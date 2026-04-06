@@ -44,11 +44,12 @@
 body.dark-mode .absent-row { background: rgba(220,53,69,0.2); color: #dc3545; }
 body.pdf-export-mode thead th { position:static !important; }
 
-/* Admin Yetkisi Olmayanlardan Gizlenecekler (DÜZELTİLDİ) */
+/* Admin Yetkisi Olmayanlardan Gizlenecekler */
 .admin-only { display: none !important; }
+body.is-admin .admin-only { display: inline-block !important; }
+body.is-admin li.admin-only { display: block !important; }
 body.is-admin button.admin-only { display: inline-block !important; }
 body.is-admin button.btn-block.admin-only { display: block !important; }
-body.is-admin li.admin-only { display: block !important; }
 </style>
 </head>
 <body class="hold-transition sidebar-mini layout-fixed">
@@ -70,7 +71,8 @@ body.is-admin li.admin-only { display: block !important; }
       <div class="form-group">
         <label>E-posta</label>
         <div class="input-group">
-          <input type="email" id="loginEmail" class="form-control" placeholder="ornek@okul.com" autocomplete="email">
+          <!-- Enter'a basınca şifreye geçmesi için onkeypress eklendi -->
+          <input type="email" id="loginEmail" class="form-control" placeholder="ornek@okul.com" autocomplete="email" onkeypress="if(event.key==='Enter') document.getElementById('loginPass').focus();">
           <div class="input-group-append"><span class="input-group-text"><i class="fas fa-envelope"></i></span></div>
         </div>
       </div>
@@ -219,8 +221,8 @@ body.is-admin li.admin-only { display: block !important; }
           <div id="anlRes"></div>
         </div>
 
-        <!-- AYARLAR (DÜZELTME: class="pane admin-only" kısmından admin-only silindi) -->
-        <div id="ayarlar" class="pane" style="display:none;">
+        <!-- AYARLAR -->
+        <div id="ayarlar" class="pane admin-only" style="display:none;">
           <div class="card card-primary card-outline">
             <div class="card-header d-flex justify-content-between align-items-center">
               <h3 class="card-title"><i class="fas fa-users mr-2"></i>Öğrenci Yönetimi</h3>
@@ -342,7 +344,14 @@ function login() {
     else err.innerHTML='<i class="fas fa-times-circle mr-2"></i>Hata: '+e.message;
   });
 }
-function logout() { auth.signOut(); getEl('loginPass').value = ''; }
+
+// BUG FIX: Çıkış yaparken veritabanı dinleyicisini kapatıp öyle çıkıyoruz.
+function logout() { 
+  database.ref('sinavDB').off(); 
+  auth.signOut(); 
+  getEl('loginPass').value = ''; 
+}
+
 function resetPassword() {
   const em = getEl('loginEmail').value.trim(), err = getEl('loginError');
   if(!em){err.textContent='E-posta girin.'; err.style.display='block'; return;}
@@ -418,13 +427,19 @@ function init() {
   
   ld(1, 'Senkronize ediliyor...');
   let st = setTimeout(() => { ld(0); alert('⚠️ İnternet bağlantınızı kontrol edin.'); uDrp(); rTabS(); rTabE(); uStat(); }, 10000);
+  
+  // VERİTABANINI DİNLEMEYE BAŞLA
   database.ref('sinavDB').on('value', (s) => {
     clearTimeout(st);
     if(s.exists()) { const d = s.val(); DB.s = d.s ||[]; DB.e = d.e || []; } else { DB = { s:[], e:[] }; }
     uDrp(); rTabS(); rTabE(); uStat();
     if(aNo) { if(DB.s.find(x=>String(x.no)===String(aNo))) { rH(); if(getEl('sonuclar').style.display==='block') rAnl(); } else { sAct(null); } }
     ld(0);
-  }, (e) => { clearTimeout(st); ld(0); alert('❌ Veritabanı hatası: ' + e.message); });
+  }, (e) => { 
+    clearTimeout(st); ld(0); 
+    // Çıkış yaparken listener off olduğu için bu hata genelde auth dışı düşmelerde gelir
+    console.error('Veritabanı hatası:', e.message); 
+  });
 }
 
 function svDB() {
