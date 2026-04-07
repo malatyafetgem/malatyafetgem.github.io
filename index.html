@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- PWA (Mobil Uygulama) Meta Etiketleri -->
+<!-- PWA Meta Etiketleri -->
 <meta name="theme-color" content="#1e3a5f">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -30,7 +30,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
 
 <style>
-/* ===== ÖZEL CSS ===== */
+/* ===== SİSTEM ARAYÜZ CSS ===== */
 #loginScreen { display:flex; justify-content:center; align-items:center; min-height:100vh; background: linear-gradient(135deg,#1e3a5f,#2d6a9f); }
 .login-card { width:100%; max-width:400px; }
 .login-card .card-header { background: linear-gradient(135deg,#1e3a5f,#2d6a9f); border-radius:8px 8px 0 0 !important; }
@@ -38,26 +38,27 @@
 #connBadge { font-size:0.78em; padding:3px 10px; border-radius:20px; display:inline-flex; align-items:center; gap:5px; }
 .chart-box { height:380px; position:relative; width: 100%; }
 
+/* Sekme Yönetimi */
+.pane { display: none !important; }
+.pane.active-pane { display: block !important; }
+
 /* Tablo Özelleştirmeleri */
 .scroll { overflow-x:auto; }
-.absent-row { background:rgba(220,53,69,0.07); color:#999; }
-.highlight-row { background:rgba(255,193,7,0.30) !important; font-weight: bold; }
-body.dark-mode .absent-row { background: rgba(220,53,69,0.2); color: #dc3545; }
-body.dark-mode .highlight-row { background:rgba(255,193,7,0.4) !important; color: #fff; }
+.absent-row td { background:rgba(220,53,69,0.07) !important; color:#999 !important; }
+body.dark-mode .absent-row td { background: rgba(220,53,69,0.2) !important; color: #dc3545 !important; }
 
-/* FIX 4: Telefonda highlight-row'un üzerine yazılmamasını garanti et */
-.table tbody tr.highlight-row,
-.table-hover tbody tr.highlight-row:hover {
-  background-color: rgba(255,193,7,0.30) !important;
+/* Mobilde Vurgulama Satırının Ezilmesini Önleme */
+tr.highlight-row td {
+  background-color: rgba(255,193,7,0.35) !important;
   font-weight: bold !important;
+  color: #212529 !important;
 }
-body.dark-mode .table tbody tr.highlight-row,
-body.dark-mode .table-hover tbody tr.highlight-row:hover {
-  background-color: rgba(255,193,7,0.4) !important;
+body.dark-mode tr.highlight-row td {
+  background-color: rgba(255,193,7,0.45) !important;
   color: #fff !important;
 }
 
-/* Admin Yetkisi Olmayanlardan Gizlenecekler */
+/* Yetkilendirme Gizlemeleri */
 .admin-only { display: none !important; }
 body.is-admin div.admin-only:not(.pane),
 body.is-admin span.admin-only,
@@ -66,94 +67,68 @@ body.is-admin li.admin-only { display: block !important; }
 body.is-admin button.admin-only { display: inline-block !important; }
 body.is-admin button.btn-block.admin-only { display: block !important; }
 
-/* FIX 3: Ayarlar içindeki yükleme bölümleri sadece Ayarlar sayfasında görünsün */
-/* (Bu bölümler HTML'de zaten sadece Ayarlar pane'indedir, extra guard eklendi) */
+/* Sitedeki PDF Başlığı Gizli */
+.pdf-header-bar { display: none; }
 
-/* ===== PDF EXPORT STİLLERİ (FIX 2) ===== */
-@media print {
-  body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+/* ===== KUSURSUZ İZOLE PDF ALANI (Arkadaşınızın Çözümü) ===== */
+#pdf-print-area {
+    display: none;
+    background-color: #fff;
+    color: #000;
+    width: 1120px; /* A4 Yatay İçin En Güvenli Genişlik */
+    padding: 30px; /* Sola/Sağa kaymayı-kırpılmayı önleyen iç boşluk */
+    box-sizing: border-box;
+    margin: 0;
+    font-family: Arial, sans-serif;
 }
-
-body.pdf-export-mode {
-  font-size: 11px !important;
+#pdf-print-area table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    font-size: 9px !important; /* Çoklu kolon sığdırma */
+    margin-bottom: 20px !important;
+    table-layout: auto !important;
 }
-body.pdf-export-mode thead th {
-  position: static !important;
-  background-color: #1e3a5f !important;
-  color: #ffffff !important;
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
-  padding: 5px 6px !important;
-  font-size: 10px !important;
+#pdf-print-area th, #pdf-print-area td {
+    border: 1px solid #555 !important;
+    padding: 4px 2px !important;
+    text-align: center !important;
+    color: #000 !important;
+    white-space: nowrap !important; /* Alt satıra inip tabloyu bozmayı engelle */
 }
-body.pdf-export-mode .card {
-  border: 1px solid #dee2e6 !important;
-  box-shadow: none !important;
-  page-break-inside: avoid;
+#pdf-print-area td:nth-child(2) {
+    text-align: left !important;
+    white-space: normal !important; /* Sadece İsimler Uzunsa Alt Satıra İnebilir */
+    font-weight: bold !important;
 }
-body.pdf-export-mode .card-header {
-  background-color: #1e3a5f !important;
-  color: #fff !important;
-  padding: 8px 12px !important;
+#pdf-print-area thead th {
+    background-color: #1e3a5f !important;
+    color: #fff !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
 }
-body.pdf-export-mode .card-title {
-  color: #fff !important;
-  font-size: 13px !important;
+#pdf-print-area tr.highlight-row td {
+    background-color: #fff3cd !important;
+    font-weight: bold !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
 }
-body.pdf-export-mode .badge {
-  background-color: #2d6a9f !important;
-  color: #fff !important;
-  font-size: 9px !important;
+#pdf-print-area tr.absent-row td {
+    background-color: #f8d7da !important;
+    color: #721c24 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
 }
-body.pdf-export-mode table {
-  width: 100% !important;
-  border-collapse: collapse !important;
-  font-size: 9px !important;
-}
-body.pdf-export-mode td, body.pdf-export-mode th {
-  padding: 3px 5px !important;
-  border: 1px solid #dee2e6 !important;
-  word-break: break-word;
-  white-space: normal !important;
-}
-body.pdf-export-mode .table-responsive {
-  overflow: visible !important;
-}
-body.pdf-export-mode .scroll {
-  overflow: visible !important;
-}
-body.pdf-export-mode .chart-box {
-  height: 260px !important;
-}
-body.pdf-export-mode .absent-row td {
-  color: #dc3545 !important;
-  background-color: rgba(220,53,69,0.08) !important;
-}
-body.pdf-export-mode .highlight-row td {
-  background-color: rgba(255,193,7,0.3) !important;
-  font-weight: bold !important;
-}
-body.pdf-export-mode .d-flex.justify-content-end {
-  display: none !important;
-}
-/* PDF'de btn-group'ları gizle */
-body.pdf-export-mode .btn-group,
-body.pdf-export-mode .btn {
-  display: none !important;
-}
-/* PDF başlık bölgesi */
-.pdf-header-bar {
-  display: none;
-  background: linear-gradient(135deg,#1e3a5f,#2d6a9f);
-  color: #fff;
-  padding: 10px 15px;
-  border-radius: 6px;
-  margin-bottom: 10px;
-}
-body.pdf-export-mode .pdf-header-bar {
-  display: flex !important;
-  justify-content: space-between;
-  align-items: center;
+#pdf-print-area .pdf-header-bar {
+    display: flex !important;
+    background: #1e3a5f !important;
+    color: #fff !important;
+    padding: 15px 20px !important;
+    border-radius: 5px !important;
+    margin-bottom: 20px !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
 }
 </style>
 </head>
@@ -280,7 +255,7 @@ body.pdf-export-mode .pdf-header-bar {
       <div class="container-fluid">
 
         <!-- ÖĞRENCİ SAYFASI -->
-        <div id="anasayfa" class="pane">
+        <div id="anasayfa" class="pane active-pane">
           <div class="card card-primary card-outline">
             <div class="card-header"><h3 class="card-title"><i class="fas fa-search mr-2"></i>Öğrenci Sorgula</h3></div>
             <div class="card-body">
@@ -302,7 +277,7 @@ body.pdf-export-mode .pdf-header-bar {
         </div>
 
         <!-- SONUÇLAR & ANALİZLER -->
-        <div id="sonuclar" class="pane" style="display:none;">
+        <div id="sonuclar" class="pane">
           <div class="card card-primary card-outline">
             <div class="card-header"><h3 class="card-title"><i class="fas fa-filter mr-2"></i>Analiz Filtreleri</h3></div>
             <div class="card-body">
@@ -334,7 +309,6 @@ body.pdf-export-mode .pdf-header-bar {
                 </div>
                 <div class="col-md-3">
                   <div class="form-group"><label>Sınav Türü</label>
-                    <!-- FIX 1: Sınav Türü seçeneği artık uExamTypes() ile doldurulacak -->
                     <select id="aEx" class="form-control" onchange="uSub(); uExamDates(); rAnl();"></select>
                   </div>
                 </div>
@@ -356,7 +330,7 @@ body.pdf-export-mode .pdf-header-bar {
         </div>
 
         <!-- AYARLAR -->
-        <div id="ayarlar" class="pane" style="display:none;">
+        <div id="ayarlar" class="pane">
           <div class="card card-primary card-outline">
             <div class="card-header d-flex justify-content-between align-items-center">
               <h3 class="card-title"><i class="fas fa-users mr-2"></i>Öğrenci Yönetimi</h3>
@@ -405,6 +379,9 @@ body.pdf-export-mode .pdf-header-bar {
     </div>
   </div>
 </div>
+
+<!-- ===== İZOLE PDF ALANI ===== -->
+<div id="pdf-print-area"></div>
 
 <!-- MODALLAR -->
 <div class="modal fade" id="mConf" tabindex="-1">
@@ -462,9 +439,10 @@ function checkAuth() {
       getEl('mainApp').style.display = 'block';
       if(getEl('userEmail')) getEl('userEmail').textContent = user.email;
       if(getEl('sideUserEmail')) getEl('sideUserEmail').textContent = user.email;
-      /* FIX 3: Admin kontrolü doğru çalışsın diye body class önce temizlenir */
+      
       document.body.classList.remove('is-admin');
       if(user.uid === ADMIN_UID) document.body.classList.add('is-admin');
+      
       init();
     } else {
       getEl('loginScreen').style.display = 'flex';
@@ -544,8 +522,10 @@ function ld(s,m="İşlem yapılıyor..."){ getEl('l-txt').textContent=m; getEl('
 
 function sTab(id, el) {
   if (id === 'ayarlar' && !document.body.classList.contains('is-admin')) return;
-  document.querySelectorAll('.pane').forEach(x=>x.style.display='none');
-  getEl(id).style.display='block';
+  
+  document.querySelectorAll('.pane').forEach(x=>x.classList.remove('active-pane'));
+  getEl(id).classList.add('active-pane');
+  
   document.querySelectorAll('.nav-sidebar .nav-link').forEach(x=>x.classList.remove('active'));
   if(el) el.classList.add('active');
   const titles={anasayfa:'Öğrenci', sonuclar:'Sonuçlar & Analizler', ayarlar:'Ayarlar'};
@@ -568,38 +548,96 @@ function cOpt(rev=false){
 function xXL(id,fn){ let wb=XLSX.utils.table_to_book(getEl(id)); XLSX.writeFile(wb,fn+'.xlsx'); }
 function xXLMul(cId,fn){ let wb=XLSX.utils.book_new(), ts=getEl(cId).getElementsByTagName('table'); for(let i=0;i<ts.length;i++){ XLSX.utils.book_append_sheet(wb,XLSX.utils.table_to_sheet(ts[i]),ts[i].getAttribute('data-sh')||('Sayfa'+i)); } XLSX.writeFile(wb,fn+'.xlsx'); }
 
-/* FIX 2: PDF export — sayfaya sığan, şık PDF */
-function xPD(id, fn, b) {
-  let o = b.innerHTML;
-  b.innerHTML = "<i class='fas fa-spinner fa-spin mr-1'></i>";
+/* ====================================================================
+   KESİN ÇÖZÜM: İZOLE EDİLMİŞ PDF ALANI (SOL/SAĞ KAYMAYI ÖNLER)
+   ==================================================================== */
+function xPD(id, fn, btn) {
+  let originalBtnHtml = btn.innerHTML;
+  btn.innerHTML = "<i class='fas fa-spinner fa-spin mr-1'></i>";
   ld(1, 'PDF Hazırlanıyor...');
-  let wasDark = document.body.classList.contains('dark-mode');
-  if (wasDark) applyTheme(false);
-  document.body.classList.add('pdf-export-mode');
-  window.scrollTo(0, 0);
+
+  let sourceEl = getEl(id);
+  let printArea = getEl('pdf-print-area');
+
+  // Sadece ".pdf-header-bar" class'ını (Özel PDF Başlığı) al
+  let headerBar = sourceEl.querySelector('.pdf-header-bar');
+  let headerHtml = headerBar ? headerBar.innerHTML : `<h2 style="margin:0;">${fn}</h2>`;
+
+  // Tüm tabloları (.scroll veya .table-responsive içinden) çıkart
+  let contentHtml = '';
+  let scrollDivs = sourceEl.querySelectorAll('.scroll, .table-responsive');
+  
+  if(scrollDivs.length > 0) {
+      scrollDivs.forEach(div => {
+          let prev = div.previousElementSibling;
+          // Karne görünümündeki H5 (Sınav Türü) başlıklarını yakala
+          if (prev && prev.tagName === 'H5') {
+              contentHtml += `<h3 style="color:#1e3a5f; border-bottom:2px solid #1e3a5f; padding-bottom:5px; margin-top:15px; font-size:14px;">${prev.innerText}</h3>`;
+          }
+          let tbl = div.querySelector('table');
+          if(tbl) contentHtml += tbl.outerHTML;
+      });
+  } else {
+      // Eğer tek bir tablo varsa direkt al
+      let tbl = sourceEl.querySelector('table');
+      if(tbl) contentHtml += tbl.outerHTML;
+  }
+
+  // Grafik Canvas'ı varsa Resme (PNG) çevirip ekle
+  let canvas = sourceEl.querySelector('canvas');
+  if (canvas) {
+      let imgUrl = canvas.toDataURL('image/png', 1.0);
+      contentHtml += `<div style="text-align:center; margin-top:20px;"><img src="${imgUrl}" style="max-height:260px; object-fit:contain;"></div>`;
+  }
+
+  // İzole edilen alana temiz HTML'i bas
+  printArea.innerHTML = `
+    <div class="pdf-header-bar">
+      ${headerHtml}
+    </div>
+    ${contentHtml}
+  `;
+
+  // PDF esnasında orijinal siteyi gizle, izole div'i göster
+  getEl('mainApp').style.display = 'none';
+  printArea.style.display = 'block';
+  
+  // Ekranı sıfır noktasına çek ki kırpılma olmasın
+  window.scrollTo(0,0);
+
   setTimeout(() => {
-    let el = getEl(id);
-    let opt = {
-      margin: [8, 6, 8, 6],
-      filename: fn + '.pdf',
-      image: { type: 'jpeg', quality: 0.97 },
-      html2canvas: {
-        scale: 2,
-        useCORS: true,
-        scrollX: 0,
-        scrollY: 0,
-        windowWidth: 1200
-      },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
-      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-    };
-    html2pdf().set(opt).from(el).save().then(() => {
-      b.innerHTML = o;
-      if (wasDark) applyTheme(true);
-      document.body.classList.remove('pdf-export-mode');
-      ld(0);
-    });
-  }, 600);
+     let opt = {
+        margin: 0, // margin kullanmıyoruz, printArea'nın padding'ini kullanıyoruz
+        filename: fn + '.pdf',
+        image: { type: 'jpeg', quality: 1.0 },
+        html2canvas: { 
+            scale: 2, 
+            useCORS: true,
+            windowWidth: 1120, // CSS'teki div genişliği ile birebir aynı
+            x: 0,
+            y: 0,
+            scrollX: 0,
+            scrollY: 0
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+     };
+
+     html2pdf().set(opt).from(printArea).save().then(() => {
+        // Temizlik işlemleri
+        printArea.style.display = 'none';
+        printArea.innerHTML = '';
+        getEl('mainApp').style.display = 'block';
+        btn.innerHTML = originalBtnHtml;
+        ld(0);
+     }).catch(err => {
+        console.error(err);
+        printArea.style.display = 'none';
+        getEl('mainApp').style.display = 'block';
+        btn.innerHTML = originalBtnHtml;
+        ld(0);
+        alert("PDF oluşturulamadı!");
+     });
+  }, 300);
 }
 
 /* ===== SİSTEM BAŞLATMA ===== */
@@ -613,7 +651,7 @@ function init() {
     if(s.exists()){ const d=s.val(); DB.s=d.s||[]; DB.e=d.e||[]; } else { DB={s:[],e:[]}; }
     uDrp(); rTabS(); rTabE(); uStat();
     if(aNo){
-      if(DB.s.find(x=>String(x.no)===String(aNo))){ rH(); if(getEl('sonuclar').style.display==='block') rAnl(); }
+      if(DB.s.find(x=>String(x.no)===String(aNo))){ rH(); if(getEl('sonuclar').classList.contains('active-pane')) rAnl(); }
       else { sAct(null); }
     }
     ld(0);
@@ -650,8 +688,7 @@ function sAct(no, clr=false){
   if(getEl('aStu')) getEl('aStu').value=no||'';
   getEl('homeArea').innerHTML='';
   if(no) rH();
-  /* FIX 1: Öğrenci değişince sınav türü listesini güncelle */
-  if(getEl('sonuclar').style.display==='block') uExamTypes();
+  if(getEl('sonuclar').classList.contains('active-pane')){ uExamTypes(); uExamDates(); }
 }
 
 function uStat(){
@@ -674,7 +711,6 @@ function rH(){
   let r=getEl('homeArea');
 
   let ownRecords=DB.e.filter(x=>String(x.studentNo)===String(aNo)).sort((a,b)=>srt(a.date,b.date));
-
   let knownKeys=new Set(ownRecords.map(e=>e.date+'__'+e.examType));
   let extraAbsent=[];
   DB.e.forEach(e=>{
@@ -684,9 +720,7 @@ function rH(){
         knownKeys.add(key);
         extraAbsent.push({
           examBatchId:e.examBatchId, studentNo:s.no, studentClass:s.class,
-          date:e.date, examType:e.examType,
-          totalNet:0, score:0, cR:'-', cP:'-', iR:'-', iP:'-', gR:'-', gP:'-',
-          abs:true, subs:{}
+          date:e.date, examType:e.examType, totalNet:0, score:0, cR:'-', cP:'-', iR:'-', iP:'-', gR:'-', gP:'-', abs:true, subs:{}
         });
       }
     }
@@ -709,8 +743,8 @@ function rH(){
   </div>
   <div id="kCont" class="card card-primary card-outline">
     <div class="pdf-header-bar">
-      <span><i class="fas fa-user-graduate mr-2"></i><strong>${s.name}</strong> — Karne</span>
-      <span style="font-size:0.85em;">${s.class} | ${new Date().toLocaleDateString('tr-TR')}</span>
+      <span style="font-size:18px;"><strong>${s.name}</strong> — Karne Özeti</span>
+      <span style="font-size:14px;">Sınıf: ${s.class} | ${new Date().toLocaleDateString('tr-TR')}</span>
     </div>
     <div class="card-header"><h3 class="card-title"><i class="fas fa-user-graduate mr-2"></i>${s.name} Karnesi</h3></div>
     <div class="card-body">`;
@@ -773,55 +807,41 @@ function dH(){
   c.h=new Chart(getEl('cH'),{type:'line',data:{labels:ex.map(e=>e.date),datasets:[{label:`${t} — ${ls}`,data:d,borderColor:cols[0],backgroundColor:cols[0]+'22',fill:true,spanGaps:true,tension:0.3}]},options:cOpt()});
 }
 
-/* ===== ANALİZLER ===== */
+/* ===== ANALİZLER VE FİLTRELEME ===== */
+function getGradeLevelClasses(studentNo) {
+    let st = DB.s.find(x => String(x.no) === String(studentNo));
+    if (!st) return null;
+    let match = st.class.match(/^(\d+)/); 
+    if (!match) return null;
+    let lvl = match[1];
+    let classes = DB.s.filter(x => {
+        let m = x.class.match(/^(\d+)/);
+        return m && m[1] === lvl;
+    }).map(x => x.class);
+    return new Set(classes);
+}
 
-/*
- * FIX 1: uDrp() artık tüm sınav türlerini listeler (genel kullanım için),
- * uExamTypes() ise Sınav Analizi modunda seçili öğrencinin sınıf seviyesine
- * göre filtrelenmiş türleri getirir.
- */
 function uDrp(){
-  /* Öğrenci dropdown'u doldur */
   getEl('aStu').innerHTML='<option value="">Seç...</option>'+DB.s.map(x=>`<option value="${x.no}">${x.name} (${x.class})</option>`).join('');
   if(aNo) getEl('aStu').value=aNo;
   uExamTypes();
 }
 
-/**
- * Sınav Türü (aEx) dropdown'unu doldurur.
- * - Sınav Analizi modunda: seçili öğrencinin sınıf seviyesine ait sınavlar.
- * - Diğer modlarda: tüm sınav türleri.
- */
 function uExamTypes(){
   let aT = getEl('aType') ? getEl('aType').value : '';
-  let types;
-
-  if(aT === 'examdetail' && aNo){
-    /* FIX 1: Seçili öğrencinin sınıf seviyesini bul */
-    let st = DB.s.find(x=>String(x.no)===String(aNo));
-    if(st){
-      let lvl = st.class.match(/^(\d+)/)?.[1]; /* Örn: "12A" → "12" */
-      if(lvl){
-        /* Bu sınıf seviyesindeki sınıfları bul */
-        let classesInLevel = DB.s
-          .filter(x=>{ let m=x.class.match(/^(\d+)/); return m&&m[1]===lvl; })
-          .map(x=>x.class);
-        let classSet = new Set(classesInLevel);
-        /* Bu sınıflara ait sınav türleri */
-        types = [...new Set(DB.e.filter(x=>classSet.has(x.studentClass)).map(e=>e.examType))].sort();
-      }
+  let types = [];
+  if((aT === 'examdetail' || aT === 'student' || aT === 'ranking') && aNo){
+    let classSet = getGradeLevelClasses(aNo);
+    if(classSet) {
+        types = [...new Set(DB.e.filter(x => classSet.has(x.studentClass)).map(e => e.examType))].sort();
     }
   }
-
-  if(!types){
-    /* Varsayılan: tüm türler */
+  if(!types.length){
     types = [...new Set(DB.e.map(e=>e.examType))].sort();
   }
-
   let prev = getEl('aEx').value;
   getEl('aEx').innerHTML = types.map(x=>`<option value="${x}">${x}</option>`).join('');
-  /* Önceki seçim hâlâ geçerliyse koru */
-  if(types.includes(prev)) getEl('aEx').value = prev;
+  if(types.includes(prev)) getEl('aEx').value = prev; 
 }
 
 function uSub(){
@@ -830,34 +850,22 @@ function uSub(){
   getEl('aSub').innerHTML='<option value="">Tümü</option>'+[...s].sort().map(x=>`<option value="${x}">${x}</option>`).join('');
 }
 
-/**
- * FIX 1: Sınav Analizi modunda tarih listesi de seçili öğrencinin
- * sınıf seviyesine göre filtrelenir.
- */
 function uExamDates(){
-  let t=getEl('aEx').value;
+  let t = getEl('aEx').value;
   let aT = getEl('aType') ? getEl('aType').value : '';
-  let dates;
-
+  let dates = [];
   if(aT === 'examdetail' && aNo){
-    let st = DB.s.find(x=>String(x.no)===String(aNo));
-    if(st){
-      let lvl = st.class.match(/^(\d+)/)?.[1];
-      if(lvl){
-        let classesInLevel = DB.s
-          .filter(x=>{ let m=x.class.match(/^(\d+)/); return m&&m[1]===lvl; })
-          .map(x=>x.class);
-        let classSet = new Set(classesInLevel);
-        dates = [...new Set(DB.e.filter(x=>x.examType===t&&classSet.has(x.studentClass)).map(x=>x.date))].sort(srt);
-      }
+    let classSet = getGradeLevelClasses(aNo);
+    if(classSet) {
+        dates = [...new Set(DB.e.filter(x => x.examType === t && classSet.has(x.studentClass)).map(x => x.date))].sort(srt);
     }
   }
-
-  if(!dates){
+  if(!dates.length){
     dates = [...new Set(DB.e.filter(x=>x.examType===t).map(x=>x.date))].sort(srt);
   }
-
-  getEl('aDate').innerHTML=dates.map(x=>`<option value="${x}">${x}</option>`).join('');
+  let prev = getEl('aDate').value;
+  getEl('aDate').innerHTML = dates.map(x=>`<option value="${x}">${x}</option>`).join('');
+  if(dates.includes(prev)) getEl('aDate').value = prev;
 }
 
 function uUI(){
@@ -873,11 +881,7 @@ function uUI(){
     getEl('aLvl').innerHTML='<option value="">Tümü</option>'+[...l].sort().map(x=>`<option value="${x}">${x}. Sınıf</option>`).join('');
     getEl('aBr').innerHTML='<option value="">Tümü</option>'+[...b].sort().map(x=>`<option value="${x}">${x}</option>`).join('');
   }
-  /* FIX 1: Sınav türü listesini mod+öğrenciye göre güncelle */
-  uExamTypes();
-  uSub();
-  uExamDates();
-  rAnl();
+  uExamTypes(); uSub(); uExamDates(); rAnl();
 }
 
 function rAnl(){
@@ -897,8 +901,8 @@ function rAnl(){
     </div>
     <div id="pR" class="card card-outline card-primary">
       <div class="pdf-header-bar">
-        <span><i class="fas fa-trophy mr-2"></i><strong>${st.name}</strong> — Sıralama</span>
-        <span style="font-size:0.85em;">${st.class} | ${new Date().toLocaleDateString('tr-TR')}</span>
+        <span style="font-size:18px;"><strong>${st.name}</strong> — Sıralama</span>
+        <span style="font-size:14px;">Sınıf: ${st.class}</span>
       </div>
       <div class="card-header"><h3 class="card-title">🏆 ${st.name} — Sıralama</h3></div>
       <div class="card-body"><div class="table-responsive">
@@ -938,8 +942,8 @@ function rAnl(){
     </div>
     <div id="pS" class="card card-outline card-info">
       <div class="pdf-header-bar">
-        <span><i class="fas fa-chart-line mr-2"></i><strong>${st.name}</strong> — Gelişim (${eT})</span>
-        <span style="font-size:0.85em;">${st.class} | ${new Date().toLocaleDateString('tr-TR')}</span>
+        <span style="font-size:18px;"><strong>${st.name}</strong> — Gelişim (${eT})</span>
+        <span style="font-size:14px;">Sınıf: ${st.class}</span>
       </div>
       <div class="card-header"><h3 class="card-title">📈 ${st.name} — Gelişim</h3></div>
       <div class="card-body"><div class="table-responsive">
@@ -984,8 +988,8 @@ function rAnl(){
     </div>
     <div id="pC" class="card card-outline card-success">
       <div class="pdf-header-bar">
-        <span><i class="fas fa-chart-bar mr-2"></i>Sınıf Analizi — ${eT}</span>
-        <span style="font-size:0.85em;">${new Date().toLocaleDateString('tr-TR')}</span>
+        <span style="font-size:18px;">Sınıf Analizi — ${eT}</span>
+        <span style="font-size:14px;">Ders: ${sb || 'Genel'}</span>
       </div>
       <div class="card-header"><h3 class="card-title">📊 Sınıf Analizi</h3></div>
       <div class="card-body"><div class="table-responsive">
@@ -1009,26 +1013,16 @@ function rAnl(){
     let dt=getEl('aDate').value;
     if(!dt){r.innerHTML='<div class="alert alert-default-info">Tarih seçiniz.</div>';return;}
 
-    /*
-     * FIX 1: Sınav Analizi'nde seçili öğrencinin sınıf seviyesine göre filtrele.
-     * Öğrenci seçilmemişse tüm veriler gösterilir.
-     */
-    let batch;
+    let batch = [];
     if(aNo){
-      let st = DB.s.find(x=>String(x.no)===String(aNo));
-      if(st){
-        let lvl = st.class.match(/^(\d+)/)?.[1];
-        if(lvl){
-          let classesInLevel = DB.s
-            .filter(x=>{ let m=x.class.match(/^(\d+)/); return m&&m[1]===lvl; })
-            .map(x=>x.class);
-          let classSet = new Set(classesInLevel);
-          batch = DB.e.filter(x=>x.examType===eT&&x.date===dt&&classSet.has(x.studentClass));
-        }
+      let classSet = getGradeLevelClasses(aNo);
+      if(classSet) {
+          batch = DB.e.filter(x => x.examType === eT && x.date === dt && classSet.has(x.studentClass));
       }
     }
-    if(!batch) batch = DB.e.filter(x=>x.examType===eT&&x.date===dt);
-
+    if(!batch.length) {
+        batch = DB.e.filter(x=>x.examType===eT&&x.date===dt);
+    }
     if(!batch.length){r.innerHTML='<div class="alert alert-default-info">Bu sınava ait veri yok.</div>';return;}
 
     let subKeys=Array.from(new Set(batch.filter(x=>!x.abs).flatMap(e=>Object.keys(e.subs)))).sort();
@@ -1043,20 +1037,18 @@ function rAnl(){
 
     let sp=attended[0]||null;
     let avgNet = attended.length ? (attended.reduce((s, x) => s + x.totalNet, 0) / attended.length).toFixed(2) : '0.00';
-    let metaStr = sp ? `Katılım: ${sp.iP||'-'} | Genel Katılım: ${sp.gP||'-'} | Ort. Net: ${avgNet}` : '';
+    let metaStr = sp ? `Kurum Katılım: ${sp.iP||'-'} | Genel Katılım: ${sp.gP||'-'} | Ort. Net: ${avgNet}` : '';
 
     let headCols=subKeys.map(k=>`<th>${k}</th>`).join('');
-
+    
     let bodyRows=sorted.map((e,idx)=>{
-      /* FIX 4: Seçili öğrenci vurgusu — hem masaüstü hem mobil için inline style ekle */
       let isSel = aNo && String(e.studentNo) === String(aNo);
       let rCls = isSel ? 'highlight-row' : '';
-      let inlineStyle = isSel ? 'style="background-color:rgba(255,193,7,0.30)!important;font-weight:bold!important;"' : '';
 
       if(e.abs){
-        return `<tr class="absent-row ${rCls}" ${inlineStyle}><td>—</td><td>${e.studentName}</td><td>${e.studentCls}</td>${subKeys.map(()=>'<td>—</td>').join('')}<td>—</td><td>—</td><td colspan="3" class="text-center font-weight-bold text-danger">Katılmadı</td></tr>`;
+        return `<tr class="absent-row ${rCls}"><td>—</td><td>${e.studentName}</td><td>${e.studentCls}</td>${subKeys.map(()=>'<td>—</td>').join('')}<td>—</td><td>—</td><td colspan="3" class="text-center font-weight-bold text-danger">Katılmadı</td></tr>`;
       }
-      return `<tr class="${rCls}" ${inlineStyle}>
+      return `<tr class="${rCls}">
         <td>${idx+1}</td><td>${e.studentName}</td><td>${e.studentCls}</td>
         ${subKeys.map(k=>`<td>${e.subs[k]!==undefined?e.subs[k].net.toFixed(2):'—'}</td>`).join('')}
         <td><strong>${e.totalNet.toFixed(2)}</strong></td>
@@ -1074,8 +1066,8 @@ function rAnl(){
     </div>
     <div id="pED" class="card card-outline card-warning">
       <div class="pdf-header-bar">
-        <span><i class="fas fa-clipboard-list mr-2"></i><strong>${eT}</strong> — ${dt} Sınav Analizi</span>
-        <span style="font-size:0.85em;">${metaStr}</span>
+        <span style="font-size:18px;"><strong>${eT}</strong> — ${dt} Sonuçları</span>
+        <span style="font-size:14px;">${metaStr}</span>
       </div>
       <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
         <h3 class="card-title mb-0">📋 ${eT} — ${dt} Sınav Analizi</h3>
@@ -1096,7 +1088,6 @@ function rAnl(){
     </div>`;
     r.innerHTML=h;
 
-    /* FIX 4: Seçili öğrenciye mobilde de scroll yap */
     if(aNo){
       setTimeout(()=>{
         let tbl = getEl('tED');
@@ -1105,7 +1096,7 @@ function rAnl(){
         if(hlRow){
           hlRow.scrollIntoView({behavior:'smooth', block:'center'});
         }
-      }, 200);
+      }, 300);
     }
   }
 }
