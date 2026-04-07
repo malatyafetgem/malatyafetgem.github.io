@@ -41,12 +41,16 @@
 /* Tablo Özelleştirmeleri */
 .scroll { overflow-x:auto; }
 .absent-row { background:rgba(220,53,69,0.07); color:#999; }
+.highlight-row { background:rgba(255,193,7,0.3) !important; font-weight: bold; }
 body.dark-mode .absent-row { background: rgba(220,53,69,0.2); color: #dc3545; }
+body.dark-mode .highlight-row { background:rgba(255,193,7,0.4) !important; color: #fff; }
 body.pdf-export-mode thead th { position:static !important; }
 
 /* Admin Yetkisi Olmayanlardan Gizlenecekler */
 .admin-only { display: none !important; }
-body.is-admin .admin-only { display: inline-block !important; }
+body.is-admin div.admin-only:not(.pane), 
+body.is-admin span.admin-only, 
+body.is-admin i.admin-only { display: inline-block !important; }
 body.is-admin li.admin-only { display: block !important; }
 body.is-admin button.admin-only { display: inline-block !important; }
 body.is-admin button.btn-block.admin-only { display: block !important; }
@@ -250,7 +254,8 @@ body.is-admin button.btn-block.admin-only { display: block !important; }
         </div>
 
         <!-- AYARLAR -->
-        <div id="ayarlar" class="pane admin-only" style="display:none;">
+        <!-- "admin-only" sınıfı .pane div'inden kaldırıldı ki CSS override etmesin -->
+        <div id="ayarlar" class="pane" style="display:none;">
           <div class="card card-primary card-outline">
             <div class="card-header d-flex justify-content-between align-items-center">
               <h3 class="card-title"><i class="fas fa-users mr-2"></i>Öğrenci Yönetimi</h3>
@@ -378,7 +383,7 @@ function login() {
   btn.disabled=true;
   
   auth.signInWithEmailAndPassword(em,pa).then(() => {
-    btn.innerHTML=orgHTML; btn.disabled=false; // BAŞARILI GİRİŞTE BUTONU SIFIRLA
+    btn.innerHTML=orgHTML; btn.disabled=false; 
   }).catch(e=>{
     btn.innerHTML=orgHTML; btn.disabled=false;
     err.className='alert alert-danger mt-3 mb-0'; err.style.display='block';
@@ -388,14 +393,13 @@ function login() {
   });
 }
 
-/* ÇIKIŞ YAPILDIĞINDA UYGULAMAYI TEMİZLE VE DİNLEYİCİLERİ KAPAT */
 function logout() {
-  database.ref('sinavDB').off(); // Dinleyici kapatılır
+  database.ref('sinavDB').off(); 
   auth.signOut();
   getEl('loginPass').value = '';
   if(getEl('loginError')) getEl('loginError').style.display = 'none';
-  sAct(null, true); // Seçili öğrenci sıfırlanır
-  sTab('anasayfa', document.querySelector('.nav-sidebar .nav-link')); // Ana sekmeye dön
+  sAct(null, true); 
+  sTab('anasayfa', document.querySelector('.nav-sidebar .nav-link')); 
 }
 
 function resetPassword() {
@@ -439,6 +443,8 @@ let dInf={}, searchDebounceTimer=null;
 function ld(s,m="İşlem yapılıyor..."){ getEl('l-txt').textContent=m; getEl('loader').style.display=s?'flex':'none'; }
 
 function sTab(id, el) {
+  if (id === 'ayarlar' && !document.body.classList.contains('is-admin')) return; // Güvenlik kontrolü
+  
   document.querySelectorAll('.pane').forEach(x=>x.style.display='none');
   getEl(id).style.display='block';
   document.querySelectorAll('.nav-sidebar .nav-link').forEach(x=>x.classList.remove('active'));
@@ -808,14 +814,18 @@ function rAnl(){
     let sorted=[...attended,...absent];
 
     let sp=attended[0]||null;
-    let metaStr=sp?`Sınıf Katılım: ${sp.cP||'-'} | Kurum Katılım: ${sp.iP||'-'} | Genel Katılım: ${sp.gP||'-'}`:'';
+    let avgNet = attended.length ? (attended.reduce((s, x) => s + x.totalNet, 0) / attended.length).toFixed(2) : '0.00';
+    let metaStr = sp ? `Kurum Katılım: ${sp.iP||'-'} | Genel Katılım: ${sp.gP||'-'} | Ortalama Net: ${avgNet}` : '';
 
     let headCols=subKeys.map(k=>`<th>${k}</th>`).join('');
     let bodyRows=sorted.map((e,idx)=>{
+      let isSel = aNo && String(e.studentNo) === String(aNo);
+      let rCls = isSel ? 'highlight-row' : '';
+
       if(e.abs){
-        return `<tr class="absent-row"><td>—</td><td>${e.studentName}</td><td>${e.studentCls}</td>${subKeys.map(()=>'<td>—</td>').join('')}<td>—</td><td>—</td><td colspan="3" class="text-center font-weight-bold text-danger">Katılmadı</td></tr>`;
+        return `<tr class="absent-row ${rCls}"><td>—</td><td>${e.studentName}</td><td>${e.studentCls}</td>${subKeys.map(()=>'<td>—</td>').join('')}<td>—</td><td>—</td><td colspan="3" class="text-center font-weight-bold text-danger">Katılmadı</td></tr>`;
       }
-      return `<tr>
+      return `<tr class="${rCls}">
         <td>${idx+1}</td><td>${e.studentName}</td><td>${e.studentCls}</td>
         ${subKeys.map(k=>`<td>${e.subs[k]!==undefined?e.subs[k].net.toFixed(2):'—'}</td>`).join('')}
         <td><strong>${e.totalNet.toFixed(2)}</strong></td>
@@ -834,7 +844,7 @@ function rAnl(){
     <div id="pED" class="card card-outline card-warning">
       <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
         <h3 class="card-title mb-0">📋 ${eT} — ${dt} Sınav Analizi</h3>
-        <small class="text-muted ml-2">${metaStr}</small>
+        <span class="badge badge-info ml-auto" style="font-size:0.9em;"><i class="fas fa-info-circle mr-1"></i>${metaStr}</span>
       </div>
       <div class="card-body">
         <div class="table-responsive">
