@@ -49,7 +49,7 @@ body.is-admin button.btn-block.admin-only { display:block !important; }
 /* PDF header sayfada gizli */
 .pdf-header-bar { display:none; }
 
-/* ===== ANALIZ SAYFASI OGRENCİ ARAMA (DEGİSİKLİK 5) ===== */
+/* ===== ANALIZ SAYFASI OGRENCİ ARAMA ===== */
 #anlStuSearch { position:relative; }
 #anlStuRes {
   position:absolute; z-index:1050; width:100%; background:#fff;
@@ -75,7 +75,6 @@ body.dark-mode .anlStu-item:hover { background:#495057; }
   box-sizing:border-box;
   font-family:Arial, sans-serif;
 }
-/* DEGİSİKLİK 6: thead her sayfada tekrar etsin */
 #pdf-print-area thead { display:table-header-group; }
 #pdf-print-area tr { page-break-inside:avoid; }
 #pdf-print-area table {
@@ -286,7 +285,6 @@ body.dark-mode .anlStu-item:hover { background:#495057; }
                   </div>
                 </div>
 
-                <!-- DEGİSİKLİK 5: Öğrenci arama kutusu -->
                 <div class="col-md-3" id="gStu">
                   <div class="form-group">
                     <label>Öğrenci Seçin</label>
@@ -434,8 +432,9 @@ function uConn(online){
 }
 database.ref('.info/connected').on('value',snap=>uConn(snap.val()===true));
 
-/* ===== KİMLİK DOĞRULAMA ===== */
-const ADMIN_UID="YLozrXC5w4OmD4HRzjlgF80qPCp1";
+/* ===== KİMLİK DOĞRULAMA (YENİ E-POSTA YETKİLENDİRMESİ) ===== */
+// Sadece bu e-postalar silme ve yükleme yapabilir!
+const ADMIN_EMAILS = ["admin@okul.com"]; 
 
 function checkAuth(){
   auth.onAuthStateChanged(user=>{
@@ -445,7 +444,11 @@ function checkAuth(){
       if(getEl('userEmail'))getEl('userEmail').textContent=user.email;
       if(getEl('sideUserEmail'))getEl('sideUserEmail').textContent=user.email;
       document.body.classList.remove('is-admin');
-      if(user.uid===ADMIN_UID)document.body.classList.add('is-admin');
+      
+      // E-posta kontrolü
+      if(ADMIN_EMAILS.includes(user.email)){
+          document.body.classList.add('is-admin');
+      }
       init();
     }else{
       getEl('loginScreen').style.display='flex';
@@ -460,19 +463,30 @@ function login(){
   const err=getEl('loginError'),btn=getEl('btnLogin');
   err.style.display='none';
   if(!em||!pa){err.textContent='E-posta ve şifre gerekli.';err.style.display='block';return;}
+  
   const orgHTML='<i class="fas fa-sign-in-alt mr-2"></i>Giriş Yap';
-  btn.innerHTML='<span class="spinner-border spinner-border-sm mr-2"></span>Giriş yapılıyor...';btn.disabled=true;
-  auth.signInWithEmailAndPassword(em,pa).then(()=>{btn.innerHTML=orgHTML;btn.disabled=false;}).catch(e=>{
-    btn.innerHTML=orgHTML;btn.disabled=false;
-    err.className='alert alert-danger mt-3 mb-0';err.style.display='block';
-    if(e.code.includes('user-not-found')||e.code.includes('wrong-password')||e.code.includes('invalid-credential'))
-      err.innerHTML='<i class="fas fa-exclamation-circle mr-2"></i>Hatalı e-posta veya şifre.';
-    else err.innerHTML='<i class="fas fa-times-circle mr-2"></i>Hata: '+e.message;
+  btn.innerHTML='<span class="spinner-border spinner-border-sm mr-2"></span>Giriş yapılıyor...';
+  btn.disabled=true;
+  
+  auth.signInWithEmailAndPassword(em,pa).then(()=>{
+    btn.innerHTML=orgHTML; btn.disabled=false;
+  }).catch(e=>{
+    btn.innerHTML=orgHTML; btn.disabled=false;
+    err.className='alert alert-danger mt-3 mb-0'; err.style.display='block';
+    
+    // Gelişmiş hata yakalayıcı
+    let msg = 'Hata: ' + e.message;
+    if(e.code) {
+      if(e.code.includes('user-not-found')||e.code.includes('wrong-password')||e.code.includes('invalid-credential'))
+        msg = '<i class="fas fa-exclamation-circle mr-2"></i>Hatalı e-posta veya şifre.';
+    }
+    err.innerHTML = msg;
   });
 }
 
 function logout(){
-  database.ref('sinavDB').off();auth.signOut();
+  database.ref('sinavDB').off(); // Veritabanı bağlantısı koparılır, bug engellenir.
+  auth.signOut();
   getEl('loginPass').value='';
   if(getEl('loginError'))getEl('loginError').style.display='none';
   sAct(null,true);
@@ -534,7 +548,6 @@ function pD(v){if(typeof v==='number'){let d=new Date((v-25569)*86400000);return
 function pN(v){let n=parseFloat(String(v||0).replace(',','.'));return isNaN(n)?0:n;}
 function srt(a,b){let x=a.split('.'),y=b.split('.');return new Date(x[2],x[1]-1,x[0])-new Date(y[2],y[1]-1,y[0]);}
 
-/* DEGİSİKLİK 3: Tüm grafikler sütun (bar) tipi */
 function mkChart(canvasId,labels,datasets,rev=false){
   let isD=document.body.classList.contains('dark-mode'),gCol=isD?'#495057':'#e2e8f0';
   return new Chart(getEl(canvasId),{
@@ -551,7 +564,6 @@ function mkChart(canvasId,labels,datasets,rev=false){
   });
 }
 
-/* DEGİSİKLİK 1: Excel yatay, sütun genişliği otomatik */
 function xXL(id,fn){
   let tbl=getEl(id);
   let wb=XLSX.utils.book_new();
@@ -592,7 +604,6 @@ function xXLMul(cId,fn){
   XLSX.writeFile(wb,fn+'.xlsx');
 }
 
-/* ===== PDF EXPORT ===== */
 function xPD(id,fn,btn){
   let orig=btn.innerHTML;
   btn.innerHTML="<i class='fas fa-spinner fa-spin mr-1'></i>";
@@ -604,7 +615,6 @@ function xPD(id,fn,btn){
   let headerBar=sourceEl.querySelector('.pdf-header-bar');
   let headerHtml=headerBar?headerBar.outerHTML:`<div class="pdf-header-bar"><h2 style="margin:0;">${fn}</h2></div>`;
 
-  /* DEGİSİKLİK 6: thead tekrar — tablo outerHTML'i koru */
   let contentHtml='';
   let scrollDivs=sourceEl.querySelectorAll('.scroll,.table-responsive');
   if(scrollDivs.length>0){
@@ -621,7 +631,6 @@ function xPD(id,fn,btn){
     if(tbl)contentHtml+=tbl.outerHTML;
   }
 
-  /* Grafik canvas → PNG */
   let canvases=sourceEl.querySelectorAll('canvas');
   canvases.forEach(canvas=>{
     try{
@@ -675,7 +684,8 @@ function init(){
 }
 
 function svDB(){
-  if(auth.currentUser.uid!==ADMIN_UID)return;
+  if(!auth.currentUser) return;
+  if(!ADMIN_EMAILS.includes(auth.currentUser.email)) return;
   ld(1,'Kaydediliyor...');
   database.ref('sinavDB').set(DB).then(()=>ld(0)).catch(e=>{alert("Hata: "+e.message);ld(0);});
 }
@@ -694,7 +704,6 @@ function sSearch(){
 }
 function clrS(){getEl('sInp').value='';getEl('sRes').innerHTML='';sAct(null,false);}
 
-/* ===== DEGİSİKLİK 5: Analiz Sayfası Öğrenci Arama ===== */
 function anlStuSearch(){
   let v=getEl('anlStuInp').value.trim();
   let res=getEl('anlStuRes');
@@ -774,7 +783,6 @@ function rH(){
   combined.forEach(e=>{(grp[e.examType]=grp[e.examType]||[]).push(e);});
   let typs=Object.keys(grp).sort();
 
-  /* DEGİSİKLİK 2: Kurum(S/K) */
   let h=`<div class="d-flex justify-content-end mb-2">
     <button class="btn btn-success btn-sm mr-2" onclick="xXLMul('kCont','${s.name}_Karne')"><i class='fas fa-file-excel mr-1'></i>Excel</button>
     <button class="btn btn-primary btn-sm" onclick="xPD('kCont','${s.name}_Karne',this)"><i class='fas fa-file-pdf mr-1'></i>PDF</button>
@@ -834,7 +842,6 @@ function uHSub(){
   getEl('hFlt').innerHTML=o;dH();
 }
 
-/* DEGİSİKLİK 3 + 7: Sütun grafiği, öğrenci + sınıf ort. + kurum ort. */
 function dH(){
   let t=getEl('hExT').value,f=getEl('hFlt').value;
   let ex=DB.e.filter(x=>String(x.studentNo)===String(aNo)&&x.examType===t).sort((a,b)=>srt(a.date,b.date));
@@ -966,7 +973,6 @@ function rAnl(){
     r.innerHTML=h;
     setTimeout(()=>{
       if(c.a)c.a.destroy();
-      /* DEGİSİKLİK 3: sütun grafik */
       c.a=mkChart('cA',ex.map(e=>e.date),[
         {label:'Sınıf Sırası',data:ex.map(e=>pN(e.cR)),backgroundColor:cols[0]+'cc',borderColor:cols[0],borderWidth:1.5},
         {label:'Genel Sıra',data:ex.map(e=>pN(e.gR)),backgroundColor:cols[1]+'cc',borderColor:cols[1],borderWidth:1.5}
@@ -984,11 +990,9 @@ function rAnl(){
       let df=(n-pn).toFixed(2),cl=df>0?'text-success':df<0?'text-danger':'';
       rows+=`<tr><td>${e.date}</td><td>${n.toFixed(2)}</td><td class="${cl} font-weight-bold">${df>0?'+'+df:df}</td></tr>`;
       dD.push(n);
-      /* DEGİSİKLİK 7: Sınıf ort. */
       let ce=DB.e.filter(x=>x.date===e.date&&x.examType===eT&&x.studentClass===st.class&&!x.abs);
       let cn=ce.map(x=>sb?(x.subs[sb]?.net||0):x.totalNet);
       clsArr.push(cn.length?(cn.reduce((a,b)=>a+b,0)/cn.length):null);
-      /* DEGİSİKLİK 7: Kurum ort. */
       let ie=DB.e.filter(x=>x.date===e.date&&x.examType===eT&&!x.abs);
       let iv=ie.map(x=>sb?(x.subs[sb]?.net||0):x.totalNet);
       instArr.push(iv.length?(iv.reduce((a,b)=>a+b,0)/iv.length):null);
@@ -1011,7 +1015,6 @@ function rAnl(){
     r.innerHTML=h;
     setTimeout(()=>{
       if(c.a)c.a.destroy();
-      /* DEGİSİKLİK 3+7 */
       c.a=mkChart('cA',ex.map(e=>e.date),[
         {label:'Öğrenci Neti',data:dD,backgroundColor:cols[0]+'cc',borderColor:cols[0],borderWidth:1.5},
         {label:'Sınıf Ort.',data:clsArr,backgroundColor:cols[2]+'99',borderColor:cols[2],borderWidth:1.5},
@@ -1087,7 +1090,6 @@ function rAnl(){
     let absent=rows2.filter(x=>x.abs).sort((a,b)=>normTR(a.studentName).localeCompare(normTR(b.studentName)));
     let sorted=[...attended,...absent];
 
-    /* DEGİSİKLİK 4: Sadece Ortalama Net */
     let avgNet=attended.length?(attended.reduce((s,x)=>s+x.totalNet,0)/attended.length).toFixed(2):'0.00';
     let metaStr=`Ortalama Net: ${avgNet}`;
 
