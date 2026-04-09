@@ -207,8 +207,7 @@ body.is-admin button.btn-block.admin-only { display:block !important; }
                 <div class="col-md-3">
                   <div class="form-group"><label class="form-label text-muted fw-bold">Analiz Türü</label>
                     <select id="aType" class="form-select" onchange="uUI()">
-                      <option value="student">Öğrenci Gelişimi</option>
-                      <option value="ranking">Öğrenci Sıralama</option>
+                      <option value="student">Öğrenci Analizi</option>
                       <option value="class">Sınıf Analizi</option>
                       <option value="examdetail">Sınav Analizi</option>
                     </select>
@@ -457,6 +456,7 @@ function applyTheme(isDark){
     icon.classList.replace('fa-sun','fa-moon');Chart.defaults.color='#475569';
   }
   if(c.h)c.h.update();if(c.a)c.a.update();
+  if(window._karneCharts){window._karneCharts.forEach(ch=>ch.update());}
 }
 function toggleTheme(){
   const isDark = document.documentElement.getAttribute('data-bs-theme') !== 'dark';
@@ -621,13 +621,13 @@ function uStat(){
   if(g) g.innerHTML=h;
 }
 
-/* ===== YENİ: ORTALAMA HESAPLAMA FONKSİYONU ===== */
-function buildAvgRow(dataArr, keys, labelColSpan) {
+/* ===== ORTALAMA SATIRI OLUŞTURUCU ===== */
+// trailingCells: karne tablosunda 2 (kurum s/k, genel s/k), toplu listede 3 (snf, kur, gen)
+function buildAvgRow(dataArr, keys, labelColSpan, trailingCells=2) {
   if(!dataArr.length) return '';
   let validCount = dataArr.filter(e => !e.abs).length;
   if(validCount === 0) return '';
-  
-  let h = `<tr class="table-avg-row"><td colspan="${labelColSpan}" class="text-end pe-3">GENEL ORTALAMA:</td>`;
+  let h = `<tr class="table-avg-row"><td colspan="${labelColSpan}" class="text-end pe-3 fw-bold">GENEL ORTALAMA:</td>`;
   keys.forEach(k => {
     if(k === 'totalNet' || k === 'score') {
       let sum = dataArr.reduce((a,b) => a + (b.abs ? 0 : b[k]), 0);
@@ -638,8 +638,8 @@ function buildAvgRow(dataArr, keys, labelColSpan) {
       h += `<td>${count ? (sum/count).toFixed(2) : '—'}</td>`;
     }
   });
-  // Snf ve Genel sıralama sütunlarını boş bırak
-  h += `<td>—</td><td>—</td></tr>`;
+  for(let i=0;i<trailingCells;i++) h += `<td>—</td>`;
+  h += `</tr>`;
   return h;
 }
 
@@ -655,7 +655,7 @@ function rH(){
   let grp={}; combined.forEach(e=>{(grp[e.examType]=grp[e.examType]||[]).push(e);}); let typs=Object.keys(grp).sort();
   function abbrevSub(name, shorten){ return shorten?name.substring(0,3):name; }
 
-  let h=`<div class="d-flex justify-content-end mb-2"><button class="btn btn-success btn-sm mr-2 fw-bold" onclick="xXLMul('kCont','${s.name}_Karne')"><i class='fas fa-file-excel me-1'></i>Excel</button><button class="btn btn-primary btn-sm fw-bold" onclick="xPD('kCont','${s.name}_Karne',this)"><i class='fas fa-file-pdf me-1'></i>PDF</button></div>
+  let h=`<div class="d-flex justify-content-end mb-2"><button class="btn btn-success btn-sm me-2 fw-bold" onclick="xXLMul('kCont','${s.name}_Karne')"><i class='fas fa-file-excel me-1'></i>Excel</button><button class="btn btn-primary btn-sm fw-bold" onclick="xPD('kCont','${s.name}_Karne',this)"><i class='fas fa-file-pdf me-1'></i>PDF</button></div>
   <div id="kCont" class="card card-primary card-outline mb-4 shadow-sm"><div class="pdf-header-bar"><span style="font-size:18px;"><strong>${s.name}</strong> — Karne Özeti</span><span style="font-size:14px;">Sınıf: ${s.class} | ${new Date().toLocaleDateString('tr-TR')}</span></div><div class="card-header"><h3 class="card-title fw-bold"><i class="fas fa-user-graduate me-2"></i>${s.name} Karnesi</h3></div><div class="card-body">`;
 
   typs.forEach(t=>{
@@ -676,10 +676,12 @@ function rH(){
     h+=`</tbody></table></div><div class="chart-box" style="margin:10px 0 18px 0; height:220px;"><div style="font-size:11px;font-weight:bold;color:#1e3a5f;margin-bottom:4px;text-align:left;">${t} — Toplam Net Gelişimi</div><canvas id="${canvasId}"></canvas></div>`;
   });
 
-  h+=`</div></div>
-  <div class="card card-outline card-info mb-4 shadow-sm"><div class="card-header"><h3 class="card-title fw-bold">Grafik</h3></div><div class="card-body"><div class="row"><div class="col-md-4"><div class="form-group mb-3"><select id="hExT" class="form-select form-select-sm fw-bold" onchange="uHSub()">${typs.map(x=>`<option value="${x}">${x}</option>`).join('')}</select></div></div><div class="col-md-4"><div class="form-group mb-3"><select id="hFlt" class="form-select form-select-sm fw-bold" onchange="dH()"></select></div></div></div><div class="chart-box"><canvas id="cH"></canvas></div></div></div>`;
-  r.innerHTML=h; uHSub();
-
+  h+=`</div></div>`;
+  
+  if(c.h){ c.h.destroy(); c.h=null; }
+  if(window._karneCharts){window._karneCharts.forEach(ch=>{try{ch.destroy();}catch(e){}});} window._karneCharts=[];
+  r.innerHTML=h;
+  
   setTimeout(()=>{
     let stGrd=getGrade(s.class);
     typs.forEach(t=>{
@@ -688,25 +690,10 @@ function rH(){
       let stuD=exT.map(e=>e.abs?null:e.totalNet);
       let clsD=exT.map(e=>{if(e.abs)return null;let v=DB.e.filter(x=>x.date===e.date&&x.examType===t&&x.studentClass===s.class&&!x.abs).map(x=>x.totalNet);return v.length?(v.reduce((a,b)=>a+b,0)/v.length):null;});
       let insD=exT.map(e=>{if(e.abs)return null;let v=DB.e.filter(x=>x.date===e.date&&x.examType===t&&!x.abs&&getGrade(x.studentClass)===stGrd).map(x=>x.totalNet);return v.length?(v.reduce((a,b)=>a+b,0)/v.length):null;});
-      mkChart(canvasId,exT.map(e=>e.date),[{label:'Toplam Net',data:stuD,backgroundColor:cols[0]+'cc',borderColor:cols[0],borderWidth:1.5},{label:'Sınıf Ort.',data:clsD,backgroundColor:cols[2]+'99',borderColor:cols[2],borderWidth:1.5},{label:'Kurum Ort.',data:insD,backgroundColor:cols[3]+'99',borderColor:cols[3],borderWidth:1.5}]);
+      let ch = mkChart(canvasId,exT.map(e=>e.date),[{label:'Toplam Net',data:stuD,backgroundColor:cols[0]+'cc',borderColor:cols[0],borderWidth:1.5},{label:'Sınıf Ort.',data:clsD,backgroundColor:cols[2]+'99',borderColor:cols[2],borderWidth:1.5},{label:'Kurum Ort.',data:insD,backgroundColor:cols[3]+'99',borderColor:cols[3],borderWidth:1.5}]);
+      window._karneCharts.push(ch);
     });
   },150);
-}
-
-function uHSub(){
-  let t=getEl('hExT').value, ex=DB.e.filter(x=>String(x.studentNo)===String(aNo)&&x.examType===t&&!x.abs), sb=Array.from(new Set(ex.flatMap(e=>Object.keys(e.subs)))).sort();
-  let o=`<option value="score">Genel Puan</option><option value="totalNet">Toplam Net</option>`; sb.forEach(x=>o+=`<option value="s_${x}">${x} Neti</option>`);
-  getEl('hFlt').innerHTML=o; dH();
-}
-
-function dH(){
-  let t=getEl('hExT').value,f=getEl('hFlt').value, ex=DB.e.filter(x=>String(x.studentNo)===String(aNo)&&x.examType===t).sort((a,b)=>srt(a.date,b.date));
-  if(c.h)c.h.destroy();
-  let getVal=e=>{ if(e.abs)return null; if(f==='score')return e.score; if(f==='totalNet')return e.totalNet; return e.subs[f.replace('s_','')]?.net??null; };
-  let ls=f==='score'?'Puanı':(f==='totalNet'?'Top. Neti':f.replace('s_','')+' Neti'), stuData=ex.map(getVal), s=DB.s.find(x=>String(x.no)===String(aNo));
-  let clsData=ex.map(e=>{ if(e.abs)return null; let peers=DB.e.filter(x=>x.date===e.date&&x.examType===t&&x.studentClass===s.class&&!x.abs); let vals=peers.map(x=>getVal(x)).filter(v=>v!==null); return vals.length?(vals.reduce((a,b)=>a+b,0)/vals.length):null; });
-  let instData=ex.map(e=>{ if(e.abs)return null; let peers=DB.e.filter(x=>x.date===e.date&&x.examType===t&&!x.abs); let vals=peers.map(x=>getVal(x)).filter(v=>v!==null); return vals.length?(vals.reduce((a,b)=>a+b,0)/vals.length):null; });
-  c.h=mkChart('cH',ex.map(e=>e.date),[{label:`${t} — ${ls}`,data:stuData,backgroundColor:cols[0]+'cc',borderColor:cols[0],borderWidth:1.5},{label:'Sınıf Ort.',data:clsData,backgroundColor:cols[2]+'99',borderColor:cols[2],borderWidth:1.5},{label:'Kurum Ort.',data:instData,backgroundColor:cols[3]+'99',borderColor:cols[3],borderWidth:1.5}]);
 }
 
 /* ===== ANALİZ FİLTRELEME ===== */
@@ -715,7 +702,7 @@ function uDrp(){ uExamTypes(); if(aNo){ let s=DB.s.find(x=>String(x.no)===String
 
 function uExamTypes(){
   let aT=getEl('aType')?getEl('aType').value:'', types=[];
-  if((aT==='examdetail'||aT==='student'||aT==='ranking')&&aNo){ let cs=getGradeLevelClasses(aNo); if(cs)types=[...new Set(DB.e.filter(x=>cs.has(x.studentClass)).map(e=>e.examType))].sort(); }
+  if((aT==='examdetail'||aT==='student')&&aNo){ let cs=getGradeLevelClasses(aNo); if(cs)types=[...new Set(DB.e.filter(x=>cs.has(x.studentClass)).map(e=>e.examType))].sort(); }
   if(!types.length)types=[...new Set(DB.e.map(e=>e.examType))].sort();
   let prev=getEl('aEx').value; getEl('aEx').innerHTML=types.map(x=>`<option value="${x}">${x}</option>`).join('');
   if(types.includes(prev))getEl('aEx').value=prev;
@@ -744,10 +731,10 @@ function uExamDates(){
 
 function uUI(){
   let t=getEl('aType').value;
-  getEl('gStu').style.display=(t==='student'||t==='ranking'||t==='examdetail')?'block':'none';
+  getEl('gStu').style.display=(t==='student'||t==='examdetail')?'block':'none';
   getEl('gLvl').style.display=(t==='class'||t==='examdetail')?'block':'none';
   getEl('gBr').style.display=t==='class'?'block':'none';
-  getEl('gSub').style.display=(t==='examdetail'||t==='ranking')?'none':'block';
+  getEl('gSub').style.display='block';
   getEl('gDate').style.display=t==='examdetail'?'block':'none';
   if(t==='class'){
     let l=new Set(),b=new Set(); DB.s.forEach(s=>{let m=s.class.match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/);if(m){l.add(m[1]);b.add(m[2].toUpperCase());}});
@@ -773,15 +760,8 @@ function rAnl(){
   
   if(!eT){r.innerHTML='<div class="alert alert-default-info">Sınav verisi yok.</div>';return;}
 
-  if(aT==='ranking'){
-    let no=getEl('aStu').value; if(!no){r.innerHTML='';return;}
-    let ex=DB.e.filter(x=>String(x.studentNo)===String(no)&&x.examType===eT&&!x.abs).sort((a,b)=>srt(a.date,b.date)), st=DB.s.find(x=>String(x.no)===String(no)); if(!st){r.innerHTML='';return;}
-    let h=`<div class="d-flex justify-content-end mb-2"><button class="btn btn-success btn-sm mr-2" onclick="xXL('tR','Siralama')"><i class='fas fa-file-excel mr-1'></i>Excel</button><button class="btn btn-primary btn-sm" onclick="xPD('pR','Siralama',this)"><i class='fas fa-file-pdf mr-1'></i>PDF</button></div><div id="pR" class="card card-outline card-primary mb-4 shadow-sm"><div class="pdf-header-bar"><span style="font-size:18px;"><strong>${st.name}</strong> — Sıralama</span><span style="font-size:14px;">Sınıf: ${st.class}</span></div><div class="card-header"><h3 class="card-title fw-bold">🏆 ${st.name} — Sıralama</h3></div><div class="card-body"><div class="scroll"><table class="table table-sm table-hover table-bordered" id="tR"><thead class="table-dark"><tr><th>Tarih</th><th>Sınıf(S/K)</th><th>Kurum(S/K)</th><th>Genel(S/K)</th></tr></thead><tbody>${ex.map(e=>`<tr><td>${e.date}</td><td>${e.cR}/${e.cP}</td><td>${e.iR}/${e.iP}</td><td>${e.gR}/${e.gP}</td></tr>`).join('')}</tbody></table></div></div><div class="chart-box"><canvas id="cA"></canvas></div></div>`;
-    r.innerHTML=h;
-    chartTimer=setTimeout(()=>{ c.a=mkChart('cA',ex.map(e=>e.date),[{label:'Sınıf Sırası',data:ex.map(e=>pN(e.cR)),backgroundColor:cols[0]+'cc',borderColor:cols[0],borderWidth:1.5},{label:'Genel Sıra',data:ex.map(e=>pN(e.gR)),backgroundColor:cols[1]+'cc',borderColor:cols[1],borderWidth:1.5}],true); },100);
-
-  }else if(aT==='student'){
-    let no=getEl('aStu').value; if(!no){r.innerHTML='';return;}
+  if(aT==='student'){
+    let no=aNo; if(!no){r.innerHTML='<div class="alert alert-info">Lütfen önce bir öğrenci seçin.</div>';return;}
     let ex=DB.e.filter(x=>String(x.studentNo)===String(no)&&x.examType===eT&&!x.abs).sort((a,b)=>srt(a.date,b.date)), st=DB.s.find(x=>String(x.no)===String(no)); if(!st){r.innerHTML='';return;}
     let stGrade=getGrade(st.class), dD=[],clsArr=[],instArr=[],rows='';
     
@@ -800,7 +780,7 @@ function rAnl(){
         let iv=DB.e.filter(x=>x.date===e.date&&x.examType===eT&&!x.abs&&getGrade(x.studentClass)===stGrade).map(getVal); instArr.push(iv.length?(iv.reduce((a,b)=>a+b,0)/iv.length):null);
       }
     });
-    let h=`<div class="d-flex justify-content-end mb-2"><button class="btn btn-success btn-sm mr-2" onclick="xXL('tS','Ogrenci_Analizi')"><i class='fas fa-file-excel mr-1'></i>Excel</button><button class="btn btn-primary btn-sm" onclick="xPD('pS','Ogrenci_Analizi',this)"><i class='fas fa-file-pdf mr-1'></i>PDF</button></div><div id="pS" class="card card-outline card-info mb-4 shadow-sm"><div class="pdf-header-bar"><span style="font-size:18px;"><strong>${st.name}</strong> — Analiz (${eT} / ${ls})</span><span style="font-size:14px;">Sınıf: ${st.class}</span></div><div class="card-header"><h3 class="card-title fw-bold">📈 ${st.name} — Analiz (${ls})</h3></div><div class="card-body"><div class="scroll"><table class="table table-sm table-hover table-bordered" id="tS"><thead class="table-dark"><tr><th>Tarih</th><th>${valHeader}</th><th>Değişim</th></tr></thead><tbody>${rows}</tbody></table></div></div><div class="chart-box"><canvas id="cA"></canvas></div></div>`;
+    let h=`<div class="d-flex justify-content-end mb-2"><button class="btn btn-success btn-sm me-2" onclick="xXL('tS','Ogrenci_Analizi')"><i class='fas fa-file-excel me-1'></i>Excel</button><button class="btn btn-primary btn-sm" onclick="xPD('pS','Ogrenci_Analizi',this)"><i class='fas fa-file-pdf me-1'></i>PDF</button></div><div id="pS" class="card card-outline card-info mb-4 shadow-sm"><div class="pdf-header-bar"><span style="font-size:18px;"><strong>${st.name}</strong> — Analiz (${eT} / ${ls})</span><span style="font-size:14px;">Sınıf: ${st.class}</span></div><div class="card-header"><h3 class="card-title fw-bold">📈 ${st.name} — Analiz (${ls})</h3></div><div class="card-body"><div class="scroll"><table class="table table-sm table-hover table-bordered" id="tS"><thead class="table-dark"><tr><th>Tarih</th><th>${valHeader}</th><th>Değişim</th></tr></thead><tbody>${rows}</tbody></table></div></div><div class="chart-box"><canvas id="cA"></canvas></div></div>`;
     r.innerHTML=h;
     
     chartTimer=setTimeout(()=>{ 
@@ -825,7 +805,7 @@ function rAnl(){
     });
     
     let clsLabel=''; {let lv=getEl('aLvl').value,br=getEl('aBr').value; if(lv&&br)clsLabel=lv+br; else if(lv)clsLabel=lv+'. Sınıflar'; else if(br)clsLabel=br; else clsLabel='Hepsi';}
-    let h=`<div class="d-flex justify-content-end mb-2"><button class="btn btn-success btn-sm mr-2" onclick="xXL('tC','Sinif_Analizi')"><i class='fas fa-file-excel mr-1'></i>Excel</button><button class="btn btn-primary btn-sm" onclick="xPD('pC','Sinif_Analizi',this)"><i class='fas fa-file-pdf mr-1'></i>PDF</button></div><div id="pC" class="card card-outline card-success mb-4 shadow-sm"><div class="pdf-header-bar"><span style="font-size:18px;">Sınıf Analizi — ${eT} (${clsLabel} / ${ls})</span><span style="font-size:14px;"></span></div><div class="card-header"><h3 class="card-title fw-bold">📊 Sınıf Analizi (${ls})</h3></div><div class="card-body"><div class="scroll"><table class="table table-sm table-hover table-bordered" id="tC"><thead class="table-dark"><tr><th>Sınıf</th><th>Tarih</th><th>Ortalama</th></tr></thead><tbody>${tr.join('')}</tbody></table></div></div><div class="chart-box"><canvas id="cA"></canvas></div></div>`;
+    let h=`<div class="d-flex justify-content-end mb-2"><button class="btn btn-success btn-sm me-2" onclick="xXL('tC','Sinif_Analizi')"><i class='fas fa-file-excel me-1'></i>Excel</button><button class="btn btn-primary btn-sm" onclick="xPD('pC','Sinif_Analizi',this)"><i class='fas fa-file-pdf me-1'></i>PDF</button></div><div id="pC" class="card card-outline card-success mb-4 shadow-sm"><div class="pdf-header-bar"><span style="font-size:18px;">Sınıf Analizi — ${eT} (${clsLabel} / ${ls})</span><span style="font-size:14px;"></span></div><div class="card-header"><h3 class="card-title fw-bold">📊 Sınıf Analizi (${ls})</h3></div><div class="card-body"><div class="scroll"><table class="table table-sm table-hover table-bordered" id="tC"><thead class="table-dark"><tr><th>Sınıf</th><th>Tarih</th><th>Ortalama</th></tr></thead><tbody>${tr.join('')}</tbody></table></div></div><div class="chart-box"><canvas id="cA"></canvas></div></div>`;
     r.innerHTML=h;
     
     chartTimer=setTimeout(()=>{ 
@@ -905,7 +885,7 @@ function rAnl(){
         let safeName = `${eT}_Genel_Ozet`;
 
         let h = `
-        <div class="d-flex justify-content-end mb-2"><button class="btn btn-primary btn-sm" onclick="xPD('pGenSummary','${safeName}',this)"><i class='fas fa-file-pdf mr-1'></i>PDF</button></div>
+        <div class="d-flex justify-content-end mb-2"><button class="btn btn-primary btn-sm" onclick="xPD('pGenSummary','${safeName}',this)"><i class='fas fa-file-pdf me-1'></i>PDF</button></div>
         <div id="pGenSummary" class="card card-outline card-primary" style="background:#f4f6f9; padding:15px;">
             <div class="pdf-header-bar"><span style="font-size:18px;"><strong>${eT}</strong> — Genel Sınav Özeti</span><span>${lvlStr}</span></div>
             <h4 class="mb-3 text-center" style="color:#1e3a5f; font-weight:bold;">${eT} Sınavları Genel Değerlendirme <small class="d-block text-muted mt-1" style="font-size:0.6em;">(${lvlStr} | Toplam ${dates.length} Sınav)</small></h4>
@@ -919,8 +899,8 @@ function rAnl(){
                 <div class="col-md-6 col-sm-12"><div class="info-box" style="background:#6c757d; color:#fff;"><span class="info-box-icon"><i class="fas fa-arrow-down"></i></span><div class="info-box-content"><span class="info-box-text">Genel Ortalaması En Çok Düşen Ders</span><span class="info-box-number" style="font-size:1.1em;">${worstSub ? worstSub.sub : 'Veri Yok'}</span><span class="progress-description" style="font-size:0.9em;">${worstSub ? `${worstSub.diff.toFixed(2)} Net (${worstSub.fAvg.toFixed(2)} ➔ ${worstSub.lAvg.toFixed(2)})` : 'Karşılaştırma için veri yetersiz'}</span></div></div></div>
             </div>
             <div class="row mt-3">
-                <div class="col-lg-6"><div class="card shadow-sm"><div class="card-header bg-success text-white"><h3 class="card-title m-0"><i class="fas fa-angle-double-up mr-1"></i> En Çok İlk 10'a Girenler</h3></div><div class="card-body p-0 scroll"><table class="table table-sm table-striped m-0" style="font-size:0.9em;"><thead><tr><th>Sıra</th><th>No</th><th>Ad Soyad</th><th>Sınıf</th><th>Sayı</th><th>Ort.Net</th><th>Ort.Puan</th></tr></thead><tbody>${top10Html}</tbody></table></div></div></div>
-                <div class="col-lg-6"><div class="card shadow-sm"><div class="card-header bg-danger text-white"><h3 class="card-title m-0"><i class="fas fa-angle-double-down mr-1"></i> En Çok Son 10'a Girenler</h3></div><div class="card-body p-0 scroll"><table class="table table-sm table-striped m-0" style="font-size:0.9em;"><thead><tr><th>Sıra</th><th>No</th><th>Ad Soyad</th><th>Sınıf</th><th>Sayı</th><th>Ort.Net</th><th>Ort.Puan</th></tr></thead><tbody>${bottom10Html}</tbody></table></div></div></div>
+                <div class="col-lg-6"><div class="card shadow-sm"><div class="card-header bg-success text-white"><h3 class="card-title m-0"><i class="fas fa-angle-double-up me-1"></i> En Çok İlk 10'a Girenler</h3></div><div class="card-body p-0 scroll"><table class="table table-sm table-striped m-0" style="font-size:0.9em;"><thead><tr><th>Sıra</th><th>No</th><th>Ad Soyad</th><th>Sınıf</th><th>Sayı</th><th>Ort.Net</th><th>Ort.Puan</th></tr></thead><tbody>${top10Html}</tbody></table></div></div></div>
+                <div class="col-lg-6"><div class="card shadow-sm"><div class="card-header bg-danger text-white"><h3 class="card-title m-0"><i class="fas fa-angle-double-down me-1"></i> En Çok Son 10'a Girenler</h3></div><div class="card-body p-0 scroll"><table class="table table-sm table-striped m-0" style="font-size:0.9em;"><thead><tr><th>Sıra</th><th>No</th><th>Ad Soyad</th><th>Sınıf</th><th>Sayı</th><th>Ort.Net</th><th>Ort.Puan</th></tr></thead><tbody>${bottom10Html}</tbody></table></div></div></div>
             </div>
         </div>`;
         r.innerHTML = h;
@@ -960,7 +940,7 @@ function rAnl(){
       let lvlStr = targetLvl ? `${targetLvl}. Sınıflar` : 'Tüm Sınıflar';
       
       let h = `
-      <div class="d-flex justify-content-end mb-2"><button class="btn btn-primary btn-sm" onclick="xPD('pSummary','Sinav_Ozeti_${safeName}',this)"><i class='fas fa-file-pdf mr-1'></i>PDF</button></div>
+      <div class="d-flex justify-content-end mb-2"><button class="btn btn-primary btn-sm" onclick="xPD('pSummary','Sinav_Ozeti_${safeName}',this)"><i class='fas fa-file-pdf me-1'></i>PDF</button></div>
       <div id="pSummary" class="card card-outline card-info" style="background:#f4f6f9; padding:15px;">
           <div class="pdf-header-bar"><span style="font-size:18px;"><strong>${eT}</strong> — ${dt} Sınav Özeti</span><span>${lvlStr}</span></div>
           <h4 class="mb-3 text-center" style="color:#1e3a5f; font-weight:bold;">${eT} Sınavı (${dt}) Değerlendirmesi <small class="d-block text-muted mt-1" style="font-size:0.6em;">(${lvlStr})</small></h4>
@@ -974,8 +954,8 @@ function rAnl(){
               <div class="col-md-6 col-sm-12"><div class="info-box" style="background:#6c757d; color:#fff;"><span class="info-box-icon"><i class="fas fa-arrow-down"></i></span><div class="info-box-content"><span class="info-box-text">Ortalaması En Çok Düşen Ders</span><span class="info-box-number" style="font-size:1.1em;">${worstSub ? worstSub.sub : 'Veri Yok'}</span><span class="progress-description" style="font-size:0.9em;">${worstSub ? `${worstSub.diff.toFixed(2)} Net (${worstSub.prevAvg.toFixed(2)} ➔ ${worstSub.curAvg.toFixed(2)})` : 'Önceki sınav bulunamadı'}</span></div></div></div>
           </div>
           <div class="row mt-3">
-              <div class="col-lg-6"><div class="card shadow-sm"><div class="card-header bg-success text-white"><h3 class="card-title m-0"><i class="fas fa-angle-double-up mr-1"></i> İlk 10 Öğrenci</h3></div><div class="card-body p-0 scroll"><table class="table table-sm table-striped m-0" style="font-size:0.9em;"><thead><tr><th>Sıra</th><th>No</th><th>Ad Soyad</th><th>Sınıf</th><th>Net</th><th>Puan</th></tr></thead><tbody>${top10Html}</tbody></table></div></div></div>
-              <div class="col-lg-6"><div class="card shadow-sm"><div class="card-header bg-danger text-white"><h3 class="card-title m-0"><i class="fas fa-angle-double-down mr-1"></i> Son 10 Öğrenci</h3></div><div class="card-body p-0 scroll"><table class="table table-sm table-striped m-0" style="font-size:0.9em;"><thead><tr><th>Sıra</th><th>No</th><th>Ad Soyad</th><th>Sınıf</th><th>Net</th><th>Puan</th></tr></thead><tbody>${bottom10Html}</tbody></table></div></div></div>
+              <div class="col-lg-6"><div class="card shadow-sm"><div class="card-header bg-success text-white"><h3 class="card-title m-0"><i class="fas fa-angle-double-up me-1"></i> İlk 10 Öğrenci</h3></div><div class="card-body p-0 scroll"><table class="table table-sm table-striped m-0" style="font-size:0.9em;"><thead><tr><th>Sıra</th><th>No</th><th>Ad Soyad</th><th>Sınıf</th><th>Net</th><th>Puan</th></tr></thead><tbody>${top10Html}</tbody></table></div></div></div>
+              <div class="col-lg-6"><div class="card shadow-sm"><div class="card-header bg-danger text-white"><h3 class="card-title m-0"><i class="fas fa-angle-double-down me-1"></i> Son 10 Öğrenci</h3></div><div class="card-body p-0 scroll"><table class="table table-sm table-striped m-0" style="font-size:0.9em;"><thead><tr><th>Sıra</th><th>No</th><th>Ad Soyad</th><th>Sınıf</th><th>Net</th><th>Puan</th></tr></thead><tbody>${bottom10Html}</tbody></table></div></div></div>
           </div>
       </div>`;
       r.innerHTML = h;
@@ -996,36 +976,15 @@ function rAnl(){
         return `<tr class="${rCls}"><td>${idx+1}</td><td>${e.pub||'-'}</td><td>${e.studentName}</td><td>${e.studentCls}</td>${subKeys.map(k=>`<td>${e.subs[k]!==undefined?e.subs[k].net.toFixed(2):'—'}</td>`).join('')}<td><strong>${e.totalNet.toFixed(2)}</strong></td><td>${e.score.toFixed(2)}</td><td>${e.cR}/${e.cP}</td><td>${e.iR}/${e.iP}</td><td>${e.gR}/${e.gP}</td></tr>`;
       }).join('');
 
-      let avgRow = buildAvgRow(batch, [...subKeys, 'totalNet', 'score'], 4); // #, Yayınevi, Ad Soyad, Sınıf
+      let avgRow = buildAvgRow(batch, [...subKeys, 'totalNet', 'score'], 4, 3); // #, Yayınevi, Ad Soyad, Sınıf + 3 trailing (snf/kur/gen)
 
       let lvlStr = targetLvl ? `${targetLvl}. Sınıflar ` : '';
       let safeName=`${eT}_${dt.replace(/\./g,'-')}`;
-      let h=`<div class="d-flex justify-content-end mb-2"><button class="btn btn-success btn-sm mr-2 fw-bold" onclick="xXL('tED','Sinav_${safeName}')"><i class='fas fa-file-excel mr-1'></i>Excel</button><button class="btn btn-primary btn-sm fw-bold" onclick="xPD('pED','Sinav_${safeName}',this)"><i class='fas fa-file-pdf mr-1'></i>PDF</button></div><div id="pED" class="card card-outline card-warning mb-4 shadow-sm"><div class="pdf-header-bar"><span style="font-size:18px;"><strong>${eT}</strong> — ${dt} ${lvlStr}Sonuçları</span><span style="font-size:14px;">${metaStr}</span></div><div class="card-header d-flex justify-content-between align-items-center flex-wrap"><h3 class="card-title fw-bold mb-0">📋 ${eT} — ${dt} ${lvlStr}Sınav Analizi</h3><span class="badge text-bg-info ms-auto" style="font-size:0.9em;"><i class="fas fa-info-circle mr-1"></i>${metaStr}</span></div><div class="card-body"><div class="scroll"><table class="table table-sm table-hover table-bordered" id="tED"><thead class="table-dark"><tr><th>#</th><th>Yayınevi</th><th>Ad Soyad</th><th>Sınıf</th>${headCols}<th>Top.Net</th><th>Puan</th><th>Snf(S/K)</th><th>Kur(S/K)</th><th>Gen(S/K)</th></tr></thead><tbody>${bodyRows}${avgRow}</tbody></table></div></div></div>`;
+      let h=`<div class="d-flex justify-content-end mb-2"><button class="btn btn-success btn-sm me-2 fw-bold" onclick="xXL('tED','Sinav_${safeName}')"><i class='fas fa-file-excel me-1'></i>Excel</button><button class="btn btn-primary btn-sm fw-bold" onclick="xPD('pED','Sinav_${safeName}',this)"><i class='fas fa-file-pdf me-1'></i>PDF</button></div><div id="pED" class="card card-outline card-warning mb-4 shadow-sm"><div class="pdf-header-bar"><span style="font-size:18px;"><strong>${eT}</strong> — ${dt} ${lvlStr}Sonuçları</span><span style="font-size:14px;">${metaStr}</span></div><div class="card-header d-flex justify-content-between align-items-center flex-wrap"><h3 class="card-title fw-bold mb-0">📋 ${eT} — ${dt} ${lvlStr}Sınav Analizi</h3><span class="badge text-bg-info ms-auto" style="font-size:0.9em;"><i class="fas fa-info-circle me-1"></i>${metaStr}</span></div><div class="card-body"><div class="scroll"><table class="table table-sm table-hover table-bordered" id="tED"><thead class="table-dark"><tr><th>#</th><th>Yayınevi</th><th>Ad Soyad</th><th>Sınıf</th>${headCols}<th>Top.Net</th><th>Puan</th><th>Snf(S/K)</th><th>Kur(S/K)</th><th>Gen(S/K)</th></tr></thead><tbody>${bodyRows}${avgRow}</tbody></table></div></div></div>`;
       r.innerHTML=h;
       if(aNo) setTimeout(()=>{ let hlRow=getEl('tED')?.querySelector('tr.highlight-row'); if(hlRow)hlRow.scrollIntoView({behavior:'smooth',block:'center'}); },300);
     }
   }
-}
-
-/* YENİ: Ortalama (Average) Satırı Oluşturucu */
-function buildAvgRow(dataArr, keys, labelColSpan) {
-  if(!dataArr.length) return '';
-  let validCount = dataArr.filter(e => !e.abs).length;
-  if(validCount === 0) return '';
-  
-  let h = `<tr class="table-avg-row"><td colspan="${labelColSpan}" class="text-end pe-3">GENEL ORTALAMA:</td>`;
-  keys.forEach(k => {
-    if(k === 'totalNet' || k === 'score') {
-      let sum = dataArr.reduce((a,b) => a + (b.abs ? 0 : b[k]), 0);
-      h += `<td>${(sum/validCount).toFixed(2)}</td>`;
-    } else {
-      let sum = 0, count = 0;
-      dataArr.forEach(e => { if(!e.abs && e.subs[k]) { sum += e.subs[k].net; count++; } });
-      h += `<td>${count ? (sum/count).toFixed(2) : '—'}</td>`;
-    }
-  });
-  h += `<td>—</td><td>—</td><td>—</td></tr>`;
-  return h;
 }
 
 /* ===== AYARLAR ===== */
