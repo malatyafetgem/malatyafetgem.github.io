@@ -14,6 +14,8 @@
 <!-- Bootstrap adminlte içinde olduğu için 2. kez yükleme kaldırıldı -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/admin-lte/3.2.0/css/adminlte.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap4.min.css">
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -48,6 +50,19 @@ body.is-admin button.btn-block.admin-only { display:block !important; }
 
 /* PDF header sayfada gizli */
 .pdf-header-bar { display:none; }
+
+/* ===== DATATABLE ÖZEL STİLLER ===== */
+.dataTables_wrapper .dataTables_filter input { border-radius: 4px; border: 1px solid #ced4da; padding: 4px 8px; }
+.dataTables_wrapper .dataTables_length select { border-radius: 4px; border: 1px solid #ced4da; padding: 2px 6px; }
+body.dark-mode .dataTables_wrapper .dataTables_filter input,
+body.dark-mode .dataTables_wrapper .dataTables_length select { background:#343a40; color:#fff; border-color:#495057; }
+body.dark-mode .dataTables_wrapper .dataTables_info,
+body.dark-mode .dataTables_wrapper .dataTables_paginate .paginate_button { color:#adb5bd !important; }
+body.dark-mode .dataTables_wrapper .dataTables_paginate .paginate_button:hover { background:#495057 !important; color:#fff !important; }
+body.dark-mode table.dataTable thead th { background:#2d3748; color:#e2e8f0; }
+body.dark-mode table.dataTable tbody tr { background:#343a40; color:#e2e8f0; }
+body.dark-mode table.dataTable tbody tr:nth-child(even) { background:#3a3f47; }
+body.dark-mode table.dataTable.hover tbody tr:hover { background:#495057 !important; }
 
 /* ===== ANALIZ SAYFASI OGRENCİ ARAMA ===== */
 #anlStuSearchWrapper { position:relative; }
@@ -300,7 +315,7 @@ body.dark-mode .anlStu-item:hover { background:#495057; }
                 <button class="btn btn-primary btn-sm" onclick="getEl('fStu').click()"><i class="fas fa-upload mr-1"></i>Excel Yükle</button>
                 <input type="file" id="fStu" style="display:none;" onchange="upl(event,'s')">
               </div>
-              <div class="table-responsive" style="max-height:300px;overflow-y:auto;">
+              <div class="table-responsive">
                 <table class="table table-sm table-hover text-nowrap" id="tStu">
                   <thead><tr><th>No</th><th>Ad Soyad</th><th>Sınıf</th><th>İşlem</th></tr></thead>
                   <tbody></tbody>
@@ -364,6 +379,10 @@ body.dark-mode .anlStu-item:hover { background:#495057; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.6.2/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/admin-lte/3.2.0/js/adminlte.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap4.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap4.min.js"></script>
 
 <script>
 /* ===== FIREBASE ===== */
@@ -531,9 +550,21 @@ function mkChart(canvasId,labels,datasets,rev=false){
 
 /* Excel İşlemleri */
 function xXL(id,fn){
-  let tbl=getEl(id),wb=XLSX.utils.book_new(),ws=XLSX.utils.table_to_sheet(tbl),range=XLSX.utils.decode_range(ws['!ref']||'A1:A1'),wscols=[];
-  for(let C=range.s.c;C<=range.e.c;C++){let maxW=6;for(let R=range.s.r;R<=range.e.r;R++){let cell=ws[XLSX.utils.encode_cell({r:R,c:C})];if(cell&&cell.v)maxW=Math.max(maxW,String(cell.v).length+2);}wscols.push({wch:Math.min(maxW,32)});}
-  ws['!cols']=wscols; XLSX.utils.book_append_sheet(wb,ws,'Rapor'); XLSX.writeFile(wb,fn+'.xlsx');
+  // DataTable varsa tüm satırları al
+  let tbl=getEl(id);
+  if($.fn.DataTable.isDataTable('#'+id)){
+    let dt=$('#'+id).DataTable();
+    let prevLen=dt.page.len();
+    dt.page.len(-1).draw(false); // tümünü göster
+    let wb=XLSX.utils.book_new(),ws=XLSX.utils.table_to_sheet(tbl),range=XLSX.utils.decode_range(ws['!ref']||'A1:A1'),wscols=[];
+    for(let C=range.s.c;C<=range.e.c;C++){let maxW=6;for(let R=range.s.r;R<=range.e.r;R++){let cell=ws[XLSX.utils.encode_cell({r:R,c:C})];if(cell&&cell.v)maxW=Math.max(maxW,String(cell.v).length+2);}wscols.push({wch:Math.min(maxW,32)});}
+    ws['!cols']=wscols; XLSX.utils.book_append_sheet(wb,ws,'Rapor'); XLSX.writeFile(wb,fn+'.xlsx');
+    dt.page.len(prevLen).draw(false); // önceki sayfa uzunluğuna dön
+  } else {
+    let wb=XLSX.utils.book_new(),ws=XLSX.utils.table_to_sheet(tbl),range=XLSX.utils.decode_range(ws['!ref']||'A1:A1'),wscols=[];
+    for(let C=range.s.c;C<=range.e.c;C++){let maxW=6;for(let R=range.s.r;R<=range.e.r;R++){let cell=ws[XLSX.utils.encode_cell({r:R,c:C})];if(cell&&cell.v)maxW=Math.max(maxW,String(cell.v).length+2);}wscols.push({wch:Math.min(maxW,32)});}
+    ws['!cols']=wscols; XLSX.utils.book_append_sheet(wb,ws,'Rapor'); XLSX.writeFile(wb,fn+'.xlsx');
+  }
 }
 
 function xXLMul(cId,fn){
@@ -550,6 +581,16 @@ function xXLMul(cId,fn){
 function xPD(id,fn,btn){
   let orig=btn.innerHTML; btn.innerHTML="<i class='fas fa-spinner fa-spin mr-1'></i>"; ld(1,'PDF Hazırlanıyor...');
   let sourceEl=getEl(id), printArea=getEl('pdf-print-area');
+
+  // DataTables varsa tüm satırları göster
+  let dtInstances=[];
+  sourceEl.querySelectorAll('table').forEach(t=>{
+    if($.fn.DataTable.isDataTable(t)){
+      let dt=$(t).DataTable();
+      dtInstances.push({dt, prevLen:dt.page.len()});
+      dt.page.len(-1).draw(false);
+    }
+  });
 
   // 1. Orijinal canvas'ları PDF öncesi img'ye çevir (innerHTML'e taşınmadan önce)
   let canvasDataUrls=[];
@@ -579,14 +620,24 @@ function xPD(id,fn,btn){
     parent.replaceChild(img,cv);
   });
 
-  // 5. Butonları ve aksiyon alanlarını gizle
+  // 5. DataTables kontrol alanlarını gizle
+  printArea.querySelectorAll('.dataTables_wrapper .dataTables_filter,.dataTables_wrapper .dataTables_length,.dataTables_wrapper .dataTables_info,.dataTables_wrapper .dataTables_paginate').forEach(el=>el.style.display='none');
+
+  // 6. Butonları ve aksiyon alanlarını gizle
   printArea.querySelectorAll('.btn,.d-flex.justify-content-end').forEach(b=>b.style.display='none');
 
   getEl('mainApp').style.display='none'; printArea.style.display='block'; window.scrollTo(0,0);
   setTimeout(()=>{
     html2pdf().set({margin:0,filename:fn+'.pdf',image:{type:'jpeg',quality:1.0},html2canvas:{scale:2,useCORS:true,windowWidth:1120,x:0,y:0,scrollX:0,scrollY:0},jsPDF:{unit:'mm',format:'a4',orientation:'landscape'}})
-    .from(printArea).save().then(()=>{ printArea.style.display='none';printArea.innerHTML=''; getEl('mainApp').style.display='block'; btn.innerHTML=orig;ld(0); })
-    .catch(err=>{ console.error(err); printArea.style.display='none';printArea.innerHTML=''; getEl('mainApp').style.display='block'; btn.innerHTML=orig;ld(0);alert("PDF oluşturulamadı!"); });
+    .from(printArea).save().then(()=>{
+      printArea.style.display='none';printArea.innerHTML='';
+      getEl('mainApp').style.display='block'; btn.innerHTML=orig;ld(0);
+      // DataTables sayfa uzunluklarını geri yükle
+      dtInstances.forEach(({dt,prevLen})=>dt.page.len(prevLen).draw(false));
+    })
+    .catch(err=>{ console.error(err); printArea.style.display='none';printArea.innerHTML=''; getEl('mainApp').style.display='block'; btn.innerHTML=orig;ld(0);alert("PDF oluşturulamadı!");
+      dtInstances.forEach(({dt,prevLen})=>dt.page.len(prevLen).draw(false));
+    });
   },300);
 }
 
@@ -1298,15 +1349,44 @@ function rAnl(){
       let safeName=`${eT}_${dt.replace(/\./g,'-')}`;
       let h=`<div class="d-flex justify-content-end mb-2"><button class="btn btn-success btn-sm mr-2" onclick="xXL('tED','Sinav_${safeName}')"><i class='fas fa-file-excel mr-1'></i>Excel</button><button class="btn btn-primary btn-sm" onclick="xPD('pED','Sinav_${safeName}',this)"><i class='fas fa-file-pdf mr-1'></i>PDF</button></div><div id="pED" class="card card-outline card-warning"><div class="pdf-header-bar"><span style="font-size:18px;"><strong>${eT}</strong> — ${dt} ${lvlStr}Sonuçları</span><span style="font-size:14px;">${metaStr}</span></div><div class="card-header d-flex justify-content-between align-items-center flex-wrap"><h3 class="card-title mb-0">📋 ${eT} — ${dt} ${lvlStr}Sınav Analizi</h3><span class="badge badge-info ml-auto" style="font-size:0.9em;"><i class="fas fa-info-circle mr-1"></i>${metaStr}</span></div><div class="card-body"><div class="table-responsive"><table class="table table-sm table-hover table-bordered" id="tED"><thead><tr><th>#</th><th>Ad Soyad</th><th>Sınıf</th>${headCols}<th>Top.Net</th><th>Puan</th><th>Snf(S/K)</th><th>Kur(S/K)</th><th>Gen(S/K)</th></tr></thead><tbody>${bodyRows}</tbody></table></div></div></div>`;
       r.innerHTML=h;
-      if(aNo) setTimeout(()=>{ let hlRow=getEl('tED')?.querySelector('tr.highlight-row'); if(hlRow)hlRow.scrollIntoView({behavior:'smooth',block:'center'}); },300);
+      // DataTable başlat (PDF/Excel işlemleri için retrieve:true güvenli tekrar init)
+      setTimeout(()=>{
+        if($.fn.DataTable.isDataTable('#tED')){ $('#tED').DataTable().destroy(); }
+        $('#tED').DataTable({
+          language: { url:'https://cdn.datatables.net/plug-ins/1.13.6/i18n/tr.json' },
+          pageLength: 50,
+          lengthMenu: [[25,50,100,-1],['25','50','100','Tümü']],
+          responsive: false,
+          scrollX: true,
+          dom: '<"row mb-2"<"col-sm-6"l><"col-sm-6"f>>rt<"row"<"col-sm-5"i><"col-sm-7"p>>',
+          order: [[0,'asc']],
+          rowCallback: function(row, data){
+            // absent-row ve highlight-row class'larını koru
+          }
+        });
+        if(aNo){ let hlRow=getEl('tED')?.querySelector('tr.highlight-row'); if(hlRow)hlRow.scrollIntoView({behavior:'smooth',block:'center'}); }
+      },100);
     }
   }
 }
 
 /* ===== AYARLAR ===== */
 function rTabS(){
+  // Mevcut DataTable'ı yok et
+  if($.fn.DataTable.isDataTable('#tStu')){$('#tStu').DataTable().destroy();}
   let t=getEl('tStu').querySelector('tbody');
   t.innerHTML=DB.s.map(s=>`<tr><td>${s.no}</td><td>${s.name}</td><td>${s.class}</td><td><div class='btn-group btn-group-sm'><button class='btn btn-warning admin-only' onclick="eStu('${s.no}')"><i class='fas fa-edit'></i></button><button class='btn btn-danger admin-only' onclick="cDel('student','${s.no} silinecek.','${s.no}')"><i class='fas fa-trash'></i></button></div></td></tr>`).join('');
+  // DataTable başlat
+  $('#tStu').DataTable({
+    language: {
+      url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/tr.json'
+    },
+    pageLength: 25,
+    responsive: true,
+    columnDefs: [{ orderable: false, targets: 3 }],
+    dom: '<"row"<"col-sm-6"l><"col-sm-6"f>>rt<"row"<"col-sm-5"i><"col-sm-7"p>>',
+    order: [[2,'asc'],[1,'asc']]
+  });
 }
 function rTabE(){
   let sn=new Map();
@@ -1315,7 +1395,18 @@ function rTabE(){
     sn.get(e.examBatchId).count++;
   });
   let u=[...sn.values()].sort((a,b)=>srt(a.date,b.date));
-  getEl('tExA').innerHTML=`<table class="table table-sm table-hover text-nowrap"><thead><tr><th>Tarih</th><th>Tür</th><th>Sayı</th><th>İşlem</th></tr></thead><tbody>${u.map(e=>`<tr><td>${e.date}</td><td>${e.examType}</td><td>${e.count}</td><td><button class="btn btn-danger btn-sm admin-only" onclick="cDel('exam','Silinsin mi?','${e.examBatchId}')"><i class='fas fa-trash'></i></button></td></tr>`).join('')}</tbody></table>`;
+  getEl('tExA').innerHTML=`<table class="table table-sm table-hover text-nowrap" id="tExAInner"><thead><tr><th>Tarih</th><th>Tür</th><th>Sayı</th><th>İşlem</th></tr></thead><tbody>${u.map(e=>`<tr><td>${e.date}</td><td>${e.examType}</td><td>${e.count}</td><td><button class="btn btn-danger btn-sm admin-only" onclick="cDel('exam','Silinsin mi?','${e.examBatchId}')"><i class='fas fa-trash'></i></button></td></tr>`).join('')}</tbody></table>`;
+  // DataTable başlat
+  $('#tExAInner').DataTable({
+    language: {
+      url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/tr.json'
+    },
+    pageLength: 10,
+    responsive: true,
+    columnDefs: [{ orderable: false, targets: 3 }],
+    dom: '<"row"<"col-sm-6"l><"col-sm-6"f>>rt<"row"<"col-sm-5"i><"col-sm-7"p>>',
+    order: [[0,'desc']]
+  });
 }
 
 function oMod(id){jQuery('#'+id).modal('show');}
