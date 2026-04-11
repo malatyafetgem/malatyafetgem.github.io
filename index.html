@@ -39,6 +39,24 @@ body.dark-mode .absent-row td { background:rgba(220,53,69,0.2) !important; color
 tr.highlight-row td { background-color:rgba(255,193,7,0.35) !important; font-weight:bold !important; color:#212529 !important; }
 body.dark-mode tr.highlight-row td { background-color:rgba(255,193,7,0.45) !important; color:#fff !important; }
 
+/* ===== ORTALAMA SATIRI TASARIMI ===== */
+tr.avg-row td {
+  background: linear-gradient(90deg, #1e3a5f 0%, #2d6a9f 100%) !important;
+  color: #ffffff !important;
+  font-weight: bold !important;
+  border-top: 3px solid #22c55e !important; /* Yeşil vurgu çizgisi */
+  font-size: 0.95em;
+  text-align: center;
+}
+tr.avg-row td:first-child { text-transform: uppercase; letter-spacing: 0.5px; }
+body.dark-mode tr.avg-row td { background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%) !important; border-top-color: #10b981 !important; }
+#pdf-print-area tr.avg-row td { 
+  background-color: #1e3a5f !important; 
+  color: #fff !important; 
+  font-weight: bold !important; 
+  -webkit-print-color-adjust: exact; print-color-adjust: exact; 
+}
+
 /* Yetki */
 .admin-only { display:none !important; }
 body.is-admin div.admin-only:not(.pane), body.is-admin span.admin-only, body.is-admin i.admin-only { display:inline-block !important; }
@@ -80,12 +98,12 @@ body.dark-mode .anlStu-item:hover { background:#495057; }
 
 /* ===== ÖĞRENCİ KARNESİ PDF İÇİN SAYFA BÖLME VE GRAFİK BOYUTLANDIRMA ===== */
 #pdf-print-area .karne-bolum {
-  page-break-after: always !important; /* Her sınav türünü (TYT, AYT vb.) yeni sayfaya atar */
-  page-break-inside: avoid !important; /* Tablo ve grafiklerin sayfa ortasında kesilmesini önler */
+  page-break-after: always !important; 
+  page-break-inside: avoid !important; 
   padding-bottom: 10px;
 }
 #pdf-print-area .karne-bolum:last-child {
-  page-break-after: auto !important; /* Son sayfadan sonra fazladan boş sayfa çıkmasını engeller */
+  page-break-after: auto !important; 
 }
 #pdf-print-area .karne-bolum .chart-box {
   height: 180px !important;
@@ -94,7 +112,7 @@ body.dark-mode .anlStu-item:hover { background:#495057; }
   margin-bottom: 10px !important;
 }
 #pdf-print-area .karne-bolum .chart-box img {
-  max-height: 160px !important; /* Grafiklerin PDF'te dev gibi olmasını kesin olarak engeller */
+  max-height: 160px !important; 
   width: 100% !important;
   object-fit: contain !important;
 }
@@ -542,7 +560,7 @@ function mkChart(canvasId,labels,datasets,rev=false){
     data:{labels,datasets},
     options:{
       responsive:true,maintainAspectRatio:false,
-      animation:false, // Yazdırma esnasında boş çıkmaması için animasyon kapalı tutuluyor
+      animation:false, 
       plugins:{legend:{position:'top'}},
       scales:{ x:{grid:{color:gCol}}, y:{reverse:rev,min:rev?1:undefined,grid:{color:gCol}} }
     }
@@ -571,22 +589,18 @@ function xPD(id,fn,btn){
   let orig=btn.innerHTML; btn.innerHTML="<i class='fas fa-spinner fa-spin mr-1'></i>"; ld(1,'PDF Hazırlanıyor...');
   let sourceEl=getEl(id), printArea=getEl('pdf-print-area');
 
-  // 1. Orijinal canvas'ları PDF öncesi img'ye çevir (innerHTML'e taşınmadan önce)
   let canvasDataUrls=[];
   sourceEl.querySelectorAll('canvas').forEach(cv=>{
     try{ canvasDataUrls.push({id:cv.id||'', url:cv.toDataURL('image/png',1.0)}); }catch(e){}
   });
 
-  // 2. İçeriği printArea'ya taşı
   let headerBar=sourceEl.querySelector('.pdf-header-bar');
   let headerHtml=headerBar?headerBar.outerHTML:`<div class="pdf-header-bar"><h2 style="margin:0;">${fn}</h2></div>`;
   printArea.innerHTML=headerHtml+sourceEl.innerHTML;
 
-  // 3. Fazla header'ı temizle
   let allHeaders=printArea.querySelectorAll('.pdf-header-bar');
   if(allHeaders.length>1){ for(let i=1;i<allHeaders.length;i++) allHeaders[i].remove(); }
 
-  // 4. printArea içindeki canvas'ları img ile değiştir
   let printCanvases=printArea.querySelectorAll('canvas');
   printCanvases.forEach((cv,i)=>{
     let data=canvasDataUrls[i];
@@ -599,12 +613,10 @@ function xPD(id,fn,btn){
     parent.replaceChild(img,cv);
   });
 
-  // 5. Butonları ve aksiyon alanlarını gizle
   printArea.querySelectorAll('.btn,.d-flex.justify-content-end').forEach(b=>b.style.display='none');
 
   getEl('mainApp').style.display='none'; printArea.style.display='block'; window.scrollTo(0,0);
   setTimeout(()=>{
-    // html2pdf AYARLARI BURADA GÜNCELLENDİ (Sayfa kırılımı özelliği pagebreak ile eklendi)
     html2pdf().set({margin:[10, 0, 10, 0], filename:fn+'.pdf', image:{type:'jpeg',quality:1.0}, html2canvas:{scale:2,useCORS:true,windowWidth:1120,x:0,y:0,scrollX:0,scrollY:0}, jsPDF:{unit:'mm',format:'a4',orientation:'landscape'}, pagebreak: { mode: ['css', 'legacy'] }})
     .from(printArea).save().then(()=>{ printArea.style.display='none';printArea.innerHTML=''; getEl('mainApp').style.display='block'; btn.innerHTML=orig;ld(0); })
     .catch(err=>{ console.error(err); printArea.style.display='none';printArea.innerHTML=''; getEl('mainApp').style.display='block'; btn.innerHTML=orig;ld(0);alert("PDF oluşturulamadı!"); });
@@ -713,18 +725,28 @@ function rH(){
     let totalCols=sb.length+5;
     let shorten=totalCols>10;
     
-    // BURADA SAYFA BÖLME YAPISI İÇİN DİV EKLENDİ
     h+=`<div class="karne-bolum">`;
-    
     h+=`<h5 class="mt-3 mb-2 text-primary border-bottom pb-2">${t} Sınavları</h5><div class="scroll"><table class="table table-sm table-bordered table-striped" data-sh="${t}"><thead><tr><th>Tarih</th>${sb.map(x=>`<th title="${x}">${abbrevSub(x,shorten)}</th>`).join('')}<th>Top.Net</th><th>Puan</th><th>Kurum(S/K)</th><th>Genel(S/K)</th></tr></thead><tbody>`;
+    
     el.forEach(e=>{
       if(e.abs) h+=`<tr class="absent-row"><td>${e.date}</td><td colspan="${sb.length+4}" style="text-align:center;font-weight:bold;">🔴 KATILMADI</td></tr>`;
       else h+=`<tr><td>${e.date}</td>${sb.map(x=>`<td>${e.subs[x]!==undefined?e.subs[x].net.toFixed(2):'—'}</td>`).join('')}<td><strong>${e.totalNet.toFixed(2)}</strong></td><td>${e.score.toFixed(2)}</td><td>${e.iR}/${e.iP}</td><td>${e.gR}/${e.gP}</td></tr>`;
     });
+    
+    /* YENİ: KARNE İÇİN ORTALAMA SATIRI */
+    let attended = el.filter(e => !e.abs);
+    if(attended.length > 0){
+      let avgSubs = sb.map(x => { 
+        let v = attended.filter(e => e.subs[x] !== undefined).map(e => e.subs[x].net); 
+        return v.length ? (v.reduce((a,b)=>a+b,0)/v.length).toFixed(2) : '—'; 
+      });
+      let avgNet = (attended.reduce((a,e)=>a+e.totalNet,0)/attended.length).toFixed(2);
+      let avgScore = (attended.reduce((a,e)=>a+e.score,0)/attended.length).toFixed(2);
+      h += `<tr class="avg-row"><td>⌀ ORTALAMA</td>${avgSubs.map(v=>`<td>${v}</td>`).join('')}<td>${avgNet}</td><td>${avgScore}</td><td colspan="2">—</td></tr>`;
+    }
+
     let canvasId='cKarne_'+t.replace(/[^a-zA-Z0-9]/g,'_');
     h+=`</tbody></table></div><div class="chart-box" style="margin:10px 0 18px 0; height:220px;"><div style="font-size:11px;font-weight:bold;color:#1e3a5f;margin-bottom:4px;text-align:left;">${t} — Toplam Net Gelişimi</div><canvas id="${canvasId}"></canvas></div>`;
-    
-    // DİV KAPATILDI
     h+=`</div>`;
   });
 
@@ -873,10 +895,7 @@ function rAnl(){
 
     ex.forEach((e,i)=>{
       let n=getVal(e), pn=i>0 ? getVal(ex[i-1]) : n;
-      
-      let dfStr = '';
-      let cl = '';
-      
+      let dfStr = ''; let cl = '';
       if(i > 0) {
           if(isRank) {
               let df = pn - n; 
@@ -887,22 +906,27 @@ function rAnl(){
               cl = df > 0 ? 'text-success' : (df < 0 ? 'text-danger' : '');
               dfStr = df > 0 ? '+' + df : df;
           }
-      } else {
-          dfStr = '-';
-      }
+      } else { dfStr = '-'; }
 
       rows+=`<tr><td>${e.date}</td><td>${isRank ? n : n.toFixed(2)}</td><td class="${cl} font-weight-bold">${dfStr}</td></tr>`; dD.push(n);
       
       if(!isRank){
         let cn=DB.e.filter(x=>x.date===e.date&&x.examType===eT&&x.studentClass===st.class&&!x.abs).map(getVal);
         clsArr.push(cn.length?(cn.reduce((a,b)=>a+b,0)/cn.length):null);
-        
         let iv=DB.e.filter(x=>x.date===e.date&&x.examType===eT&&!x.abs&&getGrade(x.studentClass)===stGrade).map(getVal);
         instArr.push(iv.length?(iv.reduce((a,b)=>a+b,0)/iv.length):null);
       }
     });
+
+    /* YENİ: ÖĞRENCİ ANALİZİ İÇİN ORTALAMA SATIRI */
+    let avgRowHtml = '';
+    if(dD.length > 0){
+      let avgVal = dD.reduce((a,b)=>a+b,0) / dD.length;
+      let displayVal = isRank ? Math.round(avgVal) : avgVal.toFixed(2);
+      avgRowHtml = `<tr class="avg-row"><td style="text-align:right;">⌀ ORTALAMA</td><td>${displayVal}</td><td>—</td></tr>`;
+    }
     
-    let h=`<div class="d-flex justify-content-end mb-2"><button class="btn btn-success btn-sm mr-2" onclick="xXL('tS','Ogrenci_Analizi')"><i class='fas fa-file-excel mr-1'></i>Excel</button><button class="btn btn-primary btn-sm" onclick="xPD('pS','Ogrenci_Analizi',this)"><i class='fas fa-file-pdf mr-1'></i>PDF</button></div><div id="pS" class="card card-outline card-info"><div class="pdf-header-bar"><span style="font-size:18px;"><strong>${st.name}</strong> — Analiz (${eT} / ${ls})</span><span style="font-size:14px;">Sınıf: ${st.class}</span></div><div class="card-header"><h3 class="card-title">📈 ${st.name} — Analiz (${ls})</h3></div><div class="card-body"><div class="table-responsive"><table class="table table-sm table-hover table-bordered" id="tS"><thead><tr><th>Tarih</th><th>${valHeader}</th><th>Değişim</th></tr></thead><tbody>${rows}</tbody></table></div></div><div class="chart-box"><canvas id="cA"></canvas></div></div>`;
+    let h=`<div class="d-flex justify-content-end mb-2"><button class="btn btn-success btn-sm mr-2" onclick="xXL('tS','Ogrenci_Analizi')"><i class='fas fa-file-excel mr-1'></i>Excel</button><button class="btn btn-primary btn-sm" onclick="xPD('pS','Ogrenci_Analizi',this)"><i class='fas fa-file-pdf mr-1'></i>PDF</button></div><div id="pS" class="card card-outline card-info"><div class="pdf-header-bar"><span style="font-size:18px;"><strong>${st.name}</strong> — Analiz (${eT} / ${ls})</span><span style="font-size:14px;">Sınıf: ${st.class}</span></div><div class="card-header"><h3 class="card-title">📈 ${st.name} — Analiz (${ls})</h3></div><div class="card-body"><div class="table-responsive"><table class="table table-sm table-hover table-bordered" id="tS"><thead><tr><th>Tarih</th><th>${valHeader}</th><th>Değişim</th></tr></thead><tbody>${rows}${avgRowHtml}</tbody></table></div></div><div class="chart-box"><canvas id="cA"></canvas></div></div>`;
     r.innerHTML=h;
     
     chartTimer=setTimeout(()=>{ 
@@ -933,9 +957,17 @@ function rAnl(){
         tr.push(`<tr><td>${cc}</td><td>${dt}</td><td>${n.length?(n.reduce((x,y)=>x+y,0)/n.length).toFixed(2):0}</td></tr>`); 
       }); 
     });
+
+    /* YENİ: SINIF ANALİZİ İÇİN ORTALAMA SATIRI */
+    let allVals = ex.map(x=>{ if(sb==='score')return x.score; if(sb==='totalNet'||!sb)return x.totalNet; return x.subs[sb.replace('s_','')]?.net||0; });
+    let clsAvgRow = '';
+    if (allVals.length > 0) {
+      let genAvg = (allVals.reduce((a,b)=>a+b,0)/allVals.length).toFixed(2);
+      clsAvgRow = `<tr class="avg-row"><td colspan="2" style="text-align:right;">⌀ GENEL ORTALAMA</td><td>${genAvg}</td></tr>`;
+    }
     
     let clsLabel=''; {let lv=getEl('aLvl').value,br=getEl('aBr').value; if(lv&&br)clsLabel=lv+br; else if(lv)clsLabel=lv+'. Sınıflar'; else if(br)clsLabel=br; else clsLabel='Hepsi';}
-    let h=`<div class="d-flex justify-content-end mb-2"><button class="btn btn-success btn-sm mr-2" onclick="xXL('tC','Sinif_Analizi')"><i class='fas fa-file-excel mr-1'></i>Excel</button><button class="btn btn-primary btn-sm" onclick="xPD('pC','Sinif_Analizi',this)"><i class='fas fa-file-pdf mr-1'></i>PDF</button></div><div id="pC" class="card card-outline card-success"><div class="pdf-header-bar"><span style="font-size:18px;">Sınıf Analizi — ${eT} (${clsLabel} / ${ls})</span><span style="font-size:14px;"></span></div><div class="card-header"><h3 class="card-title">📊 Sınıf Analizi (${ls})</h3></div><div class="card-body"><div class="table-responsive"><table class="table table-sm table-hover table-bordered" id="tC"><thead><tr><th>Sınıf</th><th>Tarih</th><th>Ortalama</th></tr></thead><tbody>${tr.join('')}</tbody></table></div></div><div class="chart-box"><canvas id="cA"></canvas></div></div>`;
+    let h=`<div class="d-flex justify-content-end mb-2"><button class="btn btn-success btn-sm mr-2" onclick="xXL('tC','Sinif_Analizi')"><i class='fas fa-file-excel mr-1'></i>Excel</button><button class="btn btn-primary btn-sm" onclick="xPD('pC','Sinif_Analizi',this)"><i class='fas fa-file-pdf mr-1'></i>PDF</button></div><div id="pC" class="card card-outline card-success"><div class="pdf-header-bar"><span style="font-size:18px;">Sınıf Analizi — ${eT} (${clsLabel} / ${ls})</span><span style="font-size:14px;"></span></div><div class="card-header"><h3 class="card-title">📊 Sınıf Analizi (${ls})</h3></div><div class="card-body"><div class="table-responsive"><table class="table table-sm table-hover table-bordered" id="tC"><thead><tr><th>Sınıf</th><th>Tarih</th><th>Ortalama</th></tr></thead><tbody>${tr.join('')}${clsAvgRow}</tbody></table></div></div><div class="chart-box"><canvas id="cA"></canvas></div></div>`;
     r.innerHTML=h;
     
     chartTimer=setTimeout(()=>{ 
@@ -978,7 +1010,7 @@ function rAnl(){
     let getName = (no) => DB.s.find(s=>s.no===no)?.name || 'Bilinmiyor';
 
     if(subSel === 'general_summary') {
-        // === GENEL SINAV ÖZETİ EKRANI ===
+        // === GENEL SINAV ÖZETİ EKRANI === (Bu ekran ağırlıklı kart olduğu için tabloya ortalama satırı gerekmez)
         let ex = baseExams.filter(x => !x.abs);
         if(ex.length === 0) { r.innerHTML = '<div class="alert alert-default-warning">Bu filtrelere uygun sınav sonucu bulunamadı.</div>'; return; }
         
@@ -1150,7 +1182,7 @@ function rAnl(){
         r.innerHTML = h;
 
     } else if (subSel === 'summary') {
-      // === TEK SINAV ÖZETİ EKRANI ===
+      // === TEK SINAV ÖZETİ EKRANI === (Bu ekran da sıralama gösterdiğinden ortalama satırı eklenmedi)
       let batch = baseExams.filter(x => x.date === dt);
       let currentExams = batch.filter(x => !x.abs);
       if (!currentExams.length) {
@@ -1322,9 +1354,20 @@ function rAnl(){
         return `<tr class="${rCls}"><td>${idx+1}</td><td>${e.studentName}</td><td>${e.studentCls}</td>${subKeys.map(k=>`<td>${e.subs[k]!==undefined?e.subs[k].net.toFixed(2):'—'}</td>`).join('')}<td><strong>${e.totalNet.toFixed(2)}</strong></td><td>${e.score.toFixed(2)}</td><td>${e.cR}/${e.cP}</td><td>${e.iR}/${e.iP}</td><td>${e.gR}/${e.gP}</td></tr>`;
       }).join('');
 
+      /* YENİ: TOPLU LİSTE İÇİN ORTALAMA SATIRI */
+      let listAvgRow = '';
+      if (attended.length > 0) {
+        let avgSubCols = subKeys.map(k => {
+            let v = attended.filter(e => e.subs[k] !== undefined).map(e => e.subs[k].net);
+            return `<td>${v.length ? (v.reduce((a,b)=>a+b,0)/v.length).toFixed(2) : '—'}</td>`;
+        }).join('');
+        let listAvgScore = (attended.reduce((s,x)=>s+x.score,0)/attended.length).toFixed(2);
+        listAvgRow = `<tr class="avg-row"><td colspan="3" style="text-align:right;">⌀ ORTALAMA (${attended.length} Kişi)</td>${avgSubCols}<td>${avgNet}</td><td>${listAvgScore}</td><td colspan="3">—</td></tr>`;
+      }
+
       let lvlStr = targetLvl ? `${targetLvl}. Sınıflar ` : '';
       let safeName=`${eT}_${dt.replace(/\./g,'-')}`;
-      let h=`<div class="d-flex justify-content-end mb-2"><button class="btn btn-success btn-sm mr-2" onclick="xXL('tED','Sinav_${safeName}')"><i class='fas fa-file-excel mr-1'></i>Excel</button><button class="btn btn-primary btn-sm" onclick="xPD('pED','Sinav_${safeName}',this)"><i class='fas fa-file-pdf mr-1'></i>PDF</button></div><div id="pED" class="card card-outline card-warning"><div class="pdf-header-bar"><span style="font-size:18px;"><strong>${eT}</strong> — ${dt} ${lvlStr}Sonuçları</span><span style="font-size:14px;">${metaStr}</span></div><div class="card-header d-flex justify-content-between align-items-center flex-wrap"><h3 class="card-title mb-0">📋 ${eT} — ${dt} ${lvlStr}Sınav Analizi</h3><span class="badge badge-info ml-auto" style="font-size:0.9em;"><i class="fas fa-info-circle mr-1"></i>${metaStr}</span></div><div class="card-body"><div class="table-responsive"><table class="table table-sm table-hover table-bordered" id="tED"><thead><tr><th>#</th><th>Ad Soyad</th><th>Sınıf</th>${headCols}<th>Top.Net</th><th>Puan</th><th>Snf(S/K)</th><th>Kur(S/K)</th><th>Gen(S/K)</th></tr></thead><tbody>${bodyRows}</tbody></table></div></div></div>`;
+      let h=`<div class="d-flex justify-content-end mb-2"><button class="btn btn-success btn-sm mr-2" onclick="xXL('tED','Sinav_${safeName}')"><i class='fas fa-file-excel mr-1'></i>Excel</button><button class="btn btn-primary btn-sm" onclick="xPD('pED','Sinav_${safeName}',this)"><i class='fas fa-file-pdf mr-1'></i>PDF</button></div><div id="pED" class="card card-outline card-warning"><div class="pdf-header-bar"><span style="font-size:18px;"><strong>${eT}</strong> — ${dt} ${lvlStr}Sonuçları</span><span style="font-size:14px;">${metaStr}</span></div><div class="card-header d-flex justify-content-between align-items-center flex-wrap"><h3 class="card-title mb-0">📋 ${eT} — ${dt} ${lvlStr}Sınav Analizi</h3><span class="badge badge-info ml-auto" style="font-size:0.9em;"><i class="fas fa-info-circle mr-1"></i>${metaStr}</span></div><div class="card-body"><div class="table-responsive"><table class="table table-sm table-hover table-bordered" id="tED"><thead><tr><th>#</th><th>Ad Soyad</th><th>Sınıf</th>${headCols}<th>Top.Net</th><th>Puan</th><th>Snf(S/K)</th><th>Kur(S/K)</th><th>Gen(S/K)</th></tr></thead><tbody>${bodyRows}${listAvgRow}</tbody></table></div></div></div>`;
       r.innerHTML=h;
       if(aNo) setTimeout(()=>{ let hlRow=getEl('tED')?.querySelector('tr.highlight-row'); if(hlRow)hlRow.scrollIntoView({behavior:'smooth',block:'center'}); },300);
     }
