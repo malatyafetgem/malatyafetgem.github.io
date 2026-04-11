@@ -39,21 +39,25 @@ body.dark-mode .absent-row td { background:rgba(220,53,69,0.2) !important; color
 tr.highlight-row td { background-color:rgba(255,193,7,0.35) !important; font-weight:bold !important; color:#212529 !important; }
 body.dark-mode tr.highlight-row td { background-color:rgba(255,193,7,0.45) !important; color:#fff !important; }
 
-/* ===== ORTALAMA SATIRI TASARIMI ===== */
+/* ===== ORTALAMA SATIRI TASARIMI (TEMA İLE UYUMLU) ===== */
 tr.avg-row td {
-  background: linear-gradient(90deg, #1e3a5f 0%, #2d6a9f 100%) !important;
-  color: #ffffff !important;
+  background-color: #e6f0fa !important; /* Temanın çok açık mavi tonu */
+  color: #1e3a5f !important; /* Ana tema lacivert rengi */
   font-weight: bold !important;
-  border-top: 3px solid #22c55e !important; /* Yeşil vurgu çizgisi */
+  border-top: 2px solid #1e3a5f !important; /* Üstte net bir lacivert çizgi */
   font-size: 0.95em;
   text-align: center;
 }
 tr.avg-row td:first-child { text-transform: uppercase; letter-spacing: 0.5px; }
-body.dark-mode tr.avg-row td { background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%) !important; border-top-color: #10b981 !important; }
+body.dark-mode tr.avg-row td { 
+  background-color: #2a3b4c !important; 
+  color: #e2e8f0 !important; 
+  border-top-color: #4b5563 !important; 
+}
 #pdf-print-area tr.avg-row td { 
-  background-color: #1e3a5f !important; 
-  color: #fff !important; 
-  font-weight: bold !important; 
+  background-color: #e6f0fa !important; 
+  color: #1e3a5f !important; 
+  border-top: 2px solid #1e3a5f !important;
   -webkit-print-color-adjust: exact; print-color-adjust: exact; 
 }
 
@@ -733,7 +737,7 @@ function rH(){
       else h+=`<tr><td>${e.date}</td>${sb.map(x=>`<td>${e.subs[x]!==undefined?e.subs[x].net.toFixed(2):'—'}</td>`).join('')}<td><strong>${e.totalNet.toFixed(2)}</strong></td><td>${e.score.toFixed(2)}</td><td>${e.iR}/${e.iP}</td><td>${e.gR}/${e.gP}</td></tr>`;
     });
     
-    /* YENİ: KARNE İÇİN ORTALAMA SATIRI */
+    /* KARNE İÇİN ORTALAMA SATIRI (Simge yok, tema uyumlu) */
     let attended = el.filter(e => !e.abs);
     if(attended.length > 0){
       let avgSubs = sb.map(x => { 
@@ -742,7 +746,7 @@ function rH(){
       });
       let avgNet = (attended.reduce((a,e)=>a+e.totalNet,0)/attended.length).toFixed(2);
       let avgScore = (attended.reduce((a,e)=>a+e.score,0)/attended.length).toFixed(2);
-      h += `<tr class="avg-row"><td>⌀ ORTALAMA</td>${avgSubs.map(v=>`<td>${v}</td>`).join('')}<td>${avgNet}</td><td>${avgScore}</td><td colspan="2">—</td></tr>`;
+      h += `<tr class="avg-row"><td>ORTALAMA</td>${avgSubs.map(v=>`<td>${v}</td>`).join('')}<td>${avgNet}</td><td>${avgScore}</td><td colspan="2">—</td></tr>`;
     }
 
     let canvasId='cKarne_'+t.replace(/[^a-zA-Z0-9]/g,'_');
@@ -918,12 +922,12 @@ function rAnl(){
       }
     });
 
-    /* YENİ: ÖĞRENCİ ANALİZİ İÇİN ORTALAMA SATIRI */
+    /* ÖĞRENCİ ANALİZİ İÇİN ORTALAMA SATIRI */
     let avgRowHtml = '';
     if(dD.length > 0){
       let avgVal = dD.reduce((a,b)=>a+b,0) / dD.length;
       let displayVal = isRank ? Math.round(avgVal) : avgVal.toFixed(2);
-      avgRowHtml = `<tr class="avg-row"><td style="text-align:right;">⌀ ORTALAMA</td><td>${displayVal}</td><td>—</td></tr>`;
+      avgRowHtml = `<tr class="avg-row"><td style="text-align:right;">ORTALAMA</td><td>${displayVal}</td><td>—</td></tr>`;
     }
     
     let h=`<div class="d-flex justify-content-end mb-2"><button class="btn btn-success btn-sm mr-2" onclick="xXL('tS','Ogrenci_Analizi')"><i class='fas fa-file-excel mr-1'></i>Excel</button><button class="btn btn-primary btn-sm" onclick="xPD('pS','Ogrenci_Analizi',this)"><i class='fas fa-file-pdf mr-1'></i>PDF</button></div><div id="pS" class="card card-outline card-info"><div class="pdf-header-bar"><span style="font-size:18px;"><strong>${st.name}</strong> — Analiz (${eT} / ${ls})</span><span style="font-size:14px;">Sınıf: ${st.class}</span></div><div class="card-header"><h3 class="card-title">📈 ${st.name} — Analiz (${ls})</h3></div><div class="card-body"><div class="table-responsive"><table class="table table-sm table-hover table-bordered" id="tS"><thead><tr><th>Tarih</th><th>${valHeader}</th><th>Değişim</th></tr></thead><tbody>${rows}${avgRowHtml}</tbody></table></div></div><div class="chart-box"><canvas id="cA"></canvas></div></div>`;
@@ -958,12 +962,12 @@ function rAnl(){
       }); 
     });
 
-    /* YENİ: SINIF ANALİZİ İÇİN ORTALAMA SATIRI */
+    /* SINIF ANALİZİ İÇİN ORTALAMA SATIRI */
     let allVals = ex.map(x=>{ if(sb==='score')return x.score; if(sb==='totalNet'||!sb)return x.totalNet; return x.subs[sb.replace('s_','')]?.net||0; });
     let clsAvgRow = '';
     if (allVals.length > 0) {
       let genAvg = (allVals.reduce((a,b)=>a+b,0)/allVals.length).toFixed(2);
-      clsAvgRow = `<tr class="avg-row"><td colspan="2" style="text-align:right;">⌀ GENEL ORTALAMA</td><td>${genAvg}</td></tr>`;
+      clsAvgRow = `<tr class="avg-row"><td colspan="2" style="text-align:right;">GENEL ORTALAMA</td><td>${genAvg}</td></tr>`;
     }
     
     let clsLabel=''; {let lv=getEl('aLvl').value,br=getEl('aBr').value; if(lv&&br)clsLabel=lv+br; else if(lv)clsLabel=lv+'. Sınıflar'; else if(br)clsLabel=br; else clsLabel='Hepsi';}
@@ -1010,7 +1014,6 @@ function rAnl(){
     let getName = (no) => DB.s.find(s=>s.no===no)?.name || 'Bilinmiyor';
 
     if(subSel === 'general_summary') {
-        // === GENEL SINAV ÖZETİ EKRANI === (Bu ekran ağırlıklı kart olduğu için tabloya ortalama satırı gerekmez)
         let ex = baseExams.filter(x => !x.abs);
         if(ex.length === 0) { r.innerHTML = '<div class="alert alert-default-warning">Bu filtrelere uygun sınav sonucu bulunamadı.</div>'; return; }
         
@@ -1182,7 +1185,6 @@ function rAnl(){
         r.innerHTML = h;
 
     } else if (subSel === 'summary') {
-      // === TEK SINAV ÖZETİ EKRANI === (Bu ekran da sıralama gösterdiğinden ortalama satırı eklenmedi)
       let batch = baseExams.filter(x => x.date === dt);
       let currentExams = batch.filter(x => !x.abs);
       if (!currentExams.length) {
@@ -1354,7 +1356,7 @@ function rAnl(){
         return `<tr class="${rCls}"><td>${idx+1}</td><td>${e.studentName}</td><td>${e.studentCls}</td>${subKeys.map(k=>`<td>${e.subs[k]!==undefined?e.subs[k].net.toFixed(2):'—'}</td>`).join('')}<td><strong>${e.totalNet.toFixed(2)}</strong></td><td>${e.score.toFixed(2)}</td><td>${e.cR}/${e.cP}</td><td>${e.iR}/${e.iP}</td><td>${e.gR}/${e.gP}</td></tr>`;
       }).join('');
 
-      /* YENİ: TOPLU LİSTE İÇİN ORTALAMA SATIRI */
+      /* TOPLU LİSTE İÇİN ORTALAMA SATIRI (Temaya uygun) */
       let listAvgRow = '';
       if (attended.length > 0) {
         let avgSubCols = subKeys.map(k => {
@@ -1362,7 +1364,7 @@ function rAnl(){
             return `<td>${v.length ? (v.reduce((a,b)=>a+b,0)/v.length).toFixed(2) : '—'}</td>`;
         }).join('');
         let listAvgScore = (attended.reduce((s,x)=>s+x.score,0)/attended.length).toFixed(2);
-        listAvgRow = `<tr class="avg-row"><td colspan="3" style="text-align:right;">⌀ ORTALAMA (${attended.length} Kişi)</td>${avgSubCols}<td>${avgNet}</td><td>${listAvgScore}</td><td colspan="3">—</td></tr>`;
+        listAvgRow = `<tr class="avg-row"><td colspan="3" style="text-align:right;">ORTALAMA (${attended.length} Kişi)</td>${avgSubCols}<td>${avgNet}</td><td>${listAvgScore}</td><td colspan="3">—</td></tr>`;
       }
 
       let lvlStr = targetLvl ? `${targetLvl}. Sınıflar ` : '';
