@@ -64,22 +64,29 @@ body.dark-mode .anlStu-item:hover { background:#495057; }
 #anlStuBadge { margin-top:4px; min-height:22px; }
 
 /* ===== İZOLE PDF ALANI ===== */
-#pdf-print-area { display:none; background-color:#fff; color:#000; width:1120px; padding:28px 32px; box-sizing:border-box; font-family:Arial, sans-serif; }
+#pdf-print-area { display:none; background-color:#fff; color:#000; width:1120px; padding:20px 24px; box-sizing:border-box; font-family:Arial, sans-serif; }
 #pdf-print-area thead { display:table-header-group; }
-#pdf-print-area tr { page-break-inside:avoid; }
-#pdf-print-area table { width:100% !important; border-collapse:collapse !important; font-size:9px !important; margin-bottom:16px !important; table-layout:auto !important; page-break-inside:auto !important; }
-#pdf-print-area th, #pdf-print-area td { border:1px solid #888 !important; padding:4px 5px !important; text-align:center !important; color:#000 !important; white-space:nowrap !important; }
+#pdf-print-area tr { page-break-inside:avoid !important; page-break-after:auto; }
+#pdf-print-area table { width:100% !important; border-collapse:collapse !important; font-size:9px !important; margin-bottom:12px !important; table-layout:auto !important; page-break-inside:auto !important; }
+#pdf-print-area th, #pdf-print-area td { border:1px solid #888 !important; padding:3px 4px !important; text-align:center !important; color:#000 !important; white-space:nowrap !important; }
 #pdf-print-area td:nth-child(2) { text-align:left !important; white-space:nowrap !important; }
 #pdf-print-area td:nth-child(3) { text-align:left !important; white-space:normal !important; font-weight:bold !important; min-width:80px; }
-#pdf-print-area thead th { background-color:#1e3a5f !important; color:#fff !important; font-size:8.5px !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+#pdf-print-area thead th { background-color:#1e3a5f !important; color:#fff !important; font-size:8px !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
 #pdf-print-area tr.highlight-row td { background-color:#fff3cd !important; font-weight:bold !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
 #pdf-print-area tr.absent-row td { background-color:#f8d7da !important; color:#721c24 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-#pdf-print-area .pdf-header-bar { display:flex !important; background:#1e3a5f !important; color:#fff !important; padding:14px 20px !important; border-radius:5px !important; margin-bottom:16px !important; justify-content:space-between !important; align-items:center !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-#pdf-print-area .pdf-section-title { color:#1e3a5f; border-bottom:2px solid #1e3a5f; padding-bottom:3px; margin:12px 0 5px 0; font-size:12px; font-weight:bold; }
-#pdf-print-area .karne-bolum { page-break-after: always !important; page-break-inside: avoid !important; padding-bottom: 10px; }
+#pdf-print-area .pdf-header-bar { display:flex !important; background:#1e3a5f !important; color:#fff !important; padding:10px 16px !important; border-radius:5px !important; margin-bottom:12px !important; justify-content:space-between !important; align-items:center !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; font-size:14px !important; }
+#pdf-print-area .pdf-section-title { color:#1e3a5f; border-bottom:2px solid #1e3a5f; padding-bottom:3px; margin:10px 0 5px 0; font-size:11px; font-weight:bold; }
+#pdf-print-area .karne-bolum { page-break-after: always !important; page-break-inside: avoid !important; padding-bottom: 8px; }
 #pdf-print-area .karne-bolum:last-child { page-break-after: auto !important; }
-#pdf-print-area .karne-bolum .chart-box { height: 180px !important; max-height: 180px !important; margin-top: 15px !important; margin-bottom: 10px !important; }
-#pdf-print-area .karne-bolum .chart-box img { max-height: 160px !important; width: 100% !important; object-fit: contain !important; }
+#pdf-print-area .karne-bolum .chart-box { height: 160px !important; max-height: 160px !important; margin-top: 10px !important; margin-bottom: 8px !important; }
+#pdf-print-area .karne-bolum .chart-box img { max-height: 150px !important; width: 100% !important; object-fit: contain !important; }
+#pdf-print-area .card { page-break-inside: avoid !important; margin-bottom: 10px !important; }
+#pdf-print-area .info-box { page-break-inside: avoid !important; min-height: 45px !important; margin-bottom: 6px !important; }
+#pdf-print-area .chart-box { page-break-inside: avoid !important; height: auto !important; max-height: 200px !important; margin-bottom: 10px !important; }
+#pdf-print-area .chart-box img { max-height: 180px !important; }
+#pdf-print-area .row { page-break-inside: avoid !important; }
+#pdf-print-area .trend-card { page-break-inside: avoid !important; padding: 12px !important; margin-bottom: 10px !important; }
+#pdf-print-area h4 { font-size: 14px !important; margin-bottom: 10px !important; }
 
 /* Hata Özeti Kutuları */
 .preview-box { background: #f8f9fa; border-left: 4px solid #17a2b8; padding: 10px 15px; margin-bottom: 15px; border-radius: 4px; }
@@ -88,6 +95,75 @@ body.dark-mode .anlStu-item:hover { background:#495057; }
 body.dark-mode .preview-box { background: #343a40; color: #fff; }
 body.dark-mode .preview-box.warning { background: #664d03; color: #fff; }
 body.dark-mode .preview-box.danger { background: #5c1e22; color: #fff; }
+
+/* ===== TOAST BİLDİRİMLERİ ===== */
+#toastContainer { position: fixed; top: 70px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 10px; max-width: 350px; }
+.toast-item { display: flex; align-items: center; padding: 12px 16px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); animation: slideInRight 0.3s ease-out; font-size: 0.9em; color: #fff; }
+.toast-item.success { background: linear-gradient(135deg, #28a745, #20c997); }
+.toast-item.error { background: linear-gradient(135deg, #dc3545, #e74c3c); }
+.toast-item.warning { background: linear-gradient(135deg, #ffc107, #fd7e14); color: #212529; }
+.toast-item.info { background: linear-gradient(135deg, #17a2b8, #2d6a9f); }
+.toast-item i { margin-right: 10px; font-size: 1.2em; }
+.toast-item .toast-close { margin-left: auto; cursor: pointer; opacity: 0.7; padding: 0 5px; }
+.toast-item .toast-close:hover { opacity: 1; }
+@keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes slideOutRight { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+
+/* ===== MOBİL RESPONSIVE TABLO ===== */
+@media (max-width: 768px) {
+  .table-responsive { font-size: 0.8em; }
+  .table th, .table td { padding: 0.4rem 0.3rem !important; white-space: nowrap; }
+  .table th { font-size: 0.75em; }
+  .card-header { padding: 0.5rem 0.75rem; }
+  .card-header .card-title { font-size: 0.95em; }
+  .info-box { min-height: 70px; }
+  .info-box-icon { width: 60px; font-size: 1.2rem; }
+  .info-box-content { padding: 8px 10px; }
+  .info-box-text { font-size: 0.8em; }
+  .info-box-number { font-size: 1em; }
+  .progress-description { font-size: 0.75em !important; }
+  .btn-group .btn { padding: 0.25rem 0.5rem; font-size: 0.75em; }
+  .chart-box { height: 250px !important; }
+  #toastContainer { left: 10px; right: 10px; max-width: none; top: auto; bottom: 70px; }
+  .content-header { padding: 0.5rem 0; }
+  .content-header h1 { font-size: 1.3rem; }
+  .breadcrumb { font-size: 0.8em; }
+  .scroll table { min-width: 600px; }
+}
+
+/* ===== DARK MODE İYİLEŞTİRMELERİ ===== */
+body.dark-mode { background-color: #1a1a2e !important; }
+body.dark-mode .content-wrapper { background-color: #16213e !important; }
+body.dark-mode .card { background-color: #1f2940 !important; border-color: #2d3a52 !important; }
+body.dark-mode .card-header { background-color: #253352 !important; border-color: #3d4f6f !important; }
+body.dark-mode .card-outline.card-primary { border-top-color: #4dabf7 !important; }
+body.dark-mode .card-outline.card-info { border-top-color: #3bc9db !important; }
+body.dark-mode .card-outline.card-success { border-top-color: #51cf66 !important; }
+body.dark-mode .card-outline.card-warning { border-top-color: #fcc419 !important; }
+body.dark-mode .table { color: #e9ecef; }
+body.dark-mode .table-striped tbody tr:nth-of-type(odd) { background-color: rgba(255,255,255,0.03); }
+body.dark-mode .table-hover tbody tr:hover { background-color: rgba(77, 171, 247, 0.1); }
+body.dark-mode .table thead th { background-color: #253352 !important; color: #e9ecef !important; border-color: #3d4f6f !important; }
+body.dark-mode .table td, body.dark-mode .table th { border-color: #3d4f6f !important; }
+body.dark-mode .info-box { background-color: #1f2940; }
+body.dark-mode .form-control { background-color: #253352; border-color: #3d4f6f; color: #e9ecef; }
+body.dark-mode .form-control:focus { background-color: #2d3a52; border-color: #4dabf7; color: #fff; }
+body.dark-mode select.form-control option { background-color: #253352; color: #e9ecef; }
+body.dark-mode .alert-default-info { background-color: rgba(59, 201, 219, 0.15); color: #3bc9db; border-color: #3bc9db; }
+body.dark-mode .alert-default-warning { background-color: rgba(252, 196, 25, 0.15); color: #fcc419; border-color: #fcc419; }
+body.dark-mode .callout-info { background-color: rgba(59, 201, 219, 0.1) !important; border-left-color: #3bc9db !important; }
+body.dark-mode .text-primary { color: #4dabf7 !important; }
+body.dark-mode .text-muted { color: #adb5bd !important; }
+body.dark-mode .badge-success { background-color: #51cf66; }
+body.dark-mode .badge-info { background-color: #3bc9db; }
+
+/* ===== TREND ANALİZİ ===== */
+.trend-card { background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 12px; padding: 20px; margin-bottom: 15px; }
+body.dark-mode .trend-card { background: linear-gradient(135deg, #1f2940 0%, #253352 100%); }
+.trend-indicator { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 20px; font-size: 0.85em; font-weight: bold; }
+.trend-up { background-color: rgba(40, 167, 69, 0.15); color: #28a745; }
+.trend-down { background-color: rgba(220, 53, 69, 0.15); color: #dc3545; }
+.trend-stable { background-color: rgba(108, 117, 125, 0.15); color: #6c757d; }
 </style>
 </head>
 <body class="hold-transition sidebar-mini layout-fixed">
@@ -215,6 +291,7 @@ body.dark-mode .preview-box.danger { background: #5c1e22; color: #fff; }
                     <select id="aType" class="form-control" onchange="reqUI()">
                       <option value="student">Öğrenci Analizi</option>
                       <option value="class">Sınıf Analizi</option>
+                      <option value="subject">Ders Analizi</option>
                       <option value="examdetail">Sınav Analizi</option>
                     </select>
                   </div>
@@ -330,6 +407,7 @@ body.dark-mode .preview-box.danger { background: #5c1e22; color: #fff; }
 </div>
 
 <div id="pdf-print-area"></div>
+<div id="toastContainer"></div>
 
 <!-- YÜKLEME ÖN İZLEME MODALI (ADIM 2) -->
 <div class="modal fade" id="mUploadPreview" tabindex="-1" data-backdrop="static">
@@ -475,6 +553,17 @@ let dInf={},searchDebounceTimer=null,anlDebounceTimer=null,chartTimer=null;
 let PENDING_UPLOAD = null; // Yükleme Ön İzlemesi İçin Global Değişken
 
 function ld(s,m="İşlem yapılıyor..."){getEl('l-txt').textContent=m;getEl('loader').style.display=s?'flex':'none';}
+
+/* ===== TOAST BİLDİRİM SİSTEMİ ===== */
+function showToast(message, type = 'info', duration = 4000) {
+  const container = getEl('toastContainer');
+  const icons = { success: 'fa-check-circle', error: 'fa-times-circle', warning: 'fa-exclamation-triangle', info: 'fa-info-circle' };
+  const toast = document.createElement('div');
+  toast.className = `toast-item ${type}`;
+  toast.innerHTML = `<i class="fas ${icons[type] || icons.info}"></i><span>${message}</span><span class="toast-close" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></span>`;
+  container.appendChild(toast);
+  setTimeout(() => { toast.style.animation = 'slideOutRight 0.3s ease-out forwards'; setTimeout(() => toast.remove(), 300); }, duration);
+}
 
 /* ALTYAPI GÖÇÜ VE SİSTEM BAŞLATMA */
 async function init(){
@@ -665,20 +754,68 @@ function xPD(id,fn,btn){
   let allHeaders=printArea.querySelectorAll('.pdf-header-bar');
   if(allHeaders.length>1){ for(let i=1;i<allHeaders.length;i++) allHeaders[i].remove(); }
 
+  // Grafik sayisina gore boyut ayarla
   let printCanvases=printArea.querySelectorAll('canvas');
+  let chartCount = printCanvases.length;
+  let maxChartHeight = chartCount <= 1 ? '200px' : (chartCount <= 2 ? '180px' : '150px');
+  
   printCanvases.forEach((cv,i)=>{
     let data=canvasDataUrls[i]; if(!data) return;
-    let img=document.createElement('img'); img.src=data.url; img.style.cssText='max-width:100%;width:100%;max-height:300px;height:auto;object-fit:contain;display:block;margin:0 auto;';
-    let parent=cv.parentElement; parent.style.height='auto'; parent.replaceChild(img,cv);
+    let img=document.createElement('img'); 
+    img.src=data.url; 
+    img.style.cssText=`max-width:100%;width:100%;max-height:${maxChartHeight};height:auto;object-fit:contain;display:block;margin:0 auto;`;
+    let parent=cv.parentElement; 
+    parent.style.height='auto'; 
+    parent.style.maxHeight=maxChartHeight;
+    parent.style.pageBreakInside='avoid';
+    parent.replaceChild(img,cv);
+  });
+
+  // Sayfa kesintisi kontrolu - tablolar ve kartlar icin
+  printArea.querySelectorAll('table').forEach(tbl => {
+    tbl.style.pageBreakInside = 'auto';
+  });
+  printArea.querySelectorAll('tr').forEach(tr => {
+    tr.style.pageBreakInside = 'avoid';
+    tr.style.pageBreakAfter = 'auto';
+  });
+  printArea.querySelectorAll('thead').forEach(thead => {
+    thead.style.display = 'table-header-group';
+  });
+  printArea.querySelectorAll('.card, .info-box, .trend-card').forEach(el => {
+    el.style.pageBreakInside = 'avoid';
+  });
+  printArea.querySelectorAll('.row').forEach(row => {
+    row.style.pageBreakInside = 'avoid';
+  });
+  
+  // Info-box'lari PDF icin kucult
+  printArea.querySelectorAll('.info-box').forEach(box => {
+    box.style.minHeight = '50px';
+    box.style.marginBottom = '8px';
+  });
+  printArea.querySelectorAll('.info-box-icon').forEach(icon => {
+    icon.style.width = '50px';
+    icon.style.fontSize = '1.2rem';
+  });
+  printArea.querySelectorAll('.info-box-number').forEach(num => {
+    num.style.fontSize = '1em';
   });
 
   printArea.querySelectorAll('.btn,.d-flex.justify-content-end').forEach(b=>b.style.display='none');
   getEl('mainApp').style.display='none'; printArea.style.display='block'; window.scrollTo(0,0);
   
   setTimeout(()=>{
-    html2pdf().set({margin:[10, 0, 10, 0], filename:fn+'.pdf', image:{type:'jpeg',quality:1.0}, html2canvas:{scale:2,useCORS:true,windowWidth:1120,x:0,y:0,scrollX:0,scrollY:0}, jsPDF:{unit:'mm',format:'a4',orientation:'landscape'}, pagebreak: { mode: ['css', 'legacy'] }})
-    .from(printArea).save().then(()=>{ printArea.style.display='none';printArea.innerHTML=''; getEl('mainApp').style.display='block'; btn.innerHTML=orig;ld(0); })
-    .catch(err=>{ console.error(err); printArea.style.display='none';printArea.innerHTML=''; getEl('mainApp').style.display='block'; btn.innerHTML=orig;ld(0);alert("PDF oluşturulamadı!"); });
+    html2pdf().set({
+      margin: [8, 5, 8, 5], 
+      filename: fn+'.pdf', 
+      image: {type:'jpeg', quality:0.98}, 
+      html2canvas: {scale:2, useCORS:true, windowWidth:1120, logging:false}, 
+      jsPDF: {unit:'mm', format:'a4', orientation:'landscape'}, 
+      pagebreak: { mode: ['avoid-all', 'css', 'legacy'], before: '.page-break-before', after: '.page-break-after', avoid: ['.card', '.info-box', 'tr', '.trend-card', '.chart-box'] }
+    })
+    .from(printArea).save().then(()=>{ printArea.style.display='none';printArea.innerHTML=''; getEl('mainApp').style.display='block'; btn.innerHTML=orig;ld(0); showToast('PDF basariyla indirildi.', 'success'); })
+    .catch(err=>{ console.error(err); printArea.style.display='none';printArea.innerHTML=''; getEl('mainApp').style.display='block'; btn.innerHTML=orig;ld(0);showToast('PDF oluşturulamadı!', 'error'); });
   },300);
 }
 
@@ -765,6 +902,11 @@ function uSub(){
     let prev = getEl('aSub').value;
     getEl('aSub').innerHTML = `<option value="list">Toplu Liste</option><option value="summary">Sınav Özeti (Tek Sınav)</option><option value="general_summary">Genel Sınav Özeti (Tüm Sınavlar)</option>`;
     if(['list','summary','general_summary'].includes(prev)) getEl('aSub').value = prev;
+  } else if (aT === 'subject') {
+    let prev = getEl('aSub').value;
+    let opts = [...s].sort().map(x=>`<option value="${x}">${x}</option>`).join('');
+    getEl('aSub').innerHTML = opts || '<option value="">Ders bulunamadı</option>';
+    if([...s].includes(prev)) getEl('aSub').value = prev;
   } else {
     getEl('aSub').innerHTML='<option value="">Tümü</option>'+[...s].sort().map(x=>`<option value="${x}">${x}</option>`).join('');
   }
@@ -790,16 +932,16 @@ function uExamDates(){
 function uUI(){
   let t=getEl('aType').value;
   getEl('gStu').style.display=(t==='student'||t==='examdetail')?'block':'none';
-  getEl('gLvl').style.display=(t==='class'||t==='examdetail')?'block':'none';
+  getEl('gLvl').style.display=(t==='class'||t==='examdetail'||t==='subject')?'block':'none';
   getEl('gBr').style.display=t==='class'?'block':'none';
   getEl('gSub').style.display='block';
-  getEl('lblSub').textContent = 'Veri';
+  getEl('lblSub').textContent = t==='subject' ? 'Ders' : 'Veri';
   
   if(t==='class'){
     let l=new Set(),b=new Set(); DB.s.forEach(s=>{let m=s.class.match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/);if(m){l.add(m[1]);b.add(m[2].toUpperCase());}});
     getEl('aLvl').innerHTML='<option value="">Tümü</option>'+[...l].sort((a,b)=>parseInt(a)-parseInt(b)).map(x=>`<option value="${x}">${x}. Sınıf</option>`).join('');
     getEl('aBr').innerHTML='<option value="">Tümü</option>'+[...b].sort().map(x=>`<option value="${x}">${x}</option>`).join('');
-  } else if (t==='examdetail') {
+  } else if (t==='examdetail' || t==='subject') {
     let l=new Set(); DB.s.forEach(s=>{let m=s.class.match(/^(\d+)/);if(m){l.add(m[1]);}});
     getEl('aLvl').innerHTML='<option value="">Tümü</option>'+[...l].sort((a,b)=>parseInt(a)-parseInt(b)).map(x=>`<option value="${x}">${x}. Sınıf</option>`).join('');
   }
@@ -906,8 +1048,53 @@ function rAnl(){
     });
 
     let avgRowHtml = '';
-    if(dD.length > 0){ let avgVal = dD.reduce((a,b)=>a+b,0) / dD.length; let displayVal = isRank ? Math.round(avgVal) : avgVal.toFixed(2); avgRowHtml = `<tr class="avg-row"><td colspan="3" style="text-align:right; padding-right:15px;">ORTALAMA</td><td>${displayVal}</td><td>—</td></tr>`; }
-    let h=`<div class="d-flex justify-content-end mb-2"><button class="btn btn-success btn-sm mr-2" onclick="xXL('tS','Ogrenci_Analizi')"><i class='fas fa-file-excel mr-1'></i>Excel</button><button class="btn btn-primary btn-sm" onclick="xPD('pS','Ogrenci_Analizi',this)"><i class='fas fa-file-pdf mr-1'></i>PDF</button></div><div id="pS" class="card card-outline card-info"><div class="pdf-header-bar"><span style="font-size:18px;"><strong>${st.name}</strong> — Analiz (${eT} / ${ls})</span><span style="font-size:14px;">Sınıf: ${st.class}</span></div><div class="card-header"><h3 class="card-title">📈 ${st.name} — Analiz (${ls})</h3></div><div class="card-body"><div class="table-responsive"><table class="table table-sm table-hover table-bordered" id="tS"><thead><tr><th>#</th><th>Tarih</th><th>Yayınevi</th><th>${valHeader}</th><th>Değişim</th></tr></thead><tbody>${rows}${avgRowHtml}</tbody></table></div></div><div class="chart-box"><canvas id="cA"></canvas></div></div>`;
+    if(dD.length > 0){ 
+      let stuAvg = dD.reduce((a,b)=>a+b,0) / dD.length;
+      let clsAvg = clsArr.filter(x=>x!==null).length > 0 ? clsArr.filter(x=>x!==null).reduce((a,b)=>a+b,0) / clsArr.filter(x=>x!==null).length : null;
+      let genAvg = instArr.filter(x=>x!==null).length > 0 ? instArr.filter(x=>x!==null).reduce((a,b)=>a+b,0) / instArr.filter(x=>x!==null).length : null;
+      
+      let displayStu = isRank ? Math.round(stuAvg) : stuAvg.toFixed(2);
+      let displayCls = clsAvg !== null ? (isRank ? Math.round(clsAvg) : clsAvg.toFixed(2)) : '—';
+      let displayGen = genAvg !== null ? (isRank ? Math.round(genAvg) : genAvg.toFixed(2)) : '—';
+      
+      avgRowHtml = `<tr class="avg-row"><td colspan="3" style="text-align:right; padding-right:15px;">GENEL ORTALAMA (${stGrade}. Sınıflar)</td><td>${displayGen}</td><td>—</td></tr>`;
+      avgRowHtml += `<tr class="avg-row"><td colspan="3" style="text-align:right; padding-right:15px;">SINIF ORTALAMA (${st.class})</td><td>${displayCls}</td><td>—</td></tr>`;
+      avgRowHtml += `<tr class="avg-row"><td colspan="3" style="text-align:right; padding-right:15px;">ÖĞRENCİ ORTALAMA</td><td>${displayStu}</td><td>—</td></tr>`;
+    }
+    // Trend hesaplama
+    let trendHtml = '';
+    if(dD.length >= 2 && !isRank) {
+      let firstVal = dD[0], lastVal = dD[dD.length - 1];
+      let totalChange = lastVal - firstVal;
+      let avgChange = totalChange / (dD.length - 1);
+      let trendClass = totalChange > 0 ? 'trend-up' : (totalChange < 0 ? 'trend-down' : 'trend-stable');
+      let trendIcon = totalChange > 0 ? 'fa-arrow-up' : (totalChange < 0 ? 'fa-arrow-down' : 'fa-minus');
+      let trendText = totalChange > 0 ? 'Yükseliş' : (totalChange < 0 ? 'Düşüş' : 'Sabit');
+      
+      trendHtml = `
+      <div class="trend-card mb-3">
+        <div class="row align-items-center">
+          <div class="col-md-3 text-center">
+            <span class="trend-indicator ${trendClass}"><i class="fas ${trendIcon} mr-1"></i>${trendText}</span>
+            <div class="mt-2 small text-muted">Genel Trend</div>
+          </div>
+          <div class="col-md-3 text-center border-left">
+            <div style="font-size:1.5em; font-weight:bold; color:${totalChange >= 0 ? '#28a745' : '#dc3545'};">${totalChange >= 0 ? '+' : ''}${totalChange.toFixed(2)}</div>
+            <div class="small text-muted">Toplam Değişim</div>
+          </div>
+          <div class="col-md-3 text-center border-left">
+            <div style="font-size:1.5em; font-weight:bold; color:${avgChange >= 0 ? '#28a745' : '#dc3545'};">${avgChange >= 0 ? '+' : ''}${avgChange.toFixed(2)}</div>
+            <div class="small text-muted">Sınav Başı Ort. Değişim</div>
+          </div>
+          <div class="col-md-3 text-center border-left">
+            <div style="font-size:1.5em; font-weight:bold;">${dD.length}</div>
+            <div class="small text-muted">Toplam Sınav</div>
+          </div>
+        </div>
+      </div>`;
+    }
+    
+    let h=`<div class="d-flex justify-content-end mb-2"><button class="btn btn-success btn-sm mr-2" onclick="xXL('tS','Ogrenci_Analizi')"><i class='fas fa-file-excel mr-1'></i>Excel</button><button class="btn btn-primary btn-sm" onclick="xPD('pS','Ogrenci_Analizi',this)"><i class='fas fa-file-pdf mr-1'></i>PDF</button></div><div id="pS" class="card card-outline card-info"><div class="pdf-header-bar"><span style="font-size:18px;"><strong>${st.name}</strong> — Analiz (${eT} / ${ls})</span><span style="font-size:14px;">Sınıf: ${st.class}</span></div><div class="card-header"><h3 class="card-title">📈 ${st.name} — Analiz (${ls})</h3></div><div class="card-body">${trendHtml}<div class="table-responsive"><table class="table table-sm table-hover table-bordered" id="tS"><thead><tr><th>#</th><th>Tarih</th><th>Yayınevi</th><th>${valHeader}</th><th>Değişim</th></tr></thead><tbody>${rows}${avgRowHtml}</tbody></table></div></div><div class="chart-box"><canvas id="cA"></canvas></div></div>`;
     r.innerHTML=h;
     
     chartTimer=setTimeout(()=>{ 
@@ -934,7 +1121,25 @@ function rAnl(){
     });
 
     let allVals = ex.map(x=>{ if(sb==='score')return x.score; if(sb==='totalNet'||!sb)return x.totalNet; return x.subs[sb.replace('s_','')]?.net||0; });
-    let clsAvgRow = ''; if (allVals.length > 0) { let genAvg = (allVals.reduce((a,b)=>a+b,0)/allVals.length).toFixed(2); clsAvgRow = `<tr class="avg-row"><td colspan="4" style="text-align:right; padding-right:15px;">GENEL ORTALAMA</td><td>${genAvg}</td></tr>`; }
+    
+    // Her sınıf için ortalama hesapla
+    let classAvgRows = '';
+    let sortedClasses = [...cs].sort();
+    sortedClasses.forEach(clsName => {
+      let clsExams = ex.filter(x => x.studentClass === clsName);
+      let clsVals = clsExams.map(x => { if(sb==='score')return x.score; if(sb==='totalNet'||!sb)return x.totalNet; return x.subs[sb.replace('s_','')]?.net||0; });
+      if(clsVals.length > 0) {
+        let clsAvg = (clsVals.reduce((a,b)=>a+b,0)/clsVals.length).toFixed(2);
+        classAvgRows += `<tr class="avg-row"><td colspan="4" style="text-align:right; padding-right:15px;">${clsName} ORTALAMA</td><td>${clsAvg}</td></tr>`;
+      }
+    });
+    
+    // Genel ortalama
+    let clsAvgRow = classAvgRows;
+    if (allVals.length > 0) { 
+      let genAvg = (allVals.reduce((a,b)=>a+b,0)/allVals.length).toFixed(2); 
+      clsAvgRow += `<tr class="avg-row"><td colspan="4" style="text-align:right; padding-right:15px;">GENEL ORTALAMA</td><td>${genAvg}</td></tr>`; 
+    }
     let clsLabel=''; {let lv=getEl('aLvl').value,br=getEl('aBr').value; if(lv&&br)clsLabel=lv+br; else if(lv)clsLabel=lv+'. Sınıflar'; else if(br)clsLabel=br; else clsLabel='Hepsi';}
     let h=`<div class="d-flex justify-content-end mb-2"><button class="btn btn-success btn-sm mr-2" onclick="xXL('tC','Sinif_Analizi')"><i class='fas fa-file-excel mr-1'></i>Excel</button><button class="btn btn-primary btn-sm" onclick="xPD('pC','Sinif_Analizi',this)"><i class='fas fa-file-pdf mr-1'></i>PDF</button></div><div id="pC" class="card card-outline card-success"><div class="pdf-header-bar"><span style="font-size:18px;">Sınıf Analizi — ${eT} (${clsLabel} / ${ls})</span><span style="font-size:14px;"></span></div><div class="card-header"><h3 class="card-title">📊 Sınıf Analizi (${ls})</h3></div><div class="card-body"><div class="table-responsive"><table class="table table-sm table-hover table-bordered" id="tC"><thead><tr><th>#</th><th>Sınıf</th><th>Tarih</th><th>Yayınevi</th><th>Ortalama</th></tr></thead><tbody>${tr.join('')}${clsAvgRow}</tbody></table></div></div><div class="chart-box"><canvas id="cA"></canvas></div></div>`;
     r.innerHTML=h;
@@ -946,6 +1151,124 @@ function rAnl(){
       })); 
       c.a=mkChart('cA',sd,ds); 
     },100);
+
+  }else if(aT==='subject'){
+    /* ===== DERS BAZLI ANALİZ ===== */
+    let subj = sb;
+    if(!subj){r.innerHTML='<div class="alert alert-default-info">Lütfen bir ders seçin.</div>';return;}
+    
+    let lvl = getEl('aLvl').value;
+    let ex = DB.e.filter(x => x.examType === eT && !x.abs && x.subs[subj]);
+    if(lvl) ex = ex.filter(x => getGrade(x.studentClass) === lvl);
+    
+    if(!ex.length){r.innerHTML='<div class="alert alert-default-warning">Bu ders için veri bulunamadı.</div>';return;}
+    
+    // Tarihlere göre grupla
+    let dateGroups = {};
+    ex.forEach(e => {
+      if(!dateGroups[e.date]) dateGroups[e.date] = [];
+      dateGroups[e.date].push(e);
+    });
+    let dates = Object.keys(dateGroups).sort(srt);
+    
+    // Sınıflara göre ortalamalar
+    let classStats = {};
+    let allStudentStats = {};
+    
+    ex.forEach(e => {
+      let cls = e.studentClass;
+      if(!classStats[cls]) classStats[cls] = { totalNet: 0, count: 0, exams: [] };
+      classStats[cls].totalNet += e.subs[subj].net;
+      classStats[cls].count++;
+      classStats[cls].exams.push(e);
+      
+      if(!allStudentStats[e.studentNo]) allStudentStats[e.studentNo] = { no: e.studentNo, name: DB.s.find(s=>s.no===e.studentNo)?.name || '—', cls: cls, totalNet: 0, count: 0, nets: [] };
+      allStudentStats[e.studentNo].totalNet += e.subs[subj].net;
+      allStudentStats[e.studentNo].count++;
+      allStudentStats[e.studentNo].nets.push(e.subs[subj].net);
+    });
+    
+    // En iyi ve en kotu ogrenciler
+    let stuArr = Object.values(allStudentStats).map(s => ({ ...s, avg: s.totalNet / s.count }));
+    stuArr.sort((a,b) => b.avg - a.avg);
+    let top5 = stuArr.slice(0, 5);
+    let bottom5 = stuArr.slice(-5).reverse();
+    
+    // Sinif ortalama tablosu
+    let clsArr = Object.entries(classStats).map(([cls, data]) => ({ cls, avg: data.totalNet / data.count, count: data.count })).sort((a,b) => b.avg - a.avg);
+    
+    // Trend hesapla (ilk ve son sinav karsilastirmasi)
+    let trendData = [];
+    if(dates.length >= 2) {
+      let firstDate = dates[0], lastDate = dates[dates.length - 1];
+      Object.values(allStudentStats).forEach(st => {
+        let firstEx = ex.find(e => e.studentNo === st.no && e.date === firstDate);
+        let lastEx = ex.find(e => e.studentNo === st.no && e.date === lastDate);
+        if(firstEx && lastEx) {
+          let diff = lastEx.subs[subj].net - firstEx.subs[subj].net;
+          trendData.push({ ...st, firstNet: firstEx.subs[subj].net, lastNet: lastEx.subs[subj].net, diff });
+        }
+      });
+      trendData.sort((a,b) => b.diff - a.diff);
+    }
+    let bestTrend = trendData.length > 0 && trendData[0].diff > 0 ? trendData[0] : null;
+    let worstTrend = trendData.length > 0 && trendData[trendData.length-1].diff < 0 ? trendData[trendData.length-1] : null;
+    
+    // Genel ortalama
+    let genAvg = ex.reduce((a,e) => a + e.subs[subj].net, 0) / ex.length;
+    
+    let lvlStr = lvl ? `${lvl}. Sınıflar` : 'Tüm Sınıflar';
+    let h = `
+    <div class="d-flex justify-content-end mb-2"><button class="btn btn-primary btn-sm" onclick="xPD('pSubj','${subj}_Analizi',this)"><i class='fas fa-file-pdf mr-1'></i>PDF</button></div>
+    <div id="pSubj" class="card card-outline card-primary" style="background:#f4f6f9; padding:15px;">
+      <div class="pdf-header-bar"><span style="font-size:18px;"><strong>${subj}</strong> — Ders Analizi</span><span>${eT} | ${lvlStr}</span></div>
+      <h4 class="mb-3 text-center" style="color:#1e3a5f; font-weight:bold;">${subj} Dersi Performans Analizi <small class="d-block text-muted mt-1" style="font-size:0.6em;">(${eT} | ${lvlStr} | ${dates.length} Sınav)</small></h4>
+      
+      <div class="row mb-3">
+        <div class="col-md-3 col-sm-6"><div class="info-box bg-primary"><span class="info-box-icon"><i class="fas fa-calculator"></i></span><div class="info-box-content"><span class="info-box-text">Genel Ortalama</span><span class="info-box-number">${genAvg.toFixed(2)} Net</span></div></div></div>
+        <div class="col-md-3 col-sm-6"><div class="info-box bg-info"><span class="info-box-icon"><i class="fas fa-users"></i></span><div class="info-box-content"><span class="info-box-text">Toplam Kayıt</span><span class="info-box-number">${ex.length} Sonuç</span></div></div></div>
+        <div class="col-md-3 col-sm-6"><div class="info-box bg-success"><span class="info-box-icon"><i class="fas fa-arrow-up"></i></span><div class="info-box-content"><span class="info-box-text">En İyi Gelişim</span><span class="info-box-number" style="font-size:0.95em;">${bestTrend ? bestTrend.name : 'Veri Yok'}</span><span class="progress-description">${bestTrend ? `+${bestTrend.diff.toFixed(2)} Net` : ''}</span></div></div></div>
+        <div class="col-md-3 col-sm-6"><div class="info-box bg-danger"><span class="info-box-icon"><i class="fas fa-arrow-down"></i></span><div class="info-box-content"><span class="info-box-text">En Çok Düşüş</span><span class="info-box-number" style="font-size:0.95em;">${worstTrend ? worstTrend.name : 'Veri Yok'}</span><span class="progress-description">${worstTrend ? `${worstTrend.diff.toFixed(2)} Net` : ''}</span></div></div></div>
+      </div>
+      
+      <div class="row">
+        <div class="col-lg-4">
+          <div class="card shadow-sm"><div class="card-header bg-success text-white"><h3 class="card-title m-0"><i class="fas fa-trophy mr-1"></i> En İyi 5 Öğrenci</h3></div>
+            <div class="card-body p-0 table-responsive"><table class="table table-sm table-striped m-0" style="font-size:0.85em;"><thead><tr><th>#</th><th>Ad Soyad</th><th>Sınıf</th><th>Ort.Net</th></tr></thead>
+            <tbody>${top5.map((s,i) => `<tr><td>${i+1}</td><td>${s.name}</td><td>${s.cls}</td><td><strong>${s.avg.toFixed(2)}</strong></td></tr>`).join('')}</tbody></table></div></div>
+        </div>
+        <div class="col-lg-4">
+          <div class="card shadow-sm"><div class="card-header bg-danger text-white"><h3 class="card-title m-0"><i class="fas fa-exclamation-circle mr-1"></i> En Düşük 5 Öğrenci</h3></div>
+            <div class="card-body p-0 table-responsive"><table class="table table-sm table-striped m-0" style="font-size:0.85em;"><thead><tr><th>#</th><th>Ad Soyad</th><th>Sınıf</th><th>Ort.Net</th></tr></thead>
+            <tbody>${bottom5.map((s,i) => `<tr><td>${stuArr.length - 4 + i}</td><td>${s.name}</td><td>${s.cls}</td><td><strong>${s.avg.toFixed(2)}</strong></td></tr>`).join('')}</tbody></table></div></div>
+        </div>
+        <div class="col-lg-4">
+          <div class="card shadow-sm"><div class="card-header bg-info text-white"><h3 class="card-title m-0"><i class="fas fa-school mr-1"></i> Sınıf Ortalamaları</h3></div>
+            <div class="card-body p-0 table-responsive" style="max-height:200px;"><table class="table table-sm table-striped m-0" style="font-size:0.85em;"><thead><tr><th>#</th><th>Sınıf</th><th>Ort.Net</th><th>Kayıt</th></tr></thead>
+            <tbody>${clsArr.map((c,i) => `<tr><td>${i+1}</td><td>${c.cls}</td><td><strong>${c.avg.toFixed(2)}</strong></td><td>${c.count}</td></tr>`).join('')}</tbody></table></div></div>
+        </div>
+      </div>
+      
+      <div class="chart-box mt-3" style="height:300px;"><canvas id="cA"></canvas></div>
+    </div>`;
+    r.innerHTML = h;
+    
+    // Grafik: Tarihe gore sinif ortalamalari
+    chartTimer=setTimeout(()=>{
+      let clsList = [...new Set(ex.map(e=>e.studentClass))].sort();
+      let datasets = clsList.map((cls, i) => ({
+        label: cls,
+        backgroundColor: cols[i % cols.length] + 'cc',
+        borderColor: cols[i % cols.length],
+        borderWidth: 1.5,
+        data: dates.map(dt => {
+          let clsExams = dateGroups[dt].filter(e => e.studentClass === cls);
+          if(clsExams.length === 0) return null;
+          return clsExams.reduce((a,e) => a + e.subs[subj].net, 0) / clsExams.length;
+        })
+      }));
+      c.a = mkChart('cA', dates, datasets);
+    }, 100);
 
   }else if(aT==='examdetail'){
     let dt=getEl('aDate').value; let subSel = sb || 'list';
@@ -1058,8 +1381,8 @@ function rAnl(){
           <h4 class="mb-3 text-center" style="color:#1e3a5f; font-weight:bold;">${eT} Sınavı (${dt}) Değerlendirmesi <small class="d-block text-muted mt-1" style="font-size:0.6em;">(${lvlStr})</small></h4>
           <div class="row">
               <div class="col-md-4 col-sm-12"><div class="info-box bg-warning" style="color:#fff !important;"><span class="info-box-icon"><i class="fas fa-trophy text-white"></i></span><div class="info-box-content"><span class="info-box-text">Sınav Birincisi</span><span class="info-box-number" style="font-size:1.1em;">${getName(winner.studentNo)} <small>(${winner.studentClass})</small></span><span class="progress-description" style="font-size:0.9em;">Net: ${winner.totalNet.toFixed(2)} | Puan: ${winner.score.toFixed(2)}</span></div></div></div>
-              <div class="col-md-4 col-sm-12"><div class="info-box bg-success"><span class="info-box-icon"><i class="fas fa-chart-line"></i></span><div class="info-box-content"><span class="info-box-text">Önceki Sınava Göre En Büyük Çıkış</span><span class="info-box-number" style="font-size:1.1em;">${bestP ? `${bestP.name} <small>(${bestP.cls})</small>` : 'Veri Yok'}</span><span class="progress-description" style="font-size:0.9em;">${bestP ? `+${bestP.diff.toFixed(2)} Net (${bestP.firstNet.toFixed(2)} ➔ ${bestP.lastNet.toFixed(2)})` : 'Önceki sınav bulunamadı'}</span></div></div></div>
-              <div class="col-md-4 col-sm-12"><div class="info-box bg-danger"><span class="info-box-icon"><i class="fas fa-level-down-alt"></i></span><div class="info-box-content"><span class="info-box-text">Önceki Sınava Göre En Büyük Düşüş</span><span class="info-box-number" style="font-size:1.1em;">${worstP ? `${worstP.name} <small>(${worstP.cls})</small>` : 'Veri Yok'}</span><span class="progress-description" style="font-size:0.9em;">${worstP ? `${worstP.diff.toFixed(2)} Net (${worstP.firstNet.toFixed(2)} ➔ ${worstP.cur.toFixed(2)})` : 'Önceki sınav bulunamadı'}</span></div></div></div>
+              <div class="col-md-4 col-sm-12"><div class="info-box bg-success"><span class="info-box-icon"><i class="fas fa-chart-line"></i></span><div class="info-box-content"><span class="info-box-text">Önceki Sınava Göre En Büyük Çıkış</span><span class="info-box-number" style="font-size:1.1em;">${bestP ? `${bestP.name} <small>(${bestP.cls})</small>` : 'Veri Yok'}</span><span class="progress-description" style="font-size:0.9em;">${bestP ? `+${bestP.diff.toFixed(2)} Net (${bestP.prev.toFixed(2)} ➔ ${bestP.cur.toFixed(2)})` : 'Önceki sınav bulunamadı'}</span></div></div></div>
+              <div class="col-md-4 col-sm-12"><div class="info-box bg-danger"><span class="info-box-icon"><i class="fas fa-level-down-alt"></i></span><div class="info-box-content"><span class="info-box-text">Önceki Sınava Göre En Büyük Düşüş</span><span class="info-box-number" style="font-size:1.1em;">${worstP ? `${worstP.name} <small>(${worstP.cls})</small>` : 'Veri Yok'}</span><span class="progress-description" style="font-size:0.9em;">${worstP ? `${worstP.diff.toFixed(2)} Net (${worstP.prev.toFixed(2)} ➔ ${worstP.cur.toFixed(2)})` : 'Önceki sınav bulunamadı'}</span></div></div></div>
           </div>
           <div class="row">
               <div class="col-md-6 col-sm-12"><div class="info-box bg-info"><span class="info-box-icon"><i class="fas fa-arrow-up"></i></span><div class="info-box-content"><span class="info-box-text">Ortalaması En Çok Artan Ders</span><span class="info-box-number" style="font-size:1.1em;">${bestSub ? bestSub.sub : 'Veri Yok'}</span><span class="progress-description" style="font-size:0.9em;">${bestSub ? `+${bestSub.diff.toFixed(2)} Net (${bestSub.prevAvg.toFixed(2)} ➔ ${bestSub.curAvg.toFixed(2)})` : 'Önceki sınav bulunamadı'}</span></div></div></div>
@@ -1150,7 +1473,7 @@ async function xDel(){
 
 async function svStu(){
   let n=String(getEl('mSNo').value).trim(),nm=getEl('mSNa').value.trim(),cc=getEl('mSCl').value.trim();
-  if(!n||!nm||!cc){alert('Doldurun!');return;}
+  if(!n||!nm||!cc){showToast('Tüm alanları doldurun!','warning');return;}
   let s=DB.s.find(x=>x.no===n);
   if(s){ s.name=nm; s.class=cc; if(aNo===n) reqProfile(); } 
   else{ DB.s.push({no:n,name:nm,class:cc}); }
@@ -1189,14 +1512,14 @@ async function expDB(){
     a.download = `TamYedek_${new Date().toLocaleDateString('tr-TR').replace(/\./g,'-')}.json`;
     a.click();
   } catch(err) {
-    alert('❌ Yedek alınamadı: ' + err.message);
+    showToast('Yedek alınamadı: ' + err.message, 'error');
   }
   ld(0);
 }
 
 async function impDB(e){
   if(auth.currentUser.uid !== ADMIN_UID){
-    alert('Bu işlem sadece admin tarafından yapılabilir.');
+    showToast('Bu işlem sadece admin tarafından yapılabilir.', 'error');
     e.target.value = ''; return;
   }
   let f = e.target.files[0];
@@ -1234,7 +1557,7 @@ async function impDB(e){
       location.reload();
 
     } catch(err) {
-      alert('❌ Geri yükleme başarısız: ' + err.message);
+      showToast('Geri yükleme başarısız: ' + err.message, 'error');
       ld(0);
     }
   };
@@ -1391,7 +1714,7 @@ function upl(e,t){
         ld(0); jQuery('#mUploadPreview').modal('show');
 
       } catch(err) { 
-        ld(0); getEl('fStu').value = ''; getEl('fEx').value = ''; alert('❌ Hata: ' + err.message); 
+        ld(0); getEl('fStu').value = ''; getEl('fEx').value = ''; showToast('Hata: ' + err.message, 'error'); 
       }
     }; 
     rd.readAsArrayBuffer(f);
@@ -1408,7 +1731,7 @@ async function confirmUpload() {
       DB.s = DB.s.concat(PENDING_UPLOAD.data);
       await database.ref('db_v2/students').set(DB.s);
       rTabS(); uStat();
-      alert(`✅ ${PENDING_UPLOAD.data.length} yeni öğrenci sisteme başarıyla eklendi.`);
+      showToast(`${PENDING_UPLOAD.data.length} yeni öğrenci sisteme başarıyla eklendi.`, 'success');
     } 
     else if (PENDING_UPLOAD.type === 'e') {
       if(PENDING_UPLOAD.existsId) {
@@ -1423,10 +1746,10 @@ async function confirmUpload() {
         count: PENDING_UPLOAD.newResults.length, subjects: PENDING_UPLOAD.subjects, grades: PENDING_UPLOAD.grades 
       });
 
-      alert(`✅ Sınav sonuçları sisteme başarıyla kaydedildi.`);
+      showToast('Sınav sonuçları sisteme başarıyla kaydedildi.', 'success');
     }
   } catch(err) {
-    alert('❌ Kayıt sırasında hata oluştu: ' + err.message);
+    showToast('Kayıt sırasında hata oluştu: ' + err.message, 'error');
   }
   
   cancelUpload();
