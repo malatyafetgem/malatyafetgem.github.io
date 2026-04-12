@@ -1144,6 +1144,18 @@ async function svStu(){
 }
 
 /* ===== EXCEL YÜKLEME VE ÖN İZLEME (ADIM 2 - GÜNCELLENMİŞ VERSİYON) ===== */
+function dTpl(t){
+  let b=XLSX.utils.book_new();
+  let d=t==='s'
+    ?[['Öğrenci No','Ad Soyad','Sınıfı'],['1001','Ahmet Yılmaz','11A']]
+    :[['Öğrenci No','Sınav Türü','Deneme Tarihi','Yayınevi','Türkçe Net','Matematik Net',
+       'Toplam Net','Puan','Sınıf Derece','Sınıf Katılım','Kurum Derece','Kurum Katılım',
+       'Genel Derece','Genel Katılım'],
+      ['1001','TYT','15.04.2024','Örnek Yayıncılık','30','20','50','300','1','30','1','150','1','1000']];
+  XLSX.utils.book_append_sheet(b,XLSX.utils.aoa_to_sheet(d),'Sablon');
+  XLSX.writeFile(b, t==='s' ? 'Ogr_Sablon.xlsx' : 'Sinav_Sablon.xlsx');
+}
+
 function cancelUpload() {
   PENDING_UPLOAD = null;
   getEl('fStu').value = '';
@@ -1353,4 +1365,4 @@ window.addEventListener('load', function(){
 });
 </script>
 </body>
-</html>
+  </html>
