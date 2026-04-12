@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Sınav Analizi">
 <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3135/3135810.png">
+<link rel="manifest" href="./manifest.json">
 <title>Sınav Analiz Sistemi</title>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/admin-lte/3.2.0/css/adminlte.min.css">
@@ -218,6 +219,11 @@ body.dark-mode .trend-card { background: linear-gradient(135deg, #1f2940 0%, #25
     </ul>
     <ul class="navbar-nav ml-auto">
       <li class="nav-item"><a href="#" class="nav-link" onclick="toggleTheme()"><i class="fas fa-moon" id="themeIcon"></i></a></li>
+      <li class="nav-item" id="installBtnWrapper" style="display:none;">
+        <a href="#" class="nav-link text-success" id="installBtn" onclick="triggerInstall(event)" title="Uygulamayı Yükle">
+          <i class="fas fa-download mr-1"></i><span class="d-none d-sm-inline">Yükle</span>
+        </a>
+      </li>
       <li class="nav-item"><span id="connBadge" class="nav-link"><span id="connDot">⏳</span> <span id="connTxt">Bağlanıyor...</span></span></li>
       <li class="nav-item"><a href="#" class="nav-link" onclick="logout()"><i class="fas fa-sign-out-alt mr-1"></i>Çıkış</a></li>
     </ul>
@@ -2006,7 +2012,42 @@ window.addEventListener('load', function(){
       document.body.classList.remove('sidebar-open'); document.body.classList.add('sidebar-collapse');
     }
   });
+
+  /* ===== SERVICE WORKER KAYIT ===== */
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('SW kayıtlı:', reg.scope))
+      .catch(err => console.error('SW hatası:', err));
+  }
 });
+
+/* ===== PWA INSTALL PROMPT ===== */
+let deferredInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  document.getElementById('installBtnWrapper').style.display = 'block';
+});
+
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  document.getElementById('installBtnWrapper').style.display = 'none';
+  showToast('Uygulama başarıyla yüklendi!', 'success');
+});
+
+function triggerInstall(e) {
+  e.preventDefault();
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  deferredInstallPrompt.userChoice.then(choice => {
+    if (choice.outcome === 'accepted') {
+      showToast('Uygulama yükleniyor...', 'info');
+    }
+    deferredInstallPrompt = null;
+    document.getElementById('installBtnWrapper').style.display = 'none';
+  });
+}
 </script>
 </body>
 </html>
