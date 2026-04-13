@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
 <meta name="theme-color" content="#1e3a5f">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -16,9 +16,6 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
@@ -44,7 +41,6 @@ body.dark-mode tr.highlight-row td { background-color:rgba(255,193,7,0.45) !impo
 tr.avg-row td { background-color: #e6f0fa !important; color: #1e3a5f !important; font-weight: bold !important; border-top: 2px solid #1e3a5f !important; font-size: 0.95em; vertical-align: middle !important; }
 tr.avg-row td:first-child { text-transform: uppercase; letter-spacing: 0.5px; }
 body.dark-mode tr.avg-row td { background-color: #2a3b4c !important; color: #e2e8f0 !important; border-top-color: #4b5563 !important; }
-#pdf-print-area tr.avg-row td { background-color: #e6f0fa !important; color: #1e3a5f !important; border-top: 2px solid #1e3a5f !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 
 /* Yetki */
 .admin-only { display:none !important; }
@@ -53,12 +49,9 @@ body.is-admin li.admin-only { display:block !important; }
 body.is-admin button.admin-only { display:inline-block !important; }
 body.is-admin button.btn-block.admin-only { display:block !important; }
 
-.pdf-header-bar { display:none; }
-
-/* ===== YAZDIR BUTONU ===== */
+/* ===== YAZDIR BUTONU & BASKI AYARLARI ===== */
 .btn-print {
-  background: linear-gradient(135deg, #1e3a5f, #2d6a9f);
-  color: #fff !important; border: none; border-radius: 4px; padding: 4px 12px;
+  background: linear-gradient(135deg, #1e3a5f, #2d6a9f); color: #fff !important; border: none; border-radius: 4px; padding: 4px 12px;
   font-size: 0.875rem; font-weight: normal; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
   transition: all 0.2s; box-shadow: 0 1px 3px rgba(30,58,95,0.25); height: calc(1.5em + .5rem + 2px);
 }
@@ -66,16 +59,15 @@ body.is-admin button.btn-block.admin-only { display:block !important; }
 .btn-print:active { transform: translateY(0); }
 .btn-print i { font-size: 0.95em; }
 
-/* YAZDIRMA CSS AYARLARI */
 @media print { 
   body * { visibility: hidden !important; } 
   .no-print { display: none !important; }
   table { page-break-inside: auto !important; }
   tr { page-break-inside: avoid !important; page-break-after: auto !important; }
   thead { display: table-header-group !important; }
-  tfoot { display: table-footer-group !important; }
 }
 .no-print { display: none !important; }
+.pdf-header-bar { display:none; }
 
 /* ===== ANALIZ SAYFASI OGRENCİ ARAMA ===== */
 #anlStuSearchWrapper { position:relative; }
@@ -87,31 +79,6 @@ body.dark-mode .anlStu-item { border-color:#495057; color:#fff; }
 body.dark-mode .anlStu-item:hover { background:#495057; }
 .anlStu-item:last-child { border-bottom:none; }
 #anlStuBadge { margin-top:4px; min-height:22px; }
-
-/* ===== İZOLE PDF ALANI ===== */
-#pdf-print-area { display:none; background-color:#fff; color:#000; width:1120px; padding:20px 24px; box-sizing:border-box; font-family:Arial, sans-serif; }
-#pdf-print-area thead { display:table-header-group; }
-#pdf-print-area tr { page-break-inside:avoid !important; page-break-after:auto; }
-#pdf-print-area table { width:100% !important; border-collapse:collapse !important; font-size:9px !important; margin-bottom:12px !important; table-layout:auto !important; page-break-inside:auto !important; }
-#pdf-print-area th, #pdf-print-area td { border:1px solid #888 !important; padding:3px 4px !important; text-align:center !important; color:#000 !important; white-space:nowrap !important; }
-#pdf-print-area td:nth-child(2) { text-align:left !important; white-space:nowrap !important; }
-#pdf-print-area td:nth-child(3) { text-align:left !important; white-space:normal !important; font-weight:bold !important; min-width:80px; }
-#pdf-print-area thead th { background-color:#1e3a5f !important; color:#fff !important; font-size:8px !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-#pdf-print-area tr.highlight-row td { background-color:#fff3cd !important; font-weight:bold !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-#pdf-print-area tr.absent-row td { background-color:#f8d7da !important; color:#721c24 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-#pdf-print-area .pdf-header-bar { display:flex !important; background:#1e3a5f !important; color:#fff !important; padding:10px 16px !important; border-radius:5px !important; margin-bottom:12px !important; justify-content:space-between !important; align-items:center !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; font-size:14px !important; }
-#pdf-print-area .pdf-section-title { color:#1e3a5f; border-bottom:2px solid #1e3a5f; padding-bottom:3px; margin:10px 0 5px 0; font-size:11px; font-weight:bold; }
-#pdf-print-area .karne-bolum { page-break-after: always !important; page-break-inside: avoid !important; padding-bottom: 8px; }
-#pdf-print-area .karne-bolum:last-child { page-break-after: auto !important; }
-#pdf-print-area .karne-bolum .chart-box { height: 160px !important; max-height: 160px !important; margin-top: 10px !important; margin-bottom: 8px !important; }
-#pdf-print-area .karne-bolum .chart-box img { max-height: 150px !important; width: 100% !important; object-fit: contain !important; }
-#pdf-print-area .card { page-break-inside: avoid !important; margin-bottom: 10px !important; }
-#pdf-print-area .info-box { page-break-inside: avoid !important; min-height: 45px !important; margin-bottom: 6px !important; }
-#pdf-print-area .chart-box { page-break-inside: avoid !important; height: auto !important; max-height: 200px !important; margin-bottom: 10px !important; }
-#pdf-print-area .chart-box img { max-height: 180px !important; }
-#pdf-print-area .row { page-break-inside: avoid !important; }
-#pdf-print-area .trend-card { page-break-inside: avoid !important; padding: 12px !important; margin-bottom: 10px !important; }
-#pdf-print-area h4 { font-size: 14px !important; margin-bottom: 10px !important; }
 
 /* Hata Özeti Kutuları */
 .preview-box { background: #f8f9fa; border-left: 4px solid #17a2b8; padding: 10px 15px; margin-bottom: 15px; border-radius: 4px; }
@@ -162,7 +129,7 @@ body.dark-mode .subj-map-row { background: #1f2940; border-color: #4b5563; }
 .subj-map-row select, .subj-map-row input { flex: 1; }
 .subj-map-row .btn-remove { flex: 0 0 auto; }
 
-/* ===== MOBİL RESPONSIVE TABLO ===== */
+/* ===== MOBİL RESPONSIVE TASARIM ===== */
 @media (max-width: 768px) {
   .table-responsive { font-size: 0.8em; }
   .table th, .table td { padding: 0.4rem 0.3rem !important; white-space: nowrap; }
@@ -181,6 +148,15 @@ body.dark-mode .subj-map-row { background: #1f2940; border-color: #4b5563; }
   .scroll table th, .scroll table td { font-size: 0.75em !important; padding: 0.3rem 0.25rem !important; }
   .hide-mobile { display: none !important; }
   .subj-map-row { flex-direction: column; align-items: stretch; }
+  
+  #mUploadPreview .modal-body { max-height: 60vh; overflow-y: auto; padding: 10px; }
+  .preview-box { padding: 10px; margin-bottom: 10px; text-align: center; }
+  .preview-box strong { font-size: 0.85em; }
+  .preview-box span { font-size: 1.2em !important; display: block; margin-top: 5px; }
+  #mUploadPreview .row:first-of-type { display: flex; flex-wrap: wrap; margin: 0 -5px; }
+  #mUploadPreview .col-md-3 { width: 50%; padding: 0 5px; flex: 0 0 50%; max-width: 50%; }
+  #mUploadPreview .table-responsive { max-height: 150px; }
+  #mMappingsBody { max-height: 65vh; overflow-y: auto; }
 }
 .scroll-hint { display: none; }
 @media (max-width: 768px) { .scroll-hint { display: block; font-size: 0.75em; color: #6c757d; text-align: right; margin-bottom: 4px; } }
@@ -218,6 +194,14 @@ body.dark-mode .trend-card { background: linear-gradient(135deg, #1f2940 0%, #25
 .trend-up { background-color: rgba(40, 167, 69, 0.15); color: #28a745; }
 .trend-down { background-color: rgba(220, 53, 69, 0.15); color: #dc3545; }
 .trend-stable { background-color: rgba(108, 117, 125, 0.15); color: #6c757d; }
+
+/* ===== TOPLU RAPOR (SINIF KARNELERİ) ===== */
+.report-student-card { border: 1px solid #dee2e6; border-radius: 8px; padding: 12px; margin-bottom: 25px; page-break-inside: avoid; background: #fff; }
+body.dark-mode .report-student-card { background: #1f2940; border-color: #3d4f6f; }
+.report-student-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px dashed #ccc; padding-bottom: 5px; }
+.report-mini-chart { height: 150px; margin: 10px 0; }
+.report-table-sm { font-size: 0.75rem; }
+.report-table-sm th, .report-table-sm td { padding: 2px 4px !important; }
 </style>
 </head>
 <body class="hold-transition sidebar-mini layout-fixed">
@@ -311,6 +295,7 @@ body.dark-mode .trend-card { background: linear-gradient(135deg, #1f2940 0%, #25
         <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
           <li class="nav-item"><a href="#" class="nav-link active" onclick="sTab('anasayfa',this)"><i class="nav-icon fas fa-user-graduate"></i><p>Öğrenci</p></a></li>
           <li class="nav-item"><a href="#" class="nav-link" onclick="sTab('sonuclar',this)"><i class="nav-icon fas fa-chart-line"></i><p>Sonuçlar &amp; Analizler</p></a></li>
+          <li class="nav-item"><a href="#" class="nav-link" onclick="sTab('topluRapor',this)"><i class="nav-icon fas fa-print"></i><p>Toplu Rapor</p></a></li>
           <li id="nav-ayarlar" class="nav-item admin-only"><a href="#" class="nav-link" onclick="sTab('ayarlar',this)"><i class="nav-icon fas fa-cog"></i><p>Ayarlar</p></a></li>
         </ul>
       </nav>
@@ -421,6 +406,42 @@ body.dark-mode .trend-card { background: linear-gradient(135deg, #1f2940 0%, #25
           <div id="anlRes"></div>
         </div>
 
+        <!-- TOPLU RAPOR SAYFASI (YENİ) -->
+        <div id="topluRapor" class="pane">
+          <div class="card card-primary card-outline">
+            <div class="card-header"><h3 class="card-title"><i class="fas fa-print mr-2"></i>Sınıf Karneleri Toplu Rapor</h3></div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-3 col-sm-6">
+                  <div class="form-group"><label>Sınıf Seviyesi</label>
+                    <select id="repLvl" class="form-control" onchange="populateBranches()"><option value="">Seçiniz</option></select>
+                  </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                  <div class="form-group"><label>Şube</label>
+                    <select id="repBr" class="form-control"><option value="">Tümü</option></select>
+                  </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                  <div class="form-group"><label>Sınav Türü</label>
+                    <select id="repExType" class="form-control" onchange="populateRepDates()"></select>
+                  </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                  <div class="form-group"><label>Sınav Tarihi</label>
+                    <select id="repDate" class="form-control"></select>
+                  </div>
+                </div>
+                <div class="col-md-12">
+                  <button class="btn btn-primary" onclick="generateReport()"><i class="fas fa-file-alt mr-1"></i>Raporu Oluştur</button>
+                  <button class="btn btn-success ml-2" onclick="printReport()" style="display:none;" id="repPrintBtn"><i class="fas fa-print mr-1"></i>Yazdır</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="reportArea"></div>
+        </div>
+
         <!-- AYARLAR -->
         <div id="ayarlar" class="pane">
           <div class="card card-primary card-outline">
@@ -471,7 +492,6 @@ body.dark-mode .trend-card { background: linear-gradient(135deg, #1f2940 0%, #25
   </div>
 </div>
 
-<div id="pdf-print-area"></div>
 <div id="toastContainer"></div>
 
 <!-- ŞİFREMİ UNUTTUM MODALI -->
@@ -503,10 +523,10 @@ body.dark-mode .trend-card { background: linear-gradient(135deg, #1f2940 0%, #25
         <h5 class="modal-title"><i class="fas fa-magic mr-2"></i>Sütun Eşleştirme Sihirbazı</h5>
         <button type="button" class="close text-white" data-dismiss="modal" onclick="cancelUpload()"><span>&times;</span></button>
       </div>
-      <div class="modal-body" id="mMappingsBody" style="max-height: 65vh; overflow-y: auto;">
+      <div class="modal-body" id="mMappingsBody" style="max-height: 70vh; overflow-y: auto;">
         <!-- Dinamik İçerik Buraya Gelecek -->
       </div>
-      <div class="modal-footer d-flex justify-content-between">
+      <div class="modal-footer">
         <button class="btn btn-secondary" data-dismiss="modal" onclick="cancelUpload()">İptal</button>
         <button class="btn btn-primary" onclick="processMappings()">Onayla ve Analiz Et <i class="fas fa-arrow-right ml-1"></i></button>
       </div>
@@ -514,7 +534,7 @@ body.dark-mode .trend-card { background: linear-gradient(135deg, #1f2940 0%, #25
   </div>
 </div>
 
-<!-- YÜKLEME ÖN İZLEME MODALI (ADIM 2) -->
+<!-- YÜKLEME ÖN İZLEME MODALI (ADIM 2) MOBİL DÜZELTİLMİŞ -->
 <div class="modal fade" id="mUploadPreview" tabindex="-1" data-backdrop="static">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
@@ -524,10 +544,10 @@ body.dark-mode .trend-card { background: linear-gradient(135deg, #1f2940 0%, #25
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
-      <div class="modal-body" id="uploadPreviewBody">
+      <div class="modal-body" id="uploadPreviewBody" style="max-height: 65vh; overflow-y: auto;">
         <!-- Dinamik İçerik Buraya Gelecek -->
       </div>
-      <div class="modal-footer">
+      <div class="modal-footer" style="flex-wrap: wrap; justify-content: space-between;">
         <button class="btn btn-secondary" onclick="backToMapping()"><i class="fas fa-arrow-left mr-1"></i>Geri Dön</button>
         <button class="btn btn-success" onclick="confirmUpload()"><i class="fas fa-check mr-1"></i>Sisteme Kaydet</button>
       </div>
@@ -553,7 +573,6 @@ body.dark-mode .trend-card { background: linear-gradient(135deg, #1f2940 0%, #25
     <div class="modal-footer"><button class="btn btn-secondary" data-dismiss="modal">İptal</button><button class="btn btn-success" onclick="svStu()"><i class="fas fa-save mr-1"></i>Kaydet</button></div>
   </div></div>
 </div>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.6.2/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/admin-lte/3.2.0/js/adminlte.min.js"></script>
@@ -681,7 +700,6 @@ let aNo=null, c={h:null,a:null};
 const cols=['#2d6a9f','#e6194b','#1a7f4b','#d97706','#7c3aed','#f58231','#0ea5e9','#db2777'];
 let dInf={},searchDebounceTimer=null,anlDebounceTimer=null,chartTimer=null;
 
-// Sihirbaz Değişkenleri
 let currentExcelData = [];
 let currentUploadType = '';
 let currentHeaders = [];
@@ -696,7 +714,7 @@ function ld(s, m="İşlem yapılıyor..."){
     el.style.display = 'flex';
     clearTimeout(loaderTimer);
     loaderTimer = setTimeout(() => { 
-      if(el.style.display === 'flex') { el.style.display = 'none'; showToast('İşlem beklenenden uzun sürdü.', 'warning'); }
+      if(el.style.display === 'flex') { el.style.display = 'none'; showToast('İşlem beklenenden uzun sürdü. Lütfen sayfayı yenileyin.', 'warning'); }
     }, 6000);
   } else { el.style.display = 'none'; clearTimeout(loaderTimer); }
 }
@@ -834,12 +852,13 @@ function sTab(id,el){
   getEl(id).classList.add('active-pane');
   document.querySelectorAll('.nav-sidebar .nav-link').forEach(x=>x.classList.remove('active'));
   if(el)el.classList.add('active');
-  const titles={anasayfa:'Öğrenci',sonuclar:'Sonuçlar & Analizler',ayarlar:'Ayarlar'};
+  const titles={anasayfa:'Öğrenci',sonuclar:'Sonuçlar & Analizler',topluRapor:'Toplu Rapor',ayarlar:'Ayarlar'};
   if(getEl('pageTitle'))getEl('pageTitle').textContent=titles[id]||id;
   if(getEl('breadcrumb'))getEl('breadcrumb').textContent=titles[id]||id;
   
   if(id==='anasayfa'){uStat();if(aNo)reqProfile();}
   if(id==='sonuclar')reqUI();
+  if(id==='topluRapor'){ populateLevelsAndBranches(); populateRepExamTypes(); }
   if(id==='ayarlar'){rTabS();rTabE();}
   if(window.innerWidth<992){document.body.classList.remove('sidebar-open');document.body.classList.add('sidebar-collapse');}
 }
@@ -890,7 +909,7 @@ function xXLMul(cId,fn){
   }
   XLSX.writeFile(wb,fn+'.xlsx');
 }
-
+<script>
 /* ===== İZOLE YAZDIRMA (PRINT) FONKSİYONU ===== */
 function xPR(sourceId, title, btn) {
   let orig = btn.innerHTML; btn.innerHTML = "<i class='fas fa-spinner fa-spin mr-1'></i>"; btn.disabled = true;
@@ -980,134 +999,9 @@ function xPR(sourceId, title, btn) {
   printWin.document.write(printHtml); printWin.document.close();
   btn.innerHTML = orig; btn.disabled = false;
 }
-
-/* ===== TABLOYA ÖZEL PDF FONKSİYONU (AutoTable - Çok Sayfalı Listeler İçin) ===== */
-async function xPDTable(tableId, fn, title, subtitle, btn) {
-  const { jsPDF } = window.jspdf;
-  let orig = btn.innerHTML; btn.innerHTML = "<i class='fas fa-spinner fa-spin mr-1'></i>"; btn.disabled = true;
-
-  try {
-    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-    doc.setFontSize(16); doc.setTextColor(30, 58, 95); doc.text(title, 14, 15);
-    doc.setFontSize(10); doc.setTextColor(100, 100, 100); doc.text(subtitle, 14, 21);
-    doc.setFontSize(8); doc.text("Oluşturulma: " + new Date().toLocaleString('tr-TR'), 280, 15, { align: 'right' });
-
-    doc.autoTable({
-      html: '#' + tableId,
-      startY: 25,
-      theme: 'grid',
-      styles: { fontSize: 8, font: 'helvetica', cellPadding: 2 },
-      headStyles: { fillColor: [30, 58, 95], textColor: [255, 255, 255], fontStyle: 'bold', halign: 'center' },
-      alternateRowStyles: { fillColor: [245, 245, 245] },
-      showHead: 'everyPage', 
-      didParseCell: function(data) {
-        if (data.section === 'body' && data.column.index > 2) data.cell.styles.halign = 'center';
-        if (data.row.raw && data.row.raw.className) {
-          if(data.row.raw.className.includes('absent-row')) { data.cell.styles.textColor = [220, 53, 69]; } 
-          else if(data.row.raw.className.includes('highlight-row')) { data.cell.styles.fillColor = [255, 243, 205]; data.cell.styles.fontStyle = 'bold'; } 
-          else if(data.row.raw.className.includes('avg-row')) { data.cell.styles.fillColor = [230, 240, 250]; data.cell.styles.textColor = [30, 58, 95]; data.cell.styles.fontStyle = 'bold'; }
-        }
-      }
-    });
-
-    const pageCount = doc.internal.getNumberOfPages();
-    for(let i = 1; i <= pageCount; i++) {
-      doc.setPage(i); doc.setFontSize(8); doc.setTextColor(128); doc.text(`Sayfa ${i} / ${pageCount}`, 280, doc.internal.pageSize.getHeight() - 10, { align: 'right' });
-    }
-    doc.save(fn + '.pdf'); showToast('PDF başarıyla indirildi.', 'success');
-  } catch(err) { showToast('PDF oluşturulamadı: ' + err.message, 'error'); }
-  btn.innerHTML = orig; btn.disabled = false;
-}
-
-/* ===== EKRAN GÖRÜNTÜLÜ (GÖRSEL) PDF FONKSİYONU ===== */
-async function xPD(id,fn,btn){
-  const { jsPDF } = window.jspdf;
-  let orig=btn.innerHTML; btn.innerHTML="<i class='fas fa-spinner fa-spin mr-1'></i>"; ld(1,'PDF Hazırlanıyor...');
-  try {
-    let sourceEl = getEl(id);
-    let bolumler = sourceEl.querySelectorAll('.karne-bolum');
-    if(bolumler.length > 0) { await xPDKarne(sourceEl, bolumler, fn, btn, orig); return; }
-    
-    let printArea = getEl('pdf-print-area'); let canvasDataUrls = [];
-    sourceEl.querySelectorAll('canvas').forEach(cv => { try { canvasDataUrls.push({ id: cv.id || '', url: cv.toDataURL('image/png', 1.0) }); } catch(e) {} });
-    
-    let headerBar = sourceEl.querySelector('.pdf-header-bar');
-    let headerHtml = headerBar ? headerBar.outerHTML : `<div class="pdf-header-bar"><h2 style="margin:0;">${fn}</h2></div>`;
-    printArea.innerHTML = headerHtml + sourceEl.innerHTML;
-    
-    let allHeaders = printArea.querySelectorAll('.pdf-header-bar');
-    if(allHeaders.length > 1) { for(let i=1; i<allHeaders.length; i++) allHeaders[i].remove(); }
-    
-    let chartCount = canvasDataUrls.length; let maxH = chartCount <= 1 ? 180 : (chartCount <= 2 ? 150 : 120);
-    printArea.querySelectorAll('canvas').forEach((cv, i) => {
-      let data = canvasDataUrls[i]; if(!data) return;
-      let img = document.createElement('img'); img.src = data.url; img.style.cssText = `max-width:100%;width:100%;max-height:${maxH}px;height:auto;object-fit:contain;display:block;margin:0 auto;`;
-      let parent = cv.parentElement; parent.style.height = 'auto'; parent.style.maxHeight = maxH + 'px'; parent.replaceChild(img, cv);
-    });
-    
-    printArea.querySelectorAll('.btn, .btn-print, .no-print, .d-flex.justify-content-end').forEach(b => b.style.display = 'none');
-    getEl('mainApp').style.display = 'none'; printArea.style.display = 'block'; printArea.style.width = '1100px'; printArea.style.padding = '15px 20px'; window.scrollTo(0, 0);
-    
-    await new Promise(r => setTimeout(r, 200));
-    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-    const pageWidth = pdf.internal.pageSize.getWidth(); const pageHeight = pdf.internal.pageSize.getHeight();
-    const margin = 8; const usableWidth = pageWidth - (margin * 2); const usableHeight = pageHeight - (margin * 2);
-    
-    const canvas = await html2canvas(printArea, { scale: 2, useCORS: true, logging: false, windowWidth: 1100, backgroundColor: '#ffffff' });
-    const imgData = canvas.toDataURL('image/jpeg', 0.95);
-    const imgWidth = usableWidth; const imgHeight = (canvas.height * usableWidth) / canvas.width;
-    
-    let heightLeft = imgHeight; let position = 0; let pageNum = 1;
-    pdf.addImage(imgData, 'JPEG', margin, margin, imgWidth, imgHeight, undefined, 'FAST', 0); heightLeft -= usableHeight;
-    while(heightLeft > 0) { position = heightLeft - imgHeight; pdf.addPage(); pageNum++; pdf.addImage(imgData, 'JPEG', margin, position + margin, imgWidth, imgHeight, undefined, 'FAST', 0); heightLeft -= usableHeight; }
-    
-    const totalPages = pdf.internal.getNumberOfPages();
-    for(let i = 1; i <= totalPages; i++) { pdf.setPage(i); pdf.setFontSize(8); pdf.setTextColor(128); pdf.text(`Sayfa ${i} / ${totalPages}`, pageWidth - margin - 20, pageHeight - 4); }
-    
-    pdf.save(fn + '.pdf'); printArea.style.display = 'none'; printArea.innerHTML = ''; getEl('mainApp').style.display = 'block'; btn.innerHTML = orig; ld(0); showToast('PDF basariyla indirildi.', 'success');
-  } catch(err) { getEl('pdf-print-area').style.display = 'none'; getEl('pdf-print-area').innerHTML = ''; getEl('mainApp').style.display = 'block'; btn.innerHTML = orig; ld(0); showToast('PDF olusturulamadi: ' + err.message, 'error'); }
-}
-
-async function xPDKarne(sourceEl, bolumler, fn, btn, orig) {
-  const { jsPDF } = window.jspdf; const printArea = getEl('pdf-print-area');
-  const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-  const pageWidth = pdf.internal.pageSize.getWidth(); const pageHeight = pdf.internal.pageSize.getHeight();
-  const margin = 8; const usableWidth = pageWidth - (margin * 2); const usableHeight = pageHeight - (margin * 2);
-
-  let headerBar = sourceEl.querySelector('.pdf-header-bar'); let headerHtml = headerBar ? headerBar.outerHTML : '';
-  let isFirstPage = true;
-
-  for(let i = 0; i < bolumler.length; i++) {
-    let bolum = bolumler[i]; let canvasDataUrls = [];
-    bolum.querySelectorAll('canvas').forEach(cv => { try { canvasDataUrls.push({ url: cv.toDataURL('image/png', 1.0) }); } catch(e) {} });
-
-    printArea.innerHTML = headerHtml + bolum.outerHTML;
-    printArea.querySelectorAll('canvas').forEach((cv, idx) => {
-      let data = canvasDataUrls[idx]; if(!data) return;
-      let img = document.createElement('img'); img.src = data.url; img.style.cssText = `max-width:100%;width:100%;max-height:160px;height:auto;object-fit:contain;display:block;margin:0 auto;`;
-      let parent = cv.parentElement; parent.style.height = 'auto'; parent.style.maxHeight = '160px'; parent.replaceChild(img, cv);
-    });
-
-    printArea.querySelectorAll('.btn, .btn-print, .no-print, .d-flex.justify-content-end').forEach(b => b.style.display = 'none');
-    printArea.style.display = 'block'; printArea.style.width = '1100px'; printArea.style.padding = '15px 20px'; getEl('mainApp').style.display = 'none'; window.scrollTo(0, 0);
-
-    await new Promise(r => setTimeout(r, 150));
-    const canvas = await html2canvas(printArea, { scale: 2, useCORS: true, logging: false, windowWidth: 1100, backgroundColor: '#ffffff' });
-    const imgData = canvas.toDataURL('image/jpeg', 0.92);
-    const imgW = usableWidth; const imgH = (canvas.height * usableWidth) / canvas.width;
-
-    if(!isFirstPage) pdf.addPage(); isFirstPage = false;
-    let heightLeft = imgH; let position = 0;
-    pdf.addImage(imgData, 'JPEG', margin, margin, imgW, imgH, undefined, 'FAST', 0); heightLeft -= usableHeight;
-    while(heightLeft > 0) { position = heightLeft - imgH; pdf.addPage(); pdf.addImage(imgData, 'JPEG', margin, position + margin, imgW, imgH, undefined, 'FAST', 0); heightLeft -= usableHeight; }
-  }
-
-  const totalPages = pdf.internal.getNumberOfPages();
-  for(let i = 1; i <= totalPages; i++) { pdf.setPage(i); pdf.setFontSize(8); pdf.setTextColor(128); pdf.text(`Sayfa ${i} / ${totalPages}`, pageWidth - margin - 20, pageHeight - 4); }
-  pdf.save(fn + '.pdf'); printArea.style.display = 'none'; printArea.innerHTML = ''; getEl('mainApp').style.display = 'block'; btn.innerHTML = orig; ld(0); showToast('PDF başarıyla indirildi.', 'success');
-}
-
-/* ===== ARAMA İŞLEMLERİ ===== */
+</script>
+<script>
+// ===== ARAMA İŞLEMLERİ =====
 function debounceSearch(){clearTimeout(searchDebounceTimer);searchDebounceTimer=setTimeout(sSearch,280);}
 function sSearch(){
   let v=getEl('sInp').value.trim(),r=getEl('sRes');
@@ -1174,7 +1068,7 @@ function uSub(){
   
   if(aT === 'student' || aT === 'class') {
     let o = `<option value="totalNet">Toplam Net</option><option value="score">Puan</option>`;
-    if (aT === 'student') { o += `<option value="rank_c">Sınıf Sıralaması</option><option value="rank_i">Kurum Sıralaması</option><option value="rank_g">Genel Sıralama</option>`; }
+    if (aT === 'student') { o += `<option value="rank_c">Sınıf Sıralaması</option><option value="rank_s">Okul Sıralaması</option><option value="rank_d">İlçe Sıralaması</option><option value="rank_p">İl Sıralaması</option><option value="rank_g">Genel Sıralama</option>`; }
     [...s].sort().forEach(x=> o += `<option value="s_${x}">${x} Neti</option>`);
     getEl('aSub').innerHTML = o;
   } else if (aT === 'examdetail') {
@@ -1234,6 +1128,13 @@ function handleSubChange(){
   reqAnl();
 }
 
+/* Geri Dönük Uyumluluk ve Yeni Derece Fonksiyonları */
+const fRc = e => e.rC !== undefined ? e.rC : (e.cR !== undefined ? e.cR : '-');
+const fRs = e => e.rS !== undefined ? e.rS : (e.iR !== undefined ? e.iR : '-');
+const fRd = e => e.rD !== undefined ? e.rD : '-';
+const fRp = e => e.rP !== undefined ? e.rP : '-';
+const fRg = e => e.rG !== undefined ? e.rG : (e.gR !== undefined ? e.gR : '-');
+
 /* ===== EKRANLARI ÇİZME ===== */
 function rH(){
   let s=DB.s.find(x=>x.no===aNo); if(!s)return;
@@ -1249,7 +1150,6 @@ function rH(){
 
   let h=`<div class="d-flex justify-content-end mb-2">
     <button class="btn btn-success btn-sm mr-2" onclick="xXLMul('kCont','${s.name}_Karne')"><i class='fas fa-file-excel mr-1'></i>Excel</button>
-    <button class="btn btn-primary btn-sm mr-2" onclick="xPD('kCont','${s.name}_Karne',this)"><i class='fas fa-file-pdf mr-1'></i>PDF</button>
     <button class="btn-print no-print" onclick="xPR('kCont','${s.name}_Karne',this)"><i class='fas fa-print'></i>Yazdır</button>
   </div>
   <div id="kCont" class="card card-primary card-outline"><div class="pdf-header-bar"><span style="font-size:18px;"><strong>${s.name}</strong> — Karne Özeti</span><span style="font-size:14px;">Sınıf: ${s.class} | ${new Date().toLocaleDateString('tr-TR')}</span></div><div class="card-header"><h3 class="card-title"><i class="fas fa-user-graduate mr-2"></i>${s.name} Karnesi</h3></div><div class="card-body">`;
@@ -1260,13 +1160,13 @@ function rH(){
     let totalCols=sb.length+5; let shorten=totalCols>10;
     
     h+=`<div class="karne-bolum">`;
-    h+=`<h5 class="mt-3 mb-2 text-primary border-bottom pb-2">${t} Sınavları</h5><div class="scroll-hint"><i class="fas fa-arrows-alt-h mr-1"></i>Tabloyu kaydırın</div><div class="scroll"><table class="table table-sm table-bordered table-striped" data-sh="${t}"><thead><tr><th>#</th><th>Tarih</th><th class="hide-mobile">Yayınevi</th>${sb.map(x=>`<th title="${x}">${abbrevSub(x,shorten)}</th>`).join('')}<th>Top.Net</th><th>Puan</th><th class="hide-mobile">Kurum(S/K)</th><th class="hide-mobile">Genel(S/K)</th></tr></thead><tbody>`;
+    h+=`<h5 class="mt-3 mb-2 text-primary border-bottom pb-2">${t} Sınavları</h5><div class="scroll-hint"><i class="fas fa-arrows-alt-h mr-1"></i>Tabloyu kaydırın</div><div class="scroll"><table class="table table-sm table-bordered table-striped" data-sh="${t}"><thead><tr><th>#</th><th>Tarih</th><th class="hide-mobile">Yayınevi</th>${sb.map(x=>`<th title="${x}">${abbrevSub(x,shorten)}</th>`).join('')}<th>Top.Net</th><th>Puan</th><th class="hide-mobile">Snf.S.</th><th class="hide-mobile">Okl.S.</th><th class="hide-mobile">İlçe.S.</th><th class="hide-mobile">İl.S.</th><th class="hide-mobile">Gen.S.</th></tr></thead><tbody>`;
     
     let kIdx = 1;
     el.forEach(e=>{
       let pub = e.publisher || '—'; let sNo = e.abs ? '—' : kIdx++;
-      if(e.abs) h+=`<tr class="absent-row"><td>${sNo}</td><td>${e.date}</td><td class="hide-mobile">${pub}</td><td colspan="${sb.length}" class="text-center font-weight-bold text-danger">KATILMADI</td><td>—</td><td>—</td><td class="hide-mobile">—</td><td class="hide-mobile">—</td></tr>`;
-      else h+=`<tr><td>${sNo}</td><td>${e.date}</td><td class="hide-mobile">${pub}</td>${sb.map(x=>`<td>${e.subs[x]!==undefined?e.subs[x].net.toFixed(2):'—'}</td>`).join('')}<td><strong>${e.totalNet.toFixed(2)}</strong></td><td>${e.score.toFixed(2)}</td><td class="hide-mobile">${e.iR}/${e.iP}</td><td class="hide-mobile">${e.gR}/${e.gP}</td></tr>`;
+      if(e.abs) h+=`<tr class="absent-row"><td>${sNo}</td><td>${e.date}</td><td class="hide-mobile">${pub}</td><td colspan="${sb.length}" class="text-center font-weight-bold text-danger">KATILMADI</td><td>—</td><td>—</td><td class="hide-mobile">—</td><td class="hide-mobile">—</td><td class="hide-mobile">—</td><td class="hide-mobile">—</td><td class="hide-mobile">—</td></tr>`;
+      else h+=`<tr><td>${sNo}</td><td>${e.date}</td><td class="hide-mobile">${pub}</td>${sb.map(x=>`<td>${e.subs[x]!==undefined?e.subs[x].net.toFixed(2):'—'}</td>`).join('')}<td><strong>${e.totalNet.toFixed(2)}</strong></td><td>${e.score.toFixed(2)}</td><td class="hide-mobile">${fRc(e)}</td><td class="hide-mobile">${fRs(e)}</td><td class="hide-mobile">${fRd(e)}</td><td class="hide-mobile">${fRp(e)}</td><td class="hide-mobile">${fRg(e)}</td></tr>`;
     });
     
     let attended = el.filter(e => !e.abs);
@@ -1274,7 +1174,7 @@ function rH(){
       let avgSubs = sb.map(x => { let v = attended.filter(e => e.subs[x] !== undefined).map(e => e.subs[x].net); return v.length ? (v.reduce((a,b)=>a+b,0)/v.length).toFixed(2) : '—'; });
       let avgNet = (attended.reduce((a,e)=>a+e.totalNet,0)/attended.length).toFixed(2);
       let avgScore = (attended.reduce((a,e)=>a+e.score,0)/attended.length).toFixed(2);
-      h += `<tr class="avg-row"><td colspan="2" class="text-right pr-2">ORTALAMA</td><td class="hide-mobile"></td>${avgSubs.map(v=>`<td>${v}</td>`).join('')}<td>${avgNet}</td><td>${avgScore}</td><td class="hide-mobile">—</td><td class="hide-mobile">—</td></tr>`;
+      h += `<tr class="avg-row"><td colspan="2" class="text-right pr-2">ORTALAMA</td><td class="hide-mobile"></td>${avgSubs.map(v=>`<td>${v}</td>`).join('')}<td>${avgNet}</td><td>${avgScore}</td><td class="hide-mobile">—</td><td class="hide-mobile">—</td><td class="hide-mobile">—</td><td class="hide-mobile">—</td><td class="hide-mobile">—</td></tr>`;
     }
 
     let canvasId='cKarne_'+t.replace(/[^a-zA-Z0-9]/g,'_');
@@ -1313,9 +1213,9 @@ function rAnl(){
     let stGrade=getGrade(st.class), dD=[],clsArr=[],instArr=[],rows='';
     
     let isRank = sb.startsWith('rank_');
-    let ls = sb === 'score' ? 'Puan' : (sb === 'rank_c' ? 'Sınıf Sırası' : (sb === 'rank_i' ? 'Kurum Sırası' : (sb === 'rank_g' ? 'Genel Sıra' : (sb === 'totalNet' || !sb ? 'Toplam Net' : sb.replace('s_','') + ' Neti'))));
+    let ls = sb === 'score' ? 'Puan' : (sb === 'rank_c' ? 'Sınıf Sırası' : (sb === 'rank_s' ? 'Okul Sırası' : (sb === 'rank_d' ? 'İlçe Sırası' : (sb === 'rank_p' ? 'İl Sırası' : (sb === 'rank_g' ? 'Genel Sıra' : (sb === 'totalNet' || !sb ? 'Toplam Net' : sb.replace('s_','') + ' Neti'))))));
     let valHeader = isRank ? 'Sıra' : (sb === 'score' ? 'Puan' : 'Net');
-    let getVal = (e) => { if (e.abs) return null; if (sb === 'score') return e.score; if (sb === 'rank_c') return pN(e.cR); if (sb === 'rank_i') return pN(e.iR); if (sb === 'rank_g') return pN(e.gR); if (sb === 'totalNet' || !sb) return e.totalNet; return e.subs[sb.replace('s_','')]?.net ?? 0; };
+    let getVal = (e) => { if (e.abs) return null; if (sb === 'score') return e.score; if (sb === 'rank_c') return pN(fRc(e)); if (sb === 'rank_s') return pN(fRs(e)); if (sb === 'rank_d') return pN(fRd(e)); if (sb === 'rank_p') return pN(fRp(e)); if (sb === 'rank_g') return pN(fRg(e)); if (sb === 'totalNet' || !sb) return e.totalNet; return e.subs[sb.replace('s_','')]?.net ?? 0; };
 
     ex.forEach((e,i)=>{
       let n=getVal(e), pn=i>0 ? getVal(ex[i-1]) : n; let dfStr = ''; let cl = '';
@@ -1347,7 +1247,6 @@ function rAnl(){
     
     let h=`<div class="d-flex justify-content-end mb-2">
       <button class="btn btn-success btn-sm mr-2" onclick="xXL('tS','Ogrenci_Analizi')"><i class='fas fa-file-excel mr-1'></i>Excel</button>
-      <button class="btn btn-primary btn-sm mr-2" onclick="xPD('pS','Ogrenci_Analizi',this)"><i class='fas fa-file-pdf mr-1'></i>PDF</button>
       <button class="btn-print no-print" onclick="xPR('pS','Ogrenci_Analizi',this)"><i class='fas fa-print'></i>Yazdır</button>
     </div>
     <div id="pS" class="card card-outline card-info"><div class="pdf-header-bar"><span style="font-size:18px;"><strong>${st.name}</strong> — Analiz (${eT} / ${ls})</span><span style="font-size:14px;">Sınıf: ${st.class}</span></div><div class="card-header"><h3 class="card-title">📈 ${st.name} — Analiz (${ls})</h3></div><div class="card-body">${trendHtml}<div class="table-responsive"><table class="table table-sm table-hover table-bordered" id="tS"><thead><tr><th>#</th><th>Tarih</th><th>Yayınevi</th><th>${valHeader}</th><th>Değişim</th></tr></thead><tbody>${rows}${avgRowHtml}</tbody></table></div></div><div class="chart-box"><canvas id="cA"></canvas></div></div>`;
@@ -1398,7 +1297,6 @@ function rAnl(){
     
     let h=`<div class="d-flex justify-content-end mb-2">
       <button class="btn btn-success btn-sm mr-2" onclick="xXL('tC','Sinif_Analizi')"><i class='fas fa-file-excel mr-1'></i>Excel</button>
-      <button class="btn btn-primary btn-sm mr-2" onclick="xPD('pC','Sinif_Analizi',this)"><i class='fas fa-file-pdf mr-1'></i>PDF</button>
       <button class="btn-print no-print" onclick="xPR('pC','Sinif_Analizi',this)"><i class='fas fa-print'></i>Yazdır</button>
     </div>
     <div id="pC" class="card card-outline card-success"><div class="pdf-header-bar"><span style="font-size:18px;">Sınıf Analizi — ${eT} (${clsLabel} / ${ls})</span><span style="font-size:14px;"></span></div><div class="card-header"><h3 class="card-title">📊 Sınıf Analizi (${ls})</h3></div><div class="card-body"><div class="table-responsive"><table class="table table-sm table-hover table-bordered" id="tC"><thead><tr><th>#</th><th>Sınıf</th><th>Tarih</th><th>Yayınevi</th><th>Ortalama</th></tr></thead><tbody>${tr.join('')}${clsAvgRow}</tbody></table></div></div><div class="chart-box"><canvas id="cA"></canvas></div></div>`;
@@ -1460,7 +1358,6 @@ function rAnl(){
     
     let h = `
     <div class="d-flex justify-content-end mb-2">
-      <button class="btn btn-primary btn-sm mr-2" onclick="xPD('pSubj','${subj}_Analizi',this)"><i class='fas fa-file-pdf mr-1'></i>PDF</button>
       <button class="btn-print no-print" onclick="xPR('pSubj','${subj}_Analizi',this)"><i class='fas fa-print'></i>Yazdır</button>
     </div>
     <div id="pSubj" class="card card-outline card-primary" style="background:#f4f6f9; padding:15px;">
@@ -1549,7 +1446,6 @@ function rAnl(){
         let lvlStr = targetLvl ? `${targetLvl}. Sınıflar` : 'Tüm Sınıflar', safeName = `${eT}_Genel_Ozet`;
 
         let h = `<div class="d-flex justify-content-end mb-2">
-          <button class="btn btn-primary btn-sm mr-2" onclick="xPD('pGenSummary','${safeName}',this)"><i class='fas fa-file-pdf mr-1'></i>PDF</button>
           <button class="btn-print no-print" onclick="xPR('pGenSummary','${safeName}',this)"><i class='fas fa-print'></i>Yazdır</button>
         </div>
         <div id="pGenSummary" class="card card-outline card-primary" style="background:#f4f6f9; padding:15px;">
@@ -1561,7 +1457,7 @@ function rAnl(){
                 <div class="col-md-4 col-sm-12"><div class="info-box bg-danger"><span class="info-box-icon"><i class="fas fa-level-down-alt"></i></span><div class="info-box-content"><span class="info-box-text">En Fazla Gerileme Kaydeden</span><span class="info-box-number" style="font-size:1.1em;">${worstP ? `${worstP.name} <small>(${worstP.cls})</small>` : 'Veri Yok'}</span><span class="progress-description" style="font-size:0.9em;">${worstP ? `${worstP.diff.toFixed(2)} Net (${worstP.firstNet.toFixed(2)} ➔ ${worstP.lastNet.toFixed(2)})` : 'En az 2 sınava giren yok'}</span></div></div></div>
             </div>
             <div class="row">
-                <div class="col-md-6 col-sm-12"><div class="info-box bg-info"><span class="info-box-icon"><i class="fas fa-arrow-up"></i></span><div class="info-box-content"><span class="info-box-text">Genel Ortalaması En Çok Artan Ders</span><span class="info-box-number" style="font-size:1.1em;">${bestSub ? bestSub.sub : 'Veri Yok'}</span><span class="progress-description" style="font-size:0.9em;">${bestSub ? `+${bestSub.diff.toFixed(2)} Net (${bestSub.fAvg.toFixed(2)} ➔ ${bestSub.lAvg.toFixed(2)})` : 'Karşılaştırma için veri yetersiz'}</span></div></div></div>
+                <div class="col-md-6 col-sm-12"><div class="info-box bg-info"><span class="info-box-icon"><i class="fas fa-arrow-up"></i></span><div class="info-box-content"><span class="info-box-text">Ortalaması En Çok Artan Ders</span><span class="info-box-number" style="font-size:1.1em;">${bestSub ? bestSub.sub : 'Veri Yok'}</span><span class="progress-description" style="font-size:0.9em;">${bestSub ? `+${bestSub.diff.toFixed(2)} Net (${bestSub.fAvg.toFixed(2)} ➔ ${bestSub.lAvg.toFixed(2)})` : 'Karşılaştırma için veri yetersiz'}</span></div></div></div>
                 <div class="col-md-6 col-sm-12"><div class="info-box" style="background:#6c757d; color:#fff;"><span class="info-box-icon"><i class="fas fa-arrow-down"></i></span><div class="info-box-content"><span class="info-box-text">Ortalaması En Çok Düşen Ders</span><span class="info-box-number" style="font-size:1.1em;">${worstSub ? worstSub.sub : 'Veri Yok'}</span><span class="progress-description" style="font-size:0.9em;">${worstSub ? `${worstSub.diff.toFixed(2)} Net (${worstSub.fAvg.toFixed(2)} ➔ ${worstSub.lAvg.toFixed(2)})` : 'Karşılaştırma için veri yetersiz'}</span></div></div></div>
             </div>
             <div class="row mt-3">
@@ -1599,7 +1495,6 @@ function rAnl(){
       let safeName = `${eT}_${dt.replace(/\./g,'-')}_Ozet`, lvlStr = targetLvl ? `${targetLvl}. Sınıflar` : 'Tüm Sınıflar';
       
       let h = `<div class="d-flex justify-content-end mb-2">
-          <button class="btn btn-primary btn-sm mr-2" onclick="xPD('pSummary','Sinav_Ozeti_${safeName}',this)"><i class='fas fa-file-pdf mr-1'></i>PDF</button>
           <button class="btn-print no-print" onclick="xPR('pSummary','Sinav_Ozeti_${safeName}',this)"><i class='fas fa-print'></i>Yazdır</button>
       </div>
       <div id="pSummary" class="card card-outline card-info" style="background:#f4f6f9; padding:15px;">
@@ -1621,7 +1516,6 @@ function rAnl(){
       </div>`; r.innerHTML = h;
 
     } else {
-      // TOPLU LİSTE (AUTO-TABLE İLE PDF UYUMLU)
       let batch = baseExams.filter(x => x.date === dt);
       if(!batch.length){r.innerHTML='<div class="alert alert-default-info">Bu sınava ait veri yok.</div>';return;}
 
@@ -1633,24 +1527,23 @@ function rAnl(){
       let headCols=subKeys.map(k=>`<th>${k}</th>`).join('');
       let bodyRows=sorted.map((e,idx)=>{
         let isSel=aNo&&e.studentNo===aNo, rCls=isSel?'highlight-row':''; let pub = e.publisher || '—';
-        if(e.abs) return `<tr class="absent-row ${rCls}"><td>—</td><td>${e.studentName}</td><td>${e.studentCls}</td><td class="hide-mobile">${e.date}</td><td class="hide-mobile">${pub}</td><td colspan="${subKeys.length}" class="text-center font-weight-bold text-danger">KATILMADI</td><td>—</td><td>—</td><td class="hide-mobile">—</td><td class="hide-mobile">—</td><td class="hide-mobile">—</td></tr>`;
-        return `<tr class="${rCls}"><td>${idx+1}</td><td>${e.studentName}</td><td>${e.studentCls}</td><td class="hide-mobile">${e.date}</td><td class="hide-mobile">${pub}</td>${subKeys.map(k=>`<td>${e.subs[k]!==undefined?e.subs[k].net.toFixed(2):'—'}</td>`).join('')}<td><strong>${e.totalNet.toFixed(2)}</strong></td><td>${e.score.toFixed(2)}</td><td class="hide-mobile">${e.cR}/${e.cP}</td><td class="hide-mobile">${e.iR}/${e.iP}</td><td class="hide-mobile">${e.gR}/${e.gP}</td></tr>`;
+        if(e.abs) return `<tr class="absent-row ${rCls}"><td>—</td><td>${e.studentName}</td><td>${e.studentCls}</td><td class="hide-mobile">${e.date}</td><td class="hide-mobile">${pub}</td><td colspan="${subKeys.length}" class="text-center font-weight-bold text-danger">KATILMADI</td><td>—</td><td>—</td><td class="hide-mobile">—</td><td class="hide-mobile">—</td><td class="hide-mobile">—</td><td class="hide-mobile">—</td><td class="hide-mobile">—</td></tr>`;
+        return `<tr class="${rCls}"><td>${idx+1}</td><td>${e.studentName}</td><td>${e.studentCls}</td><td class="hide-mobile">${e.date}</td><td class="hide-mobile">${pub}</td>${subKeys.map(k=>`<td>${e.subs[k]!==undefined?e.subs[k].net.toFixed(2):'—'}</td>`).join('')}<td><strong>${e.totalNet.toFixed(2)}</strong></td><td>${e.score.toFixed(2)}</td><td class="hide-mobile">${fRc(e)}</td><td class="hide-mobile">${fRs(e)}</td><td class="hide-mobile">${fRd(e)}</td><td class="hide-mobile">${fRp(e)}</td><td class="hide-mobile">${fRg(e)}</td></tr>`;
       }).join('');
 
       let listAvgRow = '';
       if (attended.length > 0) {
         let avgSubCols = subKeys.map(k => { let v = attended.filter(e => e.subs[k] !== undefined).map(e => e.subs[k].net); return `<td>${v.length ? (v.reduce((a,b)=>a+b,0)/v.length).toFixed(2) : '—'}</td>`; }).join('');
         let listAvgScore = (attended.reduce((s,x)=>s+x.score,0)/attended.length).toFixed(2);
-        listAvgRow = `<tr class="avg-row"><td colspan="3" class="text-right pr-2">ORTALAMA (${attended.length} Kişi)</td><td class="hide-mobile"></td><td class="hide-mobile"></td>${avgSubCols}<td>${avgNet}</td><td>${listAvgScore}</td><td class="hide-mobile">—</td><td class="hide-mobile">—</td><td class="hide-mobile">—</td></tr>`;
+        listAvgRow = `<tr class="avg-row"><td colspan="3" class="text-right pr-2">ORTALAMA (${attended.length} Kişi)</td><td class="hide-mobile"></td><td class="hide-mobile"></td>${avgSubCols}<td>${avgNet}</td><td>${listAvgScore}</td><td class="hide-mobile">—</td><td class="hide-mobile">—</td><td class="hide-mobile">—</td><td class="hide-mobile">—</td><td class="hide-mobile">—</td></tr>`;
       }
       let lvlStr = targetLvl ? `${targetLvl}. Sınıflar ` : '', safeName=`${eT}_${dt.replace(/\./g,'-')}`;
       
       let h=`<div class="d-flex justify-content-end mb-2">
         <button class="btn btn-success btn-sm mr-2" onclick="xXL('tED','Sinav_${safeName}')"><i class='fas fa-file-excel mr-1'></i>Excel</button>
-        <button class="btn btn-primary btn-sm mr-2" onclick="xPDTable('tED','Sinav_${safeName}','${eT} Sınav Analizi - ${dt}','${lvlStr}| ${metaStr}',this)"><i class='fas fa-file-pdf mr-1'></i>PDF</button>
         <button class="btn-print no-print" onclick="xPR('pED','Sinav_${safeName}',this)"><i class='fas fa-print'></i>Yazdır</button>
       </div>
-      <div id="pED" class="card card-outline card-warning"><div class="pdf-header-bar"><span style="font-size:18px;"><strong>${eT}</strong> — ${dt} ${lvlStr}Sonuçları</span><span style="font-size:14px;">${metaStr}</span></div><div class="card-header d-flex justify-content-between align-items-center flex-wrap"><h3 class="card-title mb-0">📋 ${eT} — ${dt} ${lvlStr}Sınav Analizi</h3><span class="badge badge-info ml-auto" style="font-size:0.9em;"><i class="fas fa-info-circle mr-1"></i>${metaStr}</span></div><div class="card-body"><div class="scroll-hint"><i class="fas fa-arrows-alt-h mr-1"></i>Tabloyu kaydırın</div><div class="scroll"><table class="table table-sm table-hover table-bordered" id="tED"><thead><tr><th>#</th><th>Ad Soyad</th><th>Sınıf</th><th class="hide-mobile">Tarih</th><th class="hide-mobile">Yayınevi</th>${headCols}<th>Top.Net</th><th>Puan</th><th class="hide-mobile">Snf(S/K)</th><th class="hide-mobile">Kur(S/K)</th><th class="hide-mobile">Gen(S/K)</th></tr></thead><tbody>${bodyRows}${listAvgRow}</tbody></table></div></div></div>`;
+      <div id="pED" class="card card-outline card-warning"><div class="pdf-header-bar"><span style="font-size:18px;"><strong>${eT}</strong> — ${dt} ${lvlStr}Sonuçları</span><span style="font-size:14px;">${metaStr}</span></div><div class="card-header d-flex justify-content-between align-items-center flex-wrap"><h3 class="card-title mb-0">📋 ${eT} — ${dt} ${lvlStr}Sınav Analizi</h3><span class="badge badge-info ml-auto" style="font-size:0.9em;"><i class="fas fa-info-circle mr-1"></i>${metaStr}</span></div><div class="card-body"><div class="scroll-hint"><i class="fas fa-arrows-alt-h mr-1"></i>Tabloyu kaydırın</div><div class="scroll"><table class="table table-sm table-hover table-bordered" id="tED"><thead><tr><th>#</th><th>Ad Soyad</th><th>Sınıf</th><th class="hide-mobile">Tarih</th><th class="hide-mobile">Yayınevi</th>${headCols}<th>Top.Net</th><th>Puan</th><th class="hide-mobile">Sınıf</th><th class="hide-mobile">Okul</th><th class="hide-mobile">İlçe</th><th class="hide-mobile">İl</th><th class="hide-mobile">Genel</th></tr></thead><tbody>${bodyRows}${listAvgRow}</tbody></table></div></div></div>`;
       r.innerHTML=h; if(aNo) setTimeout(()=>{ let hlRow=getEl('tED')?.querySelector('tr.highlight-row'); if(hlRow)hlRow.scrollIntoView({behavior:'smooth',block:'center'}); },300);
     }
   }
@@ -1741,7 +1634,7 @@ async function impDB(e){
 function cancelUpload() { PENDING_UPLOAD = null; getEl('fStu').value = ''; getEl('fEx').value = ''; jQuery('#mMappings').modal('hide'); jQuery('#mUploadPreview').modal('hide'); }
 function backToMapping() { jQuery('#mUploadPreview').modal('hide'); jQuery('#mMappings').modal('show'); }
 
-/* ===== YENİ: SÜTUN EŞLEŞTİRME SİHİRBAZI MANTIĞI ===== */
+/* ===== SÜTUN EŞLEŞTİRME SİHİRBAZI ===== */
 function upl(e, t) {
   let f = e.target.files[0]; if(!f) return;
   ld(1, 'Dosya Analiz Ediliyor...'); currentUploadType = t;
@@ -1806,11 +1699,21 @@ function buildMappingUI() {
         </div>
       </div>
       <div class="wizard-section">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h6 class="mb-0 border-0"><i class="fas fa-book-open mr-1"></i> 3. Ders Netleri Eşleştirmesi</h6>
-          <button class="btn btn-success btn-sm" onclick="addSubjectRow()"><i class="fas fa-plus mr-1"></i>Ders Sütunu Ekle</button>
+        <h6><i class="fas fa-trophy mr-1"></i> 3. Sıralama / Derece Sütunları (İsteğe Bağlı)</h6>
+        <div class="row">
+          <div class="col-6 col-md-4"><div class="form-group"><label>Sınıf Derecesi</label><select id="map_e_rc" class="form-control">${buildOptions(h, saved.rc||'')}</select></div></div>
+          <div class="col-6 col-md-4"><div class="form-group"><label>Okul Derecesi</label><select id="map_e_rs" class="form-control">${buildOptions(h, saved.rs||'')}</select></div></div>
+          <div class="col-6 col-md-4"><div class="form-group"><label>İlçe Derecesi</label><select id="map_e_rd" class="form-control">${buildOptions(h, saved.rd||'')}</select></div></div>
+          <div class="col-6 col-md-4"><div class="form-group"><label>İl Derecesi</label><select id="map_e_rp" class="form-control">${buildOptions(h, saved.rp||'')}</select></div></div>
+          <div class="col-6 col-md-4"><div class="form-group"><label>Genel Derece</label><select id="map_e_rg" class="form-control">${buildOptions(h, saved.rg||'')}</select></div></div>
         </div>
-        <p class="text-muted" style="font-size:0.85em; margin-top:-10px;">Sadece analize dahil etmek istediğiniz dersleri (sütunları) seçip isimlendirin.</p>
+      </div>
+      <div class="wizard-section">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="mb-0 border-0"><i class="fas fa-book-open mr-1"></i> 4. Ders Netleri Eşleştirmesi</h6>
+          <button class="btn btn-success btn-sm" onclick="addSubjectRow()"><i class="fas fa-plus mr-1"></i>Ders Ekle</button>
+        </div>
+        <p class="text-muted" style="font-size:0.85em; margin-top:-10px;">Sadece analize dahil etmek istediğiniz dersleri seçip isimlendirin.</p>
         <div id="subjectMapContainer"></div>
       </div>
     `;
@@ -1865,6 +1768,7 @@ function processMappings() {
   } else {
     let eType = getEl('map_e_type').value.trim().toUpperCase(), eDate = getEl('map_e_date').value.trim(), ePub = getEl('map_e_pub').value.trim();
     let cNo = getEl('map_e_no').value, cTnet = getEl('map_e_tnet').value, cScore = getEl('map_e_score').value;
+    let cRc = getEl('map_e_rc').value, cRs = getEl('map_e_rs').value, cRd = getEl('map_e_rd').value, cRp = getEl('map_e_rp').value, cRg = getEl('map_e_rg').value;
     
     if(!eType || !eDate || !cNo || !cTnet || !cScore) { showToast('Lütfen zorunlu alanları (Tür, Tarih, No, Net, Puan) doldurun.', 'warning'); return; }
 
@@ -1872,7 +1776,7 @@ function processMappings() {
     subRows.forEach(r => { let c = r.querySelector('.map-subj-col').value, n = r.querySelector('.map-subj-name').value.trim(); if(c && n) subsMap.push({col: c, name: n}); });
     if(subsMap.length === 0) { showToast('En az bir ders neti eşleştirmelisiniz.', 'warning'); return; }
 
-    localStorage.setItem('map_e', JSON.stringify({type: eType, pub: ePub, no: cNo, tnet: cTnet, score: cScore, subs: subsMap}));
+    localStorage.setItem('map_e', JSON.stringify({type: eType, pub: ePub, no: cNo, tnet: cTnet, score: cScore, rc: cRc, rs: cRs, rd: cRd, rp: cRp, rg: cRg, subs: subsMap}));
 
     let existsId = Object.keys(EXAM_META).find(id => EXAM_META[id].date===eDate && EXAM_META[id].examType===eType);
     let bId = existsId || Date.now().toString();
@@ -1892,13 +1796,18 @@ function processMappings() {
       seenStudentNos.add(no); cl.add(st.class); sn.add(no);
       let stGrade = getGrade(st.class); if(stGrade) gradesFound.add(stGrade);
       
-      let ex = { examBatchId:bId, studentNo:st.no, studentClass:st.class, date:eDate, examType:eType, publisher:ePub, totalNet:pN(r[cTnet]), score:pN(r[cScore]), cR:'-', cP:'-', iR:'-', iP:'-', gR:'-', gP:'-', abs:false, subs:{} };
+      let ex = { 
+        examBatchId:bId, studentNo:st.no, studentClass:st.class, date:eDate, examType:eType, publisher:ePub, 
+        totalNet:pN(r[cTnet]), score:pN(r[cScore]), 
+        rC: cRc ? pN(r[cRc]) : '-', rS: cRs ? pN(r[cRs]) : '-', rD: cRd ? pN(r[cRd]) : '-', rP: cRp ? pN(r[cRp]) : '-', rG: cRg ? pN(r[cRg]) : '-', 
+        abs:false, subs:{} 
+      };
       subsMap.forEach(sm => { let rawVal = r[sm.col]; if(rawVal !== undefined && rawVal !== null && rawVal !== '') { ex.subs[sm.name] = {net: pN(rawVal)}; subjectsFound.add(sm.name); } });
       validResults.push(ex);
     });
 
     let absentCount = 0;
-    DB.s.forEach(s => { if(cl.has(s.class) && !sn.has(s.no)) { validResults.push({ examBatchId:bId, studentNo:s.no, studentClass:s.class, date:eDate, examType:eType, publisher:ePub, totalNet:0, score:0, cR:'-', cP:'-', iR:'-', iP:'-', gR:'-', gP:'-', abs:true, subs:{} }); absentCount++; } });
+    DB.s.forEach(s => { if(cl.has(s.class) && !sn.has(s.no)) { validResults.push({ examBatchId:bId, studentNo:s.no, studentClass:s.class, date:eDate, examType:eType, publisher:ePub, totalNet:0, score:0, rC:'-', rS:'-', rD:'-', rP:'-', rG:'-', abs:true, subs:{} }); absentCount++; } });
     if(validResults.length === 0) { showToast('Sisteme eklenecek geçerli bir sınav sonucu bulunamadı.', 'error'); return; }
 
     let overwriteWarning = existsId ? `<div class="alert alert-danger mt-3"><strong><i class="fas fa-exclamation-triangle mr-2"></i>DİKKAT!</strong> Sistemde <b>${eDate}</b> tarihli bir <b>${eType}</b> sınavı zaten var. Onaylarsanız, eski veriler tamamen silinip bu dosyadaki verilerle değiştirilecektir!</div>` : '';
@@ -1914,7 +1823,7 @@ function processMappings() {
       ${overwriteWarning}
     `;
     if(missingStus.length > 0) previewHtml += `<div class="alert alert-warning mt-2" style="font-size:0.85em; padding:8px;"><strong>Sistemde Bulunamayan Numaralar (Atlanacak):</strong> ${missingStus.slice(0,20).join(', ')}${missingStus.length>20?'...':''}</div>`;
-    if(invalidRows.length > 0) previewHtml += `<div class="table-responsive mt-3" style="max-height: 200px; border: 1px solid #f5c6cb;"><table class="table table-sm table-striped mb-0" style="font-size:0.85em;"><thead style="background-color: #f8d7da; color: #721c24;"><tr><th style="width: 60px;">Satır</th><th style="width: 100px;">Öğrenci No</th><th>Hata Nedeni (Yüklenmeyecek)</th></tr></thead><tbody>${invalidRows.map(err => `<tr><td><strong>${err.rowNum}</strong></td><td>${err.no}</td><td class="text-danger">${err.reason}</td></tr>`).join('')}</tbody></table></div>`;
+    if(invalidRows.length > 0) previewHtml += `<div class="table-responsive mt-3" style="max-height: 150px; border: 1px solid #f5c6cb;"><table class="table table-sm table-striped mb-0" style="font-size:0.85em;"><thead style="background-color: #f8d7da; color: #721c24;"><tr><th style="width: 60px;">Satır</th><th style="width: 100px;">Öğrenci No</th><th>Hata Nedeni (Yüklenmeyecek)</th></tr></thead><tbody>${invalidRows.map(err => `<tr><td><strong>${err.rowNum}</strong></td><td>${err.no}</td><td class="text-danger">${err.reason}</td></tr>`).join('')}</tbody></table></div>`;
     
     PENDING_UPLOAD = { type: 'e', existsId: existsId, bId: bId, bD: eDate, bT: eType, bPub: ePub, newResults: validResults, subjects: Array.from(subjectsFound), grades: Array.from(gradesFound) };
   }
@@ -1947,20 +1856,94 @@ async function confirmUpload() {
   cancelUpload(); ld(0);
 }
 
-window.addEventListener('load', function(){
-  checkAuth();
-  document.body.addEventListener('click', function(e){
-    if(!document.body.classList.contains('sidebar-open')) return;
-    var sidebar = document.querySelector('.main-sidebar'), toggleBtn = document.querySelector('[data-widget="pushmenu"]');
-    if(sidebar && !sidebar.contains(e.target) && toggleBtn && !toggleBtn.contains(e.target)){
-      document.body.classList.remove('sidebar-open'); document.body.classList.add('sidebar-collapse');
+/* ===== TOPLU RAPOR FONKSİYONLARI ===== */
+function populateLevelsAndBranches() {
+  let levels = new Set(); DB.s.forEach(s => { let m = s.class.match(/^(\d+)/); if(m) levels.add(m[1]); });
+  let lvlSelect = getEl('repLvl'); lvlSelect.innerHTML = '<option value="">Seçiniz</option>' + [...levels].sort((a,b)=>parseInt(a)-parseInt(b)).map(l=>`<option value="${l}">${l}. Sınıf</option>`).join('');
+}
+function populateBranches() {
+  let lvl = getEl('repLvl').value; let brSelect = getEl('repBr');
+  if(!lvl) { brSelect.innerHTML = '<option value="">Tümü</option>'; return; }
+  let branches = new Set(); DB.s.filter(s => getGrade(s.class) === lvl).forEach(s => { let m = s.class.match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/); if(m) branches.add(m[2].toUpperCase()); });
+  brSelect.innerHTML = '<option value="">Tümü</option>' + [...branches].sort().map(b => `<option value="${b}">${b}</option>`).join('');
+}
+function populateRepExamTypes() {
+  let types = new Set(); Object.values(EXAM_META).forEach(m => types.add(m.examType));
+  let sel = getEl('repExType'); sel.innerHTML = [...types].sort().map(t => `<option value="${t}">${t}</option>`).join('');
+  populateRepDates();
+}
+function populateRepDates() {
+  let eType = getEl('repExType').value; let dates = new Set();
+  Object.values(EXAM_META).forEach(m => { if(m.examType === eType) dates.add(m.date); });
+  let sel = getEl('repDate'); sel.innerHTML = [...dates].sort(srt).map(d => `<option value="${d}">${d}</option>`).join('');
+}
+
+async function generateReport() {
+  let lvl = getEl('repLvl').value, br = getEl('repBr').value, eType = getEl('repExType').value, date = getEl('repDate').value;
+  if(!lvl || !eType || !date) { showToast('Lütfen sınıf seviyesi, sınav türü ve tarih seçin.', 'warning'); return; }
+  let students = DB.s.filter(s => { let g = getGrade(s.class); if(g !== lvl) return false; if(br) { let m = s.class.match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/); if(!m || m[2].toUpperCase() !== br) return false; } return true; });
+  if(students.length === 0) { showToast('Bu kriterlere uygun öğrenci bulunamadı.', 'info'); return; }
+
+  ld(1, 'Rapor hazırlanıyor...');
+  let batchId = Object.keys(EXAM_META).find(id => EXAM_META[id].examType === eType && EXAM_META[id].date === date);
+  if(!batchId) { ld(0); showToast('Seçilen sınava ait veri bulunamadı.', 'error'); return; }
+  await fetchBatches([batchId]);
+  let examResults = CACHED_RESULTS[batchId] || [];
+  
+  let reportHtml = `<div id="printableReport"><div class="pdf-header-bar no-print" style="display:flex; justify-content:space-between; background:#1e3a5f; color:#fff; padding:10px; border-radius:6px; margin-bottom:15px;"><span><strong>${lvl}. Sınıf ${br||'Tüm Şubeler'} | ${eType} - ${date}</strong></span><span>Toplu Karne Raporu</span></div>`;
+  let allSubjects = EXAM_META[batchId]?.subjects || [];
+  
+  for (let st of students) {
+    let exam = examResults.find(e => e.studentNo === st.no);
+    let isAbsent = !exam || exam.abs;
+    reportHtml += `<div class="report-student-card">`;
+    reportHtml += `<div class="report-student-header"><span><i class="fas fa-user-graduate mr-1"></i><strong>${st.name}</strong> (${st.class})</span>`;
+    if(isAbsent) reportHtml += `<span class="badge badge-danger">Katılmadı</span>`;
+    else reportHtml += `<span>Net: ${exam.totalNet.toFixed(2)} | Puan: ${exam.score.toFixed(2)}</span>`;
+    reportHtml += `</div>`;
+    
+    if(!isAbsent) {
+      reportHtml += `<table class="table table-sm table-bordered report-table-sm"><thead><tr><th>Ders</th>${allSubjects.map(s=>`<th>${s}</th>`).join('')}<th>Toplam</th></tr></thead><tbody><tr><td>Net</td>`;
+      allSubjects.forEach(sub => { let val = exam.subs[sub]?.net; reportHtml += `<td>${val !== undefined ? val.toFixed(2) : '-'}</td>`; });
+      reportHtml += `<td><strong>${exam.totalNet.toFixed(2)}</strong></td></tr></tbody></table>`;
+      reportHtml += `<div style="font-size:0.8rem;">Sınıf: ${fRc(exam)} | Okul: ${fRs(exam)} | İlçe: ${fRd(exam)} | İl: ${fRp(exam)} | Genel: ${fRg(exam)}</div>`;
+      
+      let canvasId = `repChart_${st.no.replace(/[^a-zA-Z0-9]/g,'_')}`;
+      reportHtml += `<div class="report-mini-chart"><canvas id="${canvasId}"></canvas></div>`;
+    } else {
+      reportHtml += `<div class="alert alert-warning py-1">Bu sınava katılmamıştır.</div>`;
     }
-  });
+    reportHtml += `</div>`;
+  }
+  reportHtml += `</div>`;
+  getEl('reportArea').innerHTML = reportHtml;
+  getEl('repPrintBtn').style.display = 'inline-block';
+  ld(0);
+  
+  setTimeout(() => {
+    students.forEach(st => {
+      let exam = examResults.find(e => e.studentNo === st.no);
+      if(exam && !exam.abs) {
+        let canvasId = `repChart_${st.no.replace(/[^a-zA-Z0-9]/g,'_')}`;
+        let studentExams = DB.e.filter(x => x.studentNo === st.no && x.examType === eType && !x.abs).sort((a,b) => srt(a.date, b.date));
+        if(studentExams.length > 1) {
+          let labels = studentExams.map(e => e.date);
+          let data = studentExams.map(e => e.totalNet);
+          new Chart(document.getElementById(canvasId), {
+            type: 'line', data: { labels, datasets: [{ label: 'Toplam Net', data, borderColor: '#1e3a5f', tension: 0.1 }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+          });
+        }
+      }
+    });
+  }, 200);
+}
 
-  if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js').catch(err => console.error('SW hatası:', err)); }
-});
+function printReport() {
+  xPR('printableReport', 'Sinif_Karneleri', document.getElementById('repPrintBtn'));
+}
 
-/* ===== PWA INSTALL PROMPT ===== */
+/* ===== PWA INSTALL ===== */
 let deferredInstallPrompt = null, pwaPopupTimer = null, userLoggedIn = false;
 
 window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredInstallPrompt = e; if (userLoggedIn) showPwaPopupIfReady(); });
@@ -1991,6 +1974,19 @@ function triggerInstall(e) {
   deferredInstallPrompt.prompt();
   deferredInstallPrompt.userChoice.then(choice => { if (choice.outcome === 'accepted') showToast('Uygulama yükleniyor...', 'info'); deferredInstallPrompt = null; document.getElementById('installBtnWrapper').style.display = 'none'; });
 }
+
+window.addEventListener('load', function(){
+  checkAuth();
+  document.body.addEventListener('click', function(e){
+    if(!document.body.classList.contains('sidebar-open')) return;
+    var sidebar = document.querySelector('.main-sidebar'), toggleBtn = document.querySelector('[data-widget="pushmenu"]');
+    if(sidebar && !sidebar.contains(e.target) && toggleBtn && !toggleBtn.contains(e.target)){
+      document.body.classList.remove('sidebar-open'); document.body.classList.add('sidebar-collapse');
+    }
+  });
+
+  if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js').catch(err => console.error('SW hatası:', err)); }
+});
 </script>
 </body>
 </html>
