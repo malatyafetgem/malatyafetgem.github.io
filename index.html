@@ -16,9 +16,6 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
@@ -44,7 +41,6 @@ body.dark-mode tr.highlight-row td { background-color:rgba(255,193,7,0.45) !impo
 tr.avg-row td { background-color: #e6f0fa !important; color: #1e3a5f !important; font-weight: bold !important; border-top: 2px solid #1e3a5f !important; font-size: 0.95em; vertical-align: middle !important; }
 tr.avg-row td:first-child { text-transform: uppercase; letter-spacing: 0.5px; }
 body.dark-mode tr.avg-row td { background-color: #2a3b4c !important; color: #e2e8f0 !important; border-top-color: #4b5563 !important; }
-#pdf-print-area tr.avg-row td { background-color: #e6f0fa !important; color: #1e3a5f !important; border-top: 2px solid #1e3a5f !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 
 /* Yetki */
 .admin-only { display:none !important; }
@@ -55,7 +51,30 @@ body.is-admin button.btn-block.admin-only { display:block !important; }
 
 .pdf-header-bar { display:none; }
 
-/* ===== ANALIZ SAYFASI OGRENCİ ARAMA ===== */
+/* ===== YAZDIR BUTONU ===== */
+.btn-print {
+  background: linear-gradient(135deg, #1e3a5f, #2d6a9f);
+  color: #fff !important;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 14px;
+  font-size: 0.85em;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+  box-shadow: 0 2px 6px rgba(30,58,95,0.25);
+}
+.btn-print:hover { background: linear-gradient(135deg, #2d6a9f, #3a80bf); box-shadow: 0 4px 12px rgba(30,58,95,0.35); transform: translateY(-1px); }
+.btn-print:active { transform: translateY(0); }
+.btn-print i { font-size: 0.95em; }
+
+/* ===== YAZDIR @MEDIA ===== */
+@media print {
+  body * { visibility: hidden !important; }
+}
 #anlStuSearchWrapper { position:relative; }
 #anlStuRes { position:absolute; z-index:1050; width:100%; background:#fff; border:1px solid #ced4da; border-radius:0 0 4px 4px; max-height:220px; overflow-y:auto; box-shadow:0 4px 12px rgba(0,0,0,0.15); display:none; }
 body.dark-mode #anlStuRes { background:#343a40; border-color:#495057; }
@@ -66,32 +85,7 @@ body.dark-mode .anlStu-item:hover { background:#495057; }
 .anlStu-item:last-child { border-bottom:none; }
 #anlStuBadge { margin-top:4px; min-height:22px; }
 
-/* ===== İZOLE PDF ALANI ===== */
-#pdf-print-area { display:none; background-color:#fff; color:#000; width:1120px; padding:20px 24px; box-sizing:border-box; font-family:Arial, sans-serif; }
-#pdf-print-area thead { display:table-header-group; }
-#pdf-print-area tr { page-break-inside:avoid !important; page-break-after:auto; }
-#pdf-print-area table { width:100% !important; border-collapse:collapse !important; font-size:9px !important; margin-bottom:12px !important; table-layout:auto !important; page-break-inside:auto !important; }
-#pdf-print-area th, #pdf-print-area td { border:1px solid #888 !important; padding:3px 4px !important; text-align:center !important; color:#000 !important; white-space:nowrap !important; }
-#pdf-print-area td:nth-child(2) { text-align:left !important; white-space:nowrap !important; }
-#pdf-print-area td:nth-child(3) { text-align:left !important; white-space:normal !important; font-weight:bold !important; min-width:80px; }
-#pdf-print-area thead th { background-color:#1e3a5f !important; color:#fff !important; font-size:8px !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-#pdf-print-area tr.highlight-row td { background-color:#fff3cd !important; font-weight:bold !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-#pdf-print-area tr.absent-row td { background-color:#f8d7da !important; color:#721c24 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-#pdf-print-area .pdf-header-bar { display:flex !important; background:#1e3a5f !important; color:#fff !important; padding:10px 16px !important; border-radius:5px !important; margin-bottom:12px !important; justify-content:space-between !important; align-items:center !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; font-size:14px !important; }
-#pdf-print-area .pdf-section-title { color:#1e3a5f; border-bottom:2px solid #1e3a5f; padding-bottom:3px; margin:10px 0 5px 0; font-size:11px; font-weight:bold; }
-#pdf-print-area .karne-bolum { page-break-after: always !important; page-break-inside: avoid !important; padding-bottom: 8px; }
-#pdf-print-area .karne-bolum:last-child { page-break-after: auto !important; }
-#pdf-print-area .karne-bolum .chart-box { height: 160px !important; max-height: 160px !important; margin-top: 10px !important; margin-bottom: 8px !important; }
-#pdf-print-area .karne-bolum .chart-box img { max-height: 150px !important; width: 100% !important; object-fit: contain !important; }
-#pdf-print-area .card { page-break-inside: avoid !important; margin-bottom: 10px !important; }
-#pdf-print-area .info-box { page-break-inside: avoid !important; min-height: 45px !important; margin-bottom: 6px !important; }
-#pdf-print-area .chart-box { page-break-inside: avoid !important; height: auto !important; max-height: 200px !important; margin-bottom: 10px !important; }
-#pdf-print-area .chart-box img { max-height: 180px !important; }
-#pdf-print-area .row { page-break-inside: avoid !important; }
-#pdf-print-area .trend-card { page-break-inside: avoid !important; padding: 12px !important; margin-bottom: 10px !important; }
-#pdf-print-area h4 { font-size: 14px !important; margin-bottom: 10px !important; }
-
-/* Hata Özeti Kutuları */
+/* ===== ANALIZ SAYFASI OGRENCİ ARAMA ===== */
 .preview-box { background: #f8f9fa; border-left: 4px solid #17a2b8; padding: 10px 15px; margin-bottom: 15px; border-radius: 4px; }
 .preview-box.warning { border-left-color: #ffc107; background: #fff3cd; }
 .preview-box.danger { border-left-color: #dc3545; background: #f8d7da; }
@@ -467,7 +461,6 @@ body.dark-mode .trend-card { background: linear-gradient(135deg, #1f2940 0%, #25
   </div>
 </div>
 
-<div id="pdf-print-area"></div>
 <div id="toastContainer"></div>
 
 <!-- ŞİFREMİ UNUTTUM MODALI -->
@@ -897,225 +890,214 @@ function xXLMul(cId,fn){
   XLSX.writeFile(wb,fn+'.xlsx');
 }
 
-async function xPD(id,fn,btn){
-  const { jsPDF } = window.jspdf;
-  let orig=btn.innerHTML; btn.innerHTML="<i class='fas fa-spinner fa-spin mr-1'></i>"; ld(1,'PDF Hazırlanıyor...');
-  
-  try {
-    let sourceEl = getEl(id);
-    
-    // Karne ise sayfa başına bir sınav türü
-    let bolumler = sourceEl.querySelectorAll('.karne-bolum');
-    if(bolumler.length > 0) {
-      await xPDKarne(sourceEl, bolumler, fn, btn, orig);
-      return;
+/* ===== YAZDIR FONKSİYONU ===== */
+function xPR(sourceId, title, btn) {
+  let orig = btn.innerHTML;
+  btn.innerHTML = "<i class='fas fa-spinner fa-spin mr-1'></i>";
+  btn.disabled = true;
+
+  let sourceEl = getEl(sourceId);
+  if (!sourceEl) { btn.innerHTML = orig; btn.disabled = false; return; }
+
+  // Canvas'ları önce img'e çevir
+  let canvasMap = [];
+  sourceEl.querySelectorAll('canvas').forEach(cv => {
+    try { canvasMap.push({ id: cv.id, url: cv.toDataURL('image/png', 1.0) }); } catch(e) {}
+  });
+
+  // AdminLTE + FontAwesome CSS linklerini topla
+  let cssLinks = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
+    .map(l => `<link rel="stylesheet" href="${l.href}">`)
+    .join('\n');
+
+  // Kaynak HTML klonla
+  let clone = sourceEl.cloneNode(true);
+
+  // Klon içindeki canvas'ları img ile değiştir
+  clone.querySelectorAll('canvas').forEach((cv, idx) => {
+    let mapEntry = canvasMap.find(m => m.id && m.id === cv.id) || canvasMap[idx];
+    if (!mapEntry) { cv.remove(); return; }
+    let img = document.createElement('img');
+    img.src = mapEntry.url;
+    img.className = 'print-chart-img';
+    cv.parentElement.replaceChild(img, cv);
+  });
+
+  // Buton satırlarını gizle
+  clone.querySelectorAll('.no-print, .d-flex.justify-content-end').forEach(el => el.remove());
+
+  // pdf-header-bar'ı göster
+  clone.querySelectorAll('.pdf-header-bar').forEach(el => el.style.display = 'flex');
+
+  // karne-bolum için her bölüm arasına sayfa sonu ekle
+  let bolumler = clone.querySelectorAll('.karne-bolum');
+  bolumler.forEach((b, i) => {
+    if (i < bolumler.length - 1) b.style.pageBreakAfter = 'always';
+  });
+
+  let printHtml = `<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>${title}</title>
+  ${cssLinks}
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      background: #fff !important;
+      color: #000 !important;
+      font-family: 'Source Sans Pro', Arial, sans-serif;
+      font-size: 12px;
+      margin: 0;
+      padding: 0;
     }
-    
-    let printArea = getEl('pdf-print-area');
-    
-    // Canvas'lari onceden image'a cevir
-    let canvasDataUrls = [];
-    sourceEl.querySelectorAll('canvas').forEach(cv => {
-      try { canvasDataUrls.push({ id: cv.id || '', url: cv.toDataURL('image/png', 1.0) }); } catch(e) {}
-    });
-    
-    // Header bilgisini al
-    let headerBar = sourceEl.querySelector('.pdf-header-bar');
-    let headerHtml = headerBar ? headerBar.outerHTML : `<div class="pdf-header-bar"><h2 style="margin:0;">${fn}</h2></div>`;
-    printArea.innerHTML = headerHtml + sourceEl.innerHTML;
-    
-    // Duplicate header'lari kaldir
-    let allHeaders = printArea.querySelectorAll('.pdf-header-bar');
-    if(allHeaders.length > 1) { for(let i=1; i<allHeaders.length; i++) allHeaders[i].remove(); }
-    
-    // Canvas'lari img ile degistir
-    let chartCount = canvasDataUrls.length;
-    let maxH = chartCount <= 1 ? 180 : (chartCount <= 2 ? 150 : 120);
-    printArea.querySelectorAll('canvas').forEach((cv, i) => {
-      let data = canvasDataUrls[i]; if(!data) return;
-      let img = document.createElement('img');
-      img.src = data.url;
-      img.style.cssText = `max-width:100%;width:100%;max-height:${maxH}px;height:auto;object-fit:contain;display:block;margin:0 auto;`;
-      let parent = cv.parentElement;
-      parent.style.height = 'auto';
-      parent.style.maxHeight = maxH + 'px';
-      parent.replaceChild(img, cv);
-    });
-    
-    // Butonlari gizle
-    printArea.querySelectorAll('.btn,.d-flex.justify-content-end').forEach(b => b.style.display = 'none');
-    
-    // Print area'yi goster
-    getEl('mainApp').style.display = 'none';
-    printArea.style.display = 'block';
-    printArea.style.width = '1100px';
-    printArea.style.padding = '15px 20px';
-    window.scrollTo(0, 0);
-    
-    await new Promise(r => setTimeout(r, 200));
-    
-    // PDF olustur - A4 Landscape
-    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-    const margin = 8;
-    const usableWidth = pageWidth - (margin * 2);
-    const usableHeight = pageHeight - (margin * 2);
-    
-    // html2canvas ile render et
-    const canvas = await html2canvas(printArea, {
-      scale: 2,
-      useCORS: true,
-      logging: false,
-      windowWidth: 1100,
-      backgroundColor: '#ffffff'
-    });
-    
-    const imgData = canvas.toDataURL('image/jpeg', 0.95);
-    const imgWidth = usableWidth;
-    const imgHeight = (canvas.height * usableWidth) / canvas.width;
-    
-    // Sayfa sayisini hesapla
-    let heightLeft = imgHeight;
-    let position = 0;
-    let pageNum = 1;
-    
-    // Ilk sayfa
-    pdf.addImage(imgData, 'JPEG', margin, margin, imgWidth, imgHeight, undefined, 'FAST', 0);
-    heightLeft -= usableHeight;
-    
-    // Ek sayfalar
-    while(heightLeft > 0) {
-      position = heightLeft - imgHeight;
-      pdf.addPage();
-      pageNum++;
-      pdf.addImage(imgData, 'JPEG', margin, position + margin, imgWidth, imgHeight, undefined, 'FAST', 0);
-      heightLeft -= usableHeight;
+    /* ===== YAZDIR HEADER BAR ===== */
+    .pdf-header-bar {
+      display: flex !important;
+      align-items: center;
+      justify-content: space-between;
+      background: #1e3a5f !important;
+      color: #fff !important;
+      padding: 12px 20px;
+      border-radius: 6px;
+      margin-bottom: 14px;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
-    
-    // Sayfa numaralari ekle
-    const totalPages = pdf.internal.getNumberOfPages();
-    for(let i = 1; i <= totalPages; i++) {
-      pdf.setPage(i);
-      pdf.setFontSize(8);
-      pdf.setTextColor(128);
-      pdf.text(`Sayfa ${i} / ${totalPages}`, pageWidth - margin - 20, pageHeight - 4);
+    .pdf-header-bar span { color: #fff !important; }
+    /* ===== TABLO ===== */
+    .table { width: 100% !important; border-collapse: collapse !important; font-size: 10px !important; margin-bottom: 10px; }
+    .table th, .table td { border: 1px solid #aaa !important; padding: 3px 5px !important; color: #000 !important; }
+    .table thead th {
+      background: #1e3a5f !important; color: #fff !important;
+      -webkit-print-color-adjust: exact; print-color-adjust: exact;
+      font-size: 9px !important;
     }
-    
-    pdf.save(fn + '.pdf');
-    
-    printArea.style.display = 'none';
-    printArea.innerHTML = '';
-    getEl('mainApp').style.display = 'block';
-    btn.innerHTML = orig;
-    ld(0);
-    showToast('PDF basariyla indirildi.', 'success');
-    
-  } catch(err) {
-    console.error(err);
-    getEl('pdf-print-area').style.display = 'none';
-    getEl('pdf-print-area').innerHTML = '';
-    getEl('mainApp').style.display = 'block';
-    btn.innerHTML = orig;
-    ld(0);
-    showToast('PDF olusturulamadi: ' + err.message, 'error');
+    thead { display: table-header-group; }
+    tr { page-break-inside: avoid; }
+    /* ===== RENK SATARLARI ===== */
+    tr.highlight-row td {
+      background: #fff3cd !important; font-weight: bold !important;
+      -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    }
+    tr.absent-row td {
+      background: #f8d7da !important; color: #721c24 !important;
+      -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    }
+    tr.avg-row td {
+      background: #e6f0fa !important; color: #1e3a5f !important;
+      font-weight: bold !important; border-top: 2px solid #1e3a5f !important;
+      -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    }
+    /* ===== CARD / INFO-BOX ===== */
+    .card { border: 1px solid #dee2e6 !important; border-radius: 4px; margin-bottom: 10px; page-break-inside: avoid; }
+    .card-header { background: #f8f9fa !important; padding: 8px 12px; border-bottom: 1px solid #dee2e6; }
+    .card-body { padding: 10px 12px; }
+    .card-outline.card-primary { border-top: 3px solid #1e3a5f !important; }
+    .card-outline.card-info    { border-top: 3px solid #17a2b8 !important; }
+    .card-outline.card-success { border-top: 3px solid #28a745 !important; }
+    .card-outline.card-warning { border-top: 3px solid #ffc107 !important; }
+    .info-box {
+      display: flex !important; align-items: stretch;
+      border-radius: 4px; margin-bottom: 6px;
+      page-break-inside: avoid;
+      -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    }
+    .info-box-icon {
+      display: flex !important; align-items: center; justify-content: center;
+      width: 60px !important; min-width: 60px;
+      font-size: 1.4em; color: #fff !important;
+      -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    }
+    .info-box-content { padding: 8px 10px; flex: 1; }
+    .info-box-text { display: block; font-size: 0.78em; text-transform: uppercase; font-weight: 600; }
+    .info-box-number { display: block; font-size: 1.1em; font-weight: bold; margin: 2px 0; }
+    .progress-description { display: block; font-size: 0.78em; }
+    .bg-primary   { background: #1e3a5f !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .bg-success   { background: #28a745 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .bg-danger    { background: #dc3545 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .bg-warning   { background: #ffc107 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .bg-info      { background: #17a2b8 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .bg-teal      { background: #20c997 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    /* ===== GRAFİK ===== */
+    .print-chart-img {
+      max-width: 100%; width: 100%;
+      max-height: 220px; height: auto;
+      object-fit: contain; display: block; margin: 4px auto 10px;
+    }
+    .chart-box { height: auto !important; page-break-inside: avoid; margin-bottom: 10px; }
+    /* ===== LAYOUT ===== */
+    .row { display: flex !important; flex-wrap: wrap; margin: 0 -8px; }
+    .col-md-3 { width: 25% !important; padding: 0 8px; }
+    .col-md-4 { width: 33.33% !important; padding: 0 8px; }
+    .col-md-6 { width: 50% !important; padding: 0 8px; }
+    .col-lg-4 { width: 33.33% !important; padding: 0 8px; }
+    .col-lg-6 { width: 50% !important; padding: 0 8px; }
+    .col-sm-6 { width: 50% !important; padding: 0 8px; }
+    .col-sm-12 { width: 100% !important; padding: 0 8px; }
+    /* ===== TREND CARD ===== */
+    .trend-card { background: #f8f9fa !important; border-radius: 8px; padding: 12px; margin-bottom: 10px; page-break-inside: avoid; }
+    .trend-indicator { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 20px; font-size: 0.82em; font-weight: bold; }
+    .trend-up   { background: rgba(40,167,69,0.15); color: #28a745; }
+    .trend-down { background: rgba(220,53,69,0.15); color: #dc3545; }
+    .trend-stable { background: rgba(108,117,125,0.15); color: #6c757d; }
+    .border-left { border-left: 1px solid #dee2e6; }
+    /* ===== KARNE BÖLÜM ===== */
+    .karne-bolum { page-break-after: always; page-break-inside: avoid; padding-bottom: 8px; }
+    .karne-bolum:last-child { page-break-after: auto; }
+    /* ===== YARDIMCI ===== */
+    .text-primary  { color: #1e3a5f !important; }
+    .text-success  { color: #28a745 !important; }
+    .text-danger   { color: #dc3545 !important; }
+    .text-muted    { color: #6c757d !important; }
+    .text-center   { text-align: center; }
+    .text-right    { text-align: right; }
+    .font-weight-bold { font-weight: bold; }
+    .badge { display: inline-block; padding: 2px 6px; border-radius: 10px; font-size: 0.75em; }
+    .badge-info { background: #17a2b8; color: #fff; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .shadow-sm { box-shadow: none !important; }
+    h4 { font-size: 14px !important; margin: 8px 0; }
+    h5 { font-size: 12px !important; margin: 6px 0; }
+    small { font-size: 0.82em; }
+    /* ===== GİZLE ===== */
+    .no-print, .d-flex.justify-content-end, .scroll-hint,
+    button, .btn { display: none !important; }
+    .hide-mobile { display: table-cell !important; }
+    .scroll { overflow: visible !important; }
+    /* Info-box inline style renkleri için genel fallback */
+    [style*="background:#6c757d"] { background: #6c757d !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    [style*="background: #6c757d"] { background: #6c757d !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .info-box[style*="background:#6c757d"] .info-box-icon,
+    .info-box[style*="background:#6c757d"] .info-box-content,
+    .info-box[style*="background:#6c757d"] .info-box-text,
+    .info-box[style*="background:#6c757d"] .info-box-number { color: #fff !important; }
+    /* ===== SAYFA KENARLIKLARI ===== */
+    @page { margin: 12mm 10mm; size: A4 landscape; }
+    @page :first { margin-top: 10mm; }
+  </style>
+</head>
+<body>
+  <div style="padding: 0 4px;">
+    ${clone.outerHTML}
+  </div>
+  <script>
+    window.addEventListener('load', function() {
+      setTimeout(function() { window.print(); }, 400);
+    });
+  <\/script>
+</body>
+</html>`;
+
+  let printWin = window.open('', '_blank', 'width=1100,height=800,scrollbars=yes');
+  if (!printWin) {
+    showToast('Popup engellendi! Lütfen tarayıcı ayarlarından popup iznini açın.', 'warning', 6000);
+    btn.innerHTML = orig; btn.disabled = false; return;
   }
-}
+  printWin.document.write(printHtml);
+  printWin.document.close();
 
-/* ===== KARNE PDF - SINAV TÜRÜNE GÖRE SAYFALAMA ===== */
-async function xPDKarne(sourceEl, bolumler, fn, btn, orig) {
-  const { jsPDF } = window.jspdf;
-  const printArea = getEl('pdf-print-area');
-  const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-  const pageWidth = pdf.internal.pageSize.getWidth();
-  const pageHeight = pdf.internal.pageSize.getHeight();
-  const margin = 8;
-  const usableWidth = pageWidth - (margin * 2);
-  const usableHeight = pageHeight - (margin * 2);
-
-  // Öğrenci başlık bar'ı
-  let headerBar = sourceEl.querySelector('.pdf-header-bar');
-  let headerHtml = headerBar ? headerBar.outerHTML : '';
-
-  let isFirstPage = true;
-
-  for(let i = 0; i < bolumler.length; i++) {
-    let bolum = bolumler[i];
-
-    // Canvas'ları img'e çevir
-    let canvasDataUrls = [];
-    bolum.querySelectorAll('canvas').forEach(cv => {
-      try { canvasDataUrls.push({ url: cv.toDataURL('image/png', 1.0) }); } catch(e) {}
-    });
-
-    // Print alanını temizle ve doldur
-    printArea.innerHTML = headerHtml + bolum.outerHTML;
-
-    // Canvas'ları img ile değiştir
-    printArea.querySelectorAll('canvas').forEach((cv, idx) => {
-      let data = canvasDataUrls[idx]; if(!data) return;
-      let img = document.createElement('img');
-      img.src = data.url;
-      img.style.cssText = `max-width:100%;width:100%;max-height:160px;height:auto;object-fit:contain;display:block;margin:0 auto;`;
-      let parent = cv.parentElement;
-      parent.style.height = 'auto';
-      parent.style.maxHeight = '160px';
-      parent.replaceChild(img, cv);
-    });
-
-    // Butonları gizle
-    printArea.querySelectorAll('.btn,.d-flex.justify-content-end').forEach(b => b.style.display = 'none');
-
-    printArea.style.display = 'block';
-    printArea.style.width = '1100px';
-    printArea.style.padding = '15px 20px';
-    getEl('mainApp').style.display = 'none';
-    window.scrollTo(0, 0);
-
-    await new Promise(r => setTimeout(r, 150));
-
-    const canvas = await html2canvas(printArea, {
-      scale: 2, useCORS: true, logging: false,
-      windowWidth: 1100, backgroundColor: '#ffffff'
-    });
-
-    const imgData = canvas.toDataURL('image/jpeg', 0.92);
-    const imgW = usableWidth;
-    const imgH = (canvas.height * usableWidth) / canvas.width;
-
-    if(!isFirstPage) pdf.addPage();
-    isFirstPage = false;
-
-    // İlk sayfayı yaz; fazlaysa alt sayfalar ekle
-    let heightLeft = imgH;
-    let position = 0;
-    pdf.addImage(imgData, 'JPEG', margin, margin, imgW, imgH, undefined, 'FAST', 0);
-    heightLeft -= usableHeight;
-    while(heightLeft > 0) {
-      position = heightLeft - imgH;
-      pdf.addPage();
-      pdf.addImage(imgData, 'JPEG', margin, position + margin, imgW, imgH, undefined, 'FAST', 0);
-      heightLeft -= usableHeight;
-    }
-  }
-
-  // Sayfa numaraları
-  const totalPages = pdf.internal.getNumberOfPages();
-  for(let i = 1; i <= totalPages; i++) {
-    pdf.setPage(i);
-    pdf.setFontSize(8);
-    pdf.setTextColor(128);
-    pdf.text(`Sayfa ${i} / ${totalPages}`, pageWidth - margin - 20, pageHeight - 4);
-  }
-
-  pdf.save(fn + '.pdf');
-
-  printArea.style.display = 'none';
-  printArea.innerHTML = '';
-  getEl('mainApp').style.display = 'block';
   btn.innerHTML = orig;
-  ld(0);
-  showToast('PDF başarıyla indirildi.', 'success');
+  btn.disabled = false;
 }
 
 /* ===== ARAMA İŞLEMLERİ ===== */
@@ -1321,7 +1303,7 @@ function rH(){
 
   function abbrevSub(name, shorten){ return shorten?name.substring(0,3):name; }
 
-  let h=`<div class="d-flex justify-content-end mb-2"><button class="btn btn-success btn-sm mr-2" onclick="xXLMul('kCont','${s.name}_Karne')"><i class='fas fa-file-excel mr-1'></i>Excel</button><button class="btn btn-primary btn-sm" onclick="xPD('kCont','${s.name}_Karne',this)"><i class='fas fa-file-pdf mr-1'></i>PDF</button></div>
+  let h=`<div class="d-flex justify-content-end mb-2"><button class="btn btn-success btn-sm mr-2" onclick="xXLMul('kCont','${s.name}_Karne')"><i class='fas fa-file-excel mr-1'></i>Excel</button><button class="btn-print no-print" onclick="xPR('kCont','${s.name}_Karne',this)"><i class='fas fa-print'></i>Yazdır</button></div>
   <div id="kCont" class="card card-primary card-outline"><div class="pdf-header-bar"><span style="font-size:18px;"><strong>${s.name}</strong> — Karne Özeti</span><span style="font-size:14px;">Sınıf: ${s.class} | ${new Date().toLocaleDateString('tr-TR')}</span></div><div class="card-header"><h3 class="card-title"><i class="fas fa-user-graduate mr-2"></i>${s.name} Karnesi</h3></div><div class="card-body">`;
 
   typs.forEach(t=>{
@@ -1450,7 +1432,7 @@ function rAnl(){
       </div>`;
     }
     
-    let h=`<div class="d-flex justify-content-end mb-2"><button class="btn btn-success btn-sm mr-2" onclick="xXL('tS','Ogrenci_Analizi')"><i class='fas fa-file-excel mr-1'></i>Excel</button><button class="btn btn-primary btn-sm" onclick="xPD('pS','Ogrenci_Analizi',this)"><i class='fas fa-file-pdf mr-1'></i>PDF</button></div><div id="pS" class="card card-outline card-info"><div class="pdf-header-bar"><span style="font-size:18px;"><strong>${st.name}</strong> — Analiz (${eT} / ${ls})</span><span style="font-size:14px;">Sınıf: ${st.class}</span></div><div class="card-header"><h3 class="card-title">📈 ${st.name} — Analiz (${ls})</h3></div><div class="card-body">${trendHtml}<div class="table-responsive"><table class="table table-sm table-hover table-bordered" id="tS"><thead><tr><th>#</th><th>Tarih</th><th>Yayınevi</th><th>${valHeader}</th><th>Değişim</th></tr></thead><tbody>${rows}${avgRowHtml}</tbody></table></div></div><div class="chart-box"><canvas id="cA"></canvas></div></div>`;
+    let h=`<div class="d-flex justify-content-end mb-2"><button class="btn btn-success btn-sm mr-2" onclick="xXL('tS','Ogrenci_Analizi')"><i class='fas fa-file-excel mr-1'></i>Excel</button><button class="btn-print no-print" onclick="xPR('pS','Ogrenci_Analizi',this)"><i class='fas fa-print'></i>Yazdır</button></div><div id="pS" class="card card-outline card-info"><div class="pdf-header-bar"><span style="font-size:18px;"><strong>${st.name}</strong> — Analiz (${eT} / ${ls})</span><span style="font-size:14px;">Sınıf: ${st.class}</span></div><div class="card-header"><h3 class="card-title">📈 ${st.name} — Analiz (${ls})</h3></div><div class="card-body">${trendHtml}<div class="table-responsive"><table class="table table-sm table-hover table-bordered" id="tS"><thead><tr><th>#</th><th>Tarih</th><th>Yayınevi</th><th>${valHeader}</th><th>Değişim</th></tr></thead><tbody>${rows}${avgRowHtml}</tbody></table></div></div><div class="chart-box"><canvas id="cA"></canvas></div></div>`;
     r.innerHTML=h;
     
     chartTimer=setTimeout(()=>{ 
@@ -1498,7 +1480,7 @@ function rAnl(){
       clsAvgRow += `<tr class="avg-row"><td colspan="4" style="text-align:right; padding-right:15px;">GENEL ORTALAMA</td><td>${genAvg}</td></tr>`; 
     }
     let clsLabel=''; {let lv=getEl('aLvl').value,br=getEl('aBr').value; if(lv&&br)clsLabel=lv+br; else if(lv)clsLabel=lv+'. Sınıflar'; else if(br)clsLabel=br; else clsLabel='Hepsi';}
-    let h=`<div class="d-flex justify-content-end mb-2"><button class="btn btn-success btn-sm mr-2" onclick="xXL('tC','Sinif_Analizi')"><i class='fas fa-file-excel mr-1'></i>Excel</button><button class="btn btn-primary btn-sm" onclick="xPD('pC','Sinif_Analizi',this)"><i class='fas fa-file-pdf mr-1'></i>PDF</button></div><div id="pC" class="card card-outline card-success"><div class="pdf-header-bar"><span style="font-size:18px;">Sınıf Analizi — ${eT} (${clsLabel} / ${ls})</span><span style="font-size:14px;"></span></div><div class="card-header"><h3 class="card-title">📊 Sınıf Analizi (${ls})</h3></div><div class="card-body"><div class="table-responsive"><table class="table table-sm table-hover table-bordered" id="tC"><thead><tr><th>#</th><th>Sınıf</th><th>Tarih</th><th>Yayınevi</th><th>Ortalama</th></tr></thead><tbody>${tr.join('')}${clsAvgRow}</tbody></table></div></div><div class="chart-box"><canvas id="cA"></canvas></div></div>`;
+    let h=`<div class="d-flex justify-content-end mb-2"><button class="btn btn-success btn-sm mr-2" onclick="xXL('tC','Sinif_Analizi')"><i class='fas fa-file-excel mr-1'></i>Excel</button><button class="btn-print no-print" onclick="xPR('pC','Sinif_Analizi',this)"><i class='fas fa-print'></i>Yazdır</button></div><div id="pC" class="card card-outline card-success"><div class="pdf-header-bar"><span style="font-size:18px;">Sınıf Analizi — ${eT} (${clsLabel} / ${ls})</span><span style="font-size:14px;"></span></div><div class="card-header"><h3 class="card-title">📊 Sınıf Analizi (${ls})</h3></div><div class="card-body"><div class="table-responsive"><table class="table table-sm table-hover table-bordered" id="tC"><thead><tr><th>#</th><th>Sınıf</th><th>Tarih</th><th>Yayınevi</th><th>Ortalama</th></tr></thead><tbody>${tr.join('')}${clsAvgRow}</tbody></table></div></div><div class="chart-box"><canvas id="cA"></canvas></div></div>`;
     r.innerHTML=h;
     
     chartTimer=setTimeout(()=>{ 
@@ -1585,7 +1567,7 @@ function rAnl(){
     
     let lvlStr = (lvl ? `${lvl}. Sınıflar` : 'Tüm Sınıflar') + (br ? ` / ${br} Şubesi` : '');
     let h = `
-    <div class="d-flex justify-content-end mb-2"><button class="btn btn-primary btn-sm" onclick="xPD('pSubj','${subj}_Analizi',this)"><i class='fas fa-file-pdf mr-1'></i>PDF</button></div>
+    <div class="d-flex justify-content-end mb-2"><button class="btn-print no-print" onclick="xPR('pSubj','${subj}_Analizi',this)"><i class='fas fa-print'></i>Yazdır</button></div>
     <div id="pSubj" class="card card-outline card-primary" style="background:#f4f6f9; padding:15px;">
       <div class="pdf-header-bar"><span style="font-size:18px;"><strong>${subj}</strong> — Ders Analizi</span><span>${eT} | ${lvlStr}</span></div>
       <h4 class="mb-3 text-center" style="color:#1e3a5f; font-weight:bold;">${subj} Dersi Performans Analizi <small class="d-block text-muted mt-1" style="font-size:0.6em;">(${eT} | ${lvlStr} | ${dates.length} Sınav)</small></h4>
@@ -1700,7 +1682,7 @@ function rAnl(){
         let bottom5Html = bottom5List.length ? bottom5List.map((e,i) => buildRow(e, i, 'bottom5', 'kez')).join('') : '<tr><td colspan="7" class="text-center">Veri yok</td></tr>';
         let lvlStr = targetLvl ? `${targetLvl}. Sınıflar` : 'Tüm Sınıflar', safeName = `${eT}_Genel_Ozet`;
 
-        let h = `<div class="d-flex justify-content-end mb-2"><button class="btn btn-primary btn-sm" onclick="xPD('pGenSummary','${safeName}',this)"><i class='fas fa-file-pdf mr-1'></i>PDF</button></div>
+        let h = `<div class="d-flex justify-content-end mb-2"><button class="btn-print no-print" onclick="xPR('pGenSummary','${safeName}',this)"><i class='fas fa-print'></i>Yazdır</button></div>
         <div id="pGenSummary" class="card card-outline card-primary" style="background:#f4f6f9; padding:15px;">
             <div class="pdf-header-bar"><span style="font-size:18px;"><strong>${eT}</strong> — Genel Sınav Özeti</span><span>${lvlStr}</span></div>
             <h4 class="mb-3 text-center" style="color:#1e3a5f; font-weight:bold;">${eT} Sınavları Genel Değerlendirme <small class="d-block text-muted mt-1" style="font-size:0.6em;">(${lvlStr} | Toplam ${dates.length} Sınav)</small></h4>
@@ -1750,7 +1732,7 @@ function rAnl(){
       let bottomExams = [...sortedExams].reverse().slice(0,5); let bottom5Html = bottomExams.map((e,i) => buildRow({no:e.studentNo, cls:e.studentClass, totalNet:e.totalNet, score:e.score}, sortedExams.length - i - 1)).join('');
       let safeName = `${eT}_${dt.replace(/\./g,'-')}_Ozet`, lvlStr = targetLvl ? `${targetLvl}. Sınıflar` : 'Tüm Sınıflar';
       
-      let h = `<div class="d-flex justify-content-end mb-2"><button class="btn btn-primary btn-sm" onclick="xPD('pSummary','Sinav_Ozeti_${safeName}',this)"><i class='fas fa-file-pdf mr-1'></i>PDF</button></div>
+      let h = `<div class="d-flex justify-content-end mb-2"><button class="btn-print no-print" onclick="xPR('pSummary','Sinav_Ozeti_${safeName}',this)"><i class='fas fa-print'></i>Yazdır</button></div>
       <div id="pSummary" class="card card-outline card-info" style="background:#f4f6f9; padding:15px;">
           <div class="pdf-header-bar"><span style="font-size:18px;"><strong>${eT}</strong> — ${dt} Sınav Özeti</span><span>${lvlStr}</span></div>
           <h4 class="mb-3 text-center" style="color:#1e3a5f; font-weight:bold;">${eT} Sınavı (${dt}) Değerlendirmesi <small class="d-block text-muted mt-1" style="font-size:0.6em;">(${lvlStr})</small></h4>
@@ -1792,7 +1774,7 @@ function rAnl(){
         listAvgRow = `<tr class="avg-row"><td colspan="5" style="text-align:right; padding-right:15px;">ORTALAMA (${attended.length} Kişi)</td>${avgSubCols}<td>${avgNet}</td><td>${listAvgScore}</td><td colspan="3">—</td></tr>`;
       }
       let lvlStr = targetLvl ? `${targetLvl}. Sınıflar ` : '', safeName=`${eT}_${dt.replace(/\./g,'-')}`;
-      let h=`<div class="d-flex justify-content-end mb-2"><button class="btn btn-success btn-sm mr-2" onclick="xXL('tED','Sinav_${safeName}')"><i class='fas fa-file-excel mr-1'></i>Excel</button><button class="btn btn-primary btn-sm" onclick="xPD('pED','Sinav_${safeName}',this)"><i class='fas fa-file-pdf mr-1'></i>PDF</button></div><div id="pED" class="card card-outline card-warning"><div class="pdf-header-bar"><span style="font-size:18px;"><strong>${eT}</strong> — ${dt} ${lvlStr}Sonuçları</span><span style="font-size:14px;">${metaStr}</span></div><div class="card-header d-flex justify-content-between align-items-center flex-wrap"><h3 class="card-title mb-0">📋 ${eT} — ${dt} ${lvlStr}Sınav Analizi</h3><span class="badge badge-info ml-auto" style="font-size:0.9em;"><i class="fas fa-info-circle mr-1"></i>${metaStr}</span></div><div class="card-body"><div class="scroll-hint"><i class="fas fa-arrows-alt-h mr-1"></i>Tabloyu kaydırın</div><div class="scroll"><table class="table table-sm table-hover table-bordered" id="tED"><thead><tr><th>#</th><th>Ad Soyad</th><th>Sınıf</th><th class="hide-mobile">Tarih</th><th class="hide-mobile">Yayınevi</th>${headCols}<th>Top.Net</th><th>Puan</th><th class="hide-mobile">Snf(S/K)</th><th class="hide-mobile">Kur(S/K)</th><th class="hide-mobile">Gen(S/K)</th></tr></thead><tbody>${bodyRows}${listAvgRow}</tbody></table></div></div></div>`;
+      let h=`<div class="d-flex justify-content-end mb-2"><button class="btn btn-success btn-sm mr-2" onclick="xXL('tED','Sinav_${safeName}')"><i class='fas fa-file-excel mr-1'></i>Excel</button><button class="btn-print no-print" onclick="xPR('pED','Sinav_${safeName}',this)"><i class='fas fa-print'></i>Yazdır</button></div><div id="pED" class="card card-outline card-warning"><div class="pdf-header-bar"><span style="font-size:18px;"><strong>${eT}</strong> — ${dt} ${lvlStr}Sonuçları</span><span style="font-size:14px;">${metaStr}</span></div><div class="card-header d-flex justify-content-between align-items-center flex-wrap"><h3 class="card-title mb-0">📋 ${eT} — ${dt} ${lvlStr}Sınav Analizi</h3><span class="badge badge-info ml-auto" style="font-size:0.9em;"><i class="fas fa-info-circle mr-1"></i>${metaStr}</span></div><div class="card-body"><div class="scroll-hint"><i class="fas fa-arrows-alt-h mr-1"></i>Tabloyu kaydırın</div><div class="scroll"><table class="table table-sm table-hover table-bordered" id="tED"><thead><tr><th>#</th><th>Ad Soyad</th><th>Sınıf</th><th class="hide-mobile">Tarih</th><th class="hide-mobile">Yayınevi</th>${headCols}<th>Top.Net</th><th>Puan</th><th class="hide-mobile">Snf(S/K)</th><th class="hide-mobile">Kur(S/K)</th><th class="hide-mobile">Gen(S/K)</th></tr></thead><tbody>${bodyRows}${listAvgRow}</tbody></table></div></div></div>`;
       r.innerHTML=h; if(aNo) setTimeout(()=>{ let hlRow=getEl('tED')?.querySelector('tr.highlight-row'); if(hlRow)hlRow.scrollIntoView({behavior:'smooth',block:'center'}); },300);
     }
   }
