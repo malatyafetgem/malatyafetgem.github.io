@@ -792,6 +792,12 @@ async function reqAnl() {
         if (stGrade && m.grades && m.grades.length > 0 && !m.grades.includes(stGrade)) return; 
       }
       
+      if (aT === 'subject') {
+        // Ders analizinde seçili sınıf seviyesine göre filtrele
+        let lvlFilter = getEl('aLvl') ? getEl('aLvl').value : '';
+        if (lvlFilter && m.grades && m.grades.length > 0 && !m.grades.includes(lvlFilter)) return;
+      }
+      
       if (aT === 'examdetail' && sub !== 'general_summary') {
         if (m.date === dt) {
           needed.push(bId);
@@ -822,7 +828,7 @@ async function sAct(no,clr=false){
   getEl('homeArea').innerHTML='';
   
   if(no) await reqProfile();
-  if(getEl('sonuclar').classList.contains('active-pane')){uExamTypes();uExamDates();reqAnl();}
+  if(getEl('sonuclar').classList.contains('active-pane')){ reqUI(); }
 }
 
 function sTab(id,el){
@@ -1137,9 +1143,15 @@ function execAnlStuSearch(){
   res.style.display='block';
 }
 function anlStuSelect(no){
-  getEl('anlStuRes').style.display='none'; let s=DB.s.find(x=>x.no===no);
-  if(s)getEl('anlStuInp').value=s.name+' ('+s.class+')';
-  sAct(no); reqAnl(); 
+  getEl('anlStuRes').style.display='none'; 
+  let s=DB.s.find(x=>x.no===no);
+  if(s) getEl('anlStuInp').value=s.name+' ('+s.class+')';
+  // aNo'yu ve badge'i güncelle (reqProfile çağırmadan)
+  aNo = no;
+  let ab=getEl('anlStuBadge'); 
+  if(ab) ab.innerHTML=s?`<span class="badge badge-success badge-pill px-2 py-1" style="font-size:0.8em;"><i class="fas fa-check-circle mr-1"></i>${s.name} (${s.class})</span>`:'';
+  getEl('aBadge').innerHTML=s?`<span class="badge badge-success badge-pill px-3 py-2"><i class="fas fa-check-circle mr-1"></i>${s.name} (${s.class})</span>`:'<span class="text-muted">Seçilmedi</span>';
+  reqUI(); // uUI() grade'i ayarlar, sonra reqAnl() çalışır
 }
 function anlStuClear(){
   getEl('anlStuInp').value=''; getEl('anlStuRes').style.display='none'; getEl('anlStuRes').innerHTML=''; getEl('anlStuBadge').innerHTML='';
@@ -1218,11 +1230,17 @@ function uExamDates(){
     let st = DB.s.find(x=>x.no===aNo);
     if(st) stuGrade = getGrade(st.class);
   }
+  // subject analizinde de grade filtresi
+  let subjGrade = '';
+  if(aT === 'subject') {
+    subjGrade = getEl('aLvl') ? getEl('aLvl').value : '';
+  }
 
   Object.values(EXAM_META).forEach(m => {
     if(m.examType === t) {
       // Sınıf seviyesi filtresi uygula
       if(stuGrade && m.grades && m.grades.length > 0 && !m.grades.includes(stuGrade)) return;
+      if(subjGrade && m.grades && m.grades.length > 0 && !m.grades.includes(subjGrade)) return;
       dates.push(m.date);
       if(m.publisher) datePublisherMap[m.date] = m.publisher;
     }
@@ -1262,6 +1280,17 @@ function uUI(){
     });
     getEl('aLvl').innerHTML='<option value="">Tümü</option>'+[...l].sort((a,b)=>parseInt(a)-parseInt(b)).map(x=>`<option value="${x}">${x}. Sınıf</option>`).join('');
     if(t==='subject') getEl('aBr').innerHTML='<option value="">Tümü</option>'+[...b].sort().map(x=>`<option value="${x}">${x}</option>`).join('');
+    // Öğrenci seçiliyse otomatik sınıf seviyesini seç
+    if(aNo) {
+      let selStu = DB.s.find(x=>x.no===aNo);
+      if(selStu) {
+        let m=selStu.class.match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/);
+        if(m) { 
+          getEl('aLvl').value=m[1]; 
+          if(t==='subject') getEl('aBr').value=''; // subject'te şubeyi temizle, sadece seviye seç
+        }
+      }
+    }
   }
   uExamTypes();uSub();uExamDates();
   
@@ -1518,7 +1547,7 @@ function rAnl(){
       classStats[cls].count++;
       classStats[cls].exams.push(e);
       
-      if(!allStudentStats[e.studentNo]) allStudentStats[e.studentNo] = { no: e.studentNo, name: DB.s.find(s=>s.no===e.studentNo)?.name || '—', cls: cls, totalNet: 0, count: 0, nets: [] };
+      if(!allStudentStats[e.studentNo]) { let stuName = DB.s.find(s=>s.no===e.studentNo)?.name || '—'; allStudentStats[e.studentNo] = { no: e.studentNo, name: stuName, cls: cls, totalNet: 0, count: 0, nets: [] }; }
       allStudentStats[e.studentNo].totalNet += e.subs[subj].net;
       allStudentStats[e.studentNo].count++;
       allStudentStats[e.studentNo].nets.push(e.subs[subj].net);
@@ -1542,7 +1571,8 @@ function rAnl(){
         let lastEx = ex.find(e => e.studentNo === st.no && e.date === lastDate);
         if(firstEx && lastEx) {
           let diff = lastEx.subs[subj].net - firstEx.subs[subj].net;
-          trendData.push({ ...st, firstNet: firstEx.subs[subj].net, lastNet: lastEx.subs[subj].net, diff });
+          let stuName = DB.s.find(s => s.no === st.no)?.name || st.name || '—';
+          trendData.push({ ...st, name: stuName, firstNet: firstEx.subs[subj].net, lastNet: lastEx.subs[subj].net, diff });
         }
       });
       trendData.sort((a,b) => b.diff - a.diff);
@@ -1576,7 +1606,7 @@ function rAnl(){
         <div class="col-lg-4">
           <div class="card shadow-sm"><div class="card-header bg-danger text-white"><h3 class="card-title m-0"><i class="fas fa-exclamation-circle mr-1"></i> En Düşük 5 Öğrenci</h3></div>
             <div class="card-body p-0 table-responsive"><table class="table table-sm table-striped m-0" style="font-size:0.85em;"><thead><tr><th>#</th><th>Ad Soyad</th><th>Sınıf</th><th>Ort.Net</th></tr></thead>
-            <tbody>${bottom5.map((s,i) => `<tr><td>${stuArr.length - 4 + i}</td><td>${s.name}</td><td>${s.cls}</td><td><strong>${s.avg.toFixed(2)}</strong></td></tr>`).join('')}</tbody></table></div></div>
+            <tbody>${bottom5.map((s,i) => `<tr><td>${stuArr.length - bottom5.length + i + 1}</td><td>${s.name}</td><td>${s.cls}</td><td><strong>${s.avg.toFixed(2)}</strong></td></tr>`).join('')}</tbody></table></div></div>
         </div>
         <div class="col-lg-4">
           <div class="card shadow-sm"><div class="card-header bg-info text-white"><h3 class="card-title m-0"><i class="fas fa-school mr-1"></i> Sınıf Ortalamaları</h3></div>
@@ -1799,12 +1829,15 @@ async function xDel(){
     await database.ref('db_v2/examMeta').remove();
     DB.s=[]; CACHED_RESULTS={}; DB.e=[]; EXAM_META={}; 
     sAct(null);
+    rTabS(); rTabE(); uStat(); uDrp();
   }
   else if(t==='exam'){
     await database.ref('db_v2/examResults/'+id).remove();
     await database.ref('db_v2/examMeta/'+id).remove();
     if(CACHED_RESULTS[id]) delete CACHED_RESULTS[id];
+    delete EXAM_META[id];
     DB.e = DB.e.filter(x => x.examBatchId !== id); 
+    rTabE(); uStat(); uDrp();
     if(aNo) reqProfile(); else if(getEl('sonuclar').classList.contains('active-pane')) reqAnl();
   }
   else if(t==='all'){
@@ -1823,7 +1856,11 @@ async function svStu(){
   if(s){ s.name=nm; s.class=cc; if(aNo===n) reqProfile(); } 
   else{ DB.s.push({no:n,name:nm,class:cc}); }
   await database.ref('db_v2/students').set(DB.s);
+  rTabS(); uStat();
+  // Seçili öğrenci rozet güncelle
+  if(aNo){ let upd=DB.s.find(x=>x.no===aNo); if(upd){ getEl('aBadge').innerHTML=`<span class="badge badge-success badge-pill px-3 py-2"><i class="fas fa-check-circle mr-1"></i>${upd.name} (${upd.class})</span>`; let ab=getEl('anlStuBadge'); if(ab) ab.innerHTML=`<span class="badge badge-success badge-pill px-2 py-1" style="font-size:0.8em;"><i class="fas fa-check-circle mr-1"></i>${upd.name} (${upd.class})</span>`; } }
   cMod('mStu');
+  showToast('Öğrenci bilgileri kaydedildi.', 'success');
 }
 
 /* ===== EXCEL YÜKLEME VE ÖN İZLEME (ADIM 2 - GÜNCELLENMİŞ VERSİYON) ===== */
@@ -2025,7 +2062,7 @@ function upl(e,t){
             <h5 class="text-primary border-bottom pb-2 mb-3">Sınav Analizi: <strong>${bT}</strong> - ${bD} <small class="text-muted">(${bPub})</small></h5>
             <div class="row">
               <div class="col-md-3"><div class="preview-box" style="padding:10px;"><strong>Geçerli Sonuç:</strong><br><span class="text-success" style="font-size:1.3em;">${validResults.length - absentCount} Kişi</span></div></div>
-              <div class="col-md-3"><div class="preview-box warning" style="padding:10px;" title="Sınıf listesinde olup dosyada puanı olmayanlar."><strong>Sıfır Girilecek:</strong><br><span class="text-warning" style="font-size:1.3em;">${absentCount} Kişi</span></div></div>
+              <div class="col-md-3"><div class="preview-box warning" style="padding:10px;" title="Sınıf listesinde olup Excel'de bulunmayanlar. Katılmadı olarak işaretlenecek."><strong>Katılmadı (Eklenecek):</strong><br><span class="text-warning" style="font-size:1.3em;">${absentCount} Kişi</span></div></div>
               <div class="col-md-3"><div class="preview-box danger" style="padding:10px;" title="Dosyada olan ama sistemde kaydı olmayan öğrenciler."><strong>Sistemde Yok:</strong><br><span class="text-danger" style="font-size:1.3em;">${missingStus.length} Kişi</span></div></div>
               <div class="col-md-3"><div class="preview-box danger" style="padding:10px; background:#f8d7da; border-color:#dc3545;" title="Excel format hataları."><strong>Hatalı Satır:</strong><br><span class="text-danger" style="font-size:1.3em;">${invalidRows.length} Satır</span></div></div>
             </div>
