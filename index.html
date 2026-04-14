@@ -756,9 +756,10 @@ async function reqAnl() {
   Object.keys(EXAM_META).forEach(bId => {
     let m = EXAM_META[bId];
     if (m.examType === eT) {
-      if (aT === 'student' && aNo) { let st = DB.s.find(x => x.no === aNo); let stGrade = st ? getGrade(st.class) : null; if (stGrade && m.grades && m.grades.length > 0 && !m.grades.includes(stGrade)) return; }
-      if (aT === 'class' || aT === 'subject') { let lvlFilter = getEl('aLvl') ? getEl('aLvl').value : ''; if (lvlFilter && m.grades && m.grades.length > 0 && !m.grades.includes(lvlFilter)) return; if (dt && m.date !== dt) return; needed.push(bId); return; }
-      if (aT === 'examdetail' && sub !== 'general_summary') { if (m.date === dt) { needed.push(bId); } else if (sub === 'summary') { let currentIndex = allMatchingDates.indexOf(dt); let prevDate = currentIndex > 0 ? allMatchingDates[currentIndex - 1] : null; if (prevDate && m.date === prevDate) needed.push(bId); } } else { needed.push(bId); }
+      if (aT === 'student' && aNo) { let st = DB.s.find(x => x.no === aNo); let stGrade = st ? getGrade(st.class) : null; if (stGrade && m.grades && m.grades.length > 0 && !m.grades.includes(stGrade)) return; needed.push(bId); }
+      else if (aT === 'class' || aT === 'subject') { let lvlFilter = getEl('aLvl') ? getEl('aLvl').value : ''; if (lvlFilter && m.grades && m.grades.length > 0 && !m.grades.includes(lvlFilter)) return; if (dt && m.date !== dt) return; needed.push(bId); }
+      else if (aT === 'examdetail' && sub !== 'general_summary' && sub !== 'list_all') { if (m.date === dt) { needed.push(bId); } else if (sub === 'summary') { let currentIndex = allMatchingDates.indexOf(dt); let prevDate = currentIndex > 0 ? allMatchingDates[currentIndex - 1] : null; if (prevDate && m.date === prevDate) needed.push(bId); } } 
+      else { needed.push(bId); }
     }
   });
   
@@ -860,7 +861,9 @@ function xPR(sourceId, title, btn, orientation) {
     * { box-sizing: border-box; } body { background: #fff !important; color: #000 !important; font-family: 'Source Sans Pro', Arial, sans-serif; font-size: 12px; margin: 0; padding: 0; }
     .pdf-header-bar { display: flex !important; align-items: center; justify-content: space-between; background: #1e3a5f !important; color: #fff !important; padding: 12px 20px; border-radius: 6px; margin-bottom: 14px; -webkit-print-color-adjust: exact; print-color-adjust: exact; } .pdf-header-bar span { color: #fff !important; }
     .table { width: 100% !important; border-collapse: collapse !important; font-size: 8.5px !important; margin-bottom: 6px; } .table th, .table td { border: 1px solid #aaa !important; padding: 2px 3px !important; color: #000 !important; } .table thead th { background: #1e3a5f !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-size: 8px !important; }
-    thead { display: table-header-group; } tr { page-break-inside: avoid; break-inside: avoid; }
+    thead { display: table-header-group; } 
+    tr, td, th { page-break-inside: avoid !important; break-inside: avoid !important; }
+    .card, .card-body, .scroll, table { page-break-inside: auto !important; break-inside: auto !important; }
     tr.highlight-row td { background: #fff3cd !important; font-weight: bold !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; } tr.absent-row td { background: #f8d7da !important; color: #721c24 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; } tr.avg-row td { background: #e6f0fa !important; color: #1e3a5f !important; font-weight: bold !important; border-top: 2px solid #1e3a5f !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .card { border: 1px solid #dee2e6 !important; border-radius: 4px; margin-bottom: 10px; display: block; } .card-header { background: #f8f9fa !important; padding: 8px 12px; border-bottom: 1px solid #dee2e6; } .card-body { padding: 10px 12px; } .card-outline.card-primary { border-top: 3px solid #1e3a5f !important; } .card-outline.card-info { border-top: 3px solid #17a2b8 !important; } .card-outline.card-success { border-top: 3px solid #28a745 !important; } .card-outline.card-warning { border-top: 3px solid #ffc107 !important; }
     .info-box { display: flex !important; align-items: stretch; border-radius: 4px; margin-bottom: 6px; page-break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact; } .info-box-icon { display: flex !important; align-items: center; justify-content: center; width: 60px !important; min-width: 60px; font-size: 1.4em; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; } .info-box-content { padding: 8px 10px; flex: 1; } .info-box-text { display: block; font-size: 0.78em; text-transform: uppercase; font-weight: 600; } .info-box-number { display: block; font-size: 1.1em; font-weight: bold; margin: 2px 0; } .progress-description { display: block; font-size: 0.78em; }
@@ -1274,12 +1277,12 @@ function rAnl(){
         let buildRow = (e, i, prop, countLabel) => `<tr><td>${i+1}</td><td>${e.no}</td><td>${e.name}</td><td>${e.cls}</td><td><strong>${e[prop]} ${countLabel}</strong></td><td>${e.avgNet.toFixed(2)}</td><td>${e.avgScore.toFixed(2)}</td></tr>`;
         let top5Html = top5List.length ? top5List.map((e,i) => buildRow(e, i, 'top5', 'kez')).join('') : '<tr><td colspan="7" class="text-center">Veri yok</td></tr>';
         let bottom5Html = bottom5List.length ? bottom5List.map((e,i) => buildRow(e, i, 'bottom5', 'kez')).join('') : '<tr><td colspan="7" class="text-center">Veri yok</td></tr>';
-        let lvlStr = targetLvl ? `${targetLvl}. Sınıflar` : 'Tüm Sınıflar', safeName = `${eT}_Genel_Ozet`;
+        let lvlStr = targetLvl ? `${targetLvl}. Sınıflar ` : '', safeName = `${eT}_Genel_Ozet`;
 
         let h = `<div class="d-flex justify-content-end mb-2 no-print"><button class="btn-print no-print" onclick="xPR('pGenSummary','${safeName}',this)"><i class='fas fa-print mr-1'></i>Yazdır</button></div>
         <div id="pGenSummary" class="card card-outline card-primary" style="background:#f4f6f9; padding:15px;">
             <div class="pdf-header-bar"><span style="font-size:18px;"><strong>${eT}</strong> — Genel Sınav Özeti</span><span>${lvlStr}</span></div>
-            <h4 class="mb-3 text-center" style="color:#1e3a5f; font-weight:bold;">${eT} Sınavları Genel Değerlendirme <small class="d-block text-muted mt-1" style="font-size:0.6em;">(${lvlStr} | Toplam ${dates.length} Sınav)</small></h4>
+            <h4 class="mb-3 text-center" style="color:#1e3a5f; font-weight:bold;">${eT} Sınavları Genel Değerlendirme <small class="d-block text-muted mt-1" style="font-size:0.6em;">(${lvlStr}| Toplam ${dates.length} Sınav)</small></h4>
             <div class="row">
                 <div class="col-md-4 col-sm-12"><div class="info-box bg-warning" style="color:#fff !important;"><span class="info-box-icon"><i class="fas fa-trophy text-white"></i></span><div class="info-box-content"><span class="info-box-text">En Çok Birinci Olan</span><span class="info-box-number" style="font-size:1.1em;">${mostFirst ? `${mostFirst.name} <small>(${mostFirst.cls})</small>` : 'Veri Yok'}</span><span class="progress-description" style="font-size:0.9em;">${mostFirst ? `Toplam ${mostFirst.first} kez birinci oldu` : ''}</span></div></div></div>
                 <div class="col-md-4 col-sm-12"><div class="info-box bg-success"><span class="info-box-icon"><i class="fas fa-chart-line"></i></span><div class="info-box-content"><span class="info-box-text">En Fazla İlerleme Kaydeden</span><span class="info-box-number" style="font-size:1.1em;">${bestP ? `${bestP.name} <small>(${bestP.cls})</small>` : 'Veri Yok'}</span><span class="progress-description" style="font-size:0.9em;">${bestP ? `+${bestP.diff.toFixed(2)} Net (${bestP.firstNet.toFixed(2)} ➔ ${bestP.lastNet.toFixed(2)})` : 'En az 2 sınava giren yok'}</span></div></div></div>
@@ -1319,7 +1322,7 @@ function rAnl(){
       let buildRow = (e, i) => `<tr><td>${i+1}</td><td>${e.no}</td><td>${getName(e.no)}</td><td>${e.cls}</td><td><strong>${e.totalNet.toFixed(2)}</strong></td><td>${e.score.toFixed(2)}</td></tr>`;
       let top5Html = sortedExams.slice(0,5).map((e,i) => buildRow({no:e.studentNo, cls:e.studentClass, totalNet:e.totalNet, score:e.score}, i)).join('');
       let bottomExams = [...sortedExams].reverse().slice(0,5); let bottom5Html = bottomExams.map((e,i) => buildRow({no:e.studentNo, cls:e.studentClass, totalNet:e.totalNet, score:e.score}, sortedExams.length - i - 1)).join('');
-      let safeName = `${eT}_${dt.replace(/\./g,'-')}_Ozet`, lvlStr = targetLvl ? `${targetLvl}. Sınıflar` : 'Tüm Sınıflar';
+      let safeName = `${eT}_${dt.replace(/\./g,'-')}_Ozet`, lvlStr = targetLvl ? `${targetLvl}. Sınıflar ` : '';
       
       let h = `<div class="d-flex justify-content-end mb-2 no-print"><button class="btn-print no-print" onclick="xPR('pSummary','Sinav_Ozeti_${safeName}',this)"><i class='fas fa-print mr-1'></i>Yazdır</button></div>
       <div id="pSummary" class="card card-outline card-info" style="background:#f4f6f9; padding:15px;">
@@ -1367,14 +1370,10 @@ function rAnl(){
       r.innerHTML=h; if(aNo) setTimeout(()=>{ let hlRow=getEl('tED')?.querySelector('tr.highlight-row'); if(hlRow)hlRow.scrollIntoView({behavior:'smooth',block:'center'}); },300);
 
     } else if (subSel === 'list_all') {
-      // Toplu Liste (Tüm Sınavlar): aynı sınıf seviyesi + aynı sınav türü, tüm sınavlardaki ders ortalamaları
       let allEx = baseExams.filter(x => !x.abs);
       if(!allEx.length){r.innerHTML='<div class="alert alert-default-warning">Bu filtrelere uygun sınav sonucu bulunamadı.</div>';return;}
 
-      // Tüm ders anahtarlarını bul
       let allSubKeys = Array.from(new Set(allEx.flatMap(e => Object.keys(e.subs)))).sort();
-
-      // Öğrenci bazında topla
       let stuMap = {};
       allEx.forEach(e => {
         let no = e.studentNo;
@@ -1393,7 +1392,6 @@ function rAnl(){
         });
       });
 
-      // Ortalamaları hesapla ve sırala (Toplam Net Ortalamasına göre)
       let stuArr = Object.values(stuMap).map(s => ({
         ...s,
         avgNet: s.totalNetSum / s.examCount,
@@ -1401,9 +1399,9 @@ function rAnl(){
         subAvgs: Object.fromEntries(allSubKeys.map(k => [k, s.subCounts[k] ? s.subSums[k] / s.subCounts[k] : null]))
       })).sort((a, b) => b.avgNet - a.avgNet);
 
-      let lvlStr = targetLvl ? `${targetLvl}. Sınıflar` : 'Tüm Sınıflar';
+      let lvlStr = targetLvl ? `${targetLvl}. Sınıflar ` : '';
       let examDatesAll = [...new Set(allEx.map(x => x.date))].sort(srt);
-      let metaStrAll = `${examDatesAll.length} Sınav | ${stuArr.length} Öğrenci`;
+      let metaStrAll = `Hesaplanan Sınav: ${examDatesAll.length} | Listelenen Öğrenci: ${stuArr.length} | Sıralama: Ortalama Toplam Net`;
       let headColsAll = allSubKeys.map(k => `<th>${k}</th>`).join('');
 
       let bodyRowsAll = stuArr.map((s, idx) => {
@@ -1412,7 +1410,6 @@ function rAnl(){
         return `<tr class="${rCls}"><td>${idx+1}</td><td>${s.name}</td><td>${s.cls}</td>${subCells}<td><strong>${s.avgNet.toFixed(2)}</strong></td><td>${s.avgScore.toFixed(2)}</td><td>${s.examCount}</td></tr>`;
       }).join('');
 
-      // Genel ortalama satırı
       let allAvgRow = '';
       if(stuArr.length > 0) {
         let avgSubCols = allSubKeys.map(k => {
@@ -1428,16 +1425,16 @@ function rAnl(){
       let safeNameAll = `${eT}_TumSinavlar_Toplu`;
       let hAll = `<div class="d-flex justify-content-end mb-2 no-print"><button class="btn btn-success btn-sm mr-2" onclick="xXL('tEDAll','${safeNameAll}')"><i class='fas fa-file-excel mr-1'></i>Excel</button><button class="btn-print no-print" onclick="xPR('pEDAll','${safeNameAll}',this,'landscape')"><i class='fas fa-print mr-1'></i>Yazdır</button></div>
       <div id="pEDAll" class="card card-outline card-primary">
-        <div class="pdf-header-bar"><span style="font-size:18px;"><strong>${eT}</strong> — Toplu Liste (Tüm Sınavlar)</span><span style="font-size:14px;">${lvlStr} | ${metaStrAll}</span></div>
+        <div class="pdf-header-bar"><span style="font-size:18px;"><strong>${eT}</strong> — ${lvlStr}Toplu Liste (Tüm Sınavlar)</span><span style="font-size:14px;">${metaStrAll}</span></div>
         <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
-          <h3 class="card-title mb-0">📋 ${eT} — Toplu Liste (Tüm Sınavlar)</h3>
-          <span class="badge badge-info ml-auto" style="font-size:0.9em;"><i class="fas fa-info-circle mr-1"></i>${lvlStr} | ${metaStrAll} | Sıralama: Toplam Net Ortalaması</span>
+          <h3 class="card-title mb-0">📋 ${eT} — ${lvlStr}Toplu Liste (Tüm Sınavlar)</h3>
+          <span class="badge badge-info ml-auto" style="font-size:0.9em;"><i class="fas fa-info-circle mr-1"></i>${metaStrAll}</span>
         </div>
         <div class="card-body">
           <div class="scroll-hint"><i class="fas fa-arrows-alt-h mr-1"></i>Tabloyu kaydırın</div>
           <div class="scroll">
             <table class="table table-sm table-hover table-bordered" id="tEDAll">
-              <thead><tr><th>#</th><th>Ad Soyad</th><th>Sınıf</th>${headColsAll}<th>Top.Net Ort.</th><th>Puan Ort.</th><th>Sınav Sayısı</th></tr></thead>
+              <thead><tr><th>#</th><th>Ad Soyad</th><th>Sınıf</th>${headColsAll}<th>Top.Net Ort.</th><th>Puan Ort.</th><th>Sınav Say.</th></tr></thead>
               <tbody>${bodyRowsAll}${allAvgRow}</tbody>
             </table>
           </div>
