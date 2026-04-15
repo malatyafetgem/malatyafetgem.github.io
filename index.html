@@ -1056,9 +1056,9 @@ function calcKarneSummaryCards(stuNo, examType, grade, examsData) {
 
 function buildKarneExamCards(summary, examType) {
   if(!summary) return '';
-  let {stuAvg, genAvg, rank, totalStudents, trend} = summary;
+  let {stuAvg, genAvg, rank, totalStudents} = summary;
   let cardsHtml = `<div class="row mb-2">
-    <div class="col-md-4 col-sm-6">
+    <div class="col-md-6 col-sm-6">
       <div class="info-box bg-success" style="min-height:72px;">
         <span class="info-box-icon" style="width:55px;font-size:1.3rem;"><i class="fas fa-chart-bar"></i></span>
         <div class="info-box-content" style="padding:6px 10px;">
@@ -1068,29 +1068,17 @@ function buildKarneExamCards(summary, examType) {
         </div>
       </div>
     </div>
-    <div class="col-md-4 col-sm-6">
+    <div class="col-md-6 col-sm-6">
       <div class="info-box bg-primary" style="min-height:72px;">
         <span class="info-box-icon" style="width:55px;font-size:1.3rem;"><i class="fas fa-trophy"></i></span>
         <div class="info-box-content" style="padding:6px 10px;">
-          <span class="info-box-text" style="font-size:0.75em;">Derece</span>
+          <span class="info-box-text" style="font-size:0.75em;">Kurum Derece</span>
           <span class="info-box-number" style="font-size:1.3em;">${rank>0?rank:'—'}</span>
           <span class="progress-description" style="font-size:0.75em;opacity:0.85;">Toplam: ${totalStudents} Öğrenci</span>
         </div>
       </div>
-    </div>`;
-  if(trend){
-    cardsHtml += `<div class="col-md-4 col-sm-6">
-      <div class="info-box ${trend.totalChange>=0?'bg-success':'bg-danger'}" style="min-height:72px;">
-        <span class="info-box-icon" style="width:55px;font-size:1.3rem;"><i class="fas ${trend.trendIcon}"></i></span>
-        <div class="info-box-content" style="padding:6px 10px;">
-          <span class="info-box-text" style="font-size:0.75em;">${trend.trendText}</span>
-          <span class="info-box-number" style="font-size:1.2em;">${trend.totalChange>=0?'+':''}${trend.totalChange.toFixed(2)}</span>
-          <span class="progress-description" style="font-size:0.75em;opacity:0.85;">Sınav başı: ${trend.avgChange>=0?'+':''}${trend.avgChange.toFixed(2)} | ${trend.count} sınav</span>
-        </div>
-      </div>
-    </div>`;
-  }
-  cardsHtml += `</div>`;
+    </div>
+  </div>`;
   return cardsHtml;
 }
 
@@ -1550,7 +1538,13 @@ function rTabS(){
   t.innerHTML=DB.s.map((s,idx)=>`<tr><td>${idx+1}</td><td>${s.no}</td><td>${s.name}</td><td>${s.class}</td><td><div class='btn-group btn-group-sm'><button class='btn btn-warning admin-only' onclick="eStu('${s.no}')"><i class='fas fa-edit'></i></button><button class='btn btn-danger admin-only' onclick="cDel('student','${s.no} silinecek.','${s.no}')"><i class='fas fa-trash'></i></button></div></td></tr>`).join('');
 }
 function rTabE(){
-  let u = Object.keys(EXAM_META).map(bId => ({ examBatchId: bId, ...EXAM_META[bId] })).sort((a,b)=>srt(a.date,b.date));
+  let u = Object.keys(EXAM_META).map(bId => ({ examBatchId: bId, ...EXAM_META[bId] })).sort((a,b)=>{
+    let dateCmp = srt(a.date, b.date);
+    if(dateCmp !== 0) return dateCmp;
+    let aGrade = (a.grades && a.grades.length > 0) ? Math.min(...a.grades.map(g=>parseInt(g)||99)) : 99;
+    let bGrade = (b.grades && b.grades.length > 0) ? Math.min(...b.grades.map(g=>parseInt(g)||99)) : 99;
+    return aGrade - bGrade;
+  });
   getEl('tExA').innerHTML=`<table class="table table-sm table-hover text-nowrap"><thead><tr><th>#</th><th>Tarih</th><th>Tür</th><th>Sınıf Seviyesi</th><th>Yayınevi</th><th>Sayı</th><th>İşlem</th></tr></thead><tbody>${u.map((e,idx)=>{ let gl = (e.grades && e.grades.length > 0) ? e.grades.sort().join(', ') : 'Tümü'; return `<tr><td>${idx+1}</td><td>${e.date}</td><td>${e.examType}</td><td>${gl}</td><td>${e.publisher||'—'}</td><td>${e.count}</td><td><div class="btn-group btn-group-sm"><button class="btn btn-warning admin-only" onclick="eExam('${e.examBatchId}')" title="Düzenle"><i class='fas fa-edit'></i></button><button class="btn btn-danger admin-only" onclick="cDel('exam','Silinsin mi?','${e.examBatchId}')"><i class='fas fa-trash'></i></button></div></td></tr>`; }).join('')}</tbody></table>`;
 }
 
