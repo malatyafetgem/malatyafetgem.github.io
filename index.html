@@ -996,12 +996,9 @@ function uStat(){
   const g=getEl('dynamicStatsGrid'), u={}; Object.values(EXAM_META).forEach(m => { u[m.examType] = (u[m.examType]||0) + 1; });
   const cl=['primary','success','warning','danger','info'],ic=['fas fa-file-alt','fas fa-check-circle','fas fa-star','fas fa-trophy','fas fa-bookmark'];
   
-  let totalExams = DB.e.length, absentExams = DB.e.filter(e => e.abs).length;
-  let partRate = totalExams > 0 ? ((totalExams - absentExams) / totalExams * 100).toFixed(1) : 0;
-
   let h='',i=0;
   for(const [t,count] of Object.entries(u)){ h+=`<div class="col-md-3 col-sm-6 col-12"><div class="info-box mb-3"><span class="info-box-icon bg-${cl[i%cl.length]} elevation-1"><i class="${ic[i%ic.length]}"></i></span><div class="info-box-content"><span class="info-box-text">${t} Sınavı</span><span class="info-box-number">${count} <small>deneme</small></span></div></div></div>`; i++; }
-  h+=`<div class="col-md-3 col-sm-6 col-12"><div class="info-box mb-3"><span class="info-box-icon bg-teal elevation-1"><i class="fas fa-users"></i></span><div class="info-box-content"><span class="info-box-text">Öğrenci & Katılım</span><span class="info-box-number">${DB.s.length} <small>kişi</small> / %${partRate}</span></div></div></div>`; if(g)g.innerHTML=h;
+  if(g)g.innerHTML=h;
 }
 
 function uDrp(){
