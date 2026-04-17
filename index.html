@@ -1,10 +1,11 @@
+
 <!DOCTYPE html>
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
 <style>html,body{background:#f4f6f8 !important;}</style>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#6c8ebf">
+<meta name="theme-color" content="#0d6efd">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Sınav Analizi">
@@ -25,9 +26,10 @@
 
 <style>
 /* ===== GENEL ===== */
-#loginScreen { display:flex; justify-content:center; align-items:center; min-height:100vh; background:linear-gradient(135deg,#d6e4f0,#eaf2fb); }
-.login-card { width:100%; max-width:400px; }
-.login-card .card-header { background:linear-gradient(135deg,#d6e4f0,#eaf2fb); border-radius:8px 8px 0 0 !important; }
+#loginScreen { display:flex; justify-content:center; align-items:center; min-height:100vh; background:linear-gradient(135deg,#0d6efd 0%,#0a58ca 50%,#001f3f 100%); }
+.login-card { width:100%; max-width:400px; box-shadow: 0 10px 40px rgba(0,0,0,0.25); border:none; border-radius:10px; overflow:hidden; }
+.login-card .card-header { background:linear-gradient(135deg,#0d6efd,#0a58ca) !important; color:#fff !important; border-radius:10px 10px 0 0 !important; border-bottom:none !important; }
+.login-card .card-header *, .login-card .card-header h3, .login-card .card-header p { color:#fff !important; }
 #connBadge { font-size:0.78em; padding:3px 10px; border-radius:20px; display:inline-flex; align-items:center; gap:5px; }
 .chart-box { height:380px; position:relative; width:100%; }
 .pane { display:none !important; }
@@ -39,7 +41,7 @@
 tr.highlight-row td { background-color:rgba(255,193,7,0.35) !important; font-weight:bold !important; color:#212529 !important; }
 
 /* ===== ORTALAMA SATIRI TASARIMI ===== */
-tr.avg-row td { background-color: #edf2f7 !important; color: #4a6fa5 !important; font-weight: bold !important; border-top: 2px solid #b0c4de !important; font-size: 0.95em; vertical-align: middle !important; }
+tr.avg-row td { background-color: #e7f1ff !important; color: #0a58ca !important; font-weight: bold !important; border-top: 2px solid #0d6efd !important; font-size: 0.95em; vertical-align: middle !important; }
 tr.avg-row td:first-child { letter-spacing: 0.5px; }
 
 /* Yetki */
@@ -50,12 +52,12 @@ body.is-admin button.admin-only { display:inline-block !important; }
 body.is-admin button.btn-block.admin-only { display:block !important; }
 
 /* ===== YENİ BİRLEŞTİRİLMİŞ BAŞLIK TASARIMI (Hem Ekran Hem Yazıcı) ===== */
-.report-header { display: flex !important; align-items: center; justify-content: space-between; background: linear-gradient(135deg, #6c8ebf, #8aafd4) !important; color: #fff !important; padding: 12px 20px; border-radius: 4px 4px 0 0; margin-bottom: 15px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.report-header { display: flex !important; align-items: center; justify-content: space-between; background: linear-gradient(135deg, #0d6efd, #0a58ca) !important; color: #fff !important; padding: 12px 20px; border-radius: 4px 4px 0 0; margin-bottom: 15px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 .report-header span, .report-header strong, .report-header i { color: #fff !important; }
 
 /* ===== YAZDIR BUTONU ===== */
-.btn-print { background: linear-gradient(135deg, #6c8ebf, #8aafd4); color: #fff !important; border: none; border-radius: 4px; padding: 4px 12px; font-size: 0.875rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; box-shadow: 0 1px 3px rgba(108,142,191,0.25); height: calc(1.5em + .5rem + 2px); }
-.btn-print:hover { background: linear-gradient(135deg, #8aafd4, #a0c4e8); box-shadow: 0 4px 12px rgba(108,142,191,0.35); transform: translateY(-1px); }
+.btn-print { background: linear-gradient(135deg, #0d6efd, #0a58ca); color: #fff !important; border: none; border-radius: 4px; padding: 4px 12px; font-size: 0.875rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; box-shadow: 0 1px 3px rgba(13,110,253,0.25); height: calc(1.5em + .5rem + 2px); }
+.btn-print:hover { background: linear-gradient(135deg, #0a58ca, #a0c4e8); box-shadow: 0 4px 12px rgba(108,142,191,0.35); transform: translateY(-1px); }
 
 /* DESKTOP-FIRST PRINT (Masaüstü Zorunlu Yazdırma Optimizasyonu) */
 @media print { 
@@ -92,23 +94,23 @@ body.is-admin button.btn-block.admin-only { display:block !important; }
 .toast-item.success { background: linear-gradient(135deg, #28a745, #20c997); }
 .toast-item.error { background: linear-gradient(135deg, #dc3545, #e74c3c); }
 .toast-item.warning { background: linear-gradient(135deg, #ffc107, #fd7e14); color: #212529; }
-.toast-item.info { background: linear-gradient(135deg, #17a2b8, #6c8ebf); }
+.toast-item.info { background: linear-gradient(135deg, #0dcaf0, #0d6efd); }
 .toast-item i { margin-right: 10px; font-size: 1.2em; }
 .toast-item .toast-close { margin-left: auto; cursor: pointer; opacity: 0.7; padding: 0 5px; }
 @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 @keyframes slideOutRight { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
 
 /* ===== PWA POPUP ===== */
-#pwaInstallPopup { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); z-index: 99999; background: #fff; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.2); padding: 16px 20px; display: flex; align-items: center; gap: 14px; max-width: 360px; width: 90%; animation: popupSlideDown 0.4s ease-out; border-left: 5px solid #6c8ebf; }
+#pwaInstallPopup { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); z-index: 99999; background: #fff; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.2); padding: 16px 20px; display: flex; align-items: center; gap: 14px; max-width: 360px; width: 90%; animation: popupSlideDown 0.4s ease-out; border-left: 5px solid #0d6efd; }
 #pwaInstallPopup .pwa-icon { font-size: 2em; flex-shrink: 0; }
 #pwaInstallPopup .pwa-text { flex: 1; }
-#pwaInstallPopup .pwa-text strong { display: block; font-size: 0.95em; color: #4a6fa5; margin-bottom: 2px; }
+#pwaInstallPopup .pwa-text strong { display: block; font-size: 0.95em; color: #0d6efd; margin-bottom: 2px; }
 #pwaInstallPopup .pwa-text span { font-size: 0.8em; color: #6c757d; }
 #pwaInstallPopup .pwa-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
-#pwaInstallPopup .btn-pwa-install { background: #6c8ebf; color: #fff; border: none; border-radius: 6px; padding: 6px 14px; font-size: 0.82em; cursor: pointer; white-space: nowrap; }
-#pwaInstallPopup .btn-pwa-install:hover { background: #8aafd4; }
+#pwaInstallPopup .btn-pwa-install { background: #0d6efd; color: #fff; border: none; border-radius: 6px; padding: 6px 14px; font-size: 0.82em; cursor: pointer; white-space: nowrap; }
+#pwaInstallPopup .btn-pwa-install:hover { background: #0a58ca; }
 #pwaInstallPopup .btn-pwa-close { background: transparent; color: #aaa; border: none; font-size: 1.1em; cursor: pointer; align-self: flex-start; line-height: 1; }
-#pwaInstallPopup .pwa-progress { position: absolute; bottom: 0; left: 0; height: 3px; background: #6c8ebf; border-radius: 0 0 0 12px; animation: pwaBar 4s linear forwards; }
+#pwaInstallPopup .pwa-progress { position: absolute; bottom: 0; left: 0; height: 3px; background: #0d6efd; border-radius: 0 0 0 12px; animation: pwaBar 4s linear forwards; }
 
 @keyframes popupSlideDown { from { transform: translateX(-50%) translateY(-20px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
 @keyframes popupSlideUp { from { transform: translateX(-50%) translateY(0); opacity: 1; } to { transform: translateX(-50%) translateY(-20px); opacity: 0; } }
@@ -161,6 +163,93 @@ body.is-admin button.btn-block.admin-only { display:block !important; }
 .trend-up { background-color: rgba(40, 167, 69, 0.15); color: #28a745; }
 .trend-down { background-color: rgba(220, 53, 69, 0.15); color: #dc3545; }
 .trend-stable { background-color: rgba(108, 117, 125, 0.15); color: #6c757d; }
+
+/* ===== ADMINLTE v4 RENK PALETİ (Bootstrap 5 tabanlı) ===== */
+.info-box.bg-primary, .info-box.bg-success, .info-box.bg-info, .info-box.bg-warning,
+.info-box.bg-danger, .info-box.bg-secondary, .info-box.bg-teal { box-shadow: 0 2px 6px rgba(0,0,0,0.08) !important; border: none; }
+.info-box.bg-primary { background: #0d6efd !important; color: #fff !important; }
+.info-box.bg-primary .info-box-icon, .info-box.bg-primary .info-box-text, .info-box.bg-primary .info-box-number, .info-box.bg-primary .progress-description, .info-box.bg-primary i { color: #fff !important; }
+.info-box.bg-success { background: #198754 !important; color: #fff !important; }
+.info-box.bg-success .info-box-icon, .info-box.bg-success .info-box-text, .info-box.bg-success .info-box-number, .info-box.bg-success .progress-description, .info-box.bg-success i { color: #fff !important; }
+.info-box.bg-info { background: #0dcaf0 !important; color: #055160 !important; }
+.info-box.bg-info .info-box-icon, .info-box.bg-info .info-box-text, .info-box.bg-info .info-box-number, .info-box.bg-info .progress-description, .info-box.bg-info i { color: #055160 !important; }
+.info-box.bg-warning { background: #ffc107 !important; color: #664d03 !important; }
+.info-box.bg-warning .info-box-icon, .info-box.bg-warning .info-box-text, .info-box.bg-warning .info-box-number, .info-box.bg-warning .progress-description, .info-box.bg-warning i { color: #664d03 !important; }
+.info-box.bg-danger { background: #dc3545 !important; color: #fff !important; }
+.info-box.bg-danger .info-box-icon, .info-box.bg-danger .info-box-text, .info-box.bg-danger .info-box-number, .info-box.bg-danger .progress-description, .info-box.bg-danger i { color: #fff !important; }
+
+/* Card header'lar — AdminLTE v4 default */
+.card-header.bg-success, .card-header.bg-success.text-white, .card-header.bg-success.text-white * { background: #198754 !important; color: #fff !important; }
+.card-header.bg-danger, .card-header.bg-danger.text-white, .card-header.bg-danger.text-white * { background: #dc3545 !important; color: #fff !important; }
+.card-header.bg-warning { background: #ffc107 !important; color: #664d03 !important; }
+.card-header.bg-info, .card-header.bg-info.text-white, .card-header.bg-info.text-white * { background: #0dcaf0 !important; color: #055160 !important; }
+.card-header.bg-primary, .card-header.bg-primary.text-white, .card-header.bg-primary.text-white * { background: #0d6efd !important; color: #fff !important; }
+
+/* Card outline (üst şerit) — AdminLTE v4 */
+.card.card-primary.card-outline { border-top: 3px solid #0d6efd !important; }
+.card.card-success.card-outline { border-top: 3px solid #198754 !important; }
+.card.card-warning.card-outline { border-top: 3px solid #ffc107 !important; }
+.card.card-info.card-outline { border-top: 3px solid #0dcaf0 !important; }
+.card.card-danger.card-outline { border-top: 3px solid #dc3545 !important; }
+
+/* Buton renkleri — AdminLTE v4 */
+.btn-primary { background-color: #0d6efd !important; border-color: #0d6efd !important; }
+.btn-primary:hover, .btn-primary:focus { background-color: #0a58ca !important; border-color: #0a58ca !important; }
+.btn-success { background-color: #198754 !important; border-color: #198754 !important; }
+.btn-success:hover { background-color: #146c43 !important; border-color: #146c43 !important; }
+.btn-danger { background-color: #dc3545 !important; border-color: #dc3545 !important; }
+.btn-danger:hover { background-color: #b02a37 !important; border-color: #b02a37 !important; }
+.btn-warning { background-color: #ffc107 !important; border-color: #ffc107 !important; color: #000 !important; }
+.btn-info { background-color: #0dcaf0 !important; border-color: #0dcaf0 !important; color: #000 !important; }
+
+/* Report header — AdminLTE v4 primary gradient */
+.report-header { background: linear-gradient(135deg, #0d6efd, #0a58ca) !important; color: #fff !important; border-left: 4px solid #001f3f; }
+.report-header span, .report-header strong, .report-header i { color: #fff !important; }
+
+/* Sidebar — AdminLTE v4 light primary */
+.main-sidebar.sidebar-light-primary .brand-link { background: #0d6efd !important; color: #fff !important; border-bottom: 1px solid #0a58ca; }
+.main-sidebar.sidebar-light-primary .brand-link i, .main-sidebar.sidebar-light-primary .brand-link span { color: #fff !important; }
+.main-sidebar.sidebar-light-primary { background: #f8f9fa !important; }
+.main-sidebar.sidebar-light-primary .nav-sidebar .nav-link { color: #212529 !important; }
+.main-sidebar.sidebar-light-primary .nav-sidebar .nav-link:hover { background: #e7f1ff !important; }
+.main-sidebar.sidebar-light-primary .nav-sidebar .nav-link.active { background: #0d6efd !important; color: #fff !important; box-shadow: 0 2px 4px rgba(13,110,253,0.3); }
+.main-sidebar.sidebar-light-primary .nav-sidebar .nav-link.active i { color: #fff !important; }
+.main-sidebar.sidebar-light-primary .user-panel { border-bottom: 1px solid #dee2e6 !important; }
+.main-sidebar.sidebar-light-primary .user-panel .text-white,
+.main-sidebar.sidebar-light-primary .user-panel i { color: #0d6efd !important; }
+
+/* Inline gri/danger info-box override (AdminLTE v4) */
+.info-box[style*="background:#6c757d"] { background: #6c757d !important; color: #fff !important; }
+.info-box[style*="background:#6c757d"] *, .info-box[style*="background:#6c757d"] i { color: #fff !important; }
+.info-box[style*="background:#6c757d"] .progress-description { color: #e9ecef !important; }
+.info-box[style*="background:#dc3545"] { background: #dc3545 !important; color: #fff !important; }
+.info-box[style*="background:#dc3545"] *, .info-box[style*="background:#dc3545"] i { color: #fff !important; }
+
+/* ===== SİSTEM YÖNETİMİ — MODERN TASARIM ===== */
+.sys-mgmt-card { border: none !important; border-radius: 12px !important; overflow: hidden; box-shadow: 0 4px 20px rgba(13,110,253,0.08) !important; background: #fff; }
+.sys-mgmt-card .card-header { background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%) !important; color: #fff !important; padding: 16px 20px !important; border-bottom: none !important; position: relative; }
+.sys-mgmt-card .card-header h3 { color: #fff !important; font-weight: 600; font-size: 1.05rem; margin: 0; display: flex; align-items: center; gap: 10px; }
+.sys-mgmt-card .card-header h3 i { background: rgba(255,255,255,0.2); width: 36px; height: 36px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; font-size: 1.1em; }
+.sys-mgmt-card .card-body { padding: 20px !important; }
+.sys-mgmt-section { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+@media (max-width: 575px) { .sys-mgmt-section { grid-template-columns: 1fr; } }
+.sys-mgmt-tile { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 10px; border: 1px solid #e9ecef; background: #f8f9fa; cursor: pointer; transition: all 0.2s ease; text-align: left; width: 100%; }
+.sys-mgmt-tile:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(13,110,253,0.12); border-color: #0d6efd; background: #fff; }
+.sys-mgmt-tile .tile-icon { flex-shrink: 0; width: 44px; height: 44px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; font-size: 1.2em; color: #fff; }
+.sys-mgmt-tile.tile-export .tile-icon { background: linear-gradient(135deg, #198754, #146c43); }
+.sys-mgmt-tile.tile-import .tile-icon { background: linear-gradient(135deg, #0d6efd, #0a58ca); }
+.sys-mgmt-tile .tile-text { flex: 1; min-width: 0; }
+.sys-mgmt-tile .tile-text strong { display: block; font-size: 0.92rem; color: #212529; font-weight: 600; margin-bottom: 2px; }
+.sys-mgmt-tile .tile-text span { display: block; font-size: 0.78rem; color: #6c757d; line-height: 1.3; }
+.sys-mgmt-divider { height: 1px; background: linear-gradient(90deg, transparent, #dee2e6, transparent); margin: 18px 0; }
+.sys-mgmt-danger { background: linear-gradient(135deg, #fff5f5, #ffe9ec); border: 1px solid #f5c2c7; border-radius: 10px; padding: 14px 16px; display: flex; align-items: center; gap: 14px; }
+.sys-mgmt-danger .danger-icon { width: 44px; height: 44px; border-radius: 10px; background: linear-gradient(135deg, #dc3545, #b02a37); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 1.2em; flex-shrink: 0; }
+.sys-mgmt-danger .danger-text { flex: 1; min-width: 0; }
+.sys-mgmt-danger .danger-text strong { display: block; font-size: 0.92rem; color: #842029; font-weight: 600; margin-bottom: 2px; }
+.sys-mgmt-danger .danger-text span { display: block; font-size: 0.78rem; color: #842029; opacity: 0.85; line-height: 1.3; }
+.sys-mgmt-danger .btn-danger-modern { background: linear-gradient(135deg, #dc3545, #b02a37); color: #fff; border: none; border-radius: 8px; padding: 8px 16px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.2s; flex-shrink: 0; box-shadow: 0 2px 6px rgba(220,53,69,0.3); }
+.sys-mgmt-danger .btn-danger-modern:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(220,53,69,0.4); }
+
 </style>
 </head>
 <body class="hold-transition sidebar-mini layout-fixed">
@@ -199,7 +288,7 @@ body.is-admin button.btn-block.admin-only { display:block !important; }
         <i class="fas fa-sign-in-alt mr-2"></i>Giriş Yap
       </button>
       <div class="text-center mt-2">
-        <a href="#" onclick="openForgotPassword(event)" style="font-size:0.85em; color:#6c8ebf;">Şifremi unuttum</a>
+        <a href="#" onclick="openForgotPassword(event)" style="font-size:0.85em; color:#0d6efd;">Şifremi unuttum</a>
       </div>
       <div id="loginError" class="alert mt-3 mb-0" style="display:none;"></div>
     </div>
@@ -238,7 +327,7 @@ body.is-admin button.btn-block.admin-only { display:block !important; }
     </ul>
   </nav>
 
-  <aside class="main-sidebar sidebar-dark-primary elevation-4">
+  <aside class="main-sidebar sidebar-light-primary elevation-4">
     <a href="#" class="brand-link text-center">
       <i class="fas fa-chart-line brand-image" style="font-size:1.5rem;margin:0 8px;"></i>
       <span class="brand-text font-weight-bold">Sınav Analizi</span>
@@ -356,16 +445,39 @@ body.is-admin button.btn-block.admin-only { display:block !important; }
             </div>
 
             <div class="col-lg-12 admin-only">
-              <div class="card card-danger card-outline admin-only">
-                <div class="card-header"><h3 class="card-title"><i class="fas fa-database mr-2"></i>Sistem Yönetimi</h3></div>
+              <div class="card sys-mgmt-card admin-only">
+                <div class="card-header">
+                  <h3 class="card-title"><i class="fas fa-database"></i>Sistem Yönetimi</h3>
+                </div>
                 <div class="card-body">
-                  <div class="btn-group flex-wrap mb-2">
-                    <button class="btn btn-success btn-sm" onclick="expDB()"><i class="fas fa-download mr-1"></i>Tam Yedeği İndir</button>
-                    <button class="btn btn-primary btn-sm" onclick="getEl('fImp').click()"><i class="fas fa-upload mr-1"></i>Yedekten Geri Yükle</button>
+                  <div class="sys-mgmt-section">
+                    <button type="button" class="sys-mgmt-tile tile-export" onclick="expDB()">
+                      <span class="tile-icon"><i class="fas fa-cloud-download-alt"></i></span>
+                      <span class="tile-text">
+                        <strong>Tam Yedeği İndir</strong>
+                        <span>Öğrenci, sınav meta ve sonuçları tek JSON dosyasına</span>
+                      </span>
+                    </button>
+                    <button type="button" class="sys-mgmt-tile tile-import" onclick="getEl('fImp').click()">
+                      <span class="tile-icon"><i class="fas fa-cloud-upload-alt"></i></span>
+                      <span class="tile-text">
+                        <strong>Yedekten Geri Yükle</strong>
+                        <span>Daha önce indirdiğiniz JSON yedek dosyasını seçin</span>
+                      </span>
+                    </button>
                     <input type="file" id="fImp" style="display:none;" accept=".json" onchange="impDB(event)">
                   </div>
-                  <small class="text-muted d-block mb-3"><i class="fas fa-info-circle mr-1"></i>Tüm öğrenci, sınav meta ve sınav sonuçlarını tek dosyaya yedekler.</small>
-                  <button class="btn btn-danger btn-sm" onclick="cDel('all','Tüm Veritabanı Silinecek, Onaylıyor Musunuz?')"><i class="fas fa-exclamation-triangle mr-1"></i>Tüm Veritabanını Sıfırla</button>
+                  <div class="sys-mgmt-divider"></div>
+                  <div class="sys-mgmt-danger">
+                    <span class="danger-icon"><i class="fas fa-exclamation-triangle"></i></span>
+                    <span class="danger-text">
+                      <strong>Tehlikeli Bölge</strong>
+                      <span>Tüm veritabanını kalıcı olarak siler. Bu işlem geri alınamaz.</span>
+                    </span>
+                    <button type="button" class="btn-danger-modern" onclick="cDel('all','Tüm Veritabanı Silinecek, Onaylıyor Musunuz?')">
+                      <i class="fas fa-trash mr-1"></i>Sıfırla
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -493,7 +605,7 @@ function sendPasswordReset() {
   });
 }
 
-function applyTheme(isDark){
+function applyTheme(){
   Chart.defaults.color='#475569';
   if(c.h)c.h.update();if(c.a)c.a.update();
   if(window._karneCharts) window._karneCharts.forEach(ch=>ch.update());
@@ -506,7 +618,7 @@ let DB = { s: [], e: [] };
 let EXAM_META = {}; 
 let CACHED_RESULTS = {}; 
 let aNo=null, c={h:null,a:null};
-const cols=['#6c8ebf','#e6194b','#1a7f4b','#d97706','#7c3aed','#f58231','#0ea5e9','#db2777'];
+const cols=['#0d6efd','#e6194b','#1a7f4b','#d97706','#7c3aed','#f58231','#0ea5e9','#db2777'];
 let dInf={},searchDebounceTimer=null,anlDebounceTimer=null,chartTimer=null;
 let currentExcelData=[], currentUploadType='', currentHeaders=[], PENDING_UPLOAD=null; 
 
@@ -528,7 +640,7 @@ function toTitleCase(str) {
 }
 
 async function init(){
-  const savedTheme = localStorage.getItem('appTheme') === 'dark'; applyTheme(savedTheme);
+  applyTheme(false);
   ld(1,'Sistem altyapısı hazırlanıyor...');
 
   let v2Snap = await database.ref('db_v2/students').once('value');
@@ -605,6 +717,12 @@ async function reqUI() { uUI(); await reqAnl(); }
 
 let currentPane = 'anasayfa_genel';
 window.addEventListener('popstate', function(e) {
+  // Mobilde Ana Sayfa dışında bir sayfadayken geri tuşu DOĞRUDAN Ana Sayfa'ya döner
+  let isMobile = window.innerWidth < 768;
+  if (isMobile && currentPane !== 'anasayfa_genel') {
+    executeTabSwitch('anasayfa_genel', true);
+    return;
+  }
   let targetPane = (e.state && e.state.pane) ? e.state.pane : 'anasayfa_genel';
   executeTabSwitch(targetPane, true);
 });
@@ -620,8 +738,12 @@ function executeTabSwitch(id, isPopState) {
   if(id === 'ayarlar' && !document.body.classList.contains('is-admin')) return;
 
   if (!isPopState) {
+      let isMobile = window.innerWidth < 768;
       if (id === 'anasayfa_genel') {
           window.history.pushState({pane: id}, '', window.location.pathname);
+      } else if (isMobile) {
+          // Mobilde her geçişte yeni history kaydı oluştur ki geri tuşu Ana Sayfa'ya dönsün
+          window.history.pushState({pane: id}, '', '#' + id);
       } else if (currentPane === 'anasayfa_genel') {
           window.history.pushState({pane: id}, '', '#' + id);
       } else {
@@ -739,16 +861,16 @@ function xPR(sourceId, title, btn, orientation) {
   <style>
     * { box-sizing: border-box; } body { background: #fff !important; color: #000 !important; font-family: 'Source Sans Pro', Arial, sans-serif; font-size: 12px; margin: 0; padding: 0; min-width: 1024px !important; zoom: 0.85; }
     .report-header { display: flex !important; align-items: center; justify-content: space-between; background: #4a6fa5 !important; color: #fff !important; padding: 12px 20px; border-radius: 6px; margin-bottom: 14px; -webkit-print-color-adjust: exact; print-color-adjust: exact; } .report-header span, .report-header strong, .report-header i { color: #fff !important; }
-    .table { width: 100% !important; border-collapse: collapse !important; font-size: 8.5px !important; margin-bottom: 6px; } .table th, .table td { border: 1px solid #aaa !important; padding: 2px 3px !important; color: #000 !important; } .table thead th { background: #6c8ebf !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-size: 8px !important; }
+    .table { width: 100% !important; border-collapse: collapse !important; font-size: 8.5px !important; margin-bottom: 6px; } .table th, .table td { border: 1px solid #aaa !important; padding: 2px 3px !important; color: #000 !important; } .table thead th { background: #0d6efd !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-size: 8px !important; }
     thead { display: table-header-group; } 
     table, tbody, .card, .card-body, .scroll { page-break-inside: auto !important; break-inside: auto !important; }
     tr, td, th { page-break-inside: avoid !important; break-inside: avoid !important; }
     .chart-box, .info-box, .avoid-break { page-break-inside: avoid !important; break-inside: avoid !important; }
 
     tr.highlight-row td { background: #fff3cd !important; font-weight: bold !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; } tr.absent-row td { background: #f8d7da !important; color: #721c24 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; } tr.avg-row td { background: #edf2f7 !important; color: #4a6fa5 !important; font-weight: bold !important; border-top: 2px solid #b0c4de !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .card { border: 1px solid #dee2e6 !important; border-radius: 4px; margin-bottom: 10px; display: block; } .card-header { background: #f8f9fa !important; padding: 8px 12px; border-bottom: 1px solid #dee2e6; } .card-body { padding: 10px 12px; } .card-outline.card-primary { border-top: 3px solid #6c8ebf !important; } .card-outline.card-info { border-top: 3px solid #17a2b8 !important; } .card-outline.card-success { border-top: 3px solid #28a745 !important; } .card-outline.card-warning { border-top: 3px solid #ffc107 !important; }
+    .card { border: 1px solid #dee2e6 !important; border-radius: 4px; margin-bottom: 10px; display: block; } .card-header { background: #f8f9fa !important; padding: 8px 12px; border-bottom: 1px solid #dee2e6; } .card-body { padding: 10px 12px; } .card-outline.card-primary { border-top: 3px solid #0d6efd !important; } .card-outline.card-info { border-top: 3px solid #17a2b8 !important; } .card-outline.card-success { border-top: 3px solid #28a745 !important; } .card-outline.card-warning { border-top: 3px solid #ffc107 !important; }
     .info-box { display: flex !important; align-items: stretch; border-radius: 4px; margin-bottom: 6px; -webkit-print-color-adjust: exact; print-color-adjust: exact; } .info-box-icon { display: flex !important; align-items: center; justify-content: center; width: 60px !important; min-width: 60px; font-size: 1.4em; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; } .info-box-content { padding: 8px 10px; flex: 1; } .info-box-text { display: block; font-size: 0.78em; font-weight: 600; } .info-box-number { display: block; font-size: 1.1em; font-weight: bold; margin: 2px 0; } .progress-description { display: block; font-size: 0.78em; }
-    .bg-primary { background: #6c8ebf !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; } .bg-success { background: #28a745 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; } .bg-danger { background: #dc3545 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; } .bg-warning { background: #ffc107 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; } .bg-info { background: #17a2b8 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; } .bg-teal { background: #20c997 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .bg-primary { background: #0d6efd !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; } .bg-success { background: #28a745 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; } .bg-danger { background: #dc3545 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; } .bg-warning { background: #ffc107 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; } .bg-info { background: #17a2b8 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; } .bg-teal { background: #20c997 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
     .print-chart-img { max-width: 100%; width: 100%; max-height: ${isPortrait ? "260px" : "180px"}; height: auto; object-fit: contain; display: block; margin: 4px auto 10px; } .chart-box { height: auto !important; margin-bottom: 10px; }
     
     /* Desktop Format Sizing override explicitly */
@@ -899,7 +1021,7 @@ function calcKarneSummaryCards(stuNo, examType, grade, examsData) {
   let stuMap = {};
   allSameGrade.forEach(e => {
     if(!stuMap[e.studentNo]) stuMap[e.studentNo] = {sum:0,cnt:0};
-    stuMap[e.studentNo].sum += e.totalNet; stuMap[e.studentNo].cnt++;
+    stuMap[e.studentNo].sum += (e.score||0); stuMap[e.studentNo].cnt++;
   });
   let rankings = Object.entries(stuMap).map(([no,v])=>({no,avg:v.sum/v.cnt})).sort((a,b)=>b.avg-a.avg);
   let rank = rankings.findIndex(x=>x.no===stuNo)+1;
@@ -954,7 +1076,7 @@ function rH(){
   let stGrade = getGrade(s.class);
 
   let h=`<div class="d-flex justify-content-end mb-2 no-print"><button class="btn btn-success btn-sm mr-2" onclick="xXLMul('kCont','${s.name}_Karne')"><i class='fas fa-file-excel mr-1'></i>Excel</button><button class="btn-print no-print" onclick="xPR('kCont','${s.name}_Karne',this)"><i class='fas fa-print mr-1'></i>Yazdır</button></div>
-  <div id="kCont" class="card shadow-sm" style="border-top:3px solid #6c8ebf;">
+  <div id="kCont" class="card shadow-sm" style="border-top:3px solid #0d6efd;">
     <div class="report-header">
       <span style="font-size:16px;"><i class="fas fa-user-graduate mr-2"></i><strong>${s.name}</strong> — Karne Özeti</span>
       <span style="font-size:13px;">Sınıf: ${s.class} | ${new Date().toLocaleDateString('tr-TR')}</span>
@@ -1271,7 +1393,7 @@ function rAnl(){
         let ex = baseExams.filter(x => !x.abs); if(ex.length === 0) { r.innerHTML = '<div class="alert alert-default-warning">Bu filtrelere uygun sınav sonucu bulunamadı.</div>'; return; }
         let dates = [...new Set(ex.map(x=>x.date))].sort(srt), stuStats = {}; 
         dates.forEach(d => {
-            let exDt = ex.filter(x => x.date === d).sort((a,b) => b.totalNet - a.totalNet); if(!exDt.length) return;
+            let exDt = ex.filter(x => x.date === d).sort((a,b) => (b.score||0) - (a.score||0)); if(!exDt.length) return;
             let firstNet = exDt[0].totalNet;
             exDt.forEach((e, idx) => {
                 if(!stuStats[e.studentNo]) stuStats[e.studentNo] = { no: e.studentNo, name: getName(e.studentNo), cls: e.studentClass, first:0, top5:0, bottom5:0, exList:[] };
@@ -1316,7 +1438,7 @@ function rAnl(){
         let partRateGS = baseCountGS > 0 ? Math.round((ex.length / baseCountGS) * 100) : 0;
 
         let h = `<div class="d-flex justify-content-end mb-2 no-print"><button class="btn-print no-print" onclick="xPR('pGenSummary','${safeName}',this)"><i class='fas fa-print mr-1'></i>Yazdır</button></div>
-        <div id="pGenSummary" class="card shadow-sm" style="border-top:3px solid #6c8ebf; background:#f4f6f9;">
+        <div id="pGenSummary" class="card shadow-sm" style="border-top:3px solid #0d6efd; background:#f4f6f9;">
             <div class="report-header">
               <span style="font-size:16px;"><i class="fas fa-globe mr-2"></i><strong>${eT}</strong> — Genel Değerlendirme</span>
               <span style="font-size:13px;">${lvlStr} | Toplam ${dates.length} Sınav</span>
@@ -1346,7 +1468,7 @@ function rAnl(){
       let filteredDates = [...new Set(baseExams.map(x=>x.date))].sort(srt), currentIndex = filteredDates.indexOf(dt), prevDate = currentIndex > 0 ? filteredDates[currentIndex - 1] : null;
       let prevBatch = prevDate ? DB.e.filter(x => x.examType === eT && x.date === prevDate) : [];
       if(targetLvl) prevBatch = prevBatch.filter(x => getGrade(x.studentClass) === targetLvl);
-      let prevExams = prevBatch.filter(x => !x.abs), sortedExams = [...currentExams].sort((a,b) => b.totalNet - a.totalNet), winner = sortedExams[0], progress = [];
+      let prevExams = prevBatch.filter(x => !x.abs), sortedExams = [...currentExams].sort((a,b) => (b.score||0) - (a.score||0)), winner = sortedExams[0], progress = [];
       
       currentExams.forEach(ce => { let pe = prevExams.find(x => x.studentNo === ce.studentNo); if (pe) progress.push({ no: ce.studentNo, name: getName(ce.studentNo), cls: ce.studentClass, diff: ce.totalNet - pe.totalNet, cur: ce.totalNet, prev: pe.totalNet }); });
       progress.sort((a,b) => b.diff - a.diff);
@@ -1401,8 +1523,8 @@ function rAnl(){
 
       let subKeys=Array.from(new Set(batch.filter(x=>!x.abs).flatMap(e=>Object.keys(e.subs)))).sort();
       let rows2=batch.map(e=>{ let st=DB.s.find(x=>x.no===e.studentNo); return {...e,studentName:st?st.name:'—',studentCls:st?st.class:e.studentClass}; });
-      let attended=rows2.filter(x=>!x.abs).sort((a,b)=>b.totalNet-a.totalNet), absent=rows2.filter(x=>x.abs).sort((a,b)=>normTR(a.studentName).localeCompare(normTR(b.studentName)));
-      let sorted=[...attended,...absent], avgNet=attended.length?(attended.reduce((s,x)=>s+x.totalNet,0)/attended.length).toFixed(2):'0.00', metaStr=`Ortalama Net: ${avgNet}`;
+      let attended=rows2.filter(x=>!x.abs).sort((a,b)=>(b.score||0)-(a.score||0)), absent=rows2.filter(x=>x.abs).sort((a,b)=>normTR(a.studentName).localeCompare(normTR(b.studentName)));
+      let sorted=[...attended,...absent], avgNet=attended.length?(attended.reduce((s,x)=>s+x.totalNet,0)/attended.length).toFixed(2):'0.00', avgScoreMeta=attended.length?(attended.reduce((s,x)=>s+(x.score||0),0)/attended.length).toFixed(2):'0.00', metaStr=`Katılan: ${attended.length} | Ortalama Puan: ${avgScoreMeta} | Sıralama: Puan`;
       
       let headCols=subKeys.map(k=>`<th>${toTitleCase(k)}</th>`).join('');
       let bodyRows=sorted.map((e,idx)=>{
@@ -1422,7 +1544,7 @@ function rAnl(){
       <div id="pED" class="card shadow-sm" style="border-top:3px solid #ffc107;">
         <div class="report-header">
           <span style="font-size:16px;"><i class="fas fa-list mr-2"></i><strong>${eT}</strong> — ${dt} Toplu Liste</span>
-          <span style="font-size:13px;">${lvlStr} | ${metaStr}</span>
+          <span style="font-size:13px;">${lvlStr ? lvlStr : ""}| ${metaStr}</span>
         </div>
         <div class="card-body" style="padding-top:5px;">
           <div class="scroll-hint"><i class="fas fa-arrows-alt-h mr-1"></i>Tabloyu kaydırın</div>
@@ -1459,11 +1581,11 @@ function rAnl(){
         avgNet: s.totalNetSum / s.examCount,
         avgScore: s.scoreSum / s.examCount,
         subAvgs: Object.fromEntries(allSubKeys.map(k => [k, s.subCounts[k] ? s.subSums[k] / s.subCounts[k] : null]))
-      })).sort((a, b) => b.avgNet - a.avgNet);
+      })).sort((a, b) => (b.avgScore||0) - (a.avgScore||0));
 
       let lvlStr = targetLvl ? `${targetLvl}. Sınıflar ` : '';
       let examDatesAll = [...new Set(allEx.map(x => x.date))].sort(srt);
-      let metaStrAll = `Hesaplanan Sınav: ${examDatesAll.length} | Listelenen Öğrenci: ${stuArr.length} | Sıralama: Ortalama Toplam Net`;
+      let metaStrAll = `Hesaplanan Sınav: ${examDatesAll.length} | Listelenen Öğrenci: ${stuArr.length} | Sıralama: Ortalama Puan`;
       let headColsAll = allSubKeys.map(k => `<th>${toTitleCase(k)}</th>`).join('');
 
       let bodyRowsAll = stuArr.map((s, idx) => {
@@ -1489,7 +1611,7 @@ function rAnl(){
       <div id="pEDAll" class="card shadow-sm" style="border-top:3px solid #007bff;">
         <div class="report-header">
           <span style="font-size:16px;"><i class="fas fa-list-alt mr-2"></i><strong>${eT}</strong> — Tüm Sınavlar Toplu Liste</span>
-          <span style="font-size:13px;">${lvlStr} | ${metaStrAll}</span>
+          <span style="font-size:13px;">${lvlStr ? lvlStr : ""}| ${metaStrAll}</span>
         </div>
         <div class="card-body" style="padding-top:5px;">
           <div class="scroll-hint"><i class="fas fa-arrows-alt-h mr-1"></i>Tabloyu kaydırın</div>
@@ -1594,7 +1716,7 @@ async function generateRapor() {
       }
       
       let chartId = 'rKarneChart_' + stu.no.replace(/[^a-zA-Z0-9]/g,'_') + '_' + t.replace(/[^a-zA-Z0-9]/g,'_');
-      html += `<div class="card shadow-sm mb-4 avoid-break" style="border-top:3px solid #6c8ebf;">
+      html += `<div class="card shadow-sm mb-4 avoid-break" style="border-top:3px solid #0d6efd;">
         <div class="card-header bg-light"><h3 class="card-title m-0" style="font-size:15px; font-weight:bold; color:#4a6fa5;"><i class="fas fa-book mr-2"></i>${t} Sınavları</h3></div>
         <div class="card-body p-2">
           ${cardsHtml}
@@ -1917,8 +2039,8 @@ function processMappings() {
 
     let clsGroups = {}, instGroups = {};
     validResults.filter(x=>!x.abs).forEach(x => { if(!clsGroups[x.studentClass]) clsGroups[x.studentClass] = []; clsGroups[x.studentClass].push(x); let gr = getGrade(x.studentClass); if(!instGroups[gr]) instGroups[gr] = []; instGroups[gr].push(x); });
-    Object.values(clsGroups).forEach(arr => { arr.sort((a,b) => b.totalNet - a.totalNet); arr.forEach((r, idx) => { r.cR = String(idx+1); r.cP = String(arr.length); }); });
-    Object.values(instGroups).forEach(arr => { arr.sort((a,b) => b.totalNet - a.totalNet); arr.forEach((r, idx) => { r.iR = String(idx+1); r.iP = String(arr.length); }); });
+    Object.values(clsGroups).forEach(arr => { arr.sort((a,b) => (b.score||0) - (a.score||0)); arr.forEach((r, idx) => { r.cR = String(idx+1); r.cP = String(arr.length); }); });
+    Object.values(instGroups).forEach(arr => { arr.sort((a,b) => (b.score||0) - (a.score||0)); arr.forEach((r, idx) => { r.iR = String(idx+1); r.iP = String(arr.length); }); });
     let absentCount = 0; DB.s.forEach(s => { if(cl.has(s.class) && !sn.has(s.no)) { validResults.push({ examBatchId:bId, studentNo:s.no, studentClass:s.class, date:eDate, examType:eType, publisher:toTitleCase(ePub), totalNet:0, score:0, cR:'-', cP:'-', iR:'-', iP:'-', dR:'-', dP:'-', pR:'-', pP:'-', gR:'-', gP:'-', abs:true, subs:{} }); absentCount++; } });
     if(validResults.length === 0) { showToast('Sisteme eklenecek geçerli bir sınav sonucu bulunamadı.', 'error'); return; }
     let overwriteWarning = existsId ? `<div class="alert alert-danger mt-3"><strong><i class="fas fa-exclamation-triangle mr-2"></i>DİKKAT!</strong> Sistemde <b>${eDate}</b> tarihli bir <b>${eType}</b> sınavı zaten var. Onaylarsanız, eski veriler tamamen silinip bu dosyadaki verilerle değiştirilecektir!</div>` : '';
