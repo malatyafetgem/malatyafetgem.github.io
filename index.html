@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="tr" data-bs-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,10 +11,14 @@
 <link rel="manifest" href="./manifest.json">
 <title>Sınav Analiz Sistemi</title>
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/admin-lte/3.2.0/css/adminlte.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- AdminLTE v4 CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@4.0.0-beta3/dist/css/adminlte.min.css">
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<!-- Bootstrap Icons (AdminLTE v4 uyumlu) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
-<!-- Chart.js ve Datalabels Eklentisi -->
+<!-- Chart.js ve Datalabels -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -24,61 +28,101 @@
 
 <style>
 /* ===== GENEL ===== */
-#loginScreen { display:flex; justify-content:center; align-items:center; min-height:100vh; background:linear-gradient(135deg,#1e3a5f,#2d6a9f); }
-.login-card { width:100%; max-width:400px; }
-.login-card .card-header { background:linear-gradient(135deg,#1e3a5f,#2d6a9f); border-radius:8px 8px 0 0 !important; }
-#connBadge { font-size:0.78em; padding:3px 10px; border-radius:20px; display:inline-flex; align-items:center; gap:5px; }
-.chart-box { height:380px; position:relative; width:100%; }
-.pane { display:none !important; }
-.pane.active-pane { display:block !important; }
-.scroll { overflow-x:auto; }
+#loginScreen {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1e3a5f, #2d6a9f);
+}
+.login-card { width: 100%; max-width: 420px; }
+.login-card .card-header {
+  background: linear-gradient(135deg, #1e3a5f, #2d6a9f);
+  border-radius: 0.5rem 0.5rem 0 0 !important;
+}
+
+#connBadge { font-size: 0.78em; padding: 3px 10px; border-radius: 20px; display: inline-flex; align-items: center; gap: 5px; }
+.chart-box { height: 380px; position: relative; width: 100%; }
+.pane { display: none !important; }
+.pane.active-pane { display: block !important; }
+.scroll { overflow-x: auto; }
 
 /* Tablo renkleri */
-.absent-row td { background:rgba(220,53,69,0.07) !important; color:#999 !important; }
-body.dark-mode .absent-row td { background:rgba(220,53,69,0.2) !important; color:#dc3545 !important; }
-tr.highlight-row td { background-color:rgba(255,193,7,0.35) !important; font-weight:bold !important; color:#212529 !important; }
-body.dark-mode tr.highlight-row td { background-color:rgba(255,193,7,0.45) !important; color:#fff !important; }
+.absent-row td { background: rgba(220, 53, 69, 0.07) !important; color: #999 !important; }
+[data-bs-theme="dark"] .absent-row td { background: rgba(220, 53, 69, 0.2) !important; color: #dc3545 !important; }
+tr.highlight-row td { background-color: rgba(255, 193, 7, 0.35) !important; font-weight: bold !important; color: #212529 !important; }
+[data-bs-theme="dark"] tr.highlight-row td { background-color: rgba(255, 193, 7, 0.45) !important; color: #fff !important; }
 
-/* ===== ORTALAMA SATIRI TASARIMI ===== */
+/* Ortalama satırı */
 tr.avg-row td { background-color: #e6f0fa !important; color: #1e3a5f !important; font-weight: bold !important; border-top: 2px solid #1e3a5f !important; font-size: 0.95em; vertical-align: middle !important; }
 tr.avg-row td:first-child { letter-spacing: 0.5px; }
-body.dark-mode tr.avg-row td { background-color: #2a3b4c !important; color: #e2e8f0 !important; border-top-color: #4b5563 !important; }
+[data-bs-theme="dark"] tr.avg-row td { background-color: #2a3b4c !important; color: #e2e8f0 !important; border-top-color: #4b5563 !important; }
 
 /* Yetki */
-.admin-only { display:none !important; }
-body.is-admin div.admin-only:not(.pane), body.is-admin span.admin-only, body.is-admin i.admin-only { display:inline-block !important; }
-body.is-admin li.admin-only { display:block !important; }
-body.is-admin button.admin-only { display:inline-block !important; }
-body.is-admin button.btn-block.admin-only { display:block !important; }
+.admin-only { display: none !important; }
+body.is-admin div.admin-only:not(.pane),
+body.is-admin span.admin-only,
+body.is-admin i.admin-only { display: inline-block !important; }
+body.is-admin li.admin-only { display: block !important; }
+body.is-admin button.admin-only { display: inline-block !important; }
+body.is-admin button.btn-block.admin-only { display: block !important; }
 
-.pdf-header-bar { display:none; }
+.pdf-header-bar { display: none; }
 
-/* ===== YAZDIR BUTONU ===== */
-.btn-print { background: linear-gradient(135deg, #1e3a5f, #2d6a9f); color: #fff !important; border: none; border-radius: 4px; padding: 4px 12px; font-size: 0.875rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; box-shadow: 0 1px 3px rgba(30,58,95,0.25); height: calc(1.5em + .5rem + 2px); }
-.btn-print:hover { background: linear-gradient(135deg, #2d6a9f, #3a80bf); box-shadow: 0 4px 12px rgba(30,58,95,0.35); transform: translateY(-1px); }
+/* Yazdır butonu */
+.btn-print {
+  background: linear-gradient(135deg, #1e3a5f, #2d6a9f);
+  color: #fff !important;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 14px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+  box-shadow: 0 1px 3px rgba(30, 58, 95, 0.25);
+}
+.btn-print:hover {
+  background: linear-gradient(135deg, #2d6a9f, #3a80bf);
+  box-shadow: 0 4px 12px rgba(30, 58, 95, 0.35);
+  transform: translateY(-1px);
+}
 @media print { .no-print { display: none !important; } }
 
-/* ===== ARAMA ===== */
-#anlStuSearchWrapper { position:relative; }
-#anlStuRes { position:absolute; z-index:1050; width:100%; background:#fff; border:1px solid #ced4da; border-radius:0 0 4px 4px; max-height:220px; overflow-y:auto; box-shadow:0 4px 12px rgba(0,0,0,0.15); display:none; }
-body.dark-mode #anlStuRes { background:#343a40; border-color:#495057; }
-.anlStu-item { padding:8px 12px; cursor:pointer; border-bottom:1px solid #f0f0f0; font-size:0.9em; }
-body.dark-mode .anlStu-item { border-color:#495057; color:#fff; }
-.anlStu-item:hover { background:#e8f4ff; }
-body.dark-mode .anlStu-item:hover { background:#495057; }
-#anlStuBadge { margin-top:4px; min-height:22px; }
+/* Arama autocomplete */
+#anlStuSearchWrapper { position: relative; }
+#anlStuRes {
+  position: absolute;
+  z-index: 1050;
+  width: 100%;
+  background: #fff;
+  border: 1px solid #ced4da;
+  border-radius: 0 0 6px 6px;
+  max-height: 220px;
+  overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: none;
+}
+[data-bs-theme="dark"] #anlStuRes { background: #2d3748; border-color: #4a5568; }
+.anlStu-item { padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0; font-size: 0.9em; }
+[data-bs-theme="dark"] .anlStu-item { border-color: #4a5568; color: #e2e8f0; }
+.anlStu-item:hover { background: #e8f4ff; }
+[data-bs-theme="dark"] .anlStu-item:hover { background: #4a5568; }
+#anlStuBadge { margin-top: 4px; min-height: 22px; }
 
-/* Kutular */
-.preview-box { background: #f8f9fa; border-left: 4px solid #17a2b8; padding: 10px 15px; margin-bottom: 15px; border-radius: 4px; }
+/* Preview kutuları */
+.preview-box { background: #f8f9fa; border-left: 4px solid #17a2b8; padding: 10px 15px; margin-bottom: 15px; border-radius: 6px; }
 .preview-box.warning { border-left-color: #ffc107; background: #fff3cd; }
 .preview-box.danger { border-left-color: #dc3545; background: #f8d7da; }
-body.dark-mode .preview-box { background: #343a40; color: #fff; }
-body.dark-mode .preview-box.warning { background: #664d03; color: #fff; }
-body.dark-mode .preview-box.danger { background: #5c1e22; color: #fff; }
+[data-bs-theme="dark"] .preview-box { background: #2d3748; color: #e2e8f0; }
+[data-bs-theme="dark"] .preview-box.warning { background: #664d03; color: #fff; }
+[data-bs-theme="dark"] .preview-box.danger { background: #5c1e22; color: #fff; }
 
-/* ===== TOAST ===== */
+/* Toast */
 #toastContainer { position: fixed; top: 70px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 10px; max-width: 350px; }
-.toast-item { display: flex; align-items: center; padding: 12px 16px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); animation: slideInRight 0.3s ease-out; font-size: 0.9em; color: #fff; }
+.toast-item { display: flex; align-items: center; padding: 12px 16px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); animation: slideInRight 0.3s ease-out; font-size: 0.9em; color: #fff; }
 .toast-item.success { background: linear-gradient(135deg, #28a745, #20c997); }
 .toast-item.error { background: linear-gradient(135deg, #dc3545, #e74c3c); }
 .toast-item.warning { background: linear-gradient(135deg, #ffc107, #fd7e14); color: #212529; }
@@ -88,45 +132,59 @@ body.dark-mode .preview-box.danger { background: #5c1e22; color: #fff; }
 @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 @keyframes slideOutRight { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
 
-/* ===== PWA POPUP ===== */
-#pwaInstallPopup { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); z-index: 99999; background: #fff; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.2); padding: 16px 20px; display: flex; align-items: center; gap: 14px; max-width: 360px; width: 90%; animation: popupSlideDown 0.4s ease-out; border-left: 5px solid #1e3a5f; }
-body.dark-mode #pwaInstallPopup { background: #1f2940; color: #e9ecef; }
+/* PWA Popup */
+#pwaInstallPopup {
+  position: fixed;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 99999;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: 360px;
+  width: 90%;
+  animation: popupSlideDown 0.4s ease-out;
+  border-left: 5px solid #1e3a5f;
+}
+[data-bs-theme="dark"] #pwaInstallPopup { background: #1f2940; color: #e9ecef; }
 #pwaInstallPopup .pwa-icon { font-size: 2em; flex-shrink: 0; }
 #pwaInstallPopup .pwa-text { flex: 1; }
 #pwaInstallPopup .pwa-text strong { display: block; font-size: 0.95em; color: #1e3a5f; margin-bottom: 2px; }
-body.dark-mode #pwaInstallPopup .pwa-text strong { color: #4dabf7; }
+[data-bs-theme="dark"] #pwaInstallPopup .pwa-text strong { color: #4dabf7; }
 #pwaInstallPopup .pwa-text span { font-size: 0.8em; color: #6c757d; }
 #pwaInstallPopup .pwa-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
 #pwaInstallPopup .btn-pwa-install { background: #1e3a5f; color: #fff; border: none; border-radius: 6px; padding: 6px 14px; font-size: 0.82em; cursor: pointer; white-space: nowrap; }
 #pwaInstallPopup .btn-pwa-install:hover { background: #2d6a9f; }
 #pwaInstallPopup .btn-pwa-close { background: transparent; color: #aaa; border: none; font-size: 1.1em; cursor: pointer; align-self: flex-start; line-height: 1; }
-#pwaInstallPopup .pwa-progress { position: absolute; bottom: 0; left: 0; height: 3px; background: #1e3a5f; border-radius: 0 0 0 12px; animation: pwaBar 4s linear forwards; }
-body.dark-mode #pwaInstallPopup .pwa-progress { background: #4dabf7; }
+#pwaInstallPopup .pwa-progress { position: absolute; bottom: 0; left: 0; height: 3px; background: #1e3a5f; border-radius: 0 0 0 14px; animation: pwaBar 4s linear forwards; }
+[data-bs-theme="dark"] #pwaInstallPopup .pwa-progress { background: #4dabf7; }
 @keyframes popupSlideDown { from { transform: translateX(-50%) translateY(-20px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
 @keyframes popupSlideUp { from { transform: translateX(-50%) translateY(0); opacity: 1; } to { transform: translateX(-50%) translateY(-20px); opacity: 0; } }
 @keyframes pwaBar { from { width: 100%; } to { width: 0%; } }
 
-/* ===== EŞLEŞTİRME SİHİRBAZI ===== */
-.wizard-section { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; padding: 15px; margin-bottom: 15px; }
-body.dark-mode .wizard-section { background: #2a3b4c; border-color: #3d4f6f; }
+/* Wizard */
+.wizard-section { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 15px; margin-bottom: 15px; }
+[data-bs-theme="dark"] .wizard-section { background: #2a3b4c; border-color: #3d4f6f; }
 .wizard-section h6 { margin-top: 0; margin-bottom: 15px; font-weight: bold; color: #1e3a5f; border-bottom: 2px solid #1e3a5f; padding-bottom: 5px; display: inline-block; }
-body.dark-mode .wizard-section h6 { color: #4dabf7; border-bottom-color: #4dabf7; }
-.subj-map-row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; background: #fff; padding: 10px; border-radius: 4px; border: 1px dashed #ccc; }
-body.dark-mode .subj-map-row { background: #1f2940; border-color: #4b5563; }
+[data-bs-theme="dark"] .wizard-section h6 { color: #4dabf7; border-bottom-color: #4dabf7; }
+.subj-map-row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; background: #fff; padding: 10px; border-radius: 6px; border: 1px dashed #ccc; }
+[data-bs-theme="dark"] .subj-map-row { background: #1f2940; border-color: #4b5563; }
 .subj-map-row select, .subj-map-row input { flex: 1; }
 .subj-map-row .btn-remove { flex: 0 0 auto; }
-.wiz-steps { display: flex; justify-content: space-between; font-size: 0.78em; margin-bottom: 4px; }
-.wiz-step-label { text-align: center; flex: 1; padding: 0 2px; line-height: 1.3; }
 #mMappingsFooter { position: sticky; bottom: 0; z-index: 10; }
-body.dark-mode #mMappingsFooter { background: #1f2940 !important; }
+[data-bs-theme="dark"] #mMappingsFooter { background: #1f2940 !important; }
 
-/* ===== MOBİL ===== */
+/* Mobil */
 @media (max-width: 768px) {
   .table-responsive { font-size: 0.8em; }
   .table th, .table td { padding: 0.4rem 0.3rem !important; white-space: nowrap; }
   .table th { font-size: 0.75em; }
   .card-header { padding: 0.5rem 0.75rem; }
-  .card-header .card-title { font-size: 0.95em; }
   .info-box { min-height: 70px; }
   .info-box-icon { width: 60px; font-size: 1.2rem; }
   .info-box-content { padding: 8px 10px; }
@@ -142,88 +200,90 @@ body.dark-mode #mMappingsFooter { background: #1f2940 !important; }
   .modal-content { max-height: calc(100vh - 12px) !important; display: flex; flex-direction: column; overflow: hidden; }
   .modal-body { overflow-y: auto !important; -webkit-overflow-scrolling: touch; flex: 1 1 auto; }
   .modal-footer { flex-shrink: 0 !important; position: sticky; bottom: 0; background: #fff; z-index: 5; border-top: 2px solid #dee2e6 !important; padding: 8px 12px !important; }
-  body.dark-mode .modal-footer { background: #1f2940 !important; }
-  #wizBtnBack, #wizBtnNext, #wizBtnDone { font-size: 0.85em; padding: 6px 12px; }
-  .wizard-section { padding: 10px; }
-  .wizard-section .row .col-md-4, .wizard-section .row .col-md-6 { margin-bottom: 6px; }
+  [data-bs-theme="dark"] .modal-footer { background: #1f2940 !important; }
 }
 .scroll-hint { display: none; }
 @media (max-width: 768px) { .scroll-hint { display: block; font-size: 0.75em; color: #6c757d; text-align: right; margin-bottom: 4px; } }
 
-/* ===== DARK MODE ===== */
-body.dark-mode { background-color: #1a1a2e !important; }
-body.dark-mode .content-wrapper { background-color: #16213e !important; }
-body.dark-mode .card { background-color: #1f2940 !important; border-color: #2d3a52 !important; }
-body.dark-mode .card-header { background-color: #253352 !important; border-color: #3d4f6f !important; }
-body.dark-mode .card-outline.card-primary { border-top-color: #4dabf7 !important; }
-body.dark-mode .card-outline.card-info { border-top-color: #3bc9db !important; }
-body.dark-mode .card-outline.card-success { border-top-color: #51cf66 !important; }
-body.dark-mode .card-outline.card-warning { border-top-color: #fcc419 !important; }
-body.dark-mode .table { color: #e9ecef; }
-body.dark-mode .table-striped tbody tr:nth-of-type(odd) { background-color: rgba(255,255,255,0.03); }
-body.dark-mode .table-hover tbody tr:hover { background-color: rgba(77, 171, 247, 0.1); }
-body.dark-mode .table thead th { background-color: #253352 !important; color: #e9ecef !important; border-color: #3d4f6f !important; }
-body.dark-mode .table td, body.dark-mode .table th { border-color: #3d4f6f !important; }
-body.dark-mode .info-box { background-color: #1f2940; }
-body.dark-mode .form-control { background-color: #253352; border-color: #3d4f6f; color: #e9ecef; }
-body.dark-mode .form-control:focus { background-color: #2d3a52; border-color: #4dabf7; color: #fff; }
-body.dark-mode select.form-control option { background-color: #253352; color: #e9ecef; }
-body.dark-mode .alert-default-info { background-color: rgba(59, 201, 219, 0.15); color: #3bc9db; border-color: #3bc9db; }
-body.dark-mode .alert-default-warning { background-color: rgba(252, 196, 25, 0.15); color: #fcc419; border-color: #fcc419; }
-body.dark-mode .callout-info { background-color: rgba(59, 201, 219, 0.1) !important; border-left-color: #3bc9db !important; }
-body.dark-mode .text-primary { color: #4dabf7 !important; }
-body.dark-mode .text-muted { color: #adb5bd !important; }
-body.dark-mode .badge-success { background-color: #51cf66; }
-body.dark-mode .badge-info { background-color: #3bc9db; }
-body.dark-mode .modal-footer { background-color: #1f2940 !important; border-color: #3d4f6f !important; }
-body.dark-mode .modal-content { background-color: #1f2940 !important; }
-body.dark-mode .modal-header { background-color: #253352 !important; }
+/* AdminLTE v4 Dark Mode uyumu */
+[data-bs-theme="dark"] .content-wrapper { background-color: #1a1f2e !important; }
+[data-bs-theme="dark"] .card { background-color: #1f2940 !important; border-color: #2d3a52 !important; }
+[data-bs-theme="dark"] .card-header { background-color: #253352 !important; border-color: #3d4f6f !important; }
+[data-bs-theme="dark"] .table { color: #e9ecef; }
+[data-bs-theme="dark"] .table thead th { background-color: #253352 !important; color: #e9ecef !important; border-color: #3d4f6f !important; }
+[data-bs-theme="dark"] .table td, [data-bs-theme="dark"] .table th { border-color: #3d4f6f !important; }
+[data-bs-theme="dark"] .info-box { background-color: #1f2940; }
+[data-bs-theme="dark"] .form-control { background-color: #253352; border-color: #3d4f6f; color: #e9ecef; }
+[data-bs-theme="dark"] .form-control:focus { background-color: #2d3a52; border-color: #4dabf7; color: #fff; }
+[data-bs-theme="dark"] select.form-control option, [data-bs-theme="dark"] select.form-select option { background-color: #253352; color: #e9ecef; }
+[data-bs-theme="dark"] .modal-content { background-color: #1f2940 !important; }
+[data-bs-theme="dark"] .modal-header { background-color: #253352 !important; }
+[data-bs-theme="dark"] .modal-footer { background-color: #1f2940 !important; border-color: #3d4f6f !important; }
+[data-bs-theme="dark"] .text-muted { color: #adb5bd !important; }
+[data-bs-theme="dark"] .callout { background-color: rgba(59, 201, 219, 0.1) !important; border-left-color: #3bc9db !important; }
 
-/* CSS İçerisindeki Tüm Büyük Harf (Uppercase) Komutları Kaldırıldı */
-.info-box-text { display: block; font-size: 0.78em; font-weight: 600; }
+/* info-box-text uppercase kaldırıldı */
+.info-box-text { display: block; font-size: 0.78em; font-weight: 600; text-transform: none !important; }
 
-/* ===== TREND ANALİZİ ===== */
+/* Trend Analizi */
 .trend-card { background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 12px; padding: 20px; margin-bottom: 15px; }
-body.dark-mode .trend-card { background: linear-gradient(135deg, #1f2940 0%, #253352 100%); }
+[data-bs-theme="dark"] .trend-card { background: linear-gradient(135deg, #1f2940 0%, #253352 100%); }
 .trend-indicator { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 20px; font-size: 0.85em; font-weight: bold; }
 .trend-up { background-color: rgba(40, 167, 69, 0.15); color: #28a745; }
 .trend-down { background-color: rgba(220, 53, 69, 0.15); color: #dc3545; }
 .trend-stable { background-color: rgba(108, 117, 125, 0.15); color: #6c757d; }
+
+/* AdminLTE v4 card outline uyumlu border renkler */
+.card-outline-primary { border-top: 3px solid #0d6efd !important; }
+.card-outline-info { border-top: 3px solid #0dcaf0 !important; }
+.card-outline-success { border-top: 3px solid #198754 !important; }
+.card-outline-warning { border-top: 3px solid #ffc107 !important; }
+.card-outline-danger { border-top: 3px solid #dc3545 !important; }
+
+/* AdminLTE v4 için uyumluluk katmanı (v3 sınıf isimleri → v4) */
+.card.card-primary.card-outline { border-top: 3px solid #0d6efd !important; }
+.card.card-info.card-outline { border-top: 3px solid #0dcaf0 !important; }
+.card.card-success.card-outline { border-top: 3px solid #198754 !important; }
+.card.card-warning.card-outline { border-top: 3px solid #ffc107 !important; }
+.card.card-danger.card-outline { border-top: 3px solid #dc3545 !important; }
 </style>
 </head>
-<body class="hold-transition sidebar-mini layout-fixed">
 
+<!-- AdminLTE v4: body sınıfı sidebar-mini layout-fixed yerine data attribute ile yönetilir -->
+<body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
+
+<!-- Loader -->
 <div id="loader" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:9999;justify-content:center;align-items:center;flex-direction:column;color:white;font-size:1.2em;">
   <div class="spinner-border text-light mb-3" style="width:3rem;height:3rem;"></div>
   <div id="l-txt">İşlem yapılıyor...</div>
 </div>
+
+<!-- Giriş Ekranı -->
 <div id="loginScreen">
   <div class="login-card card shadow-lg">
     <div class="card-header text-center py-4">
-      <h3 class="mb-0 text-white"><i class="fas fa-chart-bar mr-2"></i>Sınav Analizi</h3>
+      <h3 class="mb-0 text-white"><i class="fas fa-chart-bar me-2"></i>Sınav Analizi</h3>
       <p class="text-white-50 mb-0 mt-1" style="font-size:0.85em;">Bulut Tabanlı Eğitim Platformu</p>
     </div>
     <div class="card-body p-4">
-      <div class="form-group">
-        <label>E-posta</label>
+      <div class="mb-3">
+        <label class="form-label">E-posta</label>
         <div class="input-group">
           <input type="email" id="loginEmail" class="form-control" placeholder="ornek@okul.com" autocomplete="email" onkeypress="if(event.key==='Enter') document.getElementById('loginPass').focus();">
-          <div class="input-group-append"><span class="input-group-text"><i class="fas fa-envelope"></i></span></div>
+          <span class="input-group-text"><i class="fas fa-envelope"></i></span>
         </div>
       </div>
-      <div class="form-group">
-        <label>Şifre</label>
+      <div class="mb-3">
+        <label class="form-label">Şifre</label>
         <div class="input-group">
           <input type="password" id="loginPass" class="form-control" placeholder="••••••••" onkeypress="if(event.key==='Enter')login()">
-          <div class="input-group-append">
-            <button type="button" class="input-group-text" onclick="togglePassword()" style="cursor:pointer;background:transparent;border:1px solid #ced4da;border-left:0;">
-              <i class="fas fa-eye" id="togglePassIcon"></i>
-            </button>
-          </div>
+          <button type="button" class="input-group-text" onclick="togglePassword()" style="cursor:pointer;background:transparent;">
+            <i class="fas fa-eye" id="togglePassIcon"></i>
+          </button>
         </div>
       </div>
-      <button id="btnLogin" onclick="login()" class="btn btn-primary btn-block btn-lg">
-        <i class="fas fa-sign-in-alt mr-2"></i>Giriş Yap
+      <button id="btnLogin" onclick="login()" class="btn btn-primary w-100 btn-lg">
+        <i class="fas fa-sign-in-alt me-2"></i>Giriş Yap
       </button>
       <div class="text-center mt-2">
         <a href="#" onclick="openForgotPassword(event)" style="font-size:0.85em; color:#2d6a9f;">Şifremi unuttum</a>
@@ -233,6 +293,7 @@ body.dark-mode .trend-card { background: linear-gradient(135deg, #1f2940 0%, #25
   </div>
 </div>
 
+<!-- PWA Kurulum Popup -->
 <div id="pwaInstallPopup" style="display:none;">
   <div class="pwa-icon">📲</div>
   <div class="pwa-text">
@@ -240,62 +301,113 @@ body.dark-mode .trend-card { background: linear-gradient(135deg, #1f2940 0%, #25
     <span>Ana ekrana ekleyerek daha hızlı erişin</span>
   </div>
   <div class="pwa-actions">
-    <button class="btn-pwa-install" onclick="triggerInstall(event)"><i class="fas fa-download mr-1"></i>Yükle</button>
+    <button class="btn-pwa-install" onclick="triggerInstall(event)"><i class="fas fa-download me-1"></i>Yükle</button>
     <button class="btn-pwa-close" onclick="closePwaPopup()" title="Kapat">✕</button>
   </div>
   <div class="pwa-progress"></div>
 </div>
 
-<div id="mainApp" style="display:none;">
-  <nav class="main-header navbar navbar-expand navbar-white navbar-light" id="topNav">
-    <ul class="navbar-nav">
-      <li class="nav-item"><a class="nav-link" data-widget="pushmenu" href="#"><i class="fas fa-bars"></i></a></li>
-      <li class="nav-item d-none d-sm-inline-block">
-        <span class="nav-link text-muted" style="font-size:0.85em;"><i class="fas fa-user-circle mr-1"></i><span id="userEmail"></span></span>
-      </li>
-    </ul>
-    <ul class="navbar-nav ml-auto">
-      <li class="nav-item"><a href="#" class="nav-link" onclick="toggleTheme()"><i class="fas fa-moon" id="themeIcon"></i></a></li>
-      <li class="nav-item" id="installBtnWrapper" style="display:none;">
-        <a href="#" class="nav-link text-success" id="installBtn" onclick="triggerInstall(event)" title="Uygulamayı Yükle">
-          <i class="fas fa-download mr-1"></i><span class="d-none d-sm-inline">Yükle</span>
-        </a>
-      </li>
-      <li class="nav-item"><span id="connBadge" class="nav-link"><span id="connDot">⏳</span> <span id="connTxt">Bağlanıyor...</span></span></li>
-      <li class="nav-item"><a href="#" class="nav-link" onclick="logout()"><i class="fas fa-sign-out-alt mr-1"></i>Çıkış</a></li>
-    </ul>
+<!-- Ana Uygulama -->
+<div id="mainApp" style="display:none;" class="app-wrapper">
+
+  <!-- Navbar -->
+  <nav class="app-header navbar navbar-expand bg-body" id="topNav">
+    <div class="container-fluid">
+      <ul class="navbar-nav">
+        <li class="nav-item">
+          <a class="nav-link" data-lte-toggle="sidebar" href="#" role="button">
+            <i class="bi bi-list"></i>
+          </a>
+        </li>
+        <li class="nav-item d-none d-sm-inline-block">
+          <span class="nav-link text-muted" style="font-size:0.85em;"><i class="fas fa-user-circle me-1"></i><span id="userEmail"></span></span>
+        </li>
+      </ul>
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item">
+          <a href="#" class="nav-link" onclick="toggleTheme()" title="Tema Değiştir">
+            <i class="fas fa-moon" id="themeIcon"></i>
+          </a>
+        </li>
+        <li class="nav-item" id="installBtnWrapper" style="display:none;">
+          <a href="#" class="nav-link text-success" id="installBtn" onclick="triggerInstall(event)" title="Uygulamayı Yükle">
+            <i class="fas fa-download me-1"></i><span class="d-none d-sm-inline">Yükle</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <span id="connBadge" class="nav-link"><span id="connDot">⏳</span> <span id="connTxt">Bağlanıyor...</span></span>
+        </li>
+        <li class="nav-item">
+          <a href="#" class="nav-link" onclick="logout()"><i class="fas fa-sign-out-alt me-1"></i>Çıkış</a>
+        </li>
+      </ul>
+    </div>
   </nav>
 
-  <aside class="main-sidebar sidebar-dark-primary elevation-4">
-    <a href="#" class="brand-link text-center">
-      <i class="fas fa-chart-line brand-image" style="font-size:1.5rem;margin:0 8px;"></i>
-      <span class="brand-text font-weight-bold">Sınav Analizi</span>
-    </a>
-    <div class="sidebar">
-      <div class="user-panel mt-3 pb-3 mb-3 d-flex">
-        <div class="image"><i class="fas fa-user-circle fa-2x text-white ml-2"></i></div>
-        <div class="info"><span class="d-block text-white" id="sideUserEmail" style="font-size:0.8em;"></span></div>
-      </div>
+  <!-- Sidebar -->
+  <aside class="app-sidebar bg-dark sidebar-dark-primary shadow" data-bs-theme="dark">
+    <div class="sidebar-brand">
+      <a href="#" class="brand-link">
+        <i class="fas fa-chart-line me-2" style="font-size:1.3rem;"></i>
+        <span class="brand-text fw-bold">Sınav Analizi</span>
+      </a>
+    </div>
+    <div class="sidebar-wrapper">
       <nav class="mt-2">
-        <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
-          <li class="nav-item"><a id="nav-anasayfa-genel" href="#" class="nav-link active" onclick="sTab('anasayfa_genel',this)"><i class="nav-icon fas fa-home"></i><p>Ana Sayfa</p></a></li>
-          <li class="nav-item"><a id="nav-anasayfa" href="#" class="nav-link" onclick="sTab('anasayfa',this)"><i class="nav-icon fas fa-user-graduate"></i><p>Öğrenci</p></a></li>
-          <li class="nav-item"><a id="nav-sonuclar" href="#" class="nav-link" onclick="sTab('sonuclar',this)"><i class="nav-icon fas fa-chart-line"></i><p>Sonuçlar &amp; Analizler</p></a></li>
-          <li class="nav-item"><a id="nav-rapor" href="#" class="nav-link" onclick="sTab('rapor',this)"><i class="nav-icon fas fa-file-alt"></i><p>Toplu Rapor</p></a></li>
-          <li id="nav-ayarlar" class="nav-item admin-only"><a href="#" class="nav-link" onclick="sTab('ayarlar',this)"><i class="nav-icon fas fa-cog"></i><p>Ayarlar</p></a></li>
+        <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="menu" data-accordion="false">
+          <!-- Kullanıcı Paneli -->
+          <li class="nav-item">
+            <div class="user-panel mt-2 pb-3 mb-2 d-flex align-items-center px-3 border-bottom border-secondary">
+              <div class="image me-2"><i class="fas fa-user-circle fa-2x text-white"></i></div>
+              <div class="info"><span class="d-block text-white" id="sideUserEmail" style="font-size:0.78em;word-break:break-all;"></span></div>
+            </div>
+          </li>
+          <li class="nav-item">
+            <a id="nav-anasayfa-genel" href="#" class="nav-link active" onclick="sTab('anasayfa_genel',this)">
+              <i class="nav-icon fas fa-home"></i>
+              <p>Ana Sayfa</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a id="nav-anasayfa" href="#" class="nav-link" onclick="sTab('anasayfa',this)">
+              <i class="nav-icon fas fa-user-graduate"></i>
+              <p>Öğrenci</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a id="nav-sonuclar" href="#" class="nav-link" onclick="sTab('sonuclar',this)">
+              <i class="nav-icon fas fa-chart-line"></i>
+              <p>Sonuçlar &amp; Analizler</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a id="nav-rapor" href="#" class="nav-link" onclick="sTab('rapor',this)">
+              <i class="nav-icon fas fa-file-alt"></i>
+              <p>Toplu Rapor</p>
+            </a>
+          </li>
+          <li id="nav-ayarlar" class="nav-item admin-only">
+            <a href="#" class="nav-link" onclick="sTab('ayarlar',this)">
+              <i class="nav-icon fas fa-cog"></i>
+              <p>Ayarlar</p>
+            </a>
+          </li>
         </ul>
       </nav>
     </div>
   </aside>
 
-  <div class="content-wrapper">
-    <div class="content-header">
+  <!-- İçerik Alanı -->
+  <main class="app-main">
+    <div class="app-content-header">
       <div class="container-fluid">
         <div class="row mb-2">
-          <div class="col-sm-6"><h1 class="m-0" id="pageTitle">Ana Sayfa</h1></div>
           <div class="col-sm-6">
-            <ol class="breadcrumb float-sm-right">
-              <li class="breadcrumb-item"><i class="fas fa-chart-bar mr-1"></i>Sınav Analizi</li>
+            <h1 class="m-0" id="pageTitle">Ana Sayfa</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-end">
+              <li class="breadcrumb-item"><i class="fas fa-chart-bar me-1"></i>Sınav Analizi</li>
               <li class="breadcrumb-item active" id="breadcrumb">Ana Sayfa</li>
             </ol>
           </div>
@@ -303,11 +415,11 @@ body.dark-mode .trend-card { background: linear-gradient(135deg, #1f2940 0%, #25
       </div>
     </div>
 
-    <div class="content">
+    <div class="app-content">
       <div class="container-fluid">
-        <!-- ANA SAYFA (YENİ) -->
+
+        <!-- ANA SAYFA -->
         <div id="anasayfa_genel" class="pane active-pane">
-          <!-- Hızlı Erişim Kartları -->
           <div class="row mb-3">
             <div class="col-md-3 col-sm-6 col-12">
               <div class="info-box bg-primary" onclick="sTab('anasayfa', document.getElementById('nav-anasayfa'))" style="cursor:pointer; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
@@ -322,7 +434,7 @@ body.dark-mode .trend-card { background: linear-gradient(135deg, #1f2940 0%, #25
               <div class="info-box bg-success" onclick="sTab('sonuclar', document.getElementById('nav-sonuclar'))" style="cursor:pointer; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
                 <span class="info-box-icon"><i class="fas fa-chart-line"></i></span>
                 <div class="info-box-content">
-                  <span class="info-box-text">Sonuçlar & Analizler</span>
+                  <span class="info-box-text">Sonuçlar &amp; Analizler</span>
                   <span class="progress-description" style="font-size:0.8em;">Sınıf/Ders analizleri</span>
                 </div>
               </div>
@@ -340,16 +452,14 @@ body.dark-mode .trend-card { background: linear-gradient(135deg, #1f2940 0%, #25
               <div class="info-box bg-warning" onclick="sTab('ayarlar', document.getElementById('nav-ayarlar'))" style="cursor:pointer; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
                 <span class="info-box-icon"><i class="fas fa-cog text-white"></i></span>
                 <div class="info-box-content text-white">
-                  <span class="info-box-text">Ayarlar & Yükleme</span>
+                  <span class="info-box-text">Ayarlar &amp; Yükleme</span>
                   <span class="progress-description" style="font-size:0.8em;">Excel ile veri aktarımı</span>
                 </div>
               </div>
             </div>
           </div>
-          
-          <!-- Sistem Özeti -->
           <div class="card card-outline card-info">
-            <div class="card-header"><h3 class="card-title"><i class="fas fa-tachometer-alt mr-2"></i>Sistem Özeti</h3></div>
+            <div class="card-header"><h3 class="card-title"><i class="fas fa-tachometer-alt me-2"></i>Sistem Özeti</h3></div>
             <div class="card-body"><div class="row" id="dynamicStatsGrid"></div></div>
           </div>
         </div>
@@ -357,29 +467,28 @@ body.dark-mode .trend-card { background: linear-gradient(135deg, #1f2940 0%, #25
         <!-- ÖĞRENCİ SAYFASI -->
         <div id="anasayfa" class="pane">
           <div class="card card-primary card-outline">
-            <div class="card-header"><h3 class="card-title"><i class="fas fa-search mr-2"></i>Öğrenci Sorgula</h3></div>
+            <div class="card-header"><h3 class="card-title"><i class="fas fa-search me-2"></i>Öğrenci Sorgula</h3></div>
             <div class="card-body">
               <div id="aBadge" class="mb-2"></div>
               <div class="input-group">
                 <input type="text" id="sInp" class="form-control" placeholder="Öğrenci No veya Adı Soyadı..." onkeyup="debounceSearch()">
-                <div class="input-group-append">
-                  <button class="btn btn-secondary" onclick="clrS()"><i class="fas fa-times"></i> Temizle</button>
-                </div>
+                <button class="btn btn-secondary" onclick="clrS()"><i class="fas fa-times"></i> Temizle</button>
               </div>
               <div id="sRes" class="mt-3"></div>
             </div>
           </div>
           <div id="homeArea"></div>
         </div>
-<!-- SONUÇLAR & ANALİZLER -->
+
+        <!-- SONUÇLAR & ANALİZLER -->
         <div id="sonuclar" class="pane">
           <div class="card card-primary card-outline">
-            <div class="card-header"><h3 class="card-title"><i class="fas fa-filter mr-2"></i>Analiz Filtreleri</h3></div>
+            <div class="card-header"><h3 class="card-title"><i class="fas fa-filter me-2"></i>Analiz Filtreleri</h3></div>
             <div class="card-body">
               <div class="row">
                 <div class="col-sm-6 col-md-4 col-lg-2">
-                  <div class="form-group"><label>Analiz Türü</label>
-                    <select id="aType" class="form-control" onchange="reqUI()">
+                  <div class="mb-3"><label class="form-label">Analiz Türü</label>
+                    <select id="aType" class="form-select" onchange="reqUI()">
                       <option value="student">Öğrenci Analizi</option>
                       <option value="class">Sınıf Analizi</option>
                       <option value="subject">Ders Analizi</option>
@@ -387,47 +496,41 @@ body.dark-mode .trend-card { background: linear-gradient(135deg, #1f2940 0%, #25
                     </select>
                   </div>
                 </div>
-
                 <div class="col-sm-6 col-md-4 col-lg-3" id="gStu">
-                  <div class="form-group"><label>Öğrenci Seçin</label>
+                  <div class="mb-3"><label class="form-label">Öğrenci Seçin</label>
                     <div id="anlStuSearchWrapper">
                       <div class="input-group">
                         <input type="text" id="anlStuInp" class="form-control" placeholder="Ad, soyad veya numara..." onkeyup="anlStuDoSearch()" autocomplete="off">
-                        <div class="input-group-append"><button class="btn btn-outline-secondary" onclick="anlStuClear()" style="border-color:#ced4da;"><i class="fas fa-times"></i></button></div>
+                        <button class="btn btn-outline-secondary" onclick="anlStuClear()"><i class="fas fa-times"></i></button>
                       </div>
                       <div id="anlStuRes"></div>
                     </div>
                     <div id="anlStuBadge"></div>
                   </div>
                 </div>
-
                 <div class="col-sm-6 col-md-4 col-lg-2" id="gLvl" style="display:none;">
-                  <div class="form-group"><label>Sınıf Seviyesi</label>
-                    <select id="aLvl" class="form-control" onchange="reqAnl()"><option value="">Tümü</option></select>
+                  <div class="mb-3"><label class="form-label">Sınıf Seviyesi</label>
+                    <select id="aLvl" class="form-select" onchange="reqAnl()"><option value="">Tümü</option></select>
                   </div>
                 </div>
-                
                 <div class="col-sm-6 col-md-4 col-lg-1" id="gBr" style="display:none;">
-                  <div class="form-group"><label>Şube</label>
-                    <select id="aBr" class="form-control" onchange="reqAnl()"><option value="">Tümü</option></select>
+                  <div class="mb-3"><label class="form-label">Şube</label>
+                    <select id="aBr" class="form-select" onchange="reqAnl()"><option value="">Tümü</option></select>
                   </div>
                 </div>
-                
                 <div class="col-sm-6 col-md-4 col-lg-2">
-                  <div class="form-group"><label>Sınav Türü</label>
-                    <select id="aEx" class="form-control" onchange="uSub(); uExamDates(); reqAnl();"></select>
+                  <div class="mb-3"><label class="form-label">Sınav Türü</label>
+                    <select id="aEx" class="form-select" onchange="uSub(); uExamDates(); reqAnl();"></select>
                   </div>
                 </div>
-                
                 <div class="col-sm-6 col-md-4 col-lg-2" id="gSub">
-                  <div class="form-group"><label id="lblSub">Veri</label>
-                    <select id="aSub" class="form-control" onchange="handleSubChange()"></select>
+                  <div class="mb-3"><label class="form-label" id="lblSub">Veri</label>
+                    <select id="aSub" class="form-select" onchange="handleSubChange()"></select>
                   </div>
                 </div>
-                
                 <div class="col-sm-6 col-md-4 col-lg-2" id="gDate" style="display:none;">
-                  <div class="form-group"><label>Sınav Seç</label>
-                    <select id="aDate" class="form-control" onchange="reqAnl()"></select>
+                  <div class="mb-3"><label class="form-label">Sınav Seç</label>
+                    <select id="aDate" class="form-select" onchange="reqAnl()"></select>
                   </div>
                 </div>
               </div>
@@ -436,32 +539,32 @@ body.dark-mode .trend-card { background: linear-gradient(135deg, #1f2940 0%, #25
           <div id="anlRes"></div>
         </div>
 
-        <!-- TOPLU RAPOR SAYFASI -->
+        <!-- TOPLU RAPOR -->
         <div id="rapor" class="pane">
           <div class="card card-primary card-outline">
-            <div class="card-header"><h3 class="card-title"><i class="fas fa-file-alt mr-2"></i>Toplu Sınıf Raporu</h3></div>
+            <div class="card-header"><h3 class="card-title"><i class="fas fa-file-alt me-2"></i>Toplu Sınıf Raporu</h3></div>
             <div class="card-body">
               <div class="row">
                 <div class="col-sm-6 col-md-3">
-                  <div class="form-group"><label>Sınıf Seviyesi</label>
-                    <select id="rLvl" class="form-control" onchange="raporFillBranches()"><option value="">Seçiniz</option></select>
+                  <div class="mb-3"><label class="form-label">Sınıf Seviyesi</label>
+                    <select id="rLvl" class="form-select" onchange="raporFillBranches()"><option value="">Seçiniz</option></select>
                   </div>
                 </div>
                 <div class="col-sm-6 col-md-2">
-                  <div class="form-group"><label>Şube</label>
-                    <select id="rBr" class="form-control" onchange="generateRapor()"><option value="">Tümü</option></select>
+                  <div class="mb-3"><label class="form-label">Şube</label>
+                    <select id="rBr" class="form-select" onchange="generateRapor()"><option value="">Tümü</option></select>
                   </div>
                 </div>
                 <div class="col-sm-6 col-md-3">
-                  <div class="form-group"><label>Sınav Türü</label>
-                    <select id="rExType" class="form-control">
+                  <div class="mb-3"><label class="form-label">Sınav Türü</label>
+                    <select id="rExType" class="form-select">
                       <option value="ALL">Tüm Sınav Türleri (Genel Karne)</option>
                     </select>
                   </div>
                 </div>
                 <div class="col-sm-12 col-md-1 d-flex align-items-end">
-                  <div class="form-group w-100">
-                    <button class="btn btn-primary btn-block" onclick="generateRapor()"><i class="fas fa-play mr-1"></i>Getir</button>
+                  <div class="mb-3 w-100">
+                    <button class="btn btn-primary w-100" onclick="generateRapor()"><i class="fas fa-play me-1"></i>Getir</button>
                   </div>
                 </div>
               </div>
@@ -474,12 +577,12 @@ body.dark-mode .trend-card { background: linear-gradient(135deg, #1f2940 0%, #25
         <div id="ayarlar" class="pane">
           <div class="card card-primary card-outline">
             <div class="card-header d-flex justify-content-between align-items-center">
-              <h3 class="card-title"><i class="fas fa-users mr-2"></i>Öğrenci Yönetimi</h3>
-              <button class="btn btn-success btn-sm ml-auto" onclick="oModAdd()"><i class="fas fa-plus mr-1"></i>Ekle</button>
+              <h3 class="card-title"><i class="fas fa-users me-2"></i>Öğrenci Yönetimi</h3>
+              <button class="btn btn-success btn-sm ms-auto" onclick="oModAdd()"><i class="fas fa-plus me-1"></i>Ekle</button>
             </div>
             <div class="card-body">
               <div class="btn-group mb-3">
-                <button class="btn btn-primary btn-sm" onclick="getEl('fStu').click()"><i class="fas fa-upload mr-1"></i>Listeden Yükle (Excel)</button>
+                <button class="btn btn-primary btn-sm" onclick="getEl('fStu').click()"><i class="fas fa-upload me-1"></i>Listeden Yükle (Excel)</button>
                 <input type="file" id="fStu" style="display:none;" onchange="upl(event,'s')" accept=".xlsx,.xls">
               </div>
               <div class="table-responsive" style="max-height:300px;overflow-y:auto;">
@@ -488,141 +591,159 @@ body.dark-mode .trend-card { background: linear-gradient(135deg, #1f2940 0%, #25
                   <tbody></tbody>
                 </table>
               </div>
-              <button class="btn btn-danger btn-block mt-2 admin-only" onclick="cDel('allStudents','Tüm öğrenciler ve sınav verileri silinecek. Onaylıyor musunuz?')"><i class="fas fa-trash mr-1"></i>Tümünü Sil</button>
+              <button class="btn btn-danger w-100 mt-2 admin-only" onclick="cDel('allStudents','Tüm öğrenciler ve sınav verileri silinecek. Onaylıyor musunuz?')"><i class="fas fa-trash me-1"></i>Tümünü Sil</button>
             </div>
           </div>
           <div class="card card-warning card-outline">
-            <div class="card-header"><h3 class="card-title"><i class="fas fa-file-excel mr-2"></i>Sınav Verileri Yükleme</h3></div>
+            <div class="card-header"><h3 class="card-title"><i class="fas fa-file-excel me-2"></i>Sınav Verileri Yükleme</h3></div>
             <div class="card-body">
               <div class="btn-group mb-3">
-                <button class="btn btn-primary btn-sm" onclick="getEl('fEx').click()"><i class="fas fa-magic mr-1"></i>Akıllı Sihirbaz ile Sonuç Yükle</button>
+                <button class="btn btn-primary btn-sm" onclick="getEl('fEx').click()"><i class="fas fa-magic me-1"></i>Akıllı Sihirbaz ile Sonuç Yükle</button>
                 <input type="file" id="fEx" style="display:none;" onchange="upl(event,'e')" accept=".xlsx,.xls">
               </div>
               <div id="tExA" class="table-responsive mt-2"></div>
             </div>
           </div>
           <div class="card card-danger card-outline admin-only">
-            <div class="card-header"><h3 class="card-title"><i class="fas fa-database mr-2"></i>Sistem Yönetimi</h3></div>
+            <div class="card-header"><h3 class="card-title"><i class="fas fa-database me-2"></i>Sistem Yönetimi</h3></div>
             <div class="card-body">
               <div class="btn-group flex-wrap mb-2">
-                <button class="btn btn-success btn-sm" onclick="expDB()"><i class="fas fa-download mr-1"></i>Tam Yedeği İndir</button>
-                <button class="btn btn-primary btn-sm" onclick="getEl('fImp').click()"><i class="fas fa-upload mr-1"></i>Yedekten Geri Yükle</button>
+                <button class="btn btn-success btn-sm" onclick="expDB()"><i class="fas fa-download me-1"></i>Tam Yedeği İndir</button>
+                <button class="btn btn-primary btn-sm" onclick="getEl('fImp').click()"><i class="fas fa-upload me-1"></i>Yedekten Geri Yükle</button>
                 <input type="file" id="fImp" style="display:none;" accept=".json" onchange="impDB(event)">
               </div>
-              <small class="text-muted d-block mb-3"><i class="fas fa-info-circle mr-1"></i>Tüm öğrenci, sınav meta ve sınav sonuçlarını tek dosyaya yedekler.</small>
-              <button class="btn btn-danger btn-sm" onclick="cDel('all','Tüm Veritabanı Silinecek, Onaylıyor Musunuz?')"><i class="fas fa-exclamation-triangle mr-1"></i>Tüm Veritabanını Sıfırla</button>
+              <small class="text-muted d-block mb-3"><i class="fas fa-info-circle me-1"></i>Tüm öğrenci, sınav meta ve sınav sonuçlarını tek dosyaya yedekler.</small>
+              <button class="btn btn-danger btn-sm" onclick="cDel('all','Tüm Veritabanı Silinecek, Onaylıyor Musunuz?')"><i class="fas fa-exclamation-triangle me-1"></i>Tüm Veritabanını Sıfırla</button>
             </div>
           </div>
         </div>
 
       </div>
     </div>
-  </div>
+  </main>
 </div>
 
+<!-- Toast Container -->
 <div id="toastContainer"></div>
-<!-- ŞİFREMİ UNUTTUM MODALI -->
+
+<!-- ŞİFRE SIFIRLAMA MODALİ -->
 <div class="modal fade" id="mForgot" tabindex="-1">
   <div class="modal-dialog modal-sm"><div class="modal-content">
     <div class="modal-header bg-primary text-white">
-      <h5 class="modal-title"><i class="fas fa-key mr-2"></i>Şifre Sıfırlama</h5>
-      <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+      <h5 class="modal-title"><i class="fas fa-key me-2"></i>Şifre Sıfırlama</h5>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
     </div>
     <div class="modal-body">
       <p style="font-size:0.9em;">Kayıtlı e-posta adresinizi girin. Şifre sıfırlama bağlantısı gönderilecektir.</p>
-      <div class="form-group mb-0">
+      <div class="mb-0">
         <input type="email" id="forgotEmail" class="form-control" placeholder="ornek@okul.com">
       </div>
       <div id="forgotMsg" class="mt-2" style="font-size:0.85em;"></div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary btn-sm" data-dismiss="modal">İptal</button>
-      <button class="btn btn-primary btn-sm" onclick="sendPasswordReset()"><i class="fas fa-paper-plane mr-1"></i>Gönder</button>
+      <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">İptal</button>
+      <button class="btn btn-primary btn-sm" onclick="sendPasswordReset()"><i class="fas fa-paper-plane me-1"></i>Gönder</button>
     </div>
   </div></div>
 </div>
 
-<!-- EŞLEŞTİRME SİHİRBAZI MODALI -->
-<div class="modal fade" id="mMappings" tabindex="-1" data-backdrop="static">
+<!-- EŞLEŞTİRME SİHİRBAZI MODALİ -->
+<div class="modal fade" id="mMappings" tabindex="-1" data-bs-backdrop="static">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header bg-primary text-white">
-        <h5 class="modal-title"><i class="fas fa-magic mr-2"></i>Sütun Eşleştirme Sihirbazı</h5>
-        <button type="button" class="close text-white" data-dismiss="modal" onclick="cancelUpload()"><span>&times;</span></button>
+        <h5 class="modal-title"><i class="fas fa-magic me-2"></i>Sütun Eşleştirme Sihirbazı</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" onclick="cancelUpload()"></button>
       </div>
       <div class="modal-body" id="mMappingsBody" style="max-height:calc(100vh - 200px);overflow-y:auto;"></div>
       <div class="modal-footer d-flex justify-content-between" id="mMappingsFooter">
-        <button class="btn btn-secondary" data-dismiss="modal" onclick="cancelUpload()">İptal</button>
-        <button class="btn btn-primary" onclick="processMappings()">Onayla ve Analiz Et <i class="fas fa-arrow-right ml-1"></i></button>
+        <button class="btn btn-secondary" data-bs-dismiss="modal" onclick="cancelUpload()">İptal</button>
+        <button class="btn btn-primary" onclick="processMappings()">Onayla ve Analiz Et <i class="fas fa-arrow-right ms-1"></i></button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- YÜKLEME ÖN İZLEME MODALI -->
-<div class="modal fade" id="mUploadPreview" tabindex="-1" data-backdrop="static">
+<!-- YÜKLEME ÖN İZLEME MODALİ -->
+<div class="modal fade" id="mUploadPreview" tabindex="-1" data-bs-backdrop="static">
   <div class="modal-dialog modal-lg" style="margin:8px auto;max-width:800px;">
     <div class="modal-content" style="max-height:calc(100vh - 16px);display:flex;flex-direction:column;overflow:hidden;">
       <div class="modal-header bg-info text-white" style="flex-shrink:0;">
-        <h5 class="modal-title"><i class="fas fa-file-import mr-2"></i>Yükleme Ön İzlemesi</h5>
-        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close" onclick="cancelUpload()"><span aria-hidden="true">&times;</span></button>
+        <h5 class="modal-title"><i class="fas fa-file-import me-2"></i>Yükleme Ön İzlemesi</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" onclick="cancelUpload()"></button>
       </div>
       <div class="modal-body" id="uploadPreviewBody" style="overflow-y:auto;flex:1 1 auto;-webkit-overflow-scrolling:touch;"></div>
       <div class="modal-footer" style="position:sticky;bottom:0;background:#fff;z-index:10;border-top:2px solid #dee2e6;padding:10px 15px;">
-        <button class="btn btn-secondary" onclick="backToMapping()"><i class="fas fa-arrow-left mr-1"></i>Geri Dön</button>
-        <button class="btn btn-success ml-auto" onclick="confirmUpload()"><i class="fas fa-check mr-1"></i>Sisteme Kaydet</button>
+        <button class="btn btn-secondary" onclick="backToMapping()"><i class="fas fa-arrow-left me-1"></i>Geri Dön</button>
+        <button class="btn btn-success ms-auto" onclick="confirmUpload()"><i class="fas fa-check me-1"></i>Sisteme Kaydet</button>
       </div>
     </div>
   </div>
 </div>
 
+<!-- SINAV DÜZENLE MODALİ -->
 <div class="modal fade" id="mEditExam" tabindex="-1">
   <div class="modal-dialog modal-sm"><div class="modal-content">
     <div class="modal-header bg-warning text-dark">
-      <h5 class="modal-title"><i class="fas fa-edit mr-2"></i>Sınav Düzenle</h5>
-      <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+      <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Sınav Düzenle</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
     </div>
     <div class="modal-body">
       <input type="hidden" id="eExBatchId">
-      <div class="form-group"><label>Tarih <small class="text-muted">(GG.AA.YYYY)</small></label><input type="text" id="eExDate" class="form-control" placeholder="15.04.2024"></div>
-      <div class="form-group"><label>Sınav Türü</label><input type="text" id="eExType" class="form-control" placeholder="Örn: TYT"></div>
-      <div class="form-group"><label>Yayınevi <small class="text-muted">(İsteğe Bağlı)</small></label><input type="text" id="eExPub" class="form-control" placeholder="Örn: MEB"></div>
+      <div class="mb-3"><label class="form-label">Tarih <small class="text-muted">(GG.AA.YYYY)</small></label><input type="text" id="eExDate" class="form-control" placeholder="15.04.2024"></div>
+      <div class="mb-3"><label class="form-label">Sınav Türü</label><input type="text" id="eExType" class="form-control" placeholder="Örn: TYT"></div>
+      <div class="mb-3"><label class="form-label">Yayınevi <small class="text-muted">(İsteğe Bağlı)</small></label><input type="text" id="eExPub" class="form-control" placeholder="Örn: MEB"></div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary btn-sm" data-dismiss="modal">İptal</button>
-      <button class="btn btn-warning btn-sm" onclick="svExam()"><i class="fas fa-save mr-1"></i>Kaydet</button>
+      <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">İptal</button>
+      <button class="btn btn-warning btn-sm" onclick="svExam()"><i class="fas fa-save me-1"></i>Kaydet</button>
     </div>
   </div></div>
 </div>
 
+<!-- ONAY MODALİ -->
 <div class="modal fade" id="mConf" tabindex="-1">
   <div class="modal-dialog modal-sm"><div class="modal-content">
-    <div class="modal-header bg-danger text-white"><h5 class="modal-title"><i class="fas fa-exclamation-triangle mr-2"></i>Dikkat!</h5></div>
+    <div class="modal-header bg-danger text-white"><h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>Dikkat!</h5></div>
     <div class="modal-body"><p id="cTxt"></p></div>
-    <div class="modal-footer"><button class="btn btn-secondary btn-sm" data-dismiss="modal">İptal</button><button class="btn btn-danger btn-sm" onclick="xDel()">Evet, Sil</button></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">İptal</button>
+      <button class="btn btn-danger btn-sm" onclick="xDel()">Evet, Sil</button>
+    </div>
   </div></div>
 </div>
 
+<!-- ÖĞRENCİ MODALİ -->
 <div class="modal fade" id="mStu" tabindex="-1">
   <div class="modal-dialog"><div class="modal-content">
     <div class="modal-header bg-primary text-white"><h5 class="modal-title" id="mSTit">Öğrenci İşlemi</h5></div>
     <div class="modal-body">
-      <div class="form-group"><label>Öğrenci No</label><input type="text" id="mSNo" class="form-control" placeholder="Değiştirilemez"></div>
-      <div class="form-group"><label>Ad Soyad</label><input type="text" id="mSNa" class="form-control" placeholder="Ad Soyad"></div>
-      <div class="form-group"><label>Sınıfı</label><input type="text" id="mSCl" class="form-control" placeholder="Örn: 11A"></div>
+      <div class="mb-3"><label class="form-label">Öğrenci No</label><input type="text" id="mSNo" class="form-control" placeholder="Değiştirilemez"></div>
+      <div class="mb-3"><label class="form-label">Ad Soyad</label><input type="text" id="mSNa" class="form-control" placeholder="Ad Soyad"></div>
+      <div class="mb-3"><label class="form-label">Sınıfı</label><input type="text" id="mSCl" class="form-control" placeholder="Örn: 11A"></div>
     </div>
-    <div class="modal-footer"><button class="btn btn-secondary" data-dismiss="modal">İptal</button><button class="btn btn-success" onclick="svStu()"><i class="fas fa-save mr-1"></i>Kaydet</button></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+      <button class="btn btn-success" onclick="svStu()"><i class="fas fa-save me-1"></i>Kaydet</button>
+    </div>
   </div></div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.6.2/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/admin-lte/3.2.0/js/adminlte.min.js"></script>
+<!-- AdminLTE v4 JS (Bootstrap 5 + AdminLTE) -->
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/admin-lte@4.0.0-beta3/dist/js/adminlte.min.js"></script>
 
 <script>
-if(localStorage.getItem('appTheme')==='dark') document.body.classList.add('dark-mode');
+// AdminLTE v4 dark mode başlangıç
+(function() {
+  const savedTheme = localStorage.getItem('appTheme');
+  if (savedTheme === 'dark') {
+    document.documentElement.setAttribute('data-bs-theme', 'dark');
+  }
+})();
 
-/* Datalabels Eklentisi Kaydı */
+/* Datalabels Kaydı */
 Chart.register(ChartDataLabels);
 
 /* ===== FIREBASE ===== */
@@ -639,107 +760,112 @@ firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
 const auth = firebase.auth();
 
-function uConn(online){
-  const d=getEl('connDot'),t=getEl('connTxt'),b=getEl('connBadge');if(!d)return;
-  if(online){d.textContent='🟢';t.textContent='Bağlı';b.className='nav-link text-success';}
-  else{d.textContent='🔴';t.textContent='Çevrimdışı';b.className='nav-link text-danger';}
+function uConn(online) {
+  const d = getEl('connDot'), t = getEl('connTxt'), b = getEl('connBadge'); if (!d) return;
+  if (online) { d.textContent = '🟢'; t.textContent = 'Bağlı'; b.className = 'nav-link text-success'; }
+  else { d.textContent = '🔴'; t.textContent = 'Çevrimdışı'; b.className = 'nav-link text-danger'; }
 }
-database.ref('.info/connected').on('value',snap=>uConn(snap.val()===true));
+database.ref('.info/connected').on('value', snap => uConn(snap.val() === true));
 
-const ADMIN_UID="YLozrXC5w4OmD4HRzjlgF80qPCp1"; 
+const ADMIN_UID = "YLozrXC5w4OmD4HRzjlgF80qPCp1";
 
-function checkAuth(){
-  auth.onAuthStateChanged(user=>{
-    if(user){
-      getEl('loginScreen').style.display='none';
-      getEl('mainApp').style.display='block';
-      if(getEl('userEmail'))getEl('userEmail').textContent=user.email;
-      if(getEl('sideUserEmail'))getEl('sideUserEmail').textContent=user.email;
+function checkAuth() {
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      getEl('loginScreen').style.display = 'none';
+      getEl('mainApp').style.display = 'block';
+      if (getEl('userEmail')) getEl('userEmail').textContent = user.email;
+      if (getEl('sideUserEmail')) getEl('sideUserEmail').textContent = user.email;
       document.body.classList.remove('is-admin');
-      if(user.uid===ADMIN_UID)document.body.classList.add('is-admin');
+      if (user.uid === ADMIN_UID) document.body.classList.add('is-admin');
       init(); showPwaPopupIfReady();
-    }else{
-      getEl('loginScreen').style.display='flex';
-      getEl('mainApp').style.display='none';
+    } else {
+      getEl('loginScreen').style.display = 'flex';
+      getEl('mainApp').style.display = 'none';
       document.body.classList.remove('is-admin');
     }
   });
 }
 
-function login(){
-  const em=getEl('loginEmail').value.trim(),pa=getEl('loginPass').value;
-  const err=getEl('loginError'),btn=getEl('btnLogin');
-  err.style.display='none';
-  if(!em||!pa){err.textContent='E-posta ve şifre gerekli.';err.style.display='block';return;}
-  const orgHTML='<i class="fas fa-sign-in-alt mr-2"></i>Giriş Yap';
-  btn.innerHTML='<span class="spinner-border spinner-border-sm mr-2"></span>Giriş yapılıyor...';btn.disabled=true;
-  auth.signInWithEmailAndPassword(em,pa).then(()=>{btn.innerHTML=orgHTML;btn.disabled=false;}).catch(e=>{
-    btn.innerHTML=orgHTML;btn.disabled=false;
-    err.className='alert alert-danger mt-3 mb-0';err.style.display='block';
-    if(e.code.includes('user-not-found')||e.code.includes('wrong-password')||e.code.includes('invalid-credential')) err.innerHTML='<i class="fas fa-exclamation-circle mr-2"></i>Hatalı e-posta veya şifre.';
-    else err.innerHTML='<i class="fas fa-times-circle mr-2"></i>Hata: '+e.message;
+function login() {
+  const em = getEl('loginEmail').value.trim(), pa = getEl('loginPass').value;
+  const err = getEl('loginError'), btn = getEl('btnLogin');
+  err.style.display = 'none';
+  if (!em || !pa) { err.textContent = 'E-posta ve şifre gerekli.'; err.style.display = 'block'; return; }
+  const orgHTML = '<i class="fas fa-sign-in-alt me-2"></i>Giriş Yap';
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Giriş yapılıyor...'; btn.disabled = true;
+  auth.signInWithEmailAndPassword(em, pa).then(() => { btn.innerHTML = orgHTML; btn.disabled = false; }).catch(e => {
+    btn.innerHTML = orgHTML; btn.disabled = false;
+    err.className = 'alert alert-danger mt-3 mb-0'; err.style.display = 'block';
+    if (e.code.includes('user-not-found') || e.code.includes('wrong-password') || e.code.includes('invalid-credential'))
+      err.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i>Hatalı e-posta veya şifre.';
+    else err.innerHTML = '<i class="fas fa-times-circle me-2"></i>Hata: ' + e.message;
   });
 }
 
-function logout(){ auth.signOut(); location.reload(); }
+function logout() { auth.signOut(); location.reload(); }
 
-function togglePassword(){
+function togglePassword() {
   let inp = getEl('loginPass'), icon = getEl('togglePassIcon');
-  if(inp.type === 'password'){ inp.type = 'text'; icon.classList.replace('fa-eye', 'fa-eye-slash'); } 
+  if (inp.type === 'password') { inp.type = 'text'; icon.classList.replace('fa-eye', 'fa-eye-slash'); }
   else { inp.type = 'password'; icon.classList.replace('fa-eye-slash', 'fa-eye'); }
 }
 
 function openForgotPassword(e) {
   e.preventDefault();
   let em = getEl('loginEmail').value.trim();
-  if(em) getEl('forgotEmail').value = em;
-  getEl('forgotMsg').innerHTML = ''; jQuery('#mForgot').modal('show');
+  if (em) getEl('forgotEmail').value = em;
+  getEl('forgotMsg').innerHTML = '';
+  new bootstrap.Modal(document.getElementById('mForgot')).show();
 }
 
 function sendPasswordReset() {
   let em = getEl('forgotEmail').value.trim(), msg = getEl('forgotMsg');
-  if(!em) { msg.innerHTML = '<span class="text-danger">E-posta adresi gerekli.</span>'; return; }
+  if (!em) { msg.innerHTML = '<span class="text-danger">E-posta adresi gerekli.</span>'; return; }
   auth.sendPasswordResetEmail(em).then(() => {
-    msg.innerHTML = '<span class="text-success"><i class="fas fa-check-circle mr-1"></i>Sıfırlama bağlantısı gönderildi. Lütfen e-postanızı kontrol edin.</span>';
-    setTimeout(() => jQuery('#mForgot').modal('hide'), 3000);
+    msg.innerHTML = '<span class="text-success"><i class="fas fa-check-circle me-1"></i>Sıfırlama bağlantısı gönderildi.</span>';
+    setTimeout(() => bootstrap.Modal.getInstance(document.getElementById('mForgot'))?.hide(), 3000);
   }).catch(err => {
     let errMsg = 'Bir hata oluştu.';
-    if(err.code === 'auth/user-not-found') errMsg = 'Bu e-posta ile kayıtlı kullanıcı bulunamadı.';
-    else if(err.code === 'auth/invalid-email') errMsg = 'Geçersiz e-posta adresi.';
-    msg.innerHTML = `<span class="text-danger"><i class="fas fa-times-circle mr-1"></i>${errMsg}</span>`;
+    if (err.code === 'auth/user-not-found') errMsg = 'Bu e-posta ile kayıtlı kullanıcı bulunamadı.';
+    else if (err.code === 'auth/invalid-email') errMsg = 'Geçersiz e-posta adresi.';
+    msg.innerHTML = `<span class="text-danger"><i class="fas fa-times-circle me-1"></i>${errMsg}</span>`;
   });
 }
 
-function applyTheme(isDark){
-  const nav=getEl('topNav'),icon=getEl('themeIcon');
-  if(isDark){
-    document.body.classList.add('dark-mode');
-    nav.classList.replace('navbar-white','navbar-dark'); nav.classList.replace('navbar-light','navbar-dark');
-    icon.classList.replace('fa-moon','fa-sun');Chart.defaults.color='#adb5bd';
-  }else{
-    document.body.classList.remove('dark-mode');
-    nav.classList.remove('navbar-dark'); nav.classList.add('navbar-white','navbar-light');
-    icon.classList.replace('fa-sun','fa-moon');Chart.defaults.color='#475569';
+function applyTheme(isDark) {
+  const icon = getEl('themeIcon');
+  if (isDark) {
+    document.documentElement.setAttribute('data-bs-theme', 'dark');
+    if (icon) { icon.classList.replace('fa-moon', 'fa-sun'); }
+    Chart.defaults.color = '#adb5bd';
+  } else {
+    document.documentElement.setAttribute('data-bs-theme', 'light');
+    if (icon) { icon.classList.replace('fa-sun', 'fa-moon'); }
+    Chart.defaults.color = '#475569';
   }
-  if(c.h)c.h.update();if(c.a)c.a.update();
-  if(window._karneCharts) window._karneCharts.forEach(ch=>ch.update());
-  if(window._raporCharts) window._raporCharts.forEach(ch=>ch.update());
-}
-function toggleTheme(){
-  const isDark=!document.body.classList.contains('dark-mode');
-  localStorage.setItem('appTheme',isDark?'dark':'light');applyTheme(isDark);
+  if (c.h) c.h.update();
+  if (c.a) c.a.update();
+  if (window._karneCharts) window._karneCharts.forEach(ch => ch.update());
+  if (window._raporCharts) window._raporCharts.forEach(ch => ch.update());
 }
 
-const getEl=i=>document.getElementById(i);
-let DB = { s: [], e: [] }; 
-let EXAM_META = {}; 
-let CACHED_RESULTS = {}; 
-let aNo=null, c={h:null,a:null};
-const cols=['#2d6a9f','#e6194b','#1a7f4b','#d97706','#7c3aed','#f58231','#0ea5e9','#db2777'];
-let dInf={},searchDebounceTimer=null,anlDebounceTimer=null,chartTimer=null;
-let currentExcelData=[], currentUploadType='', currentHeaders=[], PENDING_UPLOAD=null; 
+function toggleTheme() {
+  const isDark = document.documentElement.getAttribute('data-bs-theme') !== 'dark';
+  localStorage.setItem('appTheme', isDark ? 'dark' : 'light');
+  applyTheme(isDark);
+}
 
-function ld(s,m="İşlem yapılıyor..."){getEl('l-txt').textContent=m;getEl('loader').style.display=s?'flex':'none';}
+const getEl = i => document.getElementById(i);
+let DB = { s: [], e: [] };
+let EXAM_META = {};
+let CACHED_RESULTS = {};
+let aNo = null, c = { h: null, a: null };
+const cols = ['#2d6a9f', '#e6194b', '#1a7f4b', '#d97706', '#7c3aed', '#f58231', '#0ea5e9', '#db2777'];
+let dInf = {}, searchDebounceTimer = null, anlDebounceTimer = null, chartTimer = null;
+let currentExcelData = [], currentUploadType = '', currentHeaders = [], PENDING_UPLOAD = null;
+
+function ld(s, m = "İşlem yapılıyor...") { getEl('l-txt').textContent = m; getEl('loader').style.display = s ? 'flex' : 'none'; }
 
 function showToast(message, type = 'info', duration = 4000) {
   const container = getEl('toastContainer');
@@ -756,9 +882,9 @@ function toTitleCase(str) {
   return String(str).toLocaleLowerCase('tr-TR').split(' ').map(word => word.charAt(0).toLocaleUpperCase('tr-TR') + word.slice(1)).join(' ');
 }
 
-async function init(){
+async function init() {
   const savedTheme = localStorage.getItem('appTheme') === 'dark'; applyTheme(savedTheme);
-  ld(1,'Sistem altyapısı hazırlanıyor...');
+  ld(1, 'Sistem altyapısı hazırlanıyor...');
 
   let v2Snap = await database.ref('db_v2/students').once('value');
   if (!v2Snap.exists()) {
@@ -769,49 +895,47 @@ async function init(){
       await database.ref('db_v2/students').set(cleanStudents);
       let meta = {}, results = {};
       oldDB.e.forEach(ex => {
-        if(!ex) return; let bId = ex.examBatchId;
-        if(!meta[bId]) { meta[bId] = { date: ex.date, examType: ex.examType, publisher: ex.publisher || '', count: 0, subjects: [], grades: [] }; results[bId] = []; }
+        if (!ex) return; let bId = ex.examBatchId;
+        if (!meta[bId]) { meta[bId] = { date: ex.date, examType: ex.examType, publisher: ex.publisher || '', count: 0, subjects: [], grades: [] }; results[bId] = []; }
         meta[bId].count++; results[bId].push(ex);
         let stGrade = getGrade(ex.studentClass);
-        if(stGrade && !meta[bId].grades.includes(stGrade)) meta[bId].grades.push(stGrade);
-        if(!ex.abs && ex.subs) meta[bId].subjects = Array.from(new Set([...meta[bId].subjects, ...Object.keys(ex.subs)]));
+        if (stGrade && !meta[bId].grades.includes(stGrade)) meta[bId].grades.push(stGrade);
+        if (!ex.abs && ex.subs) meta[bId].subjects = Array.from(new Set([...meta[bId].subjects, ...Object.keys(ex.subs)]));
       });
-      if(Object.keys(meta).length > 0) {
-        await database.ref('db_v2/examMeta').set(meta); await database.ref('db_v2/examResults').set(results);
-      }
+      if (Object.keys(meta).length > 0) { await database.ref('db_v2/examMeta').set(meta); await database.ref('db_v2/examResults').set(results); }
     } else { await database.ref('db_v2/students').set([]); }
   }
 
-  database.ref('db_v2/students').on('value', snap => { 
-    let sData = snap.val(); DB.s = sData ? (Array.isArray(sData) ? sData.filter(x => x) : Object.values(sData).filter(x => x)) : []; rTabS(); 
+  database.ref('db_v2/students').on('value', snap => {
+    let sData = snap.val(); DB.s = sData ? (Array.isArray(sData) ? sData.filter(x => x) : Object.values(sData).filter(x => x)) : []; rTabS();
   });
-  
+
   database.ref('db_v2/examMeta').on('value', snap => {
     EXAM_META = snap.val() || {}; uDrp(); rTabE(); uStat();
-    if(getEl('sonuclar').classList.contains('active-pane')) reqAnl();
-    if(aNo) reqProfile();
+    if (getEl('sonuclar').classList.contains('active-pane')) reqAnl();
+    if (aNo) reqProfile();
     ld(0);
   });
 }
 
 async function fetchBatches(batchIds) {
   let promises = [];
-  batchIds.forEach(bId => { if(!CACHED_RESULTS[bId]) { promises.push( database.ref('db_v2/examResults/' + bId).once('value').then(snap => { CACHED_RESULTS[bId] = snap.val() || []; }) ); } });
-  if(promises.length > 0) { ld(1, 'Sonuçlar indiriliyor...'); await Promise.all(promises); ld(0); }
-  let virtual_e = []; batchIds.forEach(bId => { if(CACHED_RESULTS[bId]) virtual_e = virtual_e.concat(CACHED_RESULTS[bId]); }); DB.e = virtual_e;
+  batchIds.forEach(bId => { if (!CACHED_RESULTS[bId]) { promises.push(database.ref('db_v2/examResults/' + bId).once('value').then(snap => { CACHED_RESULTS[bId] = snap.val() || []; })); } });
+  if (promises.length > 0) { ld(1, 'Sonuçlar indiriliyor...'); await Promise.all(promises); ld(0); }
+  let virtual_e = []; batchIds.forEach(bId => { if (CACHED_RESULTS[bId]) virtual_e = virtual_e.concat(CACHED_RESULTS[bId]); }); DB.e = virtual_e;
 }
 
 async function reqProfile() {
-  if(!aNo) return;
+  if (!aNo) return;
   let st = DB.s.find(x => x.no === aNo), stGrade = st ? getGrade(st.class) : null, neededBatches = [];
-  Object.keys(EXAM_META).forEach(bId => { let meta = EXAM_META[bId]; if(!meta.grades || (stGrade && meta.grades.includes(stGrade))) neededBatches.push(bId); });
+  Object.keys(EXAM_META).forEach(bId => { let meta = EXAM_META[bId]; if (!meta.grades || (stGrade && meta.grades.includes(stGrade))) neededBatches.push(bId); });
   await fetchBatches(neededBatches); rH();
 }
 
 async function reqAnl() {
   let eT = getEl('aEx').value, dt = getEl('aDate') ? getEl('aDate').value : '', aT = getEl('aType').value, sub = getEl('aSub') ? getEl('aSub').value : '';
   let needed = [], stuGrade = null;
-  if(aNo) { let st = DB.s.find(x=>x.no===aNo); if(st) stuGrade = getGrade(st.class); }
+  if (aNo) { let st = DB.s.find(x => x.no === aNo); if (st) stuGrade = getGrade(st.class); }
 
   let allMatchingDates = [];
   Object.keys(EXAM_META).forEach(bId => { let m = EXAM_META[bId]; if (m.examType !== eT) return; if (aT === 'examdetail' && sub === 'summary' && stuGrade) { if (m.grades && m.grades.length > 0 && !m.grades.includes(stuGrade)) return; } allMatchingDates.push(m.date); });
@@ -822,298 +946,290 @@ async function reqAnl() {
     if (m.examType === eT) {
       if (aT === 'student' && aNo) { let st = DB.s.find(x => x.no === aNo); let stGrade = st ? getGrade(st.class) : null; if (stGrade && m.grades && m.grades.length > 0 && !m.grades.includes(stGrade)) return; needed.push(bId); }
       else if (aT === 'class' || aT === 'subject') { let lvlFilter = getEl('aLvl') ? getEl('aLvl').value : ''; if (lvlFilter && m.grades && m.grades.length > 0 && !m.grades.includes(lvlFilter)) return; if (dt && m.date !== dt) return; needed.push(bId); }
-      else if (aT === 'examdetail' && sub !== 'general_summary' && sub !== 'list_all') { if (m.date === dt) { needed.push(bId); } else if (sub === 'summary') { let currentIndex = allMatchingDates.indexOf(dt); let prevDate = currentIndex > 0 ? allMatchingDates[currentIndex - 1] : null; if (prevDate && m.date === prevDate) needed.push(bId); } } 
+      else if (aT === 'examdetail' && sub !== 'general_summary' && sub !== 'list_all') { if (m.date === dt) { needed.push(bId); } else if (sub === 'summary') { let currentIndex = allMatchingDates.indexOf(dt); let prevDate = currentIndex > 0 ? allMatchingDates[currentIndex - 1] : null; if (prevDate && m.date === prevDate) needed.push(bId); } }
       else { needed.push(bId); }
     }
   });
-  
-  if(needed.length > 0) await fetchBatches(needed); rAnl(); 
+
+  if (needed.length > 0) await fetchBatches(needed); rAnl();
 }
 
 async function reqUI() { uUI(); await reqAnl(); }
 
-async function sAct(no,clr=false){
-  aNo=no; if(clr){getEl('sInp').value='';getEl('sRes').innerHTML='';}
-  let s=DB.s.find(x=>x.no===aNo);
-  getEl('aBadge').innerHTML=s?`<span class="badge badge-success badge-pill px-3 py-2"><i class="fas fa-check-circle mr-1"></i>${s.name} (${s.class})</span>`:'<span class="text-muted">Seçilmedi</span>';
-  let ab=getEl('anlStuBadge'); if(ab)ab.innerHTML=s?`<span class="badge badge-success badge-pill px-2 py-1" style="font-size:0.8em;"><i class="fas fa-check-circle mr-1"></i>${s.name} (${s.class})</span>`:'';
-  getEl('homeArea').innerHTML='';
-  if(no) await reqProfile(); if(getEl('sonuclar').classList.contains('active-pane')) reqUI(); 
+async function sAct(no, clr = false) {
+  aNo = no; if (clr) { getEl('sInp').value = ''; getEl('sRes').innerHTML = ''; }
+  let s = DB.s.find(x => x.no === aNo);
+  getEl('aBadge').innerHTML = s ? `<span class="badge bg-success rounded-pill px-3 py-2"><i class="fas fa-check-circle me-1"></i>${s.name} (${s.class})</span>` : '<span class="text-muted">Seçilmedi</span>';
+  let ab = getEl('anlStuBadge'); if (ab) ab.innerHTML = s ? `<span class="badge bg-success rounded-pill px-2 py-1" style="font-size:0.8em;"><i class="fas fa-check-circle me-1"></i>${s.name} (${s.class})</span>` : '';
+  getEl('homeArea').innerHTML = '';
+  if (no) await reqProfile(); if (getEl('sonuclar').classList.contains('active-pane')) reqUI();
 }
 
-function sTab(id,el){
-  if(id==='ayarlar'&&!document.body.classList.contains('is-admin'))return;
-  document.querySelectorAll('.pane').forEach(x=>x.classList.remove('active-pane')); getEl(id).classList.add('active-pane');
-  document.querySelectorAll('.nav-sidebar .nav-link').forEach(x=>x.classList.remove('active')); if(el)el.classList.add('active');
-  const titles={anasayfa_genel:'Ana Sayfa',anasayfa:'Öğrenci',sonuclar:'Sonuçlar & Analizler',rapor:'Toplu Rapor',ayarlar:'Ayarlar'};
-  if(getEl('pageTitle'))getEl('pageTitle').textContent=titles[id]||id;
-  if(getEl('breadcrumb'))getEl('breadcrumb').textContent=titles[id]||id;
-  if(id==='anasayfa_genel'){uStat();}
-  if(id==='anasayfa'){if(aNo)reqProfile();}
-  if(id==='sonuclar')reqUI();
-  if(id==='rapor')raporInit();
-  if(id==='ayarlar'){rTabS();rTabE();}
-  if(window.innerWidth<992){document.body.classList.remove('sidebar-open');document.body.classList.add('sidebar-collapse');}
+function sTab(id, el) {
+  if (id === 'ayarlar' && !document.body.classList.contains('is-admin')) return;
+  document.querySelectorAll('.pane').forEach(x => x.classList.remove('active-pane')); getEl(id).classList.add('active-pane');
+  document.querySelectorAll('.sidebar-menu .nav-link').forEach(x => x.classList.remove('active')); if (el) el.classList.add('active');
+  const titles = { anasayfa_genel: 'Ana Sayfa', anasayfa: 'Öğrenci', sonuclar: 'Sonuçlar & Analizler', rapor: 'Toplu Rapor', ayarlar: 'Ayarlar' };
+  if (getEl('pageTitle')) getEl('pageTitle').textContent = titles[id] || id;
+  if (getEl('breadcrumb')) getEl('breadcrumb').textContent = titles[id] || id;
+  if (id === 'anasayfa_genel') { uStat(); }
+  if (id === 'anasayfa') { if (aNo) reqProfile(); }
+  if (id === 'sonuclar') reqUI();
+  if (id === 'rapor') raporInit();
+  if (id === 'ayarlar') { rTabS(); rTabE(); }
+  // AdminLTE v4 mobil sidebar kapat
+  if (window.innerWidth < 992) {
+    document.body.classList.remove('sidebar-open');
+    document.body.classList.add('sidebar-collapse');
+  }
 }
 
-function normTR(s){return String(s||'').toLocaleLowerCase('tr-TR').replace(/ğ/g,'g').replace(/ü/g,'u').replace(/ş/g,'s').replace(/ı/g,'i').replace(/ö/g,'o').replace(/ç/g,'c');}
-function pN(v){let n=parseFloat(String(v||0).replace(',','.'));return isNaN(n)?0:n;}
+function normTR(s) { return String(s || '').toLocaleLowerCase('tr-TR').replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c'); }
+function pN(v) { let n = parseFloat(String(v || 0).replace(',', '.')); return isNaN(n) ? 0 : n; }
 
-function srt(a,b){
-  let parseDate = (dStr) => {
-    let m = dStr.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
-    if(m) return new Date(m[3], m[2]-1, m[1]);
-    return new Date(dStr); 
-  };
+function srt(a, b) {
+  let parseDate = (dStr) => { let m = dStr.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/); if (m) return new Date(m[3], m[2] - 1, m[1]); return new Date(dStr); };
   return parseDate(a) - parseDate(b);
 }
 
-function getGrade(cls){ let m=String(cls||'').match(/^(\d+)/); return m?m[1]:''; }
+function getGrade(cls) { let m = String(cls || '').match(/^(\d+)/); return m ? m[1] : ''; }
 
-function mkChart(canvasId,labels,datasets,rev=false){
-  let isD=document.body.classList.contains('dark-mode'),gCol=isD?'#495057':'#e2e8f0';
+function mkChart(canvasId, labels, datasets, rev = false) {
+  let isD = document.documentElement.getAttribute('data-bs-theme') === 'dark', gCol = isD ? '#495057' : '#e2e8f0';
   let txtCol = isD ? '#e2e8f0' : '#475569';
-  return new Chart(getEl(canvasId),{
-    type:'bar', data:{labels,datasets}, plugins: [ChartDataLabels],
-    options:{ 
-      responsive:true,maintainAspectRatio:false, animation:false, 
-      plugins:{
-        legend:{ position:'top', labels:{ font:{size:10}, boxWidth:12, padding:6, generateLabels: function(chart) { let orig = Chart.defaults.plugins.legend.labels.generateLabels(chart); orig.forEach(lbl => { if(lbl.text && lbl.text.length > 20) lbl.text = lbl.text.substring(0,18)+'…'; }); return orig; } } },
-        datalabels: { anchor: 'end', align: 'top', color: txtCol, font: { size: 9, weight: 'bold' }, formatter: function(val) { return (val === null || val === undefined || isNaN(val)) ? '' : (Number.isInteger(val) ? val : val.toFixed(2)); } }
-      }, 
-      scales:{ x:{grid:{color:gCol}, ticks:{font:{size:9}}}, y:{reverse:rev,min:rev?1:undefined,grid:{color:gCol}, ticks:{font:{size:9}}} } 
+  return new Chart(getEl(canvasId), {
+    type: 'bar', data: { labels, datasets }, plugins: [ChartDataLabels],
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: false,
+      plugins: {
+        legend: { position: 'top', labels: { font: { size: 10 }, boxWidth: 12, padding: 6, generateLabels: function (chart) { let orig = Chart.defaults.plugins.legend.labels.generateLabels(chart); orig.forEach(lbl => { if (lbl.text && lbl.text.length > 20) lbl.text = lbl.text.substring(0, 18) + '…'; }); return orig; } } },
+        datalabels: { anchor: 'end', align: 'top', color: txtCol, font: { size: 9, weight: 'bold' }, formatter: function (val) { return (val === null || val === undefined || isNaN(val)) ? '' : (Number.isInteger(val) ? val : val.toFixed(2)); } }
+      },
+      scales: { x: { grid: { color: gCol }, ticks: { font: { size: 9 } } }, y: { reverse: rev, min: rev ? 1 : undefined, grid: { color: gCol }, ticks: { font: { size: 9 } } } }
     }
   });
 }
 
-function xXL(id,fn){
-  let tbl=getEl(id),wb=XLSX.utils.book_new(),ws=XLSX.utils.table_to_sheet(tbl),range=XLSX.utils.decode_range(ws['!ref']||'A1:A1'),wscols=[];
-  for(let C=range.s.c;C<=range.e.c;C++){let maxW=6;for(let R=range.s.r;R<=range.e.r;R++){let cell=ws[XLSX.utils.encode_cell({r:R,c:C})];if(cell&&cell.v)maxW=Math.max(maxW,String(cell.v).length+2);}wscols.push({wch:Math.min(maxW,32)});}
-  ws['!cols']=wscols; XLSX.utils.book_append_sheet(wb,ws,'Rapor'); XLSX.writeFile(wb,fn+'.xlsx');
+function xXL(id, fn) {
+  let tbl = getEl(id), wb = XLSX.utils.book_new(), ws = XLSX.utils.table_to_sheet(tbl), range = XLSX.utils.decode_range(ws['!ref'] || 'A1:A1'), wscols = [];
+  for (let C = range.s.c; C <= range.e.c; C++) { let maxW = 6; for (let R = range.s.r; R <= range.e.r; R++) { let cell = ws[XLSX.utils.encode_cell({ r: R, c: C })]; if (cell && cell.v) maxW = Math.max(maxW, String(cell.v).length + 2); } wscols.push({ wch: Math.min(maxW, 32) }); }
+  ws['!cols'] = wscols; XLSX.utils.book_append_sheet(wb, ws, 'Rapor'); XLSX.writeFile(wb, fn + '.xlsx');
 }
 
-function xXLMul(cId,fn){
-  let wb=XLSX.utils.book_new(),ts=getEl(cId).getElementsByTagName('table');
-  for(let i=0;i<ts.length;i++){
-    let ws=XLSX.utils.table_to_sheet(ts[i]),range=XLSX.utils.decode_range(ws['!ref']||'A1:A1'),wscols=[];
-    for(let C=range.s.c;C<=range.e.c;C++){let maxW=6;for(let R=range.s.r;R<=range.e.r;R++){let cell=ws[XLSX.utils.encode_cell({r:R,c:C})];if(cell&&cell.v)maxW=Math.max(maxW,String(cell.v).length+2);}wscols.push({wch:Math.min(maxW,32)});}
-    ws['!cols']=wscols; XLSX.utils.book_append_sheet(wb,ws,ts[i].getAttribute('data-sh')||('Sayfa'+i));
+function xXLMul(cId, fn) {
+  let wb = XLSX.utils.book_new(), ts = getEl(cId).getElementsByTagName('table');
+  for (let i = 0; i < ts.length; i++) {
+    let ws = XLSX.utils.table_to_sheet(ts[i]), range = XLSX.utils.decode_range(ws['!ref'] || 'A1:A1'), wscols = [];
+    for (let C = range.s.c; C <= range.e.c; C++) { let maxW = 6; for (let R = range.s.r; R <= range.e.r; R++) { let cell = ws[XLSX.utils.encode_cell({ r: R, c: C })]; if (cell && cell.v) maxW = Math.max(maxW, String(cell.v).length + 2); } wscols.push({ wch: Math.min(maxW, 32) }); }
+    ws['!cols'] = wscols; XLSX.utils.book_append_sheet(wb, ws, ts[i].getAttribute('data-sh') || ('Sayfa' + i));
   }
-  XLSX.writeFile(wb,fn+'.xlsx');
+  XLSX.writeFile(wb, fn + '.xlsx');
 }
 
 function xPR(sourceId, title, btn, orientation) {
-  let portraitSources = ['pS','pC','pSubj','pSummary','pGenSummary'];
+  let portraitSources = ['pS', 'pC', 'pSubj', 'pSummary', 'pGenSummary'];
   let isPortrait = orientation === 'portrait' || portraitSources.includes(sourceId);
-  let orig = btn.innerHTML; btn.innerHTML = "<i class='fas fa-spinner fa-spin mr-1'></i>"; btn.disabled = true;
-
+  let orig = btn.innerHTML; btn.innerHTML = "<i class='fas fa-spinner fa-spin me-1'></i>"; btn.disabled = true;
   let sourceEl = getEl(sourceId); if (!sourceEl) { btn.innerHTML = orig; btn.disabled = false; return; }
-
   let canvasMap = [];
-  sourceEl.querySelectorAll('canvas').forEach(cv => { try { canvasMap.push({ id: cv.id, url: cv.toDataURL('image/png', 1.0) }); } catch(e) {} });
+  sourceEl.querySelectorAll('canvas').forEach(cv => { try { canvasMap.push({ id: cv.id, url: cv.toDataURL('image/png', 1.0) }); } catch (e) {} });
   let cssLinks = Array.from(document.querySelectorAll('link[rel="stylesheet"]')).map(l => `<link rel="stylesheet" href="${l.href}">`).join('\n');
-
   let clone = sourceEl.cloneNode(true);
   clone.querySelectorAll('canvas').forEach((cv, idx) => {
     let mapEntry = canvasMap.find(m => m.id && m.id === cv.id) || canvasMap[idx]; if (!mapEntry) { cv.remove(); return; }
     let img = document.createElement('img'); img.src = mapEntry.url; img.className = 'print-chart-img'; cv.parentElement.replaceChild(img, cv);
   });
-
   clone.querySelectorAll('.no-print, .d-flex.justify-content-end').forEach(el => el.remove());
   clone.querySelectorAll('.pdf-header-bar').forEach(el => el.style.display = 'flex');
-
   let bolumler = clone.querySelectorAll('.karne-bolum, .student-rapor-wrapper');
   bolumler.forEach((b, i) => { if (i < bolumler.length - 1) b.style.pageBreakAfter = 'always'; });
-
-  let printHtml = `<!DOCTYPE html>
-<html lang="tr">
-<head>
-  <meta charset="UTF-8">
-  <title>${title}</title>
-  ${cssLinks}
+  let printHtml = `<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>${title}</title>${cssLinks}
   <style>
-    * { box-sizing: border-box; } body { background: #fff !important; color: #000 !important; font-family: 'Source Sans Pro', Arial, sans-serif; font-size: 12px; margin: 0; padding: 0; }
-    .pdf-header-bar { display: flex !important; align-items: center; justify-content: space-between; background: #1e3a5f !important; color: #fff !important; padding: 12px 20px; border-radius: 6px; margin-bottom: 14px; -webkit-print-color-adjust: exact; print-color-adjust: exact; } .pdf-header-bar span { color: #fff !important; }
-    .table { width: 100% !important; border-collapse: collapse !important; font-size: 8.5px !important; margin-bottom: 6px; } .table th, .table td { border: 1px solid #aaa !important; padding: 2px 3px !important; color: #000 !important; } .table thead th { background: #1e3a5f !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-size: 8px !important; }
-    thead { display: table-header-group; } 
-    table, tbody, .card, .card-body, .scroll { page-break-inside: auto !important; break-inside: auto !important; }
-    tr, td, th { page-break-inside: avoid !important; break-inside: avoid !important; }
-    .chart-box, .info-box, .avoid-break { page-break-inside: avoid !important; break-inside: avoid !important; }
-
-    tr.highlight-row td { background: #fff3cd !important; font-weight: bold !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; } tr.absent-row td { background: #f8d7da !important; color: #721c24 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; } tr.avg-row td { background: #e6f0fa !important; color: #1e3a5f !important; font-weight: bold !important; border-top: 2px solid #1e3a5f !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .card { border: 1px solid #dee2e6 !important; border-radius: 4px; margin-bottom: 10px; display: block; } .card-header { background: #f8f9fa !important; padding: 8px 12px; border-bottom: 1px solid #dee2e6; } .card-body { padding: 10px 12px; } .card-outline.card-primary { border-top: 3px solid #1e3a5f !important; } .card-outline.card-info { border-top: 3px solid #17a2b8 !important; } .card-outline.card-success { border-top: 3px solid #28a745 !important; } .card-outline.card-warning { border-top: 3px solid #ffc107 !important; }
-    .info-box { display: flex !important; align-items: stretch; border-radius: 4px; margin-bottom: 6px; -webkit-print-color-adjust: exact; print-color-adjust: exact; } .info-box-icon { display: flex !important; align-items: center; justify-content: center; width: 60px !important; min-width: 60px; font-size: 1.4em; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; } .info-box-content { padding: 8px 10px; flex: 1; } .info-box-text { display: block; font-size: 0.78em; font-weight: 600; } .info-box-number { display: block; font-size: 1.1em; font-weight: bold; margin: 2px 0; } .progress-description { display: block; font-size: 0.78em; }
-    .bg-primary { background: #1e3a5f !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; } .bg-success { background: #28a745 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; } .bg-danger { background: #dc3545 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; } .bg-warning { background: #ffc107 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; } .bg-info { background: #17a2b8 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; } .bg-teal { background: #20c997 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-    .print-chart-img { max-width: 100%; width: 100%; max-height: ${isPortrait ? "260px" : "180px"}; height: auto; object-fit: contain; display: block; margin: 4px auto 10px; } .chart-box { height: auto !important; margin-bottom: 10px; }
-    ${isPortrait ? ".col-md-3 { width: 25% !important; } .col-md-4 { width: 33.33% !important; } .col-md-6 { width: 50% !important; } .col-lg-4 { width: 33.33% !important; } .col-lg-6 { width: 50% !important; }" : ""}
-    .row { display: flex !important; flex-wrap: wrap; margin: 0 -8px; } .col-md-3 { width: 25% !important; padding: 0 8px; } .col-md-4 { width: 33.33% !important; padding: 0 8px; } .col-md-6 { width: 50% !important; padding: 0 8px; } .col-lg-4 { width: 33.33% !important; padding: 0 8px; } .col-lg-6 { width: 50% !important; padding: 0 8px; } .col-sm-6 { width: 50% !important; padding: 0 8px; } .col-sm-12 { width: 100% !important; padding: 0 8px; }
-    .trend-card { background: #f8f9fa !important; border-radius: 8px; padding: 12px; margin-bottom: 10px; } .trend-indicator { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 20px; font-size: 0.82em; font-weight: bold; } .trend-up { background: rgba(40,167,69,0.15); color: #28a745; } .trend-down { background: rgba(220,53,69,0.15); color: #dc3545; } .trend-stable { background: rgba(108,117,125,0.15); color: #6c757d; } .border-left { border-left: 1px solid #dee2e6; }
-    .karne-bolum { padding-bottom: 8px; } .text-primary { color: #1e3a5f !important; } .text-success { color: #28a745 !important; } .text-danger { color: #dc3545 !important; } .text-muted { color: #6c757d !important; } .text-center { text-align: center; } .font-weight-bold { font-weight: bold; }
-    .badge { display: inline-block; padding: 2px 6px; border-radius: 10px; font-size: 0.75em; } .badge-info { background: #17a2b8; color: #fff; -webkit-print-color-adjust:exact; print-color-adjust:exact; } .shadow-sm { box-shadow: none !important; } h4 { font-size: 14px !important; margin: 8px 0; } h5 { font-size: 12px !important; margin: 6px 0; }
-    .no-print, .d-flex.justify-content-end, .scroll-hint, button, .btn { display: none !important; } .scroll { overflow: visible !important; }
-    [style*="background:#6c757d"] { background: #6c757d !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; } .info-box[style*="background:#6c757d"] * { color: #fff !important; }
-    @page { margin: 8mm 6mm; size: ${isPortrait ? "A4 portrait" : "A4 landscape"}; } @page :first { margin-top: 6mm; } body { font-size: ${isPortrait ? "10px" : "10px"}; }
-  </style>
-</head>
-<body>
-  <div style="padding: 0 4px;">${clone.outerHTML}</div>
-  <script>window.addEventListener('load', function() { setTimeout(function() { window.print(); }, 400); });<\/script>
-</body>
-</html>`;
-
+    * { box-sizing: border-box; } body { background: #fff !important; color: #000 !important; font-family: Arial, sans-serif; font-size: 12px; margin: 0; padding: 0; }
+    .pdf-header-bar { display: flex !important; align-items: center; justify-content: space-between; background: #1e3a5f !important; color: #fff !important; padding: 12px 20px; border-radius: 6px; margin-bottom: 14px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .pdf-header-bar span { color: #fff !important; }
+    .table { width: 100% !important; border-collapse: collapse !important; font-size: 8.5px !important; margin-bottom: 6px; }
+    .table th, .table td { border: 1px solid #aaa !important; padding: 2px 3px !important; color: #000 !important; }
+    .table thead th { background: #1e3a5f !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-size: 8px !important; }
+    thead { display: table-header-group; }
+    tr.highlight-row td { background: #fff3cd !important; font-weight: bold !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    tr.absent-row td { background: #f8d7da !important; color: #721c24 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    tr.avg-row td { background: #e6f0fa !important; color: #1e3a5f !important; font-weight: bold !important; border-top: 2px solid #1e3a5f !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .card { border: 1px solid #dee2e6 !important; border-radius: 4px; margin-bottom: 10px; display: block; }
+    .card-header { background: #f8f9fa !important; padding: 8px 12px; border-bottom: 1px solid #dee2e6; }
+    .card-body { padding: 10px 12px; }
+    .info-box { display: flex !important; align-items: stretch; border-radius: 4px; margin-bottom: 6px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .info-box-icon { display: flex !important; align-items: center; justify-content: center; width: 60px !important; min-width: 60px; font-size: 1.4em; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .info-box-content { padding: 8px 10px; flex: 1; }
+    .info-box-text { display: block; font-size: 0.78em; font-weight: 600; }
+    .info-box-number { display: block; font-size: 1.1em; font-weight: bold; margin: 2px 0; }
+    .progress-description { display: block; font-size: 0.78em; }
+    .bg-primary { background: #1e3a5f !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .bg-success { background: #28a745 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .bg-danger { background: #dc3545 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .bg-warning { background: #ffc107 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .bg-info { background: #17a2b8 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .print-chart-img { max-width: 100%; width: 100%; max-height: ${isPortrait ? "260px" : "180px"}; height: auto; object-fit: contain; display: block; margin: 4px auto 10px; }
+    .chart-box { height: auto !important; margin-bottom: 10px; }
+    .row { display: flex !important; flex-wrap: wrap; margin: 0 -8px; }
+    .col-md-3 { width: 25% !important; padding: 0 8px; }
+    .col-md-4 { width: 33.33% !important; padding: 0 8px; }
+    .col-md-6 { width: 50% !important; padding: 0 8px; }
+    .col-lg-4 { width: 33.33% !important; padding: 0 8px; }
+    .col-lg-6 { width: 50% !important; padding: 0 8px; }
+    .col-sm-6 { width: 50% !important; padding: 0 8px; }
+    .trend-card { background: #f8f9fa !important; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
+    .trend-indicator { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 20px; font-size: 0.82em; font-weight: bold; }
+    .trend-up { background: rgba(40,167,69,0.15); color: #28a745; }
+    .trend-down { background: rgba(220,53,69,0.15); color: #dc3545; }
+    .trend-stable { background: rgba(108,117,125,0.15); color: #6c757d; }
+    .no-print, .d-flex.justify-content-end, .scroll-hint, button, .btn { display: none !important; }
+    .scroll { overflow: visible !important; }
+    @page { margin: 8mm 6mm; size: ${isPortrait ? "A4 portrait" : "A4 landscape"}; }
+  </style></head><body><div style="padding: 0 4px;">${clone.outerHTML}</div>
+  <script>window.addEventListener('load', function() { setTimeout(function() { window.print(); }, 400); });<\/script></body></html>`;
   let printWin = window.open('', '_blank', 'width=1100,height=800,scrollbars=yes');
   if (!printWin) { showToast('Açılır pencere engellendi!', 'warning', 6000); btn.innerHTML = orig; btn.disabled = false; return; }
   printWin.document.write(printHtml); printWin.document.close();
   btn.innerHTML = orig; btn.disabled = false;
 }
 
-function debounceSearch(){clearTimeout(searchDebounceTimer);searchDebounceTimer=setTimeout(sSearch,280);}
-function sSearch(){
-  let v=getEl('sInp').value.trim(),r=getEl('sRes'); if(!v){r.innerHTML='';return;}
-  let trm=normTR(v).split(/\s+/), m=DB.s.filter(x=>{let txt=normTR(x.no+' '+x.name+' '+x.class);return trm.every(t=>txt.includes(t));});
-  if(!m.length){r.innerHTML='<div class="alert alert-default-warning">Bulunamadı.</div>';return;}
-  let h=''; m.forEach(x=>h+=`<div class="callout callout-info py-2 px-3 mb-2 d-flex justify-content-between align-items-center"><div><strong>${x.no}</strong> — ${x.name} <span class="text-muted">(${x.class})</span></div><div class="btn-group btn-group-sm"><button class="btn btn-success" onclick="sAct('${x.no}',true)"><i class="fas fa-check mr-1"></i>Seç</button><button class="btn btn-warning admin-only" onclick="eStu('${x.no}')"><i class="fas fa-edit"></i></button><button class="btn btn-danger admin-only" onclick="cDel('student','${x.no} silinsin mi?','${x.no}')"><i class="fas fa-trash"></i></button></div></div>`);
-  r.innerHTML=h;
+function debounceSearch() { clearTimeout(searchDebounceTimer); searchDebounceTimer = setTimeout(sSearch, 280); }
+function sSearch() {
+  let v = getEl('sInp').value.trim(), r = getEl('sRes'); if (!v) { r.innerHTML = ''; return; }
+  let trm = normTR(v).split(/\s+/), m = DB.s.filter(x => { let txt = normTR(x.no + ' ' + x.name + ' ' + x.class); return trm.every(t => txt.includes(t)); });
+  if (!m.length) { r.innerHTML = '<div class="alert alert-warning">Bulunamadı.</div>'; return; }
+  let h = ''; m.forEach(x => h += `<div class="callout callout-info py-2 px-3 mb-2 d-flex justify-content-between align-items-center"><div><strong>${x.no}</strong> — ${x.name} <span class="text-muted">(${x.class})</span></div><div class="btn-group btn-group-sm"><button class="btn btn-success" onclick="sAct('${x.no}',true)"><i class="fas fa-check me-1"></i>Seç</button><button class="btn btn-warning admin-only" onclick="eStu('${x.no}')"><i class="fas fa-edit"></i></button><button class="btn btn-danger admin-only" onclick="cDel('student','${x.no} silinsin mi?','${x.no}')"><i class="fas fa-trash"></i></button></div></div>`);
+  r.innerHTML = h;
 }
-function clrS(){getEl('sInp').value='';getEl('sRes').innerHTML='';sAct(null,false);}
+function clrS() { getEl('sInp').value = ''; getEl('sRes').innerHTML = ''; sAct(null, false); }
 
-function anlStuDoSearch(){clearTimeout(anlDebounceTimer);anlDebounceTimer=setTimeout(execAnlStuSearch,280);}
-function execAnlStuSearch(){
-  let v=getEl('anlStuInp').value.trim(), res=getEl('anlStuRes'); if(!v){res.style.display='none';res.innerHTML='';return;}
-  let trm=normTR(v).split(/\s+/), m=DB.s.filter(x=>{let txt=normTR(x.no+' '+x.name+' '+x.class);return trm.every(t=>txt.includes(t));});
-  if(!m.length){res.innerHTML='<div class="anlStu-item text-muted">Bulunamadı.</div>';res.style.display='block';return;}
-  res.innerHTML=m.slice(0,12).map(x=>`<div class="anlStu-item" onclick="anlStuSelect('${x.no}')"><strong>${x.no}</strong> — ${x.name} <span class="text-muted">(${x.class})</span></div>`).join(''); res.style.display='block';
+function anlStuDoSearch() { clearTimeout(anlDebounceTimer); anlDebounceTimer = setTimeout(execAnlStuSearch, 280); }
+function execAnlStuSearch() {
+  let v = getEl('anlStuInp').value.trim(), res = getEl('anlStuRes'); if (!v) { res.style.display = 'none'; res.innerHTML = ''; return; }
+  let trm = normTR(v).split(/\s+/), m = DB.s.filter(x => { let txt = normTR(x.no + ' ' + x.name + ' ' + x.class); return trm.every(t => txt.includes(t)); });
+  if (!m.length) { res.innerHTML = '<div class="anlStu-item text-muted">Bulunamadı.</div>'; res.style.display = 'block'; return; }
+  res.innerHTML = m.slice(0, 12).map(x => `<div class="anlStu-item" onclick="anlStuSelect('${x.no}')"><strong>${x.no}</strong> — ${x.name} <span class="text-muted">(${x.class})</span></div>`).join(''); res.style.display = 'block';
 }
-function anlStuSelect(no){
-  getEl('anlStuRes').style.display='none'; let s=DB.s.find(x=>x.no===no); if(s) getEl('anlStuInp').value=s.name+' ('+s.class+')'; aNo = no;
-  let ab=getEl('anlStuBadge'); if(ab) ab.innerHTML=s?`<span class="badge badge-success badge-pill px-2 py-1" style="font-size:0.8em;"><i class="fas fa-check-circle mr-1"></i>${s.name} (${s.class})</span>`:'';
-  getEl('aBadge').innerHTML=s?`<span class="badge badge-success badge-pill px-3 py-2"><i class="fas fa-check-circle mr-1"></i>${s.name} (${s.class})</span>`:'<span class="text-muted">Seçilmedi</span>'; reqUI(); 
+function anlStuSelect(no) {
+  getEl('anlStuRes').style.display = 'none'; let s = DB.s.find(x => x.no === no); if (s) getEl('anlStuInp').value = s.name + ' (' + s.class + ')'; aNo = no;
+  let ab = getEl('anlStuBadge'); if (ab) ab.innerHTML = s ? `<span class="badge bg-success rounded-pill px-2 py-1" style="font-size:0.8em;"><i class="fas fa-check-circle me-1"></i>${s.name} (${s.class})</span>` : '';
+  getEl('aBadge').innerHTML = s ? `<span class="badge bg-success rounded-pill px-3 py-2"><i class="fas fa-check-circle me-1"></i>${s.name} (${s.class})</span>` : '<span class="text-muted">Seçilmedi</span>'; reqUI();
 }
-function anlStuClear(){ getEl('anlStuInp').value=''; getEl('anlStuRes').style.display='none'; getEl('anlStuRes').innerHTML=''; getEl('anlStuBadge').innerHTML=''; sAct(null,false); }
-document.addEventListener('click',e=>{ let res=getEl('anlStuRes'),inp=getEl('anlStuInp'); if(res&&inp&&!res.contains(e.target)&&e.target!==inp)res.style.display='none'; });
+function anlStuClear() { getEl('anlStuInp').value = ''; getEl('anlStuRes').style.display = 'none'; getEl('anlStuRes').innerHTML = ''; getEl('anlStuBadge').innerHTML = ''; sAct(null, false); }
+document.addEventListener('click', e => { let res = getEl('anlStuRes'), inp = getEl('anlStuInp'); if (res && inp && !res.contains(e.target) && e.target !== inp) res.style.display = 'none'; });
 
-function uStat(){
-  const g=getEl('dynamicStatsGrid'), u={}; Object.values(EXAM_META).forEach(m => { u[m.examType] = (u[m.examType]||0) + 1; });
-  const cl=['primary','success','warning','danger','info'],ic=['fas fa-file-alt','fas fa-check-circle','fas fa-star','fas fa-trophy','fas fa-bookmark'];
-  
-  let h='',i=0;
-  for(const [t,count] of Object.entries(u)){ h+=`<div class="col-md-3 col-sm-6 col-12"><div class="info-box mb-3"><span class="info-box-icon bg-${cl[i%cl.length]} elevation-1"><i class="${ic[i%ic.length]}"></i></span><div class="info-box-content"><span class="info-box-text">${t} Sınavı</span><span class="info-box-number">${count} <small>deneme</small></span></div></div></div>`; i++; }
-  if(g)g.innerHTML=h;
-}
-
-function uDrp(){
-  uExamTypes(); if(aNo){ let s=DB.s.find(x=>x.no===aNo); if(s&&getEl('anlStuInp'))getEl('anlStuInp').value=s.name+' ('+s.class+')'; }
+function uStat() {
+  const g = getEl('dynamicStatsGrid'), u = {}; Object.values(EXAM_META).forEach(m => { u[m.examType] = (u[m.examType] || 0) + 1; });
+  const cl = ['primary', 'success', 'warning', 'danger', 'info'], ic = ['fas fa-file-alt', 'fas fa-check-circle', 'fas fa-star', 'fas fa-trophy', 'fas fa-bookmark'];
+  let h = '', i = 0;
+  for (const [t, count] of Object.entries(u)) { h += `<div class="col-md-3 col-sm-6 col-12"><div class="info-box mb-3"><span class="info-box-icon bg-${cl[i % cl.length]} elevation-1"><i class="${ic[i % ic.length]}"></i></span><div class="info-box-content"><span class="info-box-text">${t} Sınavı</span><span class="info-box-number">${count} <small>deneme</small></span></div></div></div>`; i++; }
+  if (g) g.innerHTML = h;
 }
 
-function uExamTypes(){
-  let types=new Set(); Object.values(EXAM_META).forEach(m => types.add(m.examType));
-  let sortedTypes = [...types].sort(), prev=getEl('aEx').value; 
-  getEl('aEx').innerHTML=sortedTypes.map(x=>`<option value="${x}">${x}</option>`).join('');
-  if(sortedTypes.includes(prev)) getEl('aEx').value=prev;
+function uDrp() {
+  uExamTypes(); if (aNo) { let s = DB.s.find(x => x.no === aNo); if (s && getEl('anlStuInp')) getEl('anlStuInp').value = s.name + ' (' + s.class + ')'; }
 }
 
-function uSub(){
-  let aT=getEl('aType')?getEl('aType').value:'', t=getEl('aEx').value, s=new Set();
-  Object.values(EXAM_META).forEach(m => { if(m.examType === t && m.subjects) m.subjects.forEach(subj => s.add(subj)); });
-  
-  if(aT === 'student' || aT === 'class') {
+function uExamTypes() {
+  let types = new Set(); Object.values(EXAM_META).forEach(m => types.add(m.examType));
+  let sortedTypes = [...types].sort(), prev = getEl('aEx').value;
+  getEl('aEx').innerHTML = sortedTypes.map(x => `<option value="${x}">${x}</option>`).join('');
+  if (sortedTypes.includes(prev)) getEl('aEx').value = prev;
+}
+
+function uSub() {
+  let aT = getEl('aType') ? getEl('aType').value : '', t = getEl('aEx').value, s = new Set();
+  Object.values(EXAM_META).forEach(m => { if (m.examType === t && m.subjects) m.subjects.forEach(subj => s.add(subj)); });
+  if (aT === 'student' || aT === 'class') {
     let o = `<option value="totalNet">Toplam Net</option><option value="score">Puan</option>`;
     if (aT === 'student') { o += `<option value="rank_c">Sınıf Sıralaması</option><option value="rank_i">Kurum Sıralaması</option><option value="rank_g">Genel Sıralama</option>`; }
-    [...s].sort().forEach(x=> o += `<option value="s_${x}">${toTitleCase(x)} Neti</option>`); getEl('aSub').innerHTML = o;
+    [...s].sort().forEach(x => o += `<option value="s_${x}">${toTitleCase(x)} Neti</option>`); getEl('aSub').innerHTML = o;
   } else if (aT === 'examdetail') {
     let prev = getEl('aSub').value; getEl('aSub').innerHTML = `<option value="summary">Sınav Özeti (Tek Sınav)</option><option value="general_summary">Genel Sınav Özeti (Tüm Sınavlar)</option><option value="list_single">Toplu Liste (Tek Sınav)</option><option value="list_all">Toplu Liste (Tüm Sınavlar)</option>`;
-    if(['list_single','list_all','summary','general_summary'].includes(prev)) getEl('aSub').value = prev; else getEl('aSub').value = 'summary';
+    if (['list_single', 'list_all', 'summary', 'general_summary'].includes(prev)) getEl('aSub').value = prev; else getEl('aSub').value = 'summary';
   } else if (aT === 'subject') {
-    let prev = getEl('aSub').value, opts = [...s].sort().map(x=>`<option value="${x}">${toTitleCase(x)}</option>`).join('');
-    getEl('aSub').innerHTML = opts || '<option value="">Ders bulunamadı</option>'; if([...s].includes(prev)) getEl('aSub').value = prev;
+    let prev = getEl('aSub').value, opts = [...s].sort().map(x => `<option value="${x}">${toTitleCase(x)}</option>`).join('');
+    getEl('aSub').innerHTML = opts || '<option value="">Ders bulunamadı</option>'; if ([...s].includes(prev)) getEl('aSub').value = prev;
   } else {
-    getEl('aSub').innerHTML='<option value="">Tümü</option>'+[...s].sort().map(x=>`<option value="${x}">${toTitleCase(x)}</option>`).join('');
+    getEl('aSub').innerHTML = '<option value="">Tümü</option>' + [...s].sort().map(x => `<option value="${x}">${toTitleCase(x)}</option>`).join('');
   }
 }
 
-function uExamDates(){
-  let t=getEl('aEx').value, dates=[], datePublisherMap = {}, aT = getEl('aType') ? getEl('aType').value : '', sub = getEl('aSub') ? getEl('aSub').value : '';
-  let stuGrade = null; if(aNo && aT === 'examdetail' && sub === 'summary') { let st = DB.s.find(x=>x.no===aNo); if(st) stuGrade = getGrade(st.class); }
-  let lvlGrade = ''; if(aT === 'subject' || aT === 'class') { lvlGrade = getEl('aLvl') ? getEl('aLvl').value : ''; }
-
+function uExamDates() {
+  let t = getEl('aEx').value, dates = [], datePublisherMap = {}, aT = getEl('aType') ? getEl('aType').value : '', sub = getEl('aSub') ? getEl('aSub').value : '';
+  let stuGrade = null; if (aNo && aT === 'examdetail' && sub === 'summary') { let st = DB.s.find(x => x.no === aNo); if (st) stuGrade = getGrade(st.class); }
+  let lvlGrade = ''; if (aT === 'subject' || aT === 'class') { lvlGrade = getEl('aLvl') ? getEl('aLvl').value : ''; }
   Object.values(EXAM_META).forEach(m => {
-    if(m.examType === t) {
-      if(stuGrade && m.grades && m.grades.length > 0 && !m.grades.includes(stuGrade)) return;
-      if(lvlGrade && m.grades && m.grades.length > 0 && !m.grades.includes(lvlGrade)) return;
-      dates.push(m.date); if(m.publisher) datePublisherMap[m.date] = m.publisher;
+    if (m.examType === t) {
+      if (stuGrade && m.grades && m.grades.length > 0 && !m.grades.includes(stuGrade)) return;
+      if (lvlGrade && m.grades && m.grades.length > 0 && !m.grades.includes(lvlGrade)) return;
+      dates.push(m.date); if (m.publisher) datePublisherMap[m.date] = m.publisher;
     }
   });
-  
-  dates = [...new Set(dates)].sort(srt); let prev=getEl('aDate').value;
+  dates = [...new Set(dates)].sort(srt); let prev = getEl('aDate').value;
   let allOpt = (aT === 'class' || aT === 'subject') ? '<option value="">Tüm Sınavlar</option>' : '';
   getEl('aDate').innerHTML = allOpt + dates.map(x => { let pub = datePublisherMap[x] ? ` (${toTitleCase(datePublisherMap[x])})` : ''; return `<option value="${x}">${x}${pub}</option>`; }).join('');
-  if(dates.includes(prev)) getEl('aDate').value=prev; else if(aT === 'class' || aT === 'subject') getEl('aDate').value='';
+  if (dates.includes(prev)) getEl('aDate').value = prev; else if (aT === 'class' || aT === 'subject') getEl('aDate').value = '';
 }
 
-function uUI(){
-  let t=getEl('aType').value;
-  getEl('gStu').style.display=(t==='student'||t==='examdetail')?'block':'none';
-  getEl('gLvl').style.display=(t==='class'||t==='examdetail'||t==='subject')?'block':'none';
-  getEl('gBr').style.display=(t==='class'||t==='subject'||t==='examdetail')?'block':'none';
-  getEl('gSub').style.display='block'; getEl('lblSub').textContent = t==='subject' ? 'Ders' : 'Veri';
-  
-  if(t==='class'){
-    let l=new Set(),b=new Set(); DB.s.forEach(s=>{let m=s.class.match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/);if(m){l.add(m[1]);b.add(m[2].toUpperCase());}});
-    getEl('aLvl').innerHTML='<option value="">Tümü</option>'+[...l].sort((a,b)=>parseInt(a)-parseInt(b)).map(x=>`<option value="${x}">${x}. Sınıf</option>`).join('');
-    getEl('aBr').innerHTML='<option value="">Tümü</option>'+[...b].sort().map(x=>`<option value="${x}">${x}</option>`).join('');
-    if(aNo){ let selStu = DB.s.find(x=>x.no===aNo); if(selStu){ let m=selStu.class.match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/); if(m){ getEl('aLvl').value=m[1]; getEl('aBr').value=m[2].toUpperCase(); } } }
-  } else if (t==='examdetail' || t==='subject') {
-    let l=new Set(), b=new Set(); DB.s.forEach(s=>{ let m=s.class.match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/); if(m){l.add(m[1]); b.add(m[2].toUpperCase());} });
-    getEl('aLvl').innerHTML='<option value="">Tümü</option>'+[...l].sort((a,b)=>parseInt(a)-parseInt(b)).map(x=>`<option value="${x}">${x}. Sınıf</option>`).join('');
-    if(t==='subject'||t==='examdetail') getEl('aBr').innerHTML='<option value="">Tümü</option>'+[...b].sort().map(x=>`<option value="${x}">${x}</option>`).join('');
-    if(aNo) { let selStu = DB.s.find(x=>x.no===aNo); if(selStu) { let m=selStu.class.match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/); if(m) { getEl('aLvl').value=m[1]; if(t==='subject') getEl('aBr').value=''; } } }
+function uUI() {
+  let t = getEl('aType').value;
+  getEl('gStu').style.display = (t === 'student' || t === 'examdetail') ? 'block' : 'none';
+  getEl('gLvl').style.display = (t === 'class' || t === 'examdetail' || t === 'subject') ? 'block' : 'none';
+  getEl('gBr').style.display = (t === 'class' || t === 'subject' || t === 'examdetail') ? 'block' : 'none';
+  getEl('gSub').style.display = 'block'; getEl('lblSub').textContent = t === 'subject' ? 'Ders' : 'Veri';
+  if (t === 'class') {
+    let l = new Set(), b = new Set(); DB.s.forEach(s => { let m = s.class.match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/); if (m) { l.add(m[1]); b.add(m[2].toUpperCase()); } });
+    getEl('aLvl').innerHTML = '<option value="">Tümü</option>' + [...l].sort((a, b) => parseInt(a) - parseInt(b)).map(x => `<option value="${x}">${x}. Sınıf</option>`).join('');
+    getEl('aBr').innerHTML = '<option value="">Tümü</option>' + [...b].sort().map(x => `<option value="${x}">${x}</option>`).join('');
+    if (aNo) { let selStu = DB.s.find(x => x.no === aNo); if (selStu) { let m = selStu.class.match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/); if (m) { getEl('aLvl').value = m[1]; getEl('aBr').value = m[2].toUpperCase(); } } }
+  } else if (t === 'examdetail' || t === 'subject') {
+    let l = new Set(), b = new Set(); DB.s.forEach(s => { let m = s.class.match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/); if (m) { l.add(m[1]); b.add(m[2].toUpperCase()); } });
+    getEl('aLvl').innerHTML = '<option value="">Tümü</option>' + [...l].sort((a, b) => parseInt(a) - parseInt(b)).map(x => `<option value="${x}">${x}. Sınıf</option>`).join('');
+    if (t === 'subject' || t === 'examdetail') getEl('aBr').innerHTML = '<option value="">Tümü</option>' + [...b].sort().map(x => `<option value="${x}">${x}</option>`).join('');
+    if (aNo) { let selStu = DB.s.find(x => x.no === aNo); if (selStu) { let m = selStu.class.match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/); if (m) { getEl('aLvl').value = m[1]; if (t === 'subject') getEl('aBr').value = ''; } } }
   }
-  uExamTypes();uSub();uExamDates();
+  uExamTypes(); uSub(); uExamDates();
   let sub = getEl('aSub') ? getEl('aSub').value : '';
-  getEl('gDate').style.display=(t==='examdetail' && sub !== 'general_summary' && sub !== 'list_all') || t==='class' || t==='subject'?'block':'none';
-  if(t==='class'||t==='subject') { let dateLbl = getEl('gDate').querySelector('label'); if(dateLbl) dateLbl.textContent = 'Sınav Seç'; }
+  getEl('gDate').style.display = (t === 'examdetail' && sub !== 'general_summary' && sub !== 'list_all') || t === 'class' || t === 'subject' ? 'block' : 'none';
+  if (t === 'class' || t === 'subject') { let dateLbl = getEl('gDate').querySelector('label'); if (dateLbl) dateLbl.textContent = 'Sınav Seç'; }
 }
 
-function handleSubChange(){ let t = getEl('aType').value, sub = getEl('aSub').value; if(t === 'examdetail') { getEl('gDate').style.display = (sub === 'general_summary' || sub === 'list_all') ? 'none' : 'block'; uExamDates(); } reqAnl(); }
+function handleSubChange() { let t = getEl('aType').value, sub = getEl('aSub').value; if (t === 'examdetail') { getEl('gDate').style.display = (sub === 'general_summary' || sub === 'list_all') ? 'none' : 'block'; uExamDates(); } reqAnl(); }
+
 function calcKarneSummaryCards(stuNo, examType, grade, examsData) {
   let attended = examsData.filter(e => !e.abs);
-  if(!attended.length) return null;
-  let stuAvg = attended.reduce((a,e)=>a+e.totalNet,0) / attended.length;
-  
-  let allSameGrade = DB.e.filter(x => x.examType===examType && !x.abs && getGrade(x.studentClass)===grade);
-  let genAvg = allSameGrade.length ? allSameGrade.reduce((a,e)=>a+e.totalNet,0)/allSameGrade.length : null;
-  
+  if (!attended.length) return null;
+  let stuAvg = attended.reduce((a, e) => a + e.totalNet, 0) / attended.length;
+  let allSameGrade = DB.e.filter(x => x.examType === examType && !x.abs && getGrade(x.studentClass) === grade);
+  let genAvg = allSameGrade.length ? allSameGrade.reduce((a, e) => a + e.totalNet, 0) / allSameGrade.length : null;
   let stuMap = {};
-  allSameGrade.forEach(e => {
-    if(!stuMap[e.studentNo]) stuMap[e.studentNo] = {sum:0,cnt:0};
-    stuMap[e.studentNo].sum += e.totalNet; stuMap[e.studentNo].cnt++;
-  });
-  let rankings = Object.entries(stuMap).map(([no,v])=>({no,avg:v.sum/v.cnt})).sort((a,b)=>b.avg-a.avg);
-  let rank = rankings.findIndex(x=>x.no===stuNo)+1;
+  allSameGrade.forEach(e => { if (!stuMap[e.studentNo]) stuMap[e.studentNo] = { sum: 0, cnt: 0 }; stuMap[e.studentNo].sum += e.totalNet; stuMap[e.studentNo].cnt++; });
+  let rankings = Object.entries(stuMap).map(([no, v]) => ({ no, avg: v.sum / v.cnt })).sort((a, b) => b.avg - a.avg);
+  let rank = rankings.findIndex(x => x.no === stuNo) + 1;
   let totalStudents = rankings.length;
-  
-  let nets = attended.map(e=>e.totalNet);
+  let nets = attended.map(e => e.totalNet);
   let trend = null;
-  if(nets.length >= 2){
-    let totalChange = nets[nets.length-1]-nets[0];
-    let avgChange = totalChange/(nets.length-1);
-    trend = {totalChange, avgChange, count: nets.length, trendClass: totalChange>0?'trend-up':(totalChange<0?'trend-down':'trend-stable'), trendIcon: totalChange>0?'fa-arrow-up':(totalChange<0?'fa-arrow-down':'fa-minus'), trendText: totalChange>0?'Yükseliş':(totalChange<0?'Düşüş':'Sabit')};
+  if (nets.length >= 2) {
+    let totalChange = nets[nets.length - 1] - nets[0];
+    let avgChange = totalChange / (nets.length - 1);
+    trend = { totalChange, avgChange, count: nets.length, trendClass: totalChange > 0 ? 'trend-up' : (totalChange < 0 ? 'trend-down' : 'trend-stable'), trendIcon: totalChange > 0 ? 'fa-arrow-up' : (totalChange < 0 ? 'fa-arrow-down' : 'fa-minus'), trendText: totalChange > 0 ? 'Yükseliş' : (totalChange < 0 ? 'Düşüş' : 'Sabit') };
   }
-  
-  return {stuAvg, genAvg, rank, totalStudents, trend};
+  return { stuAvg, genAvg, rank, totalStudents, trend };
 }
 
 function buildKarneExamCards(summary, examType) {
-  if(!summary) return '';
-  let {stuAvg, genAvg, rank, totalStudents} = summary;
-  let cardsHtml = `<div class="row mb-2">
+  if (!summary) return '';
+  let { stuAvg, genAvg, rank, totalStudents } = summary;
+  return `<div class="row mb-2">
     <div class="col-md-6 col-sm-6">
       <div class="info-box bg-success" style="min-height:72px;">
         <span class="info-box-icon" style="width:55px;font-size:1.3rem;"><i class="fas fa-chart-bar"></i></span>
         <div class="info-box-content" style="padding:6px 10px;">
           <span class="info-box-text" style="font-size:0.75em;">Ortalama Net</span>
           <span class="info-box-number" style="font-size:1.3em;">${stuAvg.toFixed(2)}</span>
-          <span class="progress-description" style="font-size:0.75em;opacity:0.85;">Genel Ort: ${genAvg!==null?genAvg.toFixed(2):'—'}</span>
+          <span class="progress-description" style="font-size:0.75em;opacity:0.85;">Genel Ort: ${genAvg !== null ? genAvg.toFixed(2) : '—'}</span>
         </div>
       </div>
     </div>
@@ -1122,213 +1238,170 @@ function buildKarneExamCards(summary, examType) {
         <span class="info-box-icon" style="width:55px;font-size:1.3rem;"><i class="fas fa-trophy"></i></span>
         <div class="info-box-content" style="padding:6px 10px;">
           <span class="info-box-text" style="font-size:0.75em;">Kurum Derece</span>
-          <span class="info-box-number" style="font-size:1.3em;">${rank>0?rank:'—'}</span>
+          <span class="info-box-number" style="font-size:1.3em;">${rank > 0 ? rank : '—'}</span>
           <span class="progress-description" style="font-size:0.75em;opacity:0.85;">Toplam: ${totalStudents} Öğrenci</span>
         </div>
       </div>
     </div>
   </div>`;
-  return cardsHtml;
 }
 
-function rH(){
-  let s=DB.s.find(x=>x.no===aNo); if(!s)return; let r=getEl('homeArea');
-  let combined=DB.e.filter(x=>x.studentNo===aNo).sort((a,b)=>srt(a.date,b.date));
-  if(!combined.length){r.innerHTML='<div class="alert alert-default-info">Bu öğrenciye ait sınav verisi yok.</div>';return;}
-
-  let grp={}; combined.forEach(e=>{(grp[e.examType]=grp[e.examType]||[]).push(e);});
-  let typs=Object.keys(grp).sort(); function abbrevSub(name, shorten){ return shorten?name.substring(0,3):toTitleCase(name); }
+function rH() {
+  let s = DB.s.find(x => x.no === aNo); if (!s) return; let r = getEl('homeArea');
+  let combined = DB.e.filter(x => x.studentNo === aNo).sort((a, b) => srt(a.date, b.date));
+  if (!combined.length) { r.innerHTML = '<div class="alert alert-info">Bu öğrenciye ait sınav verisi yok.</div>'; return; }
+  let grp = {}; combined.forEach(e => { (grp[e.examType] = grp[e.examType] || []).push(e); });
+  let typs = Object.keys(grp).sort(); function abbrevSub(name, shorten) { return shorten ? name.substring(0, 3) : toTitleCase(name); }
   let stGrade = getGrade(s.class);
-
-  let h=`<div class="d-flex justify-content-end mb-2 no-print"><button class="btn btn-success btn-sm mr-2" onclick="xXLMul('kCont','${s.name}_Karne')"><i class='fas fa-file-excel mr-1'></i>Excel</button><button class="btn-print no-print" onclick="xPR('kCont','${s.name}_Karne',this)"><i class='fas fa-print mr-1'></i>Yazdır</button></div><div id="kCont" class="card card-primary card-outline"><div class="pdf-header-bar"><span style="font-size:18px;"><strong>${s.name}</strong> — Karne Özeti</span><span style="font-size:14px;">Sınıf: ${s.class} | ${new Date().toLocaleDateString('tr-TR')}</span></div><div class="card-header"><h3 class="card-title"><i class="fas fa-user-graduate mr-2"></i>${s.name} Karnesi</h3></div><div class="card-body">`;
-
-  typs.forEach(t=>{
-    let el=grp[t].sort((a,b)=>srt(a.date,b.date)); let sb=Array.from(new Set(el.filter(e=>!e.abs).flatMap(e=>Object.keys(e.subs)))).sort();
-    let totalCols=sb.length+5, shorten=totalCols>10;
-    
+  let h = `<div class="d-flex justify-content-end mb-2 no-print"><button class="btn btn-success btn-sm me-2" onclick="xXLMul('kCont','${s.name}_Karne')"><i class='fas fa-file-excel me-1'></i>Excel</button><button class="btn-print no-print" onclick="xPR('kCont','${s.name}_Karne',this)"><i class='fas fa-print me-1'></i>Yazdır</button></div><div id="kCont" class="card card-primary card-outline"><div class="pdf-header-bar"><span style="font-size:18px;"><strong>${s.name}</strong> — Karne Özeti</span><span style="font-size:14px;">Sınıf: ${s.class} | ${new Date().toLocaleDateString('tr-TR')}</span></div><div class="card-header"><h3 class="card-title"><i class="fas fa-user-graduate me-2"></i>${s.name} Karnesi</h3></div><div class="card-body">`;
+  typs.forEach(t => {
+    let el = grp[t].sort((a, b) => srt(a.date, b.date)); let sb = Array.from(new Set(el.filter(e => !e.abs).flatMap(e => Object.keys(e.subs)))).sort();
+    let totalCols = sb.length + 5, shorten = totalCols > 10;
     let summary = calcKarneSummaryCards(aNo, t, stGrade, el);
     let cardsHtml = buildKarneExamCards(summary, t);
-    
-    h+=`<div class="karne-bolum"><h5 class="mt-3 mb-2 text-primary border-bottom pb-2">${t} Sınavları</h5>${cardsHtml}<div class="scroll-hint"><i class="fas fa-arrows-alt-h mr-1"></i>Tabloyu kaydırın</div><div class="scroll"><table class="table table-sm table-bordered table-striped" data-sh="${t}"><thead><tr><th>#</th><th>Tarih</th><th>Yayınevi</th>${sb.map(x=>`<th title="${toTitleCase(x)}">${abbrevSub(x,shorten)}</th>`).join('')}<th>Top.Net</th><th>Puan</th><th>Snf(S/K)</th><th>Okul(S/K)</th><th>İlçe(S/K)</th><th>İl(S/K)</th><th>Gen(S/K)</th></tr></thead><tbody>`;
-    
+    h += `<div class="karne-bolum"><h5 class="mt-3 mb-2 text-primary border-bottom pb-2">${t} Sınavları</h5>${cardsHtml}<div class="scroll-hint"><i class="fas fa-arrows-alt-h me-1"></i>Tabloyu kaydırın</div><div class="scroll"><table class="table table-sm table-bordered table-striped" data-sh="${t}"><thead><tr><th>#</th><th>Tarih</th><th>Yayınevi</th>${sb.map(x => `<th title="${toTitleCase(x)}">${abbrevSub(x, shorten)}</th>`).join('')}<th>Top.Net</th><th>Puan</th><th>Snf(S/K)</th><th>Okul(S/K)</th><th>İlçe(S/K)</th><th>İl(S/K)</th><th>Gen(S/K)</th></tr></thead><tbody>`;
     let kIdx = 1;
-    el.forEach(e=>{
+    el.forEach(e => {
       let pub = e.publisher || '—', sNo = e.abs ? '—' : kIdx++;
-      if(e.abs) h+=`<tr class="absent-row"><td>${sNo}</td><td>${e.date}</td><td>${toTitleCase(pub)}</td><td colspan="${sb.length+7}" class="text-center font-weight-bold">🔴 Katılmadı</td></tr>`;
-      else h+=`<tr><td>${sNo}</td><td>${e.date}</td><td>${toTitleCase(pub)}</td>${sb.map(x=>`<td>${e.subs[x]!==undefined?e.subs[x].net.toFixed(2):'—'}</td>`).join('')}<td><strong>${e.totalNet.toFixed(2)}</strong></td><td>${e.score.toFixed(2)}</td><td>${e.cR||'—'}/${e.cP||'—'}</td><td>${e.iR||'—'}/${e.iP||'—'}</td><td>${e.dR||'—'}/${e.dP||'—'}</td><td>${e.pR||'—'}/${e.pP||'—'}</td><td>${e.gR||'—'}/${e.gP||'—'}</td></tr>`;
+      if (e.abs) h += `<tr class="absent-row"><td>${sNo}</td><td>${e.date}</td><td>${toTitleCase(pub)}</td><td colspan="${sb.length + 7}" class="text-center fw-bold">🔴 Katılmadı</td></tr>`;
+      else h += `<tr><td>${sNo}</td><td>${e.date}</td><td>${toTitleCase(pub)}</td>${sb.map(x => `<td>${e.subs[x] !== undefined ? e.subs[x].net.toFixed(2) : '—'}</td>`).join('')}<td><strong>${e.totalNet.toFixed(2)}</strong></td><td>${e.score.toFixed(2)}</td><td>${e.cR || '—'}/${e.cP || '—'}</td><td>${e.iR || '—'}/${e.iP || '—'}</td><td>${e.dR || '—'}/${e.dP || '—'}</td><td>${e.pR || '—'}/${e.pP || '—'}</td><td>${e.gR || '—'}/${e.gP || '—'}</td></tr>`;
     });
-    
     let attended = el.filter(e => !e.abs);
-    if(attended.length > 0){
+    if (attended.length > 0) {
       let allGradeExams = DB.e.filter(x => x.examType === t && !x.abs && getGrade(x.studentClass) === stGrade);
       let allClassExams = DB.e.filter(x => x.examType === t && !x.abs && x.studentClass === s.class);
-      let genAvgSubs = sb.map(x => { let v = allGradeExams.filter(e => e.subs[x] !== undefined).map(e => e.subs[x].net); return v.length ? (v.reduce((a,b)=>a+b,0)/v.length).toFixed(2) : '—'; });
-      let genAvgNet = allGradeExams.length > 0 ? (allGradeExams.reduce((a,e)=>a+e.totalNet,0)/allGradeExams.length).toFixed(2) : '—';
-      let genAvgScore = allGradeExams.length > 0 ? (allGradeExams.reduce((a,e)=>a+e.score,0)/allGradeExams.length).toFixed(2) : '—';
-      let clsAvgSubs = sb.map(x => { let v = allClassExams.filter(e => e.subs[x] !== undefined).map(e => e.subs[x].net); return v.length ? (v.reduce((a,b)=>a+b,0)/v.length).toFixed(2) : '—'; });
-      let clsAvgNet = allClassExams.length > 0 ? (allClassExams.reduce((a,e)=>a+e.totalNet,0)/allClassExams.length).toFixed(2) : '—';
-      let clsAvgScore = allClassExams.length > 0 ? (allClassExams.reduce((a,e)=>a+e.score,0)/allClassExams.length).toFixed(2) : '—';
-      let avgSubs = sb.map(x => { let v = attended.filter(e => e.subs[x] !== undefined).map(e => e.subs[x].net); return v.length ? (v.reduce((a,b)=>a+b,0)/v.length).toFixed(2) : '—'; });
-      let avgNet = (attended.reduce((a,e)=>a+e.totalNet,0)/attended.length).toFixed(2), avgScore = (attended.reduce((a,e)=>a+e.score,0)/attended.length).toFixed(2);
-      
-      h += `<tr class="avg-row"><td colspan="3" style="text-align:right; padding-right:15px;">Öğrenci Ortalama</td>${avgSubs.map(v=>`<td>${v}</td>`).join('')}<td>${avgNet}</td><td>${avgScore}</td><td colspan="5">—</td></tr>`;
-      h += `<tr class="avg-row"><td colspan="3" style="text-align:right; padding-right:15px;">Sınıf Ortalama (${s.class})</td>${clsAvgSubs.map(v=>`<td>${v}</td>`).join('')}<td>${clsAvgNet}</td><td>${clsAvgScore}</td><td colspan="5">—</td></tr>`;
-      h += `<tr class="avg-row"><td colspan="3" style="text-align:right; padding-right:15px;">Kurum Ortalama (${stGrade}. Sınıflar)</td>${genAvgSubs.map(v=>`<td>${v}</td>`).join('')}<td>${genAvgNet}</td><td>${genAvgScore}</td><td colspan="5">—</td></tr>`;
+      let genAvgSubs = sb.map(x => { let v = allGradeExams.filter(e => e.subs[x] !== undefined).map(e => e.subs[x].net); return v.length ? (v.reduce((a, b) => a + b, 0) / v.length).toFixed(2) : '—'; });
+      let genAvgNet = allGradeExams.length > 0 ? (allGradeExams.reduce((a, e) => a + e.totalNet, 0) / allGradeExams.length).toFixed(2) : '—';
+      let genAvgScore = allGradeExams.length > 0 ? (allGradeExams.reduce((a, e) => a + e.score, 0) / allGradeExams.length).toFixed(2) : '—';
+      let clsAvgSubs = sb.map(x => { let v = allClassExams.filter(e => e.subs[x] !== undefined).map(e => e.subs[x].net); return v.length ? (v.reduce((a, b) => a + b, 0) / v.length).toFixed(2) : '—'; });
+      let clsAvgNet = allClassExams.length > 0 ? (allClassExams.reduce((a, e) => a + e.totalNet, 0) / allClassExams.length).toFixed(2) : '—';
+      let clsAvgScore = allClassExams.length > 0 ? (allClassExams.reduce((a, e) => a + e.score, 0) / allClassExams.length).toFixed(2) : '—';
+      let avgSubs = sb.map(x => { let v = attended.filter(e => e.subs[x] !== undefined).map(e => e.subs[x].net); return v.length ? (v.reduce((a, b) => a + b, 0) / v.length).toFixed(2) : '—'; });
+      let avgNet = (attended.reduce((a, e) => a + e.totalNet, 0) / attended.length).toFixed(2), avgScore = (attended.reduce((a, e) => a + e.score, 0) / attended.length).toFixed(2);
+      h += `<tr class="avg-row"><td colspan="3" style="text-align:right; padding-right:15px;">Öğrenci Ortalama</td>${avgSubs.map(v => `<td>${v}</td>`).join('')}<td>${avgNet}</td><td>${avgScore}</td><td colspan="5">—</td></tr>`;
+      h += `<tr class="avg-row"><td colspan="3" style="text-align:right; padding-right:15px;">Sınıf Ortalama (${s.class})</td>${clsAvgSubs.map(v => `<td>${v}</td>`).join('')}<td>${clsAvgNet}</td><td>${clsAvgScore}</td><td colspan="5">—</td></tr>`;
+      h += `<tr class="avg-row"><td colspan="3" style="text-align:right; padding-right:15px;">Kurum Ortalama (${stGrade}. Sınıflar)</td>${genAvgSubs.map(v => `<td>${v}</td>`).join('')}<td>${genAvgNet}</td><td>${genAvgScore}</td><td colspan="5">—</td></tr>`;
     }
-
-    let canvasId='cKarne_'+t.replace(/[^a-zA-Z0-9]/g,'_');
-    h+=`</tbody></table></div><div class="chart-box avoid-break" style="margin:10px 0 18px 0; height:220px;"><div style="font-size:11px;font-weight:bold;color:#1e3a5f;margin-bottom:4px;text-align:left;">${t} — Toplam Net Gelişimi</div><canvas id="${canvasId}"></canvas></div></div>`;
+    let canvasId = 'cKarne_' + t.replace(/[^a-zA-Z0-9]/g, '_');
+    h += `</tbody></table></div><div class="chart-box avoid-break" style="margin:10px 0 18px 0; height:220px;"><div style="font-size:11px;font-weight:bold;color:#1e3a5f;margin-bottom:4px;text-align:left;">${t} — Toplam Net Gelişimi</div><canvas id="${canvasId}"></canvas></div></div>`;
   });
-
-  h+=`</div></div>`;
-  if(c.h){ c.h.destroy(); c.h=null; } if(window._karneCharts){window._karneCharts.forEach(ch=>{try{ch.destroy();}catch(e){}});} window._karneCharts=[];
-  r.innerHTML=h; 
-  
-  setTimeout(()=>{
-    typs.forEach(t=>{
-      let canvasId='cKarne_'+t.replace(/[^a-zA-Z0-9]/g,'_'); let cv=getEl(canvasId); if(!cv)return;
-      let exT=DB.e.filter(x=>x.studentNo===aNo&&x.examType===t).sort((a,b)=>srt(a.date,b.date));
+  h += `</div></div>`;
+  if (c.h) { c.h.destroy(); c.h = null; } if (window._karneCharts) { window._karneCharts.forEach(ch => { try { ch.destroy(); } catch (e) {} }); } window._karneCharts = [];
+  r.innerHTML = h;
+  setTimeout(() => {
+    typs.forEach(t => {
+      let canvasId = 'cKarne_' + t.replace(/[^a-zA-Z0-9]/g, '_'); let cv = getEl(canvasId); if (!cv) return;
+      let exT = DB.e.filter(x => x.studentNo === aNo && x.examType === t).sort((a, b) => srt(a.date, b.date));
       let chartLabels = exT.map(e => e.publisher ? `${e.date} (${toTitleCase(e.publisher)})` : e.date);
-      let stuD=exT.map(e=>e.abs?null:e.totalNet);
-      let clsD=exT.map(e=>{if(e.abs)return null;let v=DB.e.filter(x=>x.date===e.date&&x.examType===t&&x.studentClass===s.class&&!x.abs).map(x=>x.totalNet);return v.length?(v.reduce((a,b)=>a+b,0)/v.length):null;});
-      let insD=exT.map(e=>{if(e.abs)return null;let v=DB.e.filter(x=>x.date===e.date&&x.examType===t&&!x.abs&&getGrade(x.studentClass)===stGrade).map(x=>x.totalNet);return v.length?(v.reduce((a,b)=>a+b,0)/v.length):null;});
-      let ch=mkChart(canvasId,chartLabels,[{label:'Toplam Net',data:stuD,backgroundColor:cols[0]+'cc',borderColor:cols[0],borderWidth:1.5},{label:'Sınıf Ort.',data:clsD,backgroundColor:cols[2]+'99',borderColor:cols[2],borderWidth:1.5},{label:'Kurum Ort.',data:insD,backgroundColor:cols[3]+'99',borderColor:cols[3],borderWidth:1.5}]);
+      let stuD = exT.map(e => e.abs ? null : e.totalNet);
+      let clsD = exT.map(e => { if (e.abs) return null; let v = DB.e.filter(x => x.date === e.date && x.examType === t && x.studentClass === s.class && !x.abs).map(x => x.totalNet); return v.length ? (v.reduce((a, b) => a + b, 0) / v.length) : null; });
+      let insD = exT.map(e => { if (e.abs) return null; let v = DB.e.filter(x => x.date === e.date && x.examType === t && !x.abs && getGrade(x.studentClass) === stGrade).map(x => x.totalNet); return v.length ? (v.reduce((a, b) => a + b, 0) / v.length) : null; });
+      let ch = mkChart(canvasId, chartLabels, [{ label: 'Toplam Net', data: stuD, backgroundColor: cols[0] + 'cc', borderColor: cols[0], borderWidth: 1.5 }, { label: 'Sınıf Ort.', data: clsD, backgroundColor: cols[2] + '99', borderColor: cols[2], borderWidth: 1.5 }, { label: 'Kurum Ort.', data: insD, backgroundColor: cols[3] + '99', borderColor: cols[3], borderWidth: 1.5 }]);
       window._karneCharts.push(ch);
     });
-  },150);
+  }, 150);
 }
 
-function rAnl(){
-  let aT=getEl('aType').value,eT=getEl('aEx').value, sb=getEl('aSub')?getEl('aSub').value:'', r=getEl('anlRes');
-  if(c.a){ c.a.destroy(); c.a=null; } clearTimeout(chartTimer); 
-  if(!eT){r.innerHTML='<div class="alert alert-default-info">Sınav verisi yok.</div>';return;}
-  if(aT==='examdetail' && !sb) { if(getEl('aSub')) getEl('aSub').value='summary'; sb='summary'; }
+function rAnl() {
+  let aT = getEl('aType').value, eT = getEl('aEx').value, sb = getEl('aSub') ? getEl('aSub').value : '', r = getEl('anlRes');
+  if (c.a) { c.a.destroy(); c.a = null; } clearTimeout(chartTimer);
+  if (!eT) { r.innerHTML = '<div class="alert alert-info">Sınav verisi yok.</div>'; return; }
+  if (aT === 'examdetail' && !sb) { if (getEl('aSub')) getEl('aSub').value = 'summary'; sb = 'summary'; }
 
-  if(aT==='student'){
-    let no=aNo;if(!no){r.innerHTML='';return;}
-    let ex=DB.e.filter(x=>x.studentNo===no&&x.examType===eT&&!x.abs).sort((a,b)=>srt(a.date,b.date)), st=DB.s.find(x=>x.no===no); if(!st){r.innerHTML='';return;}
-    let stGrade=getGrade(st.class), dD=[],clsArr=[],instArr=[],rows='';
-    
+  if (aT === 'student') {
+    let no = aNo; if (!no) { r.innerHTML = ''; return; }
+    let ex = DB.e.filter(x => x.studentNo === no && x.examType === eT && !x.abs).sort((a, b) => srt(a.date, b.date)), st = DB.s.find(x => x.no === no); if (!st) { r.innerHTML = ''; return; }
+    let stGrade = getGrade(st.class), dD = [], clsArr = [], instArr = [], rows = '';
     let isRank = sb.startsWith('rank_');
-    let ls = sb === 'score' ? 'Puan' : (sb === 'rank_c' ? 'Sınıf Sırası' : (sb === 'rank_i' ? 'Kurum Sırası' : (sb === 'rank_g' ? 'Genel Sıra' : (sb === 'totalNet' || !sb ? 'Toplam Net' : toTitleCase(sb.replace('s_','')) + ' Neti'))));
+    let ls = sb === 'score' ? 'Puan' : (sb === 'rank_c' ? 'Sınıf Sırası' : (sb === 'rank_i' ? 'Kurum Sırası' : (sb === 'rank_g' ? 'Genel Sıra' : (sb === 'totalNet' || !sb ? 'Toplam Net' : toTitleCase(sb.replace('s_', '')) + ' Neti'))));
     let valHeader = isRank ? 'Sıra' : (sb === 'score' ? 'Puan' : 'Net');
-    let getVal = (e) => { if (e.abs) return null; if (sb === 'score') return e.score; if (sb === 'rank_c') return pN(e.cR); if (sb === 'rank_i') return pN(e.iR); if (sb === 'rank_g') return pN(e.gR); if (sb === 'totalNet' || !sb) return e.totalNet; return e.subs[toTitleCase(sb.replace('s_',''))]?.net ?? 0; };
-
-    ex.forEach((e,i)=>{
-      let n=getVal(e), pn=i>0 ? getVal(ex[i-1]) : n; let dfStr = '', cl = '';
-      if(i > 0) { if(isRank) { let df = pn - n; cl = df > 0 ? 'text-success' : (df < 0 ? 'text-danger' : ''); dfStr = df > 0 ? '+' + df : df; } else { let df = (n - pn).toFixed(2); cl = df > 0 ? 'text-success' : (df < 0 ? 'text-danger' : ''); dfStr = df > 0 ? '+' + df : df; } } else { dfStr = '-'; }
+    let getVal = (e) => { if (e.abs) return null; if (sb === 'score') return e.score; if (sb === 'rank_c') return pN(e.cR); if (sb === 'rank_i') return pN(e.iR); if (sb === 'rank_g') return pN(e.gR); if (sb === 'totalNet' || !sb) return e.totalNet; return e.subs[toTitleCase(sb.replace('s_', ''))]?.net ?? 0; };
+    ex.forEach((e, i) => {
+      let n = getVal(e), pn = i > 0 ? getVal(ex[i - 1]) : n; let dfStr = '', cl = '';
+      if (i > 0) { if (isRank) { let df = pn - n; cl = df > 0 ? 'text-success' : (df < 0 ? 'text-danger' : ''); dfStr = df > 0 ? '+' + df : df; } else { let df = (n - pn).toFixed(2); cl = df > 0 ? 'text-success' : (df < 0 ? 'text-danger' : ''); dfStr = df > 0 ? '+' + df : df; } } else { dfStr = '-'; }
       let pub = e.publisher || '—';
-      rows+=`<tr><td>${i+1}</td><td>${e.date}</td><td>${toTitleCase(pub)}</td><td>${isRank ? n : n.toFixed(2)}</td><td class="${cl} font-weight-bold">${dfStr}</td></tr>`; dD.push(n);
-      if(!isRank){ let cn=DB.e.filter(x=>x.date===e.date&&x.examType===eT&&x.studentClass===st.class&&!x.abs).map(getVal); clsArr.push(cn.length?(cn.reduce((a,b)=>a+b,0)/cn.length):null); let iv=DB.e.filter(x=>x.date===e.date&&x.examType===eT&&!x.abs&&getGrade(x.studentClass)===stGrade).map(getVal); instArr.push(iv.length?(iv.reduce((a,b)=>a+b,0)/iv.length):null); }
+      rows += `<tr><td>${i + 1}</td><td>${e.date}</td><td>${toTitleCase(pub)}</td><td>${isRank ? n : n.toFixed(2)}</td><td class="${cl} fw-bold">${dfStr}</td></tr>`; dD.push(n);
+      if (!isRank) { let cn = DB.e.filter(x => x.date === e.date && x.examType === eT && x.studentClass === st.class && !x.abs).map(getVal); clsArr.push(cn.length ? (cn.reduce((a, b) => a + b, 0) / cn.length) : null); let iv = DB.e.filter(x => x.date === e.date && x.examType === eT && !x.abs && getGrade(x.studentClass) === stGrade).map(getVal); instArr.push(iv.length ? (iv.reduce((a, b) => a + b, 0) / iv.length) : null); }
     });
-
     let avgRowHtml = '';
-    if(dD.length > 0){ 
-      let stuAvg = dD.reduce((a,b)=>a+b,0) / dD.length;
-      let clsAvg = clsArr.filter(x=>x!==null).length > 0 ? clsArr.filter(x=>x!==null).reduce((a,b)=>a+b,0) / clsArr.filter(x=>x!==null).length : null;
-      let genAvg = instArr.filter(x=>x!==null).length > 0 ? instArr.filter(x=>x!==null).reduce((a,b)=>a+b,0) / instArr.filter(x=>x!==null).length : null;
+    if (dD.length > 0) {
+      let stuAvg = dD.reduce((a, b) => a + b, 0) / dD.length;
+      let clsAvg = clsArr.filter(x => x !== null).length > 0 ? clsArr.filter(x => x !== null).reduce((a, b) => a + b, 0) / clsArr.filter(x => x !== null).length : null;
+      let genAvg = instArr.filter(x => x !== null).length > 0 ? instArr.filter(x => x !== null).reduce((a, b) => a + b, 0) / instArr.filter(x => x !== null).length : null;
       let displayStu = isRank ? Math.round(stuAvg) : stuAvg.toFixed(2);
       let displayCls = clsAvg !== null ? (isRank ? Math.round(clsAvg) : clsAvg.toFixed(2)) : '—';
       let displayGen = genAvg !== null ? (isRank ? Math.round(genAvg) : genAvg.toFixed(2)) : '—';
       avgRowHtml = `<tr class="avg-row"><td colspan="3" style="text-align:right; padding-right:15px;">Öğrenci Ortalama</td><td>${displayStu}</td><td>—</td></tr><tr class="avg-row"><td colspan="3" style="text-align:right; padding-right:15px;">Sınıf Ortalama (${st.class})</td><td>${displayCls}</td><td>—</td></tr><tr class="avg-row"><td colspan="3" style="text-align:right; padding-right:15px;">Kurum Ortalama (${stGrade}. Sınıflar)</td><td>${displayGen}</td><td>—</td></tr>`;
     }
-
     let trendHtml = '';
-    if(dD.length >= 2 && !isRank) {
+    if (dD.length >= 2 && !isRank) {
       let firstVal = dD[0], lastVal = dD[dD.length - 1]; let totalChange = lastVal - firstVal; let avgChange = totalChange / (dD.length - 1);
       let trendClass = totalChange > 0 ? 'trend-up' : (totalChange < 0 ? 'trend-down' : 'trend-stable');
       let trendIcon = totalChange > 0 ? 'fa-arrow-up' : (totalChange < 0 ? 'fa-arrow-down' : 'fa-minus');
       let trendText = totalChange > 0 ? 'Yükseliş' : (totalChange < 0 ? 'Düşüş' : 'Sabit');
-      trendHtml = `<div class="trend-card mb-3"><div class="row align-items-center"><div class="col-md-3 text-center"><span class="trend-indicator ${trendClass}"><i class="fas ${trendIcon} mr-1"></i>${trendText}</span><div class="mt-2 small text-muted">Genel Trend</div></div><div class="col-md-3 text-center border-left"><div style="font-size:1.5em; font-weight:bold; color:${totalChange >= 0 ? '#28a745' : '#dc3545'};">${totalChange >= 0 ? '+' : ''}${totalChange.toFixed(2)}</div><div class="small text-muted">Toplam Değişim</div></div><div class="col-md-3 text-center border-left"><div style="font-size:1.5em; font-weight:bold; color:${avgChange >= 0 ? '#28a745' : '#dc3545'};">${avgChange >= 0 ? '+' : ''}${avgChange.toFixed(2)}</div><div class="small text-muted">Sınav Başı Ort. Değişim</div></div><div class="col-md-3 text-center border-left"><div style="font-size:1.5em; font-weight:bold;">${dD.length}</div><div class="small text-muted">Toplam Sınav</div></div></div></div>`;
+      trendHtml = `<div class="trend-card mb-3"><div class="row align-items-center"><div class="col-md-3 text-center"><span class="trend-indicator ${trendClass}"><i class="fas ${trendIcon} me-1"></i>${trendText}</span><div class="mt-2 small text-muted">Genel Trend</div></div><div class="col-md-3 text-center border-start"><div style="font-size:1.5em; font-weight:bold; color:${totalChange >= 0 ? '#28a745' : '#dc3545'};">${totalChange >= 0 ? '+' : ''}${totalChange.toFixed(2)}</div><div class="small text-muted">Toplam Değişim</div></div><div class="col-md-3 text-center border-start"><div style="font-size:1.5em; font-weight:bold; color:${avgChange >= 0 ? '#28a745' : '#dc3545'};">${avgChange >= 0 ? '+' : ''}${avgChange.toFixed(2)}</div><div class="small text-muted">Sınav Başı Ort. Değişim</div></div><div class="col-md-3 text-center border-start"><div style="font-size:1.5em; font-weight:bold;">${dD.length}</div><div class="small text-muted">Toplam Sınav</div></div></div></div>`;
     }
-    
     let perfHtml = '';
-    if(!isRank && dD.length > 0) {
-      let maxVal = Math.max(...dD), minVal = Math.min(...dD), avgVal = dD.reduce((a,b)=>a+b,0)/dD.length;
-      let absCnt = ex.filter(e=>e.abs).length; let partRate = ex.length > 0 ? ((ex.length - absCnt) / ex.length * 100).toFixed(0) : 0;
-      perfHtml = `<div class="row mt-3 mb-2">
-        <div class="col-md-3 col-sm-6"><div class="info-box bg-primary"><span class="info-box-icon"><i class="fas fa-chart-line"></i></span><div class="info-box-content"><span class="info-box-text">En Yüksek</span><span class="info-box-number">${maxVal.toFixed(2)}</span></div></div></div>
-        <div class="col-md-3 col-sm-6"><div class="info-box bg-danger"><span class="info-box-icon"><i class="fas fa-arrow-down"></i></span><div class="info-box-content"><span class="info-box-text">En Düşük</span><span class="info-box-number">${minVal.toFixed(2)}</span></div></div></div>
-        <div class="col-md-3 col-sm-6"><div class="info-box bg-success"><span class="info-box-icon"><i class="fas fa-balance-scale"></i></span><div class="info-box-content"><span class="info-box-text">Ortalama</span><span class="info-box-number">${avgVal.toFixed(2)}</span></div></div></div>
-        <div class="col-md-3 col-sm-6"><div class="info-box bg-info"><span class="info-box-icon"><i class="fas fa-percentage"></i></span><div class="info-box-content"><span class="info-box-text">Katılım</span><span class="info-box-number">${partRate}%</span><span class="progress-description">${ex.length-absCnt}/${ex.length} Sınav</span></div></div></div>
-      </div>`;
+    if (!isRank && dD.length > 0) {
+      let maxVal = Math.max(...dD), minVal = Math.min(...dD), avgVal = dD.reduce((a, b) => a + b, 0) / dD.length;
+      let absCnt = ex.filter(e => e.abs).length; let partRate = ex.length > 0 ? ((ex.length - absCnt) / ex.length * 100).toFixed(0) : 0;
+      perfHtml = `<div class="row mt-3 mb-2"><div class="col-md-3 col-sm-6"><div class="info-box bg-primary"><span class="info-box-icon"><i class="fas fa-chart-line"></i></span><div class="info-box-content"><span class="info-box-text">En Yüksek</span><span class="info-box-number">${maxVal.toFixed(2)}</span></div></div></div><div class="col-md-3 col-sm-6"><div class="info-box bg-danger"><span class="info-box-icon"><i class="fas fa-arrow-down"></i></span><div class="info-box-content"><span class="info-box-text">En Düşük</span><span class="info-box-number">${minVal.toFixed(2)}</span></div></div></div><div class="col-md-3 col-sm-6"><div class="info-box bg-success"><span class="info-box-icon"><i class="fas fa-balance-scale"></i></span><div class="info-box-content"><span class="info-box-text">Ortalama</span><span class="info-box-number">${avgVal.toFixed(2)}</span></div></div></div><div class="col-md-3 col-sm-6"><div class="info-box bg-info"><span class="info-box-icon"><i class="fas fa-percentage"></i></span><div class="info-box-content"><span class="info-box-text">Katılım</span><span class="info-box-number">${partRate}%</span><span class="progress-description">${ex.length - absCnt}/${ex.length} Sınav</span></div></div></div></div>`;
     }
-
-    let h=`<div class="d-flex justify-content-end mb-2 no-print"><button class="btn btn-success btn-sm mr-2" onclick="xXL('tS','Ogrenci_Analizi')"><i class='fas fa-file-excel mr-1'></i>Excel</button><button class="btn-print no-print" onclick="xPR('pS','Ogrenci_Analizi',this)"><i class='fas fa-print mr-1'></i>Yazdır</button></div><div id="pS" class="card card-outline card-info"><div class="pdf-header-bar"><span style="font-size:18px;"><strong>${st.name}</strong> — Analiz (${eT} / ${ls})</span><span style="font-size:14px;">Sınıf: ${st.class}</span></div><div class="card-header"><h3 class="card-title">📈 ${st.name} — Analiz (${ls})</h3></div><div class="card-body">${perfHtml}${trendHtml}<div class="table-responsive"><table class="table table-sm table-hover table-bordered" id="tS"><thead><tr><th>#</th><th>Tarih</th><th>Yayınevi</th><th>${valHeader}</th><th>Değişim</th></tr></thead><tbody>${rows}${avgRowHtml}</tbody></table></div><div class="chart-box avoid-break" style="margin-top:10px;"><canvas id="cA"></canvas></div></div></div>`;
-    r.innerHTML=h;
-    
-    chartTimer=setTimeout(()=>{ 
+    let h = `<div class="d-flex justify-content-end mb-2 no-print"><button class="btn btn-success btn-sm me-2" onclick="xXL('tS','Ogrenci_Analizi')"><i class='fas fa-file-excel me-1'></i>Excel</button><button class="btn-print no-print" onclick="xPR('pS','Ogrenci_Analizi',this)"><i class='fas fa-print me-1'></i>Yazdır</button></div><div id="pS" class="card card-outline card-info"><div class="pdf-header-bar"><span style="font-size:18px;"><strong>${st.name}</strong> — Analiz (${eT} / ${ls})</span><span style="font-size:14px;">Sınıf: ${st.class}</span></div><div class="card-header"><h3 class="card-title">📈 ${st.name} — Analiz (${ls})</h3></div><div class="card-body">${perfHtml}${trendHtml}<div class="table-responsive"><table class="table table-sm table-hover table-bordered" id="tS"><thead><tr><th>#</th><th>Tarih</th><th>Yayınevi</th><th>${valHeader}</th><th>Değişim</th></tr></thead><tbody>${rows}${avgRowHtml}</tbody></table></div><div class="chart-box avoid-break" style="margin-top:10px;"><canvas id="cA"></canvas></div></div></div>`;
+    r.innerHTML = h;
+    chartTimer = setTimeout(() => {
       let chartLabels = ex.map(e => e.publisher ? `${e.date} (${toTitleCase(e.publisher)})` : e.date);
-      let datasets = [{label:`Öğrenci ${ls}`,data:dD,backgroundColor:cols[0]+'cc',borderColor:cols[0],borderWidth:1.5}];
-      if(!isRank){ datasets.push({label:'Sınıf Ort.',data:clsArr,backgroundColor:cols[2]+'99',borderColor:cols[2],borderWidth:1.5}); datasets.push({label:'Kurum Ort. ('+stGrade+'.Sınıf)',data:instArr,backgroundColor:cols[3]+'99',borderColor:cols[3],borderWidth:1.5}); }
-      c.a=mkChart('cA',chartLabels,datasets,isRank); 
-    },100);
+      let datasets = [{ label: `Öğrenci ${ls}`, data: dD, backgroundColor: cols[0] + 'cc', borderColor: cols[0], borderWidth: 1.5 }];
+      if (!isRank) { datasets.push({ label: 'Sınıf Ort.', data: clsArr, backgroundColor: cols[2] + '99', borderColor: cols[2], borderWidth: 1.5 }); datasets.push({ label: 'Kurum Ort. (' + stGrade + '.Sınıf)', data: instArr, backgroundColor: cols[3] + '99', borderColor: cols[3], borderWidth: 1.5 }); }
+      c.a = mkChart('cA', chartLabels, datasets, isRank);
+    }, 100);
 
-  }else if(aT==='class'){
-    let l=getEl('aLvl').value,b=getEl('aBr').value, dateFilter = getEl('aDate') ? getEl('aDate').value : '';
-    let ex=DB.e.filter(x=>x.examType===eT&&!x.abs&&(!dateFilter||x.date===dateFilter)),d={};
-    ex.forEach(e=>{ let m=e.studentClass.match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/); if(!m)return; if((l&&l!==m[1])||(b&&b!==m[2].toUpperCase()))return; (d[e.date]=d[e.date]||[]).push(e); });
-    let sd=Object.keys(d).sort(srt),cs=new Set(),tr=[], ls = sb === 'score' ? 'Puan' : (sb === 'totalNet' || !sb ? 'Toplam Net' : toTitleCase(sb.replace('s_','')) + ' Neti');
-
+  } else if (aT === 'class') {
+    let l = getEl('aLvl').value, b = getEl('aBr').value, dateFilter = getEl('aDate') ? getEl('aDate').value : '';
+    let ex = DB.e.filter(x => x.examType === eT && !x.abs && (!dateFilter || x.date === dateFilter)), d = {};
+    ex.forEach(e => { let m = e.studentClass.match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/); if (!m) return; if ((l && l !== m[1]) || (b && b !== m[2].toUpperCase())) return; (d[e.date] = d[e.date] || []).push(e); });
+    let sd = Object.keys(d).sort(srt), cs = new Set(), tr = [], ls = sb === 'score' ? 'Puan' : (sb === 'totalNet' || !sb ? 'Toplam Net' : toTitleCase(sb.replace('s_', '')) + ' Neti');
     let cIdx = 1;
-    sd.forEach(dt=>{ 
-      let cl={}; d[dt].forEach(e=>(cl[e.studentClass]=cl[e.studentClass]||[]).push(e)); 
-      Object.keys(cl).sort().forEach(cc=>{ 
-        cs.add(cc); 
-        let n=cl[cc].map(x=>{ if(sb === 'score') return x.score; if(sb === 'totalNet' || !sb) return x.totalNet; return x.subs[toTitleCase(sb.replace('s_',''))]?.net || 0; }); 
-        let pub = cl[cc][0]?.publisher || '—'; tr.push(`<tr><td>${cIdx++}</td><td>${cc}</td><td>${dt}</td><td>${toTitleCase(pub)}</td><td>${n.length?(n.reduce((x,y)=>x+y,0)/n.length).toFixed(2):0}</td></tr>`); 
-      }); 
+    sd.forEach(dt => {
+      let cl = {}; d[dt].forEach(e => (cl[e.studentClass] = cl[e.studentClass] || []).push(e));
+      Object.keys(cl).sort().forEach(cc => {
+        cs.add(cc);
+        let n = cl[cc].map(x => { if (sb === 'score') return x.score; if (sb === 'totalNet' || !sb) return x.totalNet; return x.subs[toTitleCase(sb.replace('s_', ''))]?.net || 0; });
+        let pub = cl[cc][0]?.publisher || '—'; tr.push(`<tr><td>${cIdx++}</td><td>${cc}</td><td>${dt}</td><td>${toTitleCase(pub)}</td><td>${n.length ? (n.reduce((x, y) => x + y, 0) / n.length).toFixed(2) : 0}</td></tr>`);
+      });
     });
-
     let lvlForAvg = l || (ex.length > 0 ? getGrade(ex[0].studentClass) : ''), exForAvg = lvlForAvg ? ex.filter(x => getGrade(x.studentClass) === lvlForAvg) : ex;
-    let allVals = exForAvg.map(x=>{ if(sb==='score')return x.score; if(sb==='totalNet'||!sb)return x.totalNet; return x.subs[toTitleCase(sb.replace('s_',''))]?.net||0; });
+    let allVals = exForAvg.map(x => { if (sb === 'score') return x.score; if (sb === 'totalNet' || !sb) return x.totalNet; return x.subs[toTitleCase(sb.replace('s_', ''))]?.net || 0; });
     let classAvgRows = '', sortedClasses = [...cs].sort();
     sortedClasses.forEach(clsName => {
-      let clsExams = ex.filter(x => x.studentClass === clsName), clsVals = clsExams.map(x => { if(sb==='score')return x.score; if(sb==='totalNet'||!sb)return x.totalNet; return x.subs[toTitleCase(sb.replace('s_',''))]?.net||0; });
-      if(clsVals.length > 0) { let clsAvg = (clsVals.reduce((a,b)=>a+b,0)/clsVals.length).toFixed(2); classAvgRows += `<tr class="avg-row"><td colspan="4" style="text-align:right; padding-right:15px;">${clsName} Ortalama</td><td>${clsAvg}</td></tr>`; }
+      let clsExams = ex.filter(x => x.studentClass === clsName), clsVals = clsExams.map(x => { if (sb === 'score') return x.score; if (sb === 'totalNet' || !sb) return x.totalNet; return x.subs[toTitleCase(sb.replace('s_', ''))]?.net || 0; });
+      if (clsVals.length > 0) { let clsAvg = (clsVals.reduce((a, b) => a + b, 0) / clsVals.length).toFixed(2); classAvgRows += `<tr class="avg-row"><td colspan="4" style="text-align:right; padding-right:15px;">${clsName} Ortalama</td><td>${clsAvg}</td></tr>`; }
     });
-    
     let clsAvgRow = classAvgRows, lvlLabel = lvlForAvg ? `${lvlForAvg}. Sınıflar` : 'Tüm Sınıflar';
-    if (allVals.length > 0) { let genAvg = (allVals.reduce((a,b)=>a+b,0)/allVals.length).toFixed(2); clsAvgRow += `<tr class="avg-row"><td colspan="4" style="text-align:right; padding-right:15px;">Kurum Ortalama (${lvlLabel})</td><td>${genAvg}</td></tr>`; }
-    let clsLabel=''; {let lv=getEl('aLvl').value,br=getEl('aBr').value; if(lv&&br)clsLabel=lv+br; else if(lv)clsLabel=lv+'. Sınıflar'; else if(br)clsLabel=br; else clsLabel='Hepsi';}
-    
+    if (allVals.length > 0) { let genAvg = (allVals.reduce((a, b) => a + b, 0) / allVals.length).toFixed(2); clsAvgRow += `<tr class="avg-row"><td colspan="4" style="text-align:right; padding-right:15px;">Kurum Ortalama (${lvlLabel})</td><td>${genAvg}</td></tr>`; }
+    let clsLabel = ''; { let lv = getEl('aLvl').value, br = getEl('aBr').value; if (lv && br) clsLabel = lv + br; else if (lv) clsLabel = lv + '. Sınıflar'; else if (br) clsLabel = br; else clsLabel = 'Hepsi'; }
     let clsPerfHtml = '';
-    if(sortedClasses.length > 0 && allVals.length > 0) {
-      let topCls = sortedClasses.map(clsName => { let cv = ex.filter(x=>x.studentClass===clsName).map(x=>{ if(sb==='score')return x.score; if(sb==='totalNet'||!sb)return x.totalNet; return x.subs[toTitleCase(sb.replace('s_',''))]?.net||0; }); return {cls: clsName, avg: cv.length?(cv.reduce((a,b)=>a+b,0)/cv.length):0, count: cv.length}; }).sort((a,b)=>b.avg-a.avg);
-      let best = topCls[0], worst = topCls[topCls.length-1], genAvgPerf = allVals.reduce((a,b)=>a+b,0)/allVals.length, aboveAvg = topCls.filter(x=>x.avg >= genAvgPerf).length;
-      clsPerfHtml = `<div class="row mb-3">
-        <div class="col-md-3 col-sm-6"><div class="info-box bg-success"><span class="info-box-icon"><i class="fas fa-trophy"></i></span><div class="info-box-content"><span class="info-box-text">En İyi Sınıf</span><span class="info-box-number">${best.cls}</span><span class="progress-description">Ort: ${best.avg.toFixed(2)}</span></div></div></div>
-        <div class="col-md-3 col-sm-6"><div class="info-box bg-danger"><span class="info-box-icon"><i class="fas fa-exclamation-circle"></i></span><div class="info-box-content"><span class="info-box-text">En Düşük Sınıf</span><span class="info-box-number">${worst.cls}</span><span class="progress-description">Ort: ${worst.avg.toFixed(2)}</span></div></div></div>
-        <div class="col-md-3 col-sm-6"><div class="info-box bg-primary"><span class="info-box-icon"><i class="fas fa-calculator"></i></span><div class="info-box-content"><span class="info-box-text">Kurum Ort. (${lvlLabel})</span><span class="info-box-number">${genAvgPerf.toFixed(2)}</span></div></div></div>
-        <div class="col-md-3 col-sm-6"><div class="info-box bg-info"><span class="info-box-icon"><i class="fas fa-star"></i></span><div class="info-box-content"><span class="info-box-text">Ort. Üstü Sınıf</span><span class="info-box-number">${aboveAvg} / ${topCls.length}</span></div></div></div>
-      </div>`;
+    if (sortedClasses.length > 0 && allVals.length > 0) {
+      let topCls = sortedClasses.map(clsName => { let cv = ex.filter(x => x.studentClass === clsName).map(x => { if (sb === 'score') return x.score; if (sb === 'totalNet' || !sb) return x.totalNet; return x.subs[toTitleCase(sb.replace('s_', ''))]?.net || 0; }); return { cls: clsName, avg: cv.length ? (cv.reduce((a, b) => a + b, 0) / cv.length) : 0, count: cv.length }; }).sort((a, b) => b.avg - a.avg);
+      let best = topCls[0], worst = topCls[topCls.length - 1], genAvgPerf = allVals.reduce((a, b) => a + b, 0) / allVals.length, aboveAvg = topCls.filter(x => x.avg >= genAvgPerf).length;
+      clsPerfHtml = `<div class="row mb-3"><div class="col-md-3 col-sm-6"><div class="info-box bg-success"><span class="info-box-icon"><i class="fas fa-trophy"></i></span><div class="info-box-content"><span class="info-box-text">En İyi Sınıf</span><span class="info-box-number">${best.cls}</span><span class="progress-description">Ort: ${best.avg.toFixed(2)}</span></div></div></div><div class="col-md-3 col-sm-6"><div class="info-box bg-danger"><span class="info-box-icon"><i class="fas fa-exclamation-circle"></i></span><div class="info-box-content"><span class="info-box-text">En Düşük Sınıf</span><span class="info-box-number">${worst.cls}</span><span class="progress-description">Ort: ${worst.avg.toFixed(2)}</span></div></div></div><div class="col-md-3 col-sm-6"><div class="info-box bg-primary"><span class="info-box-icon"><i class="fas fa-calculator"></i></span><div class="info-box-content"><span class="info-box-text">Kurum Ort. (${lvlLabel})</span><span class="info-box-number">${genAvgPerf.toFixed(2)}</span></div></div></div><div class="col-md-3 col-sm-6"><div class="info-box bg-info"><span class="info-box-icon"><i class="fas fa-star"></i></span><div class="info-box-content"><span class="info-box-text">Ort. Üstü Sınıf</span><span class="info-box-number">${aboveAvg} / ${topCls.length}</span></div></div></div></div>`;
+      let stuRankMap = {};
+      ex.forEach(e => {
+        let stu = DB.s.find(x => x.no === e.studentNo); if (!stu) return;
+        let m = stu.class.match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/); if (!m) return;
+        if ((l && l !== m[1]) || (b && b !== m[2].toUpperCase())) return;
+        let val; if (sb === 'score') val = e.score; else if (sb === 'totalNet' || !sb) val = e.totalNet; else { let subKey = toTitleCase(sb.replace('s_', '')); val = (e.subs && e.subs[subKey] !== undefined) ? e.subs[subKey].net : null; }
+        if (val === null || val === undefined) return;
+        if (!stuRankMap[e.studentNo]) stuRankMap[e.studentNo] = { no: e.studentNo, name: stu.name, cls: stu.class, sum: 0, cnt: 0 };
+        stuRankMap[e.studentNo].sum += val; stuRankMap[e.studentNo].cnt++;
+      });
+      let stuRankArr = Object.values(stuRankMap).map(s => ({ ...s, avg: s.sum / s.cnt })).sort((a, b) => b.avg - a.avg);
+      let top5Stu = stuRankArr.slice(0, 5), bottom5Stu = stuRankArr.slice(-5).reverse();
+      let stuTop5Html = top5Stu.length ? top5Stu.map((s, i) => `<tr><td>${i + 1}</td><td>${s.name}</td><td>${s.cls}</td><td><strong>${s.avg.toFixed(2)}</strong></td></tr>`).join('') : '<tr><td colspan="4" class="text-center text-muted">Veri yok</td></tr>';
+      let stuBottom5Html = bottom5Stu.length ? bottom5Stu.map((s, i) => `<tr><td>${stuRankArr.length - bottom5Stu.length + i + 1}</td><td>${s.name}</td><td>${s.cls}</td><td><strong>${s.avg.toFixed(2)}</strong></td></tr>`).join('') : '<tr><td colspan="4" class="text-center text-muted">Veri yok</td></tr>';
+      if (stuRankArr.length > 0) { clsPerfHtml += `<div class="row mt-3"><div class="col-lg-6"><div class="card shadow-sm avoid-break"><div class="card-header bg-success text-white"><h3 class="card-title m-0"><i class="fas fa-trophy me-1"></i> En İyi 5 Öğrenci</h3></div><div class="card-body p-0 table-responsive"><table class="table table-sm table-striped m-0" style="font-size:0.85em;"><thead><tr><th>#</th><th>Ad Soyad</th><th>Sınıf</th><th>Ort. (${ls})</th></tr></thead><tbody>${stuTop5Html}</tbody></table></div></div></div><div class="col-lg-6"><div class="card shadow-sm avoid-break"><div class="card-header bg-danger text-white"><h3 class="card-title m-0"><i class="fas fa-exclamation-circle me-1"></i> En Düşük 5 Öğrenci</h3></div><div class="card-body p-0 table-responsive"><table class="table table-sm table-striped m-0" style="font-size:0.85em;"><thead><tr><th>#</th><th>Ad Soyad</th><th>Sınıf</th><th>Ort. (${ls})</th></tr></thead><tbody>${stuBottom5Html}</tbody></table></div></div></div></div>`; }
     }
-    
-    let stuRankMap = {};
-    ex.forEach(e => {
-      let stu = DB.s.find(x => x.no === e.studentNo);
-      if(!stu) return;
-      let m = stu.class.match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/);
-      if(!m) return;
-      if((l && l !== m[1]) || (b && b !== m[2].toUpperCase())) return;
-      let val;
-      if(sb === 'score') val = e.score;
-      else if(sb === 'totalNet' || !sb) val = e.totalNet;
-      else { let subKey = toTitleCase(sb.replace('s_','')); val = (e.subs && e.subs[subKey] !== undefined) ? e.subs[subKey].net : null; }
-      if(val === null || val === undefined) return;
-      if(!stuRankMap[e.studentNo]) stuRankMap[e.studentNo] = { no: e.studentNo, name: stu.name, cls: stu.class, sum: 0, cnt: 0 };
-      stuRankMap[e.studentNo].sum += val; stuRankMap[e.studentNo].cnt++;
-    });
-    let stuRankArr = Object.values(stuRankMap).map(s => ({ ...s, avg: s.sum / s.cnt })).sort((a,b) => b.avg - a.avg);
-    let top5Stu = stuRankArr.slice(0, 5), bottom5Stu = stuRankArr.slice(-5).reverse();
-    let stuTop5Html = top5Stu.length ? top5Stu.map((s,i) => `<tr><td>${i+1}</td><td>${s.name}</td><td>${s.cls}</td><td><strong>${s.avg.toFixed(2)}</strong></td></tr>`).join('') : '<tr><td colspan="4" class="text-center text-muted">Veri yok</td></tr>';
-    let stuBottom5Html = bottom5Stu.length ? bottom5Stu.map((s,i) => `<tr><td>${stuRankArr.length - bottom5Stu.length + i + 1}</td><td>${s.name}</td><td>${s.cls}</td><td><strong>${s.avg.toFixed(2)}</strong></td></tr>`).join('') : '<tr><td colspan="4" class="text-center text-muted">Veri yok</td></tr>';
-    let top5Bottom5Html = stuRankArr.length > 0 ? `<div class="row mt-3">
-      <div class="col-lg-6"><div class="card shadow-sm avoid-break"><div class="card-header bg-success text-white"><h3 class="card-title m-0"><i class="fas fa-trophy mr-1"></i> En İyi 5 Öğrenci</h3></div><div class="card-body p-0 table-responsive"><table class="table table-sm table-striped m-0" style="font-size:0.85em;"><thead><tr><th>#</th><th>Ad Soyad</th><th>Sınıf</th><th>Ort. (${ls})</th></tr></thead><tbody>${stuTop5Html}</tbody></table></div></div></div>
-      <div class="col-lg-6"><div class="card shadow-sm avoid-break"><div class="card-header bg-danger text-white"><h3 class="card-title m-0"><i class="fas fa-exclamation-circle mr-1"></i> En Düşük 5 Öğrenci</h3></div><div class="card-body p-0 table-responsive"><table class="table table-sm table-striped m-0" style="font-size:0.85em;"><thead><tr><th>#</th><th>Ad Soyad</th><th>Sınıf</th><th>Ort. (${ls})</th></tr></thead><tbody>${stuBottom5Html}</tbody></table></div></div></div>
-    </div>` : '';
-
-    let h=`<div class="d-flex justify-content-end mb-2 no-print"><button class="btn btn-success btn-sm mr-2" onclick="xXL('tC','Sinif_Analizi')"><i class='fas fa-file-excel mr-1'></i>Excel</button><button class="btn-print no-print" onclick="xPR('pC','Sinif_Analizi',this)"><i class='fas fa-print mr-1'></i>Yazdır</button></div><div id="pC" class="card card-outline card-success"><div class="pdf-header-bar"><span style="font-size:18px;">Sınıf Analizi — ${eT} (${clsLabel} / ${ls})</span><span style="font-size:14px;"></span></div><div class="card-header"><h3 class="card-title">📊 Sınıf Analizi (${ls})</h3></div><div class="card-body">${clsPerfHtml}<div class="table-responsive"><table class="table table-sm table-hover table-bordered" id="tC"><thead><tr><th>#</th><th>Sınıf</th><th>Tarih</th><th>Yayınevi</th><th>Ortalama</th></tr></thead><tbody>${tr.join('')}${clsAvgRow}</tbody></table></div>${top5Bottom5Html}<div class="chart-box avoid-break" style="margin-top:10px;"><canvas id="cA"></canvas></div></div></div>`;
+    let h = `<div class="d-flex justify-content-end mb-2 no-print"><button class="btn btn-success btn-sm me-2" onclick="xXL('tC','Sinif_Analizi')"><i class='fas fa-file-excel me-1'></i>Excel</button><button class="btn-print no-print" onclick="xPR('pC','Sinif_Analizi',this)"><i class='fas fa-print me-1'></i>Yazdır</button></div><div id="pC" class="card card-outline card-success"><div class="pdf-header-bar"><span style="font-size:18px;">Sınıf Analizi — ${eT} (${clsLabel} / ${ls})</span><span style="font-size:14px;"></span></div><div class="card-header"><h3 class="card-title">📊 Sınıf Analizi (${ls})</h3></div><div class="card-body">${clsPerfHtml}<div class="table-responsive"><table class="table table-sm table-hover table-bordered" id="tC"><thead><tr><th>#</th><th>Sınıf</th><th>Tarih</th><th>Yayınevi</th><th>Ortalama</th></tr></thead><tbody>${tr.join('')}${clsAvgRow}</tbody></table></div>${top5Bottom5Html}<div class="chart-box avoid-break" style="margin-top:10px;"><canvas id="cA"></canvas></div></div></div>`;
     r.innerHTML=h;
     
     chartTimer=setTimeout(()=>{ 
