@@ -410,11 +410,11 @@ body.is-admin button.btn-block.admin-only { display:block !important; }
           <div class="card card-primary card-outline"><div class="card-header"><h3 class="card-title"><i class="fas fa-filter mr-2"></i>Analiz Filtreleri</h3></div><div class="card-body"><div class="row">
             <div class="col-sm-6 col-md-4 col-lg-2"><div class="form-group"><label>Analiz Türü</label><select id="aType" class="form-control" onchange="reqUI()"><option value="student">Öğrenci Analizi</option><option value="class">Sınıf Analizi</option><option value="subject">Ders Analizi</option><option value="examdetail">Sınav Analizi</option></select></div></div>
             <div class="col-sm-6 col-md-4 col-lg-3" id="gStu"><div class="form-group"><label>Öğrenci Seçin</label><div id="anlStuSearchWrapper"><div class="input-group"><input type="text" id="anlStuInp" class="form-control" placeholder="Ad, soyad veya numara..." onkeyup="anlStuDoSearch()" autocomplete="off"><div class="input-group-append"><button class="btn btn-outline-secondary" onclick="anlStuClear()" style="border-color:#ced4da;"><i class="fas fa-times"></i></button></div></div><div id="anlStuRes"></div></div><div id="anlStuBadge"></div></div></div>
-            <div class="col-sm-6 col-md-4 col-lg-2" id="gLvl" style="display:none;"><div class="form-group"><label>Sınıf Seviyesi</label><select id="aLvl" class="form-control" onchange="reqAnl()"><option value="">Tümü</option></select></div></div>
-            <div class="col-sm-6 col-md-4 col-lg-1" id="gBr" style="display:none;"><div class="form-group"><label>Şube</label><select id="aBr" class="form-control" onchange="reqAnl()"><option value="">Tümü</option></select></div></div>
-            <div class="col-sm-6 col-md-4 col-lg-2"><div class="form-group"><label>Sınav Türü</label><select id="aEx" class="form-control" onchange="uSub(); uExamDates(); reqAnl();"></select></div></div>
+            <div class="col-sm-6 col-md-4 col-lg-2" id="gLvl" style="display:none;"><div class="form-group"><label>Sınıf Seviyesi</label><select id="aLvl" class="form-control" onchange="reqAnl()"><option value="" disabled selected>Sınıf Seviyesi Seç</option></select></div></div>
+            <div class="col-sm-6 col-md-4 col-lg-1" id="gBr" style="display:none;"><div class="form-group"><label>Şube</label><select id="aBr" class="form-control" onchange="reqAnl()"><option value="" disabled selected>Şube Seç</option></select></div></div>
+            <div class="col-sm-6 col-md-4 col-lg-2"><div class="form-group"><label>Sınav Türü</label><select id="aEx" class="form-control" onchange="uSub(); uExamDates(); reqAnl();"><option value="" disabled selected>Sınav Türü Seç</option></select></div></div>
             <div class="col-sm-6 col-md-4 col-lg-2" id="gSub"><div class="form-group"><label id="lblSub">Veri</label><select id="aSub" class="form-control" onchange="handleSubChange()"></select></div></div>
-            <div class="col-sm-6 col-md-4 col-lg-2" id="gDate" style="display:none;"><div class="form-group"><label>Sınav Seç</label><select id="aDate" class="form-control" onchange="reqAnl()"></select></div></div>
+            <div class="col-sm-6 col-md-4 col-lg-2" id="gDate" style="display:none;"><div class="form-group"><label>Sınav Seç</label><select id="aDate" class="form-control" onchange="reqAnl()"><option value="" disabled selected>Sınav Seç</option></select></div></div>
           </div></div></div>
           <div id="anlRes"></div>
         </div>
@@ -996,7 +996,7 @@ function uDrp(){
 function uExamTypes(){
   let types=new Set(); Object.values(EXAM_META).forEach(m => types.add(m.examType));
   let sortedTypes = [...types].sort(), prev=getEl('aEx').value; 
-  getEl('aEx').innerHTML=sortedTypes.map(x=>`<option value="${x}">${x}</option>`).join('');
+  getEl('aEx').innerHTML='<option value="" disabled' + (prev?'':' selected') + '>Sınav Türü Seç</option>'+sortedTypes.map(x=>`<option value="${x}">${x}</option>`).join('');
   if(sortedTypes.includes(prev)) getEl('aEx').value=prev;
 }
 
@@ -1005,17 +1005,21 @@ function uSub(){
   Object.values(EXAM_META).forEach(m => { if(m.examType === t && m.subjects) m.subjects.forEach(subj => s.add(subj)); });
   
   if(aT === 'student' || aT === 'class') {
-    let o = `<option value="totalNet">Toplam Net</option><option value="score">Puan</option>`;
+    let _prev = getEl('aSub').value;
+    let o = `<option value="" disabled${_prev?'':' selected'}>Veri Seç</option><option value="totalNet">Toplam Net</option><option value="score">Puan</option>`;
     if (aT === 'student') { o += `<option value="rank_c">Sınıf Sıralaması</option><option value="rank_i">Kurum Sıralaması</option><option value="rank_g">Genel Sıralama</option>`; }
     [...s].sort().forEach(x=> o += `<option value="s_${x}">${toTitleCase(x)} Neti</option>`); getEl('aSub').innerHTML = o;
+    if(_prev) { let _opt=[...getEl('aSub').options].find(o=>o.value===_prev); if(_opt) getEl('aSub').value=_prev; }
   } else if (aT === 'examdetail') {
-    let prev = getEl('aSub').value; getEl('aSub').innerHTML = `<option value="summary">Sınav Özeti (Tek Sınav)</option><option value="general_summary">Genel Sınav Özeti (Tüm Sınavlar)</option><option value="list_single">Toplu Liste (Tek Sınav)</option><option value="list_all">Toplu Liste (Tüm Sınavlar)</option>`;
-    if(['list_single','list_all','summary','general_summary'].includes(prev)) getEl('aSub').value = prev; else getEl('aSub').value = 'summary';
+    let prev = getEl('aSub').value; getEl('aSub').innerHTML = `<option value="" disabled${prev?'':' selected'}>Veri Seç</option><option value="summary">Sınav Özeti (Tek Sınav)</option><option value="general_summary">Genel Sınav Özeti (Tüm Sınavlar)</option><option value="list_single">Toplu Liste (Tek Sınav)</option><option value="list_all">Toplu Liste (Tüm Sınavlar)</option>`;
+    if(['list_single','list_all','summary','general_summary'].includes(prev)) getEl('aSub').value = prev;
   } else if (aT === 'subject') {
     let prev = getEl('aSub').value, opts = [...s].sort().map(x=>`<option value="${x}">${toTitleCase(x)}</option>`).join('');
-    getEl('aSub').innerHTML = opts || '<option value="">Ders bulunamadı</option>'; if([...s].includes(prev)) getEl('aSub').value = prev;
+    let ph = `<option value="" disabled${prev?'':' selected'}>Ders Seç</option>`;
+    getEl('aSub').innerHTML = opts ? (ph + opts) : '<option value="" disabled selected>Ders bulunamadı</option>';
+    if([...s].includes(prev)) getEl('aSub').value = prev;
   } else {
-    getEl('aSub').innerHTML='<option value="">Tümü</option>'+[...s].sort().map(x=>`<option value="${x}">${toTitleCase(x)}</option>`).join('');
+    getEl('aSub').innerHTML='<option value="" disabled selected>Veri Seç</option>'+[...s].sort().map(x=>`<option value="${x}">${toTitleCase(x)}</option>`).join('');
   }
 }
 
@@ -1033,8 +1037,9 @@ function uExamDates(){
   });
   
   dates = [...new Set(dates)].sort(srt); let prev=getEl('aDate').value;
+  let placeholderOpt = `<option value="" disabled${prev?'':' selected'}>Sınav Seç</option>`;
   let allOpt = (aT === 'class' || aT === 'subject') ? '<option value="">Tüm Sınavlar</option>' : '';
-  getEl('aDate').innerHTML = allOpt + dates.map(x => { let pub = datePublisherMap[x] ? ` (${toTitleCase(datePublisherMap[x])})` : ''; return `<option value="${x}">${x}${pub}</option>`; }).join('');
+  getEl('aDate').innerHTML = placeholderOpt + allOpt + dates.map(x => { let pub = datePublisherMap[x] ? ` (${toTitleCase(datePublisherMap[x])})` : ''; return `<option value="${x}">${x}${pub}</option>`; }).join('');
   if(dates.includes(prev)) getEl('aDate').value=prev; else if(aT === 'class' || aT === 'subject') getEl('aDate').value='';
 }
 
@@ -1047,13 +1052,19 @@ function uUI(){
   
   if(t==='class'){
     let l=new Set(),b=new Set(); DB.s.forEach(s=>{let m=s.class.match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/);if(m){l.add(m[1]);b.add(m[2].toUpperCase());}});
-    getEl('aLvl').innerHTML='<option value="">Tümü</option>'+[...l].sort((a,b)=>parseInt(a)-parseInt(b)).map(x=>`<option value="${x}">${x}. Sınıf</option>`).join('');
-    getEl('aBr').innerHTML='<option value="">Tümü</option>'+[...b].sort().map(x=>`<option value="${x}">${x}</option>`).join('');
+    let _pL=getEl('aLvl').value, _pB=getEl('aBr').value;
+    getEl('aLvl').innerHTML=`<option value="" disabled${_pL?'':' selected'}>Sınıf Seviyesi Seç</option>`+[...l].sort((a,b)=>parseInt(a)-parseInt(b)).map(x=>`<option value="${x}">${x}. Sınıf</option>`).join('');
+    getEl('aBr').innerHTML=`<option value="" disabled${_pB?'':' selected'}>Şube Seç</option>`+[...b].sort().map(x=>`<option value="${x}">${x}</option>`).join('');
+    if(_pL && [...l].includes(_pL)) getEl('aLvl').value=_pL;
+    if(_pB && [...b].includes(_pB)) getEl('aBr').value=_pB;
     if(aNo){ let selStu = DB.s.find(x=>x.no===aNo); if(selStu){ let m=selStu.class.match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/); if(m){ getEl('aLvl').value=m[1]; getEl('aBr').value=m[2].toUpperCase(); } } }
   } else if (t==='examdetail' || t==='subject') {
     let l=new Set(), b=new Set(); DB.s.forEach(s=>{ let m=s.class.match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/); if(m){l.add(m[1]); b.add(m[2].toUpperCase());} });
-    getEl('aLvl').innerHTML='<option value="">Tümü</option>'+[...l].sort((a,b)=>parseInt(a)-parseInt(b)).map(x=>`<option value="${x}">${x}. Sınıf</option>`).join('');
-    if(t==='subject'||t==='examdetail') getEl('aBr').innerHTML='<option value="">Tümü</option>'+[...b].sort().map(x=>`<option value="${x}">${x}</option>`).join('');
+    let _pL=getEl('aLvl').value, _pB=getEl('aBr').value;
+    getEl('aLvl').innerHTML=`<option value="" disabled${_pL?'':' selected'}>Sınıf Seviyesi Seç</option>`+[...l].sort((a,b)=>parseInt(a)-parseInt(b)).map(x=>`<option value="${x}">${x}. Sınıf</option>`).join('');
+    if(t==='subject'||t==='examdetail') getEl('aBr').innerHTML=`<option value="" disabled${_pB?'':' selected'}>Şube Seç</option>`+[...b].sort().map(x=>`<option value="${x}">${x}</option>`).join('');
+    if(_pL && [...l].includes(_pL)) getEl('aLvl').value=_pL;
+    if(_pB && [...b].includes(_pB)) getEl('aBr').value=_pB;
     if(aNo) { let selStu = DB.s.find(x=>x.no===aNo); if(selStu) { let m=selStu.class.match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/); if(m) { getEl('aLvl').value=m[1]; if(t==='subject') getEl('aBr').value=''; } } }
   }
   uExamTypes();uSub();uExamDates();
@@ -1197,7 +1208,8 @@ function rAnl(){
   let aT=getEl('aType').value,eT=getEl('aEx').value, sb=getEl('aSub')?getEl('aSub').value:'', r=getEl('anlRes');
   if(c.a){ c.a.destroy(); c.a=null; } clearTimeout(chartTimer); 
   if(!eT){r.innerHTML='<div class="alert alert-default-info">Sınav verisi yok.</div>';return;}
-  if(aT==='examdetail' && !sb) { if(getEl('aSub')) getEl('aSub').value='summary'; sb='summary'; }
+  // (placeholder kept; user must explicitly choose data type)
+  if(aT==='examdetail' && !sb) { return; }
 
   if(aT==='student'){
     let no=aNo;if(!no){r.innerHTML='';return;}
