@@ -413,8 +413,8 @@ body.is-admin button.btn-block.admin-only { display:block !important; }
             <div class="col-sm-6 col-md-4 col-lg-2" id="gLvl" style="display:none;"><div class="form-group"><label>Sınıf Seviyesi</label><select id="aLvl" class="form-control" onchange="onLvlChange()"><option value="" disabled selected>Sınıf Seviyesi Seç</option></select></div></div>
             <div class="col-sm-6 col-md-4 col-lg-1" id="gBr" style="display:none;"><div class="form-group"><label>Şube</label><select id="aBr" class="form-control" onchange="onBrChange()"><option value="" disabled selected>Şube Seç</option></select></div></div>
             <div class="col-sm-6 col-md-4 col-lg-2"><div class="form-group"><label>Sınav Türü</label><select id="aEx" class="form-control" onchange="onExTypeChange()"><option value="" disabled selected>Sınav Türü Seç</option></select></div></div>
-            <div class="col-sm-6 col-md-4 col-lg-2" id="gDate" style="display:none;"><div class="form-group"><label>Sınav Seç</label><select id="aDate" class="form-control" onchange="onDateChange()"><option value="" disabled selected>Sınav Seç</option></select></div></div>
-            <div class="col-sm-6 col-md-4 col-lg-2" id="gSub"><div class="form-group"><label id="lblSub">Veri</label><select id="aSub" class="form-control" onchange="handleSubChange()"></select></div></div>
+            <div class="col-sm-6 col-md-4 col-lg-2" id="gDate" style="display:none;"><div class="form-group"><label id="lblDate">Sınav Seç</label><select id="aDate" class="form-control" onchange="onDateChange()"><option value="" disabled selected>Sınav Seç</option></select></div></div>
+            <div class="col-sm-6 col-md-4 col-lg-2" id="gSub" style="display:none;"><div class="form-group"><label id="lblSub">Veri</label><select id="aSub" class="form-control" onchange="handleSubChange()"></select></div></div>
           </div></div></div>
           <div id="anlRes"></div>
         </div>
@@ -723,24 +723,68 @@ async function reqProfile() {
 
 async function reqAnl() {
   let eT = getEl('aEx').value, dt = getEl('aDate') ? getEl('aDate').value : '', aT = getEl('aType').value, sub = getEl('aSub') ? getEl('aSub').value : '';
-  let needed = [], stuGrade = null;
-  if(aNo) { let st = DB.s.find(x=>x.no===aNo); if(st) stuGrade = getGrade(st.class); }
+  let needed = [];
 
-  let allMatchingDates = [];
-  Object.keys(EXAM_META).forEach(bId => { let m = EXAM_META[bId]; if (m.examType !== eT) return; if (aT === 'examdetail' && sub === 'summary' && stuGrade) { if (m.grades && m.grades.length > 0 && !m.grades.includes(stuGrade)) return; } allMatchingDates.push(m.date); });
-  allMatchingDates = [...new Set(allMatchingDates)].sort(srt);
+  if(!eT){ getEl('anlRes').innerHTML=''; return; }
 
-  Object.keys(EXAM_META).forEach(bId => {
-    let m = EXAM_META[bId];
-    if (m.examType === eT) {
-      if (aT === 'student' && aNo) { let st = DB.s.find(x => x.no === aNo); let stGrade = st ? getGrade(st.class) : null; if (stGrade && m.grades && m.grades.length > 0 && !m.grades.includes(stGrade)) return; needed.push(bId); }
-      else if (aT === 'class' || aT === 'subject') { let lvlFilter = getEl('aLvl') ? getEl('aLvl').value : ''; if (lvlFilter && m.grades && m.grades.length > 0 && !m.grades.includes(lvlFilter)) return; if (dt && m.date !== dt) return; needed.push(bId); }
-      else if (aT === 'examdetail' && sub !== 'general_summary' && sub !== 'list_all') { if (m.date === dt) { needed.push(bId); } else if (sub === 'summary') { let currentIndex = allMatchingDates.indexOf(dt); let prevDate = currentIndex > 0 ? allMatchingDates[currentIndex - 1] : null; if (prevDate && m.date === prevDate) needed.push(bId); } } 
-      else { needed.push(bId); }
+  // Hangi batch'lerin yüklenmesi gerektiğini belirle
+  let lvlF = (aT==='class'||aT==='subject'||aT==='examdetail') && getEl('aLvl') ? getEl('aLvl').value : '';
+
+  if(aT === 'student'){
+    // Öğrenci analizi: öğrenci seçilmeli
+    if(!aNo){ getEl('anlRes').innerHTML=''; return; }
+    let st = DB.s.find(x=>x.no===aNo), stuGrade = st ? getGrade(st.class) : null;
+    Object.keys(EXAM_META).forEach(bId => {
+      let m = EXAM_META[bId];
+      if(m.examType !== eT) return;
+      if(stuGrade && m.grades && m.grades.length > 0 && !m.grades.includes(stuGrade)) return;
+      needed.push(bId);
+    });
+  } else if(aT === 'class' || aT === 'subject'){
+    // Sınıf/Ders analizi: öğrenci seçiminden bağımsız
+    Object.keys(EXAM_META).forEach(bId => {
+      let m = EXAM_META[bId];
+      if(m.examType !== eT) return;
+      if(lvlF && m.grades && m.grades.length > 0 && !m.grades.includes(lvlF)) return;
+      if(dt && m.date !== dt) return;
+      needed.push(bId);
+    });
+  } else if(aT === 'examdetail'){
+    // Sınav analizi: öğrenci seçiminden bağımsız
+    if(sub === 'general_summary' || sub === 'list_all'){
+      // Tüm sınavlar
+      Object.keys(EXAM_META).forEach(bId => {
+        let m = EXAM_META[bId];
+        if(m.examType !== eT) return;
+        if(lvlF && m.grades && m.grades.length > 0 && !m.grades.includes(lvlF)) return;
+        needed.push(bId);
+      });
+    } else {
+      // Tek sınav + önceki sınav (özet için)
+      let allMatchingDates = [];
+      Object.keys(EXAM_META).forEach(bId => {
+        let m = EXAM_META[bId];
+        if(m.examType !== eT) return;
+        if(lvlF && m.grades && m.grades.length > 0 && !m.grades.includes(lvlF)) return;
+        allMatchingDates.push(m.date);
+      });
+      allMatchingDates = [...new Set(allMatchingDates)].sort(srt);
+      Object.keys(EXAM_META).forEach(bId => {
+        let m = EXAM_META[bId];
+        if(m.examType !== eT) return;
+        if(lvlF && m.grades && m.grades.length > 0 && !m.grades.includes(lvlF)) return;
+        if(m.date === dt){ needed.push(bId); }
+        else if(sub === 'summary'){
+          let ci = allMatchingDates.indexOf(dt);
+          let prevDate = ci > 0 ? allMatchingDates[ci-1] : null;
+          if(prevDate && m.date === prevDate) needed.push(bId);
+        }
+      });
     }
-  });
-  
-  if(needed.length > 0) await fetchBatches(needed); rAnl(); 
+  }
+
+  if(needed.length > 0) await fetchBatches(needed); 
+  rAnl();
 }
 
 async function reqUI() { uUI(); await reqAnl(); }
@@ -995,22 +1039,19 @@ function uDrp(){
 }
 
 function uBranches(){
-  // Sınıf Seviyesi'ne göre yalnızca o seviyede verisi olan şubeleri listele
+  // Sınıf Seviyesi'ne göre yalnızca o seviyede öğrencisi olan şubeleri DB.s'den listele
   let aT = getEl('aType') ? getEl('aType').value : '';
   if(!(aT==='class'||aT==='subject'||aT==='examdetail')) return;
   let brSel = getEl('aBr'); if(!brSel) return;
   let lvlF = getEl('aLvl') ? getEl('aLvl').value : '';
   let prev = brSel.value, branches = new Set();
-  DB.e.forEach(x => {
-    let m = String(x.studentClass||'').match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/); if(!m) return;
+  // DB.s üzerinden şube tespiti (her zaman çalışır, DB.e yüklenmesine gerek yok)
+  DB.s.forEach(s => {
+    let m = String(s.class||'').match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/);
+    if(!m) return;
     if(lvlF && m[1] !== lvlF) return;
     branches.add(m[2].toUpperCase());
   });
-  // Eğer Sınıf Seviyesi seçilmemişse tüm öğrencilerin şubelerini ver (fallback)
-  if(!lvlF){
-    branches.clear();
-    DB.s.forEach(s=>{ let m=String(s.class||'').match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/); if(m) branches.add(m[2].toUpperCase()); });
-  }
   let sorted = [...branches].sort();
   brSel.innerHTML = `<option value="" disabled${prev?'':' selected'}>Şube Seç</option><option value="__ALL__"${prev==='__ALL__'?' selected':''}>Tümü</option>`+sorted.map(x=>`<option value="${x}"${prev===x?' selected':''}>${x}</option>`).join('');
   if(prev==='__ALL__' || sorted.includes(prev)) brSel.value = prev;
@@ -1022,22 +1063,40 @@ function uExamTypes(){
   let aT = getEl('aType') ? getEl('aType').value : '';
   let lvlF = (aT==='class'||aT==='subject'||aT==='examdetail') && getEl('aLvl') ? getEl('aLvl').value : '';
   let brF  = (aT==='class'||aT==='subject'||aT==='examdetail') ? getBrVal() : '';
+
   if(lvlF || brF){
-    // Sadece seçilen sınıf seviyesi/şubeye ait verisi olan sınav türlerini listele
-    DB.e.forEach(x => {
-      if(!x.examType) return;
-      let m = String(x.studentClass||'').match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/); if(!m) return;
-      if(lvlF && m[1] !== lvlF) return;
-      if(brF  && m[2].toUpperCase() !== brF) return;
-      types.add(x.examType);
+    // EXAM_META.grades üzerinden filtrele — DB.e yüklenmesine gerek yok
+    // Eğer brF seçili ise: o şubede öğrenci var mı kontrol et + EXAM_META'dan grade ile eşleştir
+    let lvlsInBranch = new Set();
+    if(brF){
+      DB.s.forEach(s => {
+        let m = String(s.class||'').match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/);
+        if(!m) return;
+        if(lvlF && m[1]!==lvlF) return;
+        if(m[2].toUpperCase()===brF) lvlsInBranch.add(m[1]);
+      });
+    }
+    Object.values(EXAM_META).forEach(m => {
+      if(!m.examType) return;
+      let gs = (m.grades && m.grades.length) ? m.grades : null;
+      if(lvlF){
+        // sınav bu seviyeyi kapsıyor mu?
+        if(gs && !gs.includes(lvlF)) return;
+      }
+      if(brF){
+        // bu şubede öğrenci olan sınıf seviyelerinden en az biri sınavın kapsamında mı?
+        if(lvlsInBranch.size === 0) return; // o şubede hiç öğrenci yok
+        if(gs && ![...lvlsInBranch].some(g=>gs.includes(g))) return;
+      }
+      types.add(m.examType);
     });
   } else {
     Object.values(EXAM_META).forEach(m => types.add(m.examType));
   }
-  let sortedTypes = [...types].sort(), prev=getEl('aEx').value; 
+  let sortedTypes = [...types].sort(), prev=getEl('aEx').value;
   getEl('aEx').innerHTML='<option value="" disabled' + (prev && sortedTypes.includes(prev) ? '' : ' selected') + '>Sınav Türü Seç</option>'+sortedTypes.map(x=>`<option value="${x}">${x}</option>`).join('');
   if(sortedTypes.includes(prev)) getEl('aEx').value=prev;
-  else if(prev){ getEl('aEx').value=''; } // mevcut seçim filtreye uymuyorsa sıfırla
+  else if(prev){ getEl('aEx').value=''; }
 }
 
 function uSub(){
@@ -1045,17 +1104,30 @@ function uSub(){
   let lvlF = (aT==='class'||aT==='subject'||aT==='examdetail') && getEl('aLvl') ? getEl('aLvl').value : '';
   let brF  = (aT==='class'||aT==='subject'||aT==='examdetail') ? getBrVal() : '';
   let dtF  = (aT==='class'||aT==='subject'||aT==='examdetail') && getEl('aDate') ? getEl('aDate').value : '';
-  if(t && (lvlF || brF || dtF)){
+
+  // Ders listesini her zaman EXAM_META'dan al (DB.e yüklenmesine gerek yok)
+  Object.values(EXAM_META).forEach(m => {
+    if(m.examType !== t || !m.subjects) return;
+    if(dtF && m.date !== dtF) return;
+    if(lvlF){
+      let gs = (m.grades && m.grades.length) ? m.grades : null;
+      if(gs && !gs.includes(lvlF)) return;
+    }
+    m.subjects.forEach(subj => s.add(subj.toLowerCase()));
+  });
+  // Eğer DB.e yüklüyse ve şube filtresi varsa, şube kısıtını da uygula
+  if(brF && DB.e.length > 0){
+    let filteredS = new Set();
     DB.e.forEach(x => {
       if(x.examType !== t || !x.subs) return;
       if(dtF && x.date !== dtF) return;
       let m = String(x.studentClass||'').match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/); if(!m) return;
       if(lvlF && m[1] !== lvlF) return;
-      if(brF  && m[2].toUpperCase() !== brF) return;
-      Object.keys(x.subs).forEach(subj => s.add(subj.toLowerCase()));
+      if(m[2].toUpperCase() !== brF) return;
+      Object.keys(x.subs).forEach(subj => filteredS.add(subj.toLowerCase()));
     });
-  } else {
-    Object.values(EXAM_META).forEach(m => { if(m.examType === t && m.subjects) m.subjects.forEach(subj => s.add(subj)); });
+    // Sadece şube filtresiyle kesişimi al
+    s = new Set([...s].filter(x => filteredS.has(x)));
   }
   
   if(aT === 'student' || aT === 'class') {
@@ -1125,32 +1197,52 @@ function uUI(){
   getEl('gStu').style.display=(t==='student')?'block':'none';
   getEl('gLvl').style.display=(t==='class'||t==='examdetail'||t==='subject')?'block':'none';
   getEl('gBr').style.display=(t==='class'||t==='subject'||t==='examdetail')?'block':'none';
-  getEl('gSub').style.display='block'; getEl('lblSub').textContent = t==='subject' ? 'Ders' : 'Veri';
-  
+
+  // gDate ve gSub görünürlüğü ve etiketleri
+  // Sınıf/Ders Analizi: Sınav Seç her zaman görünür, Veri de görünür
+  // Sınav Analizi: Veri seçimine göre gDate görünür
+  // Öğrenci Analizi: Sınav Seç gizli, Veri görünür
+  if(t==='class'){
+    getEl('gDate').style.display='block';
+    let dateLbl=getEl('lblDate'); if(dateLbl) dateLbl.textContent='Sınav Seç';
+    getEl('gSub').style.display='block'; getEl('lblSub').textContent='Veri';
+  } else if(t==='subject'){
+    getEl('gDate').style.display='block';
+    let dateLbl=getEl('lblDate'); if(dateLbl) dateLbl.textContent='Sınav Seç';
+    getEl('gSub').style.display='block'; getEl('lblSub').textContent='Ders';
+  } else if(t==='examdetail'){
+    getEl('gSub').style.display='block'; getEl('lblSub').textContent='Veri';
+    // gDate: Veri seçimi 'general_summary' veya 'list_all' ise gizle, aksi halde göster
+    let sub=getEl('aSub')?getEl('aSub').value:'';
+    getEl('gDate').style.display=(sub==='general_summary'||sub==='list_all')?'none':'block';
+    let dateLbl=getEl('lblDate'); if(dateLbl) dateLbl.textContent='Sınav Seç';
+  } else if(t==='student'){
+    getEl('gDate').style.display='none';
+    getEl('gSub').style.display='block'; getEl('lblSub').textContent='Veri';
+  }
+
   if(t==='class'){
     let l=new Set(),b=new Set(); DB.s.forEach(s=>{let m=s.class.match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/);if(m){l.add(m[1]);b.add(m[2].toUpperCase());}});
     let _pL=getEl('aLvl').value, _pB=getEl('aBr').value;
     getEl('aLvl').innerHTML=`<option value="" disabled${_pL?'':' selected'}>Sınıf Seviyesi Seç</option>`+[...l].sort((a,b)=>parseInt(a)-parseInt(b)).map(x=>`<option value="${x}">${x}. Sınıf</option>`).join('');
-    getEl('aBr').innerHTML=`<option value="" disabled${_pB?'':' selected'}>Şube Seç</option><option value="__ALL__"${_pB==='__ALL__'?' selected':''}>Tümü</option>`+[...b].sort().map(x=>`<option value="${x}"${_pB===x?' selected':''}>${x}</option>`).join('');
     if(_pL && [...l].includes(_pL)) getEl('aLvl').value=_pL;
-    if(_pB && [...b].includes(_pB)) getEl('aBr').value=_pB;
-    if(aNo){ let selStu = DB.s.find(x=>x.no===aNo); if(selStu){ let m=selStu.class.match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/); if(m){ getEl('aLvl').value=m[1]; getEl('aBr').value=m[2].toUpperCase(); } } }
   } else if (t==='examdetail' || t==='subject') {
-    let l=new Set(), b=new Set(); DB.s.forEach(s=>{ let m=s.class.match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/); if(m){l.add(m[1]); b.add(m[2].toUpperCase());} });
-    let _pL=getEl('aLvl').value, _pB=getEl('aBr').value;
+    let l=new Set(); DB.s.forEach(s=>{ let m=s.class.match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/); if(m) l.add(m[1]); });
+    let _pL=getEl('aLvl').value;
     getEl('aLvl').innerHTML=`<option value="" disabled${_pL?'':' selected'}>Sınıf Seviyesi Seç</option>`+[...l].sort((a,b)=>parseInt(a)-parseInt(b)).map(x=>`<option value="${x}">${x}. Sınıf</option>`).join('');
-    if(t==='subject'||t==='examdetail') getEl('aBr').innerHTML=`<option value="" disabled${_pB?'':' selected'}>Şube Seç</option><option value="__ALL__"${_pB==='__ALL__'?' selected':''}>Tümü</option>`+[...b].sort().map(x=>`<option value="${x}"${_pB===x?' selected':''}>${x}</option>`).join('');
     if(_pL && [...l].includes(_pL)) getEl('aLvl').value=_pL;
-    if(_pB && [...b].includes(_pB)) getEl('aBr').value=_pB;
-    if(aNo) { let selStu = DB.s.find(x=>x.no===aNo); if(selStu) { let m=selStu.class.match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/); if(m) { getEl('aLvl').value=m[1]; if(t==='subject') getEl('aBr').value=''; } } }
   }
-  uExamTypes();uSub();uExamDates();
-  let sub = getEl('aSub') ? getEl('aSub').value : '';
-  getEl('gDate').style.display=(t==='examdetail' && sub !== 'general_summary' && sub !== 'list_all') || t==='class' || t==='subject'?'block':'none';
-  if(t==='class'||t==='subject') { let dateLbl = getEl('gDate').querySelector('label'); if(dateLbl) dateLbl.textContent = 'Sınav Seç'; }
+  uBranches(); uExamTypes(); uExamDates(); uSub();
 }
 
-function handleSubChange(){ let t = getEl('aType').value, sub = getEl('aSub').value; if(t === 'examdetail') { getEl('gDate').style.display = (sub === 'general_summary' || sub === 'list_all') ? 'none' : 'block'; uExamDates(); } reqAnl(); }
+function handleSubChange(){ 
+  let t = getEl('aType').value, sub = getEl('aSub').value; 
+  if(t === 'examdetail') { 
+    getEl('gDate').style.display = (sub === 'general_summary' || sub === 'list_all') ? 'none' : 'block'; 
+    uExamDates(); 
+  } 
+  reqAnl(); 
+}
 
 function calcKarneSummaryCards(stuNo, examType, grade, examsData) {
   let attended = examsData.filter(e => !e.abs);
@@ -1367,9 +1459,16 @@ function rAnl(){
     },100);
 
   }else if(aT==='class'){
-    let l=getEl('aLvl').value,b=getBrVal(), dateFilter = getEl('aDate') ? getEl('aDate').value : '';
-    let ex=DB.e.filter(x=>x.examType===eT&&!x.abs&&(!dateFilter||x.date===dateFilter)),d={};
-    ex.forEach(e=>{ let m=e.studentClass.match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/); if(!m)return; if((l&&l!==m[1])||(b&&b!==m[2].toUpperCase()))return; (d[e.date]=d[e.date]||[]).push(e); });
+    let l=getEl('aLvl').value, b=getBrVal(), dateFilter = getEl('aDate') ? getEl('aDate').value : '';
+    // Filtrelenmiş sınav verisi: sınav türü + tarih filtresi + level/branch filtresi
+    let ex=DB.e.filter(x=>x.examType===eT&&!x.abs),d={};
+    ex.forEach(e=>{ 
+      let m=e.studentClass.match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/); if(!m)return; 
+      if(l&&l!==m[1])return; 
+      if(b&&b!==m[2].toUpperCase())return; 
+      if(dateFilter && e.date!==dateFilter) return;
+      (d[e.date]=d[e.date]||[]).push(e); 
+    });
     let sd=Object.keys(d).sort(srt),cs=new Set(),tr=[], ls = sb === 'score' ? 'Puan' : (sb === 'totalNet' || !sb ? 'Toplam Net' : toTitleCase(sb.replace('s_','')) + ' Neti');
 
     let cIdx = 1;
