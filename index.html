@@ -1013,6 +1013,7 @@ function xPR(sourceId, title, btn, orientation) {
     .badge { display: inline-block; padding: 2px 6px; border-radius: 10px; font-size: 0.75em; } .badge-info { background: #17a2b8; color: #fff; -webkit-print-color-adjust:exact; print-color-adjust:exact; } .shadow-sm { box-shadow: none !important; } h4 { font-size: 14px !important; margin: 8px 0; } h5 { font-size: 12px !important; margin: 6px 0; }
     .no-print, .d-flex.justify-content-end, .scroll-hint, button, .btn { display: none !important; } .scroll { overflow: visible !important; } .table-responsive { overflow-x: visible !important; }
     [style*="background:#6c757d"] { background: #6c757d !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; } .info-box[style*="background:#6c757d"] * { color: #fff !important; }
+    .info-box[style*="background:linear-gradient"] { -webkit-print-color-adjust:exact; print-color-adjust:exact; } .info-box[style*="background:linear-gradient"] * { color: #fff !important; }
     @page { margin: 8mm 6mm; size: ${isPortrait ? "A4 portrait" : "A4 landscape"}; } @page :first { margin-top: 6mm; } body { font-size: ${isPortrait ? "10px" : "10px"}; }
   </style>
 </head>
@@ -1311,6 +1312,22 @@ function calcKarneSummaryCards(stuNo, examType, grade, examsData) {
   let rank = rankings.findIndex(x=>x.no===stuNo)+1;
   let totalStudents = rankings.length;
 
+  // Sınıf Derecesi hesapla
+  let stuClass = (DB.s.find(x=>x.no===stuNo)||{}).class || '';
+  let allSameClass = DB.e.filter(x => x.examType===examType && !x.abs && x.studentClass===stuClass);
+  let clsMap = {};
+  allSameClass.forEach(e => {
+    if(!clsMap[e.studentNo]) clsMap[e.studentNo] = {scoreSum:0,netSum:0,cnt:0};
+    clsMap[e.studentNo].scoreSum += (e.score||0);
+    clsMap[e.studentNo].netSum  += (e.totalNet||0);
+    clsMap[e.studentNo].cnt++;
+  });
+  let clsRankings = Object.entries(clsMap).map(([no,v])=>({no,avgScore:v.scoreSum/v.cnt,avgNet:v.netSum/v.cnt})).sort((a,b)=>{
+    let dp=(b.avgScore||0)-(a.avgScore||0); if(dp!==0) return dp; return (b.avgNet||0)-(a.avgNet||0);
+  });
+  let classRank = clsRankings.findIndex(x=>x.no===stuNo)+1;
+  let classTotalStudents = clsRankings.length;
+
   // Katılım: öğrencinin sınıf seviyesinde o sınav türüne ait tüm unique sınavlar baz alınır
   let gradeExamKeys = new Set();
   DB.e.forEach(x => { if(x.examType===examType && getGrade(x.studentClass)===grade) gradeExamKeys.add(x.date+'||'+( x.publisher||'')); });
@@ -1334,12 +1351,12 @@ function calcKarneSummaryCards(stuNo, examType, grade, examsData) {
     };
   }
 
-  return {stuAvg, genAvg, rank, totalStudents, partRate, attendedCount, totalExamCount, trend};
+  return {stuAvg, genAvg, rank, totalStudents, classRank, classTotalStudents, partRate, attendedCount, totalExamCount, trend};
 }
 
 function buildKarneExamCards(summary, examType) {
   if(!summary) return '';
-  let {stuAvg, genAvg, rank, totalStudents, partRate, attendedCount, totalExamCount, trend} = summary;
+  let {stuAvg, genAvg, rank, totalStudents, classRank, classTotalStudents, partRate, attendedCount, totalExamCount, trend} = summary;
 
   // Katılım kartı + trend bloğu oluştur
   let trendHtml = '';
@@ -1367,34 +1384,45 @@ function buildKarneExamCards(summary, examType) {
     </div></div>`;
   }
 
+  /* Sıralama: Ortalama Net | Katılım | Sınıf Derece | Kurum Derece */
   let cardsHtml = `<div class="row mb-2">
-    <div class="col-md-4 col-sm-6">
-      <div class="info-box bg-success" style="min-height:72px;">
-        <span class="info-box-icon" style="width:55px;font-size:1.3rem;"><i class="fas fa-chart-bar"></i></span>
+    <div class="col-md-3 col-sm-6">
+      <div class="info-box" style="min-height:72px;background:linear-gradient(135deg,#198754,#20c997);color:#fff;">
+        <span class="info-box-icon" style="width:55px;font-size:1.3rem;color:#fff;"><i class="fas fa-chart-bar"></i></span>
         <div class="info-box-content" style="padding:6px 10px;">
-          <span class="info-box-text" style="font-size:0.75em;">Ortalama Net</span>
-          <span class="info-box-number" style="font-size:1.3em;">${stuAvg.toFixed(2)}</span>
-          <span class="progress-description" style="font-size:0.75em;opacity:0.85;">Genel Ort: ${genAvg!==null?genAvg.toFixed(2):'—'}</span>
+          <span class="info-box-text" style="font-size:0.75em;color:#fff;">Ortalama Net</span>
+          <span class="info-box-number" style="font-size:1.3em;color:#fff;">${stuAvg.toFixed(2)}</span>
+          <span class="progress-description" style="font-size:0.75em;opacity:0.9;color:#fff;">Genel Ort: ${genAvg!==null?genAvg.toFixed(2):'—'}</span>
         </div>
       </div>
     </div>
-    <div class="col-md-4 col-sm-6">
-      <div class="info-box bg-primary" style="min-height:72px;">
-        <span class="info-box-icon" style="width:55px;font-size:1.3rem;"><i class="fas fa-trophy"></i></span>
+    <div class="col-md-3 col-sm-6">
+      <div class="info-box" style="min-height:72px;background:linear-gradient(135deg,#fd7e14,#ffc107);color:#fff;">
+        <span class="info-box-icon" style="width:55px;font-size:1.3rem;color:#fff;"><i class="fas fa-percentage"></i></span>
         <div class="info-box-content" style="padding:6px 10px;">
-          <span class="info-box-text" style="font-size:0.75em;">Kurum Derece</span>
-          <span class="info-box-number" style="font-size:1.3em;">${rank>0?rank:'—'}</span>
-          <span class="progress-description" style="font-size:0.75em;opacity:0.85;">Toplam: ${totalStudents} Öğrenci</span>
+          <span class="info-box-text" style="font-size:0.75em;color:#fff;">Katılım</span>
+          <span class="info-box-number" style="font-size:1.3em;color:#fff;">${partRate}%</span>
+          <span class="progress-description" style="font-size:0.75em;opacity:0.9;color:#fff;">${attendedCount}/${totalExamCount} Sınav</span>
         </div>
       </div>
     </div>
-    <div class="col-md-4 col-sm-6">
-      <div class="info-box bg-info" style="min-height:72px;">
-        <span class="info-box-icon" style="width:55px;font-size:1.3rem;"><i class="fas fa-percentage"></i></span>
+    <div class="col-md-3 col-sm-6">
+      <div class="info-box" style="min-height:72px;background:linear-gradient(135deg,#6f42c1,#a855f7);color:#fff;">
+        <span class="info-box-icon" style="width:55px;font-size:1.3rem;color:#fff;"><i class="fas fa-users"></i></span>
         <div class="info-box-content" style="padding:6px 10px;">
-          <span class="info-box-text" style="font-size:0.75em;">Katılım</span>
-          <span class="info-box-number" style="font-size:1.3em;">${partRate}%</span>
-          <span class="progress-description" style="font-size:0.75em;opacity:0.85;">${attendedCount}/${totalExamCount} Sınav</span>
+          <span class="info-box-text" style="font-size:0.75em;color:#fff;">Sınıf Derece</span>
+          <span class="info-box-number" style="font-size:1.3em;color:#fff;">${classRank>0?classRank:'—'}</span>
+          <span class="progress-description" style="font-size:0.75em;opacity:0.9;color:#fff;">Toplam: ${classTotalStudents} Öğrenci</span>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+      <div class="info-box" style="min-height:72px;background:linear-gradient(135deg,#0d6efd,#0a58ca);color:#fff;">
+        <span class="info-box-icon" style="width:55px;font-size:1.3rem;color:#fff;"><i class="fas fa-trophy"></i></span>
+        <div class="info-box-content" style="padding:6px 10px;">
+          <span class="info-box-text" style="font-size:0.75em;color:#fff;">Kurum Derece</span>
+          <span class="info-box-number" style="font-size:1.3em;color:#fff;">${rank>0?rank:'—'}</span>
+          <span class="progress-description" style="font-size:0.75em;opacity:0.9;color:#fff;">Toplam: ${totalStudents} Öğrenci</span>
         </div>
       </div>
     </div>
