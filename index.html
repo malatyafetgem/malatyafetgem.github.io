@@ -774,14 +774,26 @@ async function init(){
   database.ref('db_v2/students').on('value', snap => { 
     let sData = snap.val(); DB.s = sData ? (Array.isArray(sData) ? sData.filter(x => x) : Object.values(sData).filter(x => x)) : []; rTabS(); 
   });
-  
-  database.ref('db_v2/examMeta').on('value', snap => {
+
+  database.ref('db_v2/examMeta').on('value', async snap => {
     EXAM_META = snap.val() || {}; uDrp(); rTabE(); uStat();
     if(getEl('sonuclar').classList.contains('active-pane')) reqAnl();
     if(aNo) reqProfile();
+    // examResults'i examMeta ile paralel cek — panel diger bolumlerle birlikte acilsin
+    let allIds = Object.keys(EXAM_META);
+    let missing = allIds.filter(bId => !CACHED_RESULTS[bId]);
+    if(missing.length > 0) {
+      await Promise.all(missing.map(bId =>
+        database.ref('db_v2/examResults/' + bId).once('value').then(s => { CACHED_RESULTS[bId] = s.val() || []; })
+      ));
+    }
+    let validNos = new Set(DB.s.map(s => s.no));
+    let allE = [];
+    allIds.forEach(bId => { if(CACHED_RESULTS[bId]) allE = allE.concat(CACHED_RESULTS[bId]); });
+    DB.e = allE.filter(e => e && e.studentNo && validNos.has(e.studentNo));
+    _riskCache = null;
+    renderRiskPanel();
     ld(0);
-    // Risk paneli için arka planda tüm batch'leri yükle
-    fetchAllBatchesForRisk();
   });
 }
 
@@ -795,36 +807,7 @@ async function fetchBatches(batchIds) {
   DB.e = virtual_e.filter(e => e && e.studentNo && validNos.has(e.studentNo));
 }
 
-// Risk paneli için tüm batch'leri sessizce yükler (loader göstermez)
-let _riskFetchPending = false;
-async function fetchAllBatchesForRisk() {
-  if(_riskFetchPending) return;
-  _riskFetchPending = true;
 
-  // Eğer DB.e zaten doluysa hemen render et, bekletme
-  if(DB.e.length > 0) {
-    _riskCache = null;
-    renderRiskPanel();
-  }
-
-  let allIds = Object.keys(EXAM_META);
-  let missing = allIds.filter(bId => !CACHED_RESULTS[bId]);
-  if(missing.length > 0) {
-    await Promise.all(missing.map(bId =>
-      database.ref('db_v2/examResults/' + bId).once('value').then(snap => { CACHED_RESULTS[bId] = snap.val() || []; })
-    ));
-    // DB.e'yi tüm verilerle güncelle
-    let validNos = new Set(DB.s.map(s => s.no));
-    let allE = [];
-    allIds.forEach(bId => { if(CACHED_RESULTS[bId]) allE = allE.concat(CACHED_RESULTS[bId]); });
-    DB.e = allE.filter(e => e && e.studentNo && validNos.has(e.studentNo));
-  }
-
-  _riskFetchPending = false;
-  // Tüm verilerle güncel render
-  _riskCache = null;
-  renderRiskPanel();
-}
 
 async function reqProfile() {
   if(!aNo) return;
@@ -1001,17 +984,21 @@ function linRegSlope(values){
 // ===== RİSK UYARI SİSTEMİ =====
 /*
   İstatistiksel eşik mantığı:
-  Her metrik için önce tüm öğrencilerin popülasyon değerleri hesaplanır.
+  Her metrik için karşılaştırma havuzu: Sınav Türü + Sınıf Seviyesi (grade).
+  Yani bir öğrenci yalnızca aynı sınav türünü yazan aynı sınıf seviyesindekilerle kıyaslanır.
+
   Bir öğrenci, kendi değeri (popülasyon ortalaması - k×std) altındaysa uyarı alır.
   k = 1.0 → alt %16 → "düşük risk"
   k = 1.5 → alt %7  → "orta risk"
   k = 2.0 → alt %2  → "yüksek risk"
 
   Metrikler:
-  1. Trend skoru       : linRegSlope(son sınavlar) — negatif eğim kötüye gidiş
-  2. Sıralama gerileme : Kurum sırası z-skoru (yüksek sıra = kötü, bu metrikte ters)
-  3. Ders düşüşü       : Son sınavdaki her dersin z-skoru kendi popülasyonunda
+  1. Trend skoru       : linRegSlope(toplam net, zaman) — negatif eğim kötüye gidiş
+  2. Sıralama gerileme : Son sınavdaki kurum sırası/katılımcı oranı z-skoru
+  3. Ders düşüşü       : Her dersin zaman trendindeki z-skoru (anlık değil, eğim bazlı)
   4. Katılım oranı     : Katılım % z-skoru (düşük katılım = risk)
+
+  Tüm metrikler examType + grade (sınıf seviyesi) kombinasyonu bazında hesaplanır.
 */
 
 let _riskCache = null; // { timestamp, results }
@@ -1030,17 +1017,33 @@ function calcRiskScores() {
     return { mean, std: Math.sqrt(variance) || 1 };
   }
 
-  let examTypes = [...new Set(Object.values(EXAM_META).map(m=>m.examType))];
+  // Sınıf adından grade seviyesini al (örn. "10-A" → "10")
+  function gradeOf(no) {
+    let st = DB.s.find(x=>x.no===no);
+    if(!st) return '';
+    let m = String(st.class||'').match(/^(\d+)/);
+    return m ? m[1] : '';
+  }
+
+  // examType + grade kombinasyonlarını bul
+  let combos = new Set();
+  DB.e.filter(x=>!x.abs).forEach(x => {
+    let gr = gradeOf(x.studentNo);
+    if(gr) combos.add(x.examType + '||' + gr);
+  });
+
   let studentRisks = {};
 
-  examTypes.forEach(eType => {
-    let allExams = DB.e.filter(x => x.examType === eType && !x.abs);
+  combos.forEach(combo => {
+    let [eType, grade] = combo.split('||');
+
+    // Bu kombinasyona ait sınavlar
+    let allExams = DB.e.filter(x => x.examType === eType && !x.abs && gradeOf(x.studentNo) === grade);
     if(allExams.length < 2) return;
 
     let stuNos = [...new Set(allExams.map(x=>x.studentNo))];
 
-    // ---- METRİK 1: TREND ----
-    // Her öğrencinin net eğimi; en az 2 sınavı olan herkesi dahil et
+    // ---- METRİK 1: TOPLAM NET TRENDİ ----
     let trendMap = {};
     stuNos.forEach(no => {
       let nets = DB.e.filter(x=>x.studentNo===no&&x.examType===eType&&!x.abs)
@@ -1052,15 +1055,13 @@ function calcRiskScores() {
       let ts = popStats(trendVals);
       Object.entries(trendMap).forEach(([no, slope]) => {
         let z = (slope - ts.mean) / ts.std;
-        // Düşük slope (kötüye gidiş) → negatif z → severity
         let severity = z < -2.0 ? 'high' : z < -1.5 ? 'med' : z < -1.0 ? 'low' : null;
-        // Eğer popülasyon std çok küçükse (herkes benzer) ve slope gerçekten negatifse de yakala
         if(!severity && slope < 0 && ts.std < 0.5) severity = 'low';
         if(severity) {
           if(!studentRisks[no]) studentRisks[no] = { flags:[], examTypes: new Set() };
           studentRisks[no].examTypes.add(eType);
           let sp = (slope>=0?'+':'')+slope.toFixed(2);
-          studentRisks[no].flags.push({ type:'trend', severity, examType:eType, detail:`${eType}: Net eğimi ${sp}/sınav`, z: z });
+          studentRisks[no].flags.push({ type:'trend', severity, examType:eType, detail:`${eType} (${grade}. Sınıf): Net eğimi ${sp}/sınav`, z });
         }
       });
     }
@@ -1086,35 +1087,39 @@ function calcRiskScores() {
           studentRisks[no].examTypes.add(eType);
           let last2 = DB.e.filter(x=>x.studentNo===no&&x.examType===eType&&!x.abs).sort((a,b)=>srt(a.date,b.date)).pop();
           let rankStr = last2 ? `${last2.iR}/${last2.iP}` : '—';
-          studentRisks[no].flags.push({ type:'rank', severity, examType:eType, detail:`${eType}: Kurum sırası ${rankStr}`, z });
+          studentRisks[no].flags.push({ type:'rank', severity, examType:eType, detail:`${eType} (${grade}. Sınıf): Kurum sırası ${rankStr}`, z });
         }
       });
     }
 
-    // ---- METRİK 3: DERS DÜŞÜŞÜ ----
-    let lastDates = [...new Set(allExams.map(x=>x.date))].sort(srt);
-    let lastDate = lastDates[lastDates.length-1];
-    let lastExams = allExams.filter(x=>x.date===lastDate);
-    if(lastExams.length >= 3) {
-      let allSubjs = [...new Set(lastExams.flatMap(x=>Object.keys(x.subs||{})))];
-      allSubjs.forEach(subj => {
-        let subjVals = lastExams.map(x => x.subs[subj]!==undefined ? x.subs[subj].net : null).filter(v=>v!==null);
-        if(subjVals.length < 3) return;
-        let ss = popStats(subjVals);
-        lastExams.forEach(ex => {
-          if(!ex.subs[subj]) return;
-          let val = ex.subs[subj].net;
-          let z = (val - ss.mean) / ss.std;
-          let severity = z < -2.0 ? 'high' : z < -1.5 ? 'med' : z < -1.0 ? 'low' : null;
-          if(severity) {
-            let no = ex.studentNo;
-            if(!studentRisks[no]) studentRisks[no] = { flags:[], examTypes: new Set() };
-            studentRisks[no].examTypes.add(eType);
-            studentRisks[no].flags.push({ type:'subj', severity, examType:eType, detail:`${eType}/${toTitleCase(subj)}: ${val.toFixed(1)} net (ort. ${ss.mean.toFixed(1)})`, z });
-          }
-        });
+    // ---- METRİK 3: DERS DÜŞÜŞÜ (eğim bazlı, zaman trendi) ----
+    // Her öğrencinin her dersteki netlerinin zaman eğimini hesapla
+    // Eğimleri aynı havuzdaki diğer öğrencilerle karşılaştır
+    let allSubjs = [...new Set(allExams.flatMap(x=>Object.keys(x.subs||{})))];
+    allSubjs.forEach(subj => {
+      let subjTrendMap = {};
+      stuNos.forEach(no => {
+        let subjNets = DB.e
+          .filter(x=>x.studentNo===no&&x.examType===eType&&!x.abs&&x.subs&&x.subs[subj]!==undefined)
+          .sort((a,b)=>srt(a.date,b.date))
+          .map(x=>x.subs[subj].net);
+        if(subjNets.length >= 2) subjTrendMap[no] = linRegSlope(subjNets);
       });
-    }
+      let stVals = Object.values(subjTrendMap);
+      if(stVals.length < 3) return;
+      let ss = popStats(stVals);
+      Object.entries(subjTrendMap).forEach(([no, slope]) => {
+        let z = (slope - ss.mean) / ss.std;
+        let severity = z < -2.0 ? 'high' : z < -1.5 ? 'med' : z < -1.0 ? 'low' : null;
+        if(!severity && slope < 0 && ss.std < 0.3) severity = 'low';
+        if(severity) {
+          if(!studentRisks[no]) studentRisks[no] = { flags:[], examTypes: new Set() };
+          studentRisks[no].examTypes.add(eType);
+          let sp = (slope>=0?'+':'')+slope.toFixed(2);
+          studentRisks[no].flags.push({ type:'subj', severity, examType:eType, detail:`${eType} (${grade}. Sınıf) / ${toTitleCase(subj)}: Eğim ${sp}/sınav`, z });
+        }
+      });
+    });
 
     // ---- METRİK 4: KATILIM ORANI ----
     let totalExamKeys = new Set(allExams.map(x=>x.date+'||'+(x.publisher||'')));
@@ -1135,7 +1140,7 @@ function calcRiskScores() {
           if(!studentRisks[no]) studentRisks[no] = { flags:[], examTypes: new Set() };
           studentRisks[no].examTypes.add(eType);
           let attended = DB.e.filter(x=>x.studentNo===no&&x.examType===eType&&!x.abs).length;
-          studentRisks[no].flags.push({ type:'abs', severity, examType:eType, detail:`${eType}: Katılım %${Math.round(rate*100)} (${attended}/${totalCount} sınav)`, z });
+          studentRisks[no].flags.push({ type:'abs', severity, examType:eType, detail:`${eType} (${grade}. Sınıf): Katılım %${Math.round(rate*100)} (${attended}/${totalCount} sınav)`, z });
         }
       });
     }
