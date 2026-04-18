@@ -928,6 +928,11 @@ function xXLMul(cId,fn){
 }
 
 function xPR(sourceId, title, btn, orientation) {
+  if(window._karneCharts) window._karneCharts.forEach(ch => { try { ch.tooltip.setActiveElements([]); ch.update('none'); } catch(e){} });
+  if(window._raporCharts) window._raporCharts.forEach(ch => { try { ch.tooltip.setActiveElements([]); ch.update('none'); } catch(e){} });
+  if(c.a) { try { c.a.tooltip.setActiveElements([]); c.a.update('none'); } catch(e){} }
+  if(c.h) { try { c.h.tooltip.setActiveElements([]); c.h.update('none'); } catch(e){} }
+  
   let portraitSources = ['pS','pC','pSubj','pSummary','pGenSummary'];
   let isPortrait = orientation === 'portrait' || portraitSources.includes(sourceId);
   let orig = btn.innerHTML; btn.innerHTML = "<i class='fas fa-spinner fa-spin mr-1'></i>"; btn.disabled = true;
