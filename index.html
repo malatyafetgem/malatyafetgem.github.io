@@ -483,6 +483,11 @@ body.is-admin button.btn-block.admin-only { display:block !important; }
             <div class="col-sm-6 col-md-4 col-lg-2"><div class="form-group"><label>Sınav Türü</label><select id="aEx" class="form-control" onchange="onExTypeChange()"><option value="" disabled selected>Sınav Türü Seç</option></select></div></div>
             <div class="col-sm-6 col-md-4 col-lg-2" id="gDate" style="display:none;"><div class="form-group"><label id="lblDate">Sınav Seç</label><select id="aDate" class="form-control" onchange="onDateChange()"><option value="" disabled selected>Sınav Seç</option></select></div></div>
             <div class="col-sm-6 col-md-4 col-lg-2" id="gSub" style="display:none;"><div class="form-group"><label id="lblSub">Veri</label><select id="aSub" class="form-control" onchange="handleSubChange()"></select></div></div>
+            <!-- Risk Analizi Filtreleri — sadece Risk modunda görünür -->
+            <div class="col-sm-6 col-md-4 col-lg-2" id="gRiskGrade" style="display:none;"><div class="form-group"><label>Sınıf Seviyesi</label><select id="riskGradeFilter" class="form-control" onchange="_populateRiskFilterDropdowns();renderRiskPanel()"><option value="">Tüm Sınıflar</option></select></div></div>
+            <div class="col-sm-6 col-md-4 col-lg-2" id="gRiskBranch" style="display:none;"><div class="form-group"><label>Şube</label><select id="riskBranchFilter" class="form-control" onchange="renderRiskPanel()"><option value="">Tüm Şubeler</option></select></div></div>
+            <div class="col-sm-6 col-md-4 col-lg-2" id="gRiskExType" style="display:none;"><div class="form-group"><label>Sınav Türü</label><select id="riskExTypeFilter" class="form-control" onchange="renderRiskPanel()"><option value="">Tüm Sınav Türleri</option></select></div></div>
+            <div class="col-sm-6 col-md-4 col-lg-2" id="gRiskLevel" style="display:none;"><div class="form-group"><label>Risk Türü</label><select id="riskLevelFilter" class="form-control" onchange="renderRiskPanel()"><option value="">Tüm Riskler</option><option value="high">🔴 Yüksek Risk</option><option value="med">🟠 Orta Risk</option><option value="low">🟡 Düşük Risk</option></select></div></div>
           </div></div></div>
           <div id="anlRes"></div>
           <!-- RİSK ANALİZİ PANELİ -->
@@ -494,44 +499,6 @@ body.is-admin button.btn-block.admin-only { display:block !important; }
                 </div>
               </div>
               <div class="card-body" style="padding:12px 14px;">
-                <!-- Filtreler -->
-                <div class="row mb-3" id="riskFiltersRow">
-                  <div class="col-sm-6 col-md-3 mb-2">
-                    <label class="small font-weight-bold text-muted mb-1">Sınıf Seviyesi</label>
-                    <select id="riskGradeFilter" class="form-control form-control-sm" onchange="renderRiskPanel()">
-                      <option value="">Tüm Sınıflar</option>
-                      <option value="9">9. Sınıf</option>
-                      <option value="10">10. Sınıf</option>
-                      <option value="11">11. Sınıf</option>
-                      <option value="12">12. Sınıf</option>
-                    </select>
-                  </div>
-                  <div class="col-sm-6 col-md-3 mb-2">
-                    <label class="small font-weight-bold text-muted mb-1">Şube</label>
-                    <select id="riskBranchFilter" class="form-control form-control-sm" onchange="renderRiskPanel()">
-                      <option value="">Tüm Şubeler</option>
-                      <option value="A">A Şubesi</option>
-                      <option value="B">B Şubesi</option>
-                      <option value="C">C Şubesi</option>
-                      <option value="D">D Şubesi</option>
-                    </select>
-                  </div>
-                  <div class="col-sm-6 col-md-3 mb-2">
-                    <label class="small font-weight-bold text-muted mb-1">Sınav Türü</label>
-                    <select id="riskExTypeFilter" class="form-control form-control-sm" onchange="renderRiskPanel()">
-                      <option value="">Tüm Sınav Türleri</option>
-                    </select>
-                  </div>
-                  <div class="col-sm-6 col-md-3 mb-2">
-                    <label class="small font-weight-bold text-muted mb-1">Risk Türü</label>
-                    <select id="riskLevelFilter" class="form-control form-control-sm" onchange="renderRiskPanel()">
-                      <option value="">Tüm Riskler</option>
-                      <option value="high">🔴 Yüksek Risk</option>
-                      <option value="med">🟠 Orta Risk</option>
-                      <option value="low">🟡 Düşük Risk</option>
-                    </select>
-                  </div>
-                </div>
                 <!-- Özet Kartlar -->
                 <div class="row mb-3" id="riskStatCards">
                   <div class="col-6 col-md-3 mb-2">
@@ -565,7 +532,7 @@ body.is-admin button.btn-block.admin-only { display:block !important; }
                     </div>
                   </div>
                   <div class="col-6 col-md-3 mb-2">
-                    <div class="info-box mb-0" style="min-height:64px;background:linear-gradient(135deg,#0d6efd,#0a58ca);color:#fff;border-radius:8px;">
+                    <div class="info-box mb-0" style="min-height:64px;background:linear-gradient(135deg,#0d6efd,#0a58ca);color:#fff;border-radius:8px;cursor:pointer;" onclick="setRiskLevel('')">
                       <span class="info-box-icon" style="width:50px;font-size:1.2rem;color:#fff;background:rgba(0,0,0,0.15);border-radius:8px 0 0 8px;"><i class="fas fa-users"></i></span>
                       <div class="info-box-content" style="padding:5px 10px;">
                         <span class="info-box-text" style="font-size:0.72em;color:#fff;">Toplam Riskteki</span>
@@ -1290,7 +1257,7 @@ function renderRiskPanel() {
     return true;
   });
 
-  // ExType dropdown'unu doldur (ilk çalışmada)
+  // ExType dropdown'unu doldur (ilk çalışmada veya henüz dolmamışsa)
   let exTypeEl = getEl('riskExTypeFilter');
   if(exTypeEl && exTypeEl.options.length <= 1) {
     let allTypes = [...new Set(risks.flatMap(r=>r.examTypes))].sort();
@@ -1351,7 +1318,9 @@ function renderRiskPanel() {
 function setRiskLevel(level) {
   let el = getEl('riskLevelFilter');
   if(!el) return;
-  el.value = (el.value === level) ? '' : level;
+  // Boş string = tümünü göster; aynı seviyeye tıklamak toggle yapar
+  if(level === '') { el.value = ''; }
+  else { el.value = (el.value === level) ? '' : level; }
   renderRiskPanel();
 }
 
@@ -1517,16 +1486,20 @@ function mkBoxPlotSVG(groups, studentVal, options) {
 }
 
 /* Birden fazla sınıfı karşılaştıran kutu grafiği — her sınıf ayrı kutu */
-function mkMultiClassBoxPlot(classDataMap, highlightClass, options) {
+function mkMultiClassBoxPlot(classDataMap, highlightClass, options, allVals) {
   options = options || {};
   let entries = Object.entries(classDataMap).sort((a,b)=>a[0].localeCompare(b[0],'tr'));
   if(entries.length === 0) return '';
-  let baseColors = ['#0d6efd','#28a745','#fd7e14','#6f42c1','#17a2b8','#dc3545','#20c997','#e83e8c'];
+  // Sınıf renkleri çubuk grafikteki cols ile aynı (sıralı eşleşme)
   let groups = entries.map(([cls, vals], i) => ({
     label: cls,
     values: vals,
-    color: highlightClass && cls === highlightClass ? '#dc3545' : baseColors[i % baseColors.length]
+    color: highlightClass && cls === highlightClass ? '#dc3545' : cols[i % cols.length]
   }));
+  // "Tümü" grubu: tüm bireylerin değerleri birleştirilir
+  if(allVals && allVals.length >= 3) {
+    groups.unshift({ label: 'Tümü', values: allVals, color: '#6c757d' });
+  }
   let W = Math.max(560, groups.length * 90 + 80);
   return mkBoxPlotSVG(groups, null, { ...options, width: W });
 }
@@ -1601,19 +1574,16 @@ function xPR(sourceId, title, btn, orientation) {
   clone.querySelectorAll('.report-header').forEach(el => el.style.display = 'flex');
 
   // ── SAYFA KIRMA MANTIĞI ──────────────────────────────────────────
-  // Kural: Her .exam-type-block (TYT bloğu, AYT bloğu vs.) kendi sayfasında başlar.
+  // Kural: Her .exam-type-block (TYT, AYT vb.) DAIMA kendi sayfasında başlar.
   // Toplu raporda: her yeni öğrenci de yeni sayfada başlar.
-  // Ek olarak: Öğrenci isim başlığı (report-header) her exam-type-block'un önüne eklenir (ilk hariç).
+  // Öğrenci isim başlığı (report-header) her exam-type-block'un önüne eklenir (ilk hariç).
 
   let examBlocks = clone.querySelectorAll('.exam-type-block');
   examBlocks.forEach((blk, idx) => {
-    // Tüm exam-type-block'lar için page-break-inside: avoid + break-inside: avoid
-    blk.style.cssText += '; page-break-inside: avoid; break-inside: avoid;';
-
     let stuName  = blk.getAttribute('data-stu-name')  || '';
     let stuClass = blk.getAttribute('data-stu-class') || '';
 
-    // İlk block mı?
+    // İlk block mı? (wrapper içindeki veya global olarak)
     let wrapper = blk.closest('.student-rapor-wrapper');
     let isFirstInScope = false;
     if(wrapper) {
@@ -1623,18 +1593,27 @@ function xPR(sourceId, title, btn, orientation) {
       isFirstInScope = (idx === 0);
     }
 
-    if(isFirstInScope) return; // İlk bloğun önüne başlık ekleme (zaten report-header var)
-
-    // Diğer blokların önüne: sayfa kırma + tekrar öğrenci başlığı
-    if(stuName) {
-      let hdr = document.createElement('div');
-      hdr.className = 'report-header print-page-hdr';
-      hdr.style.cssText = 'margin-bottom:10px; margin-top:0; page-break-before:always; break-before:page;';
-      hdr.innerHTML = `<span style="font-size:15px;"><i class="fas fa-user-graduate mr-2"></i><strong>${stuName}</strong></span><span style="font-size:12px;">Sınıf: ${stuClass} | ${new Date().toLocaleDateString('tr-TR')}</span>`;
-      blk.parentNode.insertBefore(hdr, blk);
+    // Her exam-type-block bir sayfa bölümüdür — sayfa kırmayı her bloğa uygula
+    if(isFirstInScope) {
+      // İlk blokta sadece page-break-inside: auto (içerik büyükse taşabilir, bu normal)
+      blk.style.cssText += '; page-break-inside: auto; break-inside: auto;';
+      blk.classList.add('exam-type-first');
     } else {
-      blk.style.cssText += '; page-break-before: always; break-before: page;';
+      // Diğer bloklar kesinlikle yeni sayfada başlar
+      if(stuName) {
+        let hdr = document.createElement('div');
+        hdr.className = 'report-header print-page-hdr';
+        hdr.style.cssText = 'margin-bottom:10px; margin-top:0; page-break-before:always; break-before:page;';
+        hdr.innerHTML = `<span style="font-size:15px;"><i class="fas fa-user-graduate mr-2"></i><strong>${stuName}</strong></span><span style="font-size:12px;">Sınıf: ${stuClass} | ${new Date().toLocaleDateString('tr-TR')}</span>`;
+        blk.parentNode.insertBefore(hdr, blk);
+      }
+      blk.style.cssText += '; page-break-before: always; break-before: page; page-break-inside: auto; break-inside: auto;';
     }
+
+    // Tablo, grafik ve kutu grafiklerini esnek hale getir (shrink-to-fit)
+    blk.querySelectorAll('.chart-box, .boxplot-card, .boxplot-wrap').forEach(el => {
+      el.style.cssText += '; page-break-inside: avoid; break-inside: avoid;';
+    });
   });
 
   // Toplu rapor: öğrenciler arası zorunlu sayfa kırma (student-rapor-wrapper'lar arası)
@@ -1642,6 +1621,14 @@ function xPR(sourceId, title, btn, orientation) {
   wrappers.forEach((w, i) => {
     if(i > 0) w.style.cssText += '; page-break-before: always; break-before: page;';
     w.style.cssText += '; page-break-inside: auto; break-inside: auto;';
+  });
+
+  // karne-bolum (tekil öğrenci karnesi, birden fazla sınav türü varsa)
+  clone.querySelectorAll('.karne-bolum').forEach((blk, idx) => {
+    if(idx > 0) {
+      blk.style.cssText += '; page-break-before: always; break-before: page;';
+    }
+    blk.style.cssText += '; page-break-inside: auto; break-inside: auto;';
   });
 
   let printHtml = `<!DOCTYPE html>
@@ -1752,22 +1739,28 @@ function xPR(sourceId, title, btn, orientation) {
     /* ── GRAFİK IMG ── */
     .print-chart-img {
       max-width: 100%; width: 100%;
-      max-height: ${isPortrait ? '200px' : '160px'};
+      max-height: ${isPortrait ? '170px' : '130px'};
       height: auto; object-fit: contain;
-      display: block; margin: 3px auto 8px;
+      display: block; margin: 2px auto 5px;
     }
-    .chart-box { height: auto !important; margin-bottom: 8px; page-break-inside: avoid !important; break-inside: avoid !important; }
+    .chart-box {
+      height: auto !important; margin-bottom: 5px;
+      page-break-inside: avoid !important; break-inside: avoid !important;
+    }
 
     /* ── KUTU GRAFİĞİ ── */
     .boxplot-card {
       background: #f8f9ff !important; border: 1px solid #c8d4ee !important;
-      border-radius: 6px; padding: 8px 10px; margin-top: 6px;
+      border-radius: 6px; padding: 6px 8px; margin-top: 4px;
       page-break-inside: avoid !important; break-inside: avoid !important;
       -webkit-print-color-adjust: exact; print-color-adjust: exact;
     }
-    .boxplot-title { font-size: 10px; font-weight: 700; color: #1a5fa8; margin-bottom: 4px; }
+    .boxplot-title { font-size: 9px; font-weight: 700; color: #1a5fa8; margin-bottom: 3px; }
     .boxplot-wrap { overflow: visible !important; }
-    .boxplot-svg { max-height: 160px; width: 100%; }
+    .boxplot-svg {
+      max-height: ${isPortrait ? '120px' : '100px'} !important;
+      width: 100% !important; height: auto !important;
+    }
 
     /* ── RİSK KARTLARI ── */
     [style*="border:1px solid #dc3545"], [style*="border:1px solid #fd7e14"], [style*="border:1px solid #ffc107"] {
@@ -1784,11 +1777,21 @@ function xPR(sourceId, title, btn, orientation) {
     .rb-rank   { background: rgba(108,117,125,0.12); color: #495057; }
     .rb-subj   { background: rgba(111,66,193,0.12);  color: #4a1d8a; }
 
-    /* ── SAYFA KIRMA ── */
-    /* Her exam-type-block kendi sayfasında */
+    /* ── SAYFA KIRMA — KESİN ÇÖZÜM ── */
+    /* exam-type-block: her sınav türü (TYT, AYT...) kendi sayfasında.
+       İçerik sayfaya sığmazsa taşabilir (break-inside: auto) —
+       ama her blok MUTLAKA yeni sayfada başlar. */
     .exam-type-block {
-      page-break-inside: avoid !important;
-      break-inside: avoid !important;
+      page-break-inside: auto !important;
+      break-inside: auto !important;
+      page-break-before: always !important;
+      break-before: page !important;
+    }
+    /* İlk blok: sayfa kırma yok (zaten sayfanın başındadır) */
+    .exam-type-block.exam-type-first,
+    .exam-type-block:first-child {
+      page-break-before: avoid !important;
+      break-before: avoid !important;
     }
     .print-page-hdr {
       page-break-before: always !important;
@@ -1798,10 +1801,25 @@ function xPR(sourceId, title, btn, orientation) {
       page-break-inside: auto !important;
       break-inside: auto !important;
     }
+    /* karne-bolum: tek öğrenci karnesinde her sınav türü yeni sayfada */
     .karne-bolum {
-      page-break-inside: avoid !important;
-      break-inside: avoid !important;
+      page-break-before: always !important;
+      break-before: page !important;
+      page-break-inside: auto !important;
+      break-inside: auto !important;
     }
+    .karne-bolum:first-child {
+      page-break-before: avoid !important;
+      break-before: avoid !important;
+    }
+
+    /* Info-box satırı: sıkıştır */
+    .info-box { margin-bottom: 3px !important; }
+    .trend-card { padding: 5px 8px !important; margin-bottom: 5px !important; }
+    .card-body { padding: 5px 8px !important; }
+    .mb-4 { margin-bottom: 8px !important; }
+    .mb-3 { margin-bottom: 6px !important; }
+    .mb-2 { margin-bottom: 3px !important; }
     /* ── GİZLE ── */
     .no-print, button, .btn, .scroll-hint,
     .d-flex.justify-content-end, #riskPanel,
@@ -2057,6 +2075,11 @@ function uUI(){
   getEl('gDate').style.display = isRisk ? 'none' : (t==='student' ? 'none' : 'block');
   getEl('gSub').style.display = isRisk ? 'none' : 'block';
 
+  // Risk filtre slotları
+  ['gRiskGrade','gRiskBranch','gRiskExType','gRiskLevel'].forEach(id => {
+    let el = getEl(id); if(el) el.style.display = isRisk ? 'block' : 'none';
+  });
+
   // anlRes ve riskPanel görünürlüğü
   getEl('anlRes').style.display = isRisk ? 'none' : 'block';
   getEl('riskPanel').style.display = isRisk ? 'block' : 'none';
@@ -2094,8 +2117,39 @@ function uUI(){
     }
     uBranches(); uExamTypes(); uExamDates(); uSub();
   } else {
-    // Risk modunda filtreleri render et
+    // Risk modunda filtre dropdown'larını doldur
+    _populateRiskFilterDropdowns();
     renderRiskPanel();
+  }
+}
+
+function _populateRiskFilterDropdowns() {
+  // Sınıf Seviyesi
+  let gradeEl = getEl('riskGradeFilter');
+  if(gradeEl) {
+    let prevG = gradeEl.value;
+    let grades = new Set();
+    DB.s.forEach(s => { let m = s.class.match(/^(\d+)/); if(m) grades.add(m[1]); });
+    gradeEl.innerHTML = '<option value="">Tüm Sınıflar</option>' + [...grades].sort((a,b)=>parseInt(a)-parseInt(b)).map(g=>`<option value="${g}">${g}. Sınıf</option>`).join('');
+    if(prevG && [...grades].includes(prevG)) gradeEl.value = prevG;
+  }
+  // Şube
+  let branchEl = getEl('riskBranchFilter');
+  if(branchEl) {
+    let prevB = branchEl.value;
+    let gradeF = getEl('riskGradeFilter') ? getEl('riskGradeFilter').value : '';
+    let branches = new Set();
+    DB.s.forEach(s => { let m = s.class.match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/); if(m && (!gradeF||m[1]===gradeF)) branches.add(m[2].toLocaleUpperCase('tr-TR')); });
+    branchEl.innerHTML = '<option value="">Tüm Şubeler</option>' + [...branches].sort().map(b=>`<option value="${b}">${b} Şubesi</option>`).join('');
+    if(prevB && [...branches].includes(prevB)) branchEl.value = prevB;
+  }
+  // Sınav Türü
+  let exTypeEl = getEl('riskExTypeFilter');
+  if(exTypeEl && exTypeEl.options.length <= 1) {
+    let risks = (_riskCache && _riskCache.results) ? _riskCache.results : [];
+    let allTypes = [...new Set(risks.flatMap(r=>r.examTypes))].sort();
+    if(!allTypes.length) allTypes = [...new Set(Object.values(EXAM_META).map(m=>m.examType))].sort();
+    exTypeEl.innerHTML = '<option value="">Tüm Sınav Türleri</option>' + allTypes.map(t=>`<option value="${t}">${t}</option>`).join('');
   }
 }
 
@@ -2315,6 +2369,7 @@ function rH(){
     </div>
     <div class="card-body" style="padding-top:5px;">`;
 
+  let typsIdx = 0;
   typs.forEach(t=>{
     let el=grp[t].sort((a,b)=>srt(a.date,b.date)); let sb=Array.from(new Set(el.filter(e=>!e.abs).flatMap(e=>Object.keys(e.subs)))).sort();
     let totalCols=sb.length+5, shorten=totalCols>10;
@@ -2322,8 +2377,9 @@ function rH(){
     let summary = calcKarneSummaryCards(aNo, t, stGrade, el);
     let cardsHtml = buildKarneExamCards(summary, t);
     let riskCardsHtml = buildRiskInfoCards(aNo, t, s.class);
+    let isFirstType = (typsIdx === 0); typsIdx++;
     
-    h+=`<div class="karne-bolum exam-type-block" data-stu-name="${s.name.replace(/"/g,'&quot;')}" data-stu-class="${s.class}"><h5 class="mt-3 mb-2 text-primary border-bottom pb-2">${t} Sınavları</h5>${cardsHtml}${riskCardsHtml}<div class="scroll-hint"><i class="fas fa-arrows-alt-h mr-1"></i>Tabloyu kaydırın</div><div class="scroll"><table class="table table-sm table-bordered table-striped" data-sh="${t}"><thead><tr><th>#</th><th>Tarih</th><th>Yayınevi</th>${sb.map(x=>`<th title="${toTitleCase(x)}">${abbrevSub(x,shorten)}</th>`).join('')}<th>Top.Net</th><th>Puan</th><th>Snf(S/K)</th><th>Okul(S/K)</th><th>İlçe(S/K)</th><th>İl(S/K)</th><th>Gen(S/K)</th></tr></thead><tbody>`;
+    h+=`<div class="karne-bolum exam-type-block${isFirstType?' exam-type-first':''}" data-stu-name="${s.name.replace(/"/g,'&quot;')}" data-stu-class="${s.class}"><h5 class="mt-3 mb-2 text-primary border-bottom pb-2">${t} Sınavları</h5>${cardsHtml}${riskCardsHtml}<div id="${bpKarneId}"></div><div class="scroll-hint"><i class="fas fa-arrows-alt-h mr-1"></i>Tabloyu kaydırın</div><div class="scroll"><table class="table table-sm table-bordered table-striped" data-sh="${t}"><thead><tr><th>#</th><th>Tarih</th><th>Yayınevi</th>${sb.map(x=>`<th title="${toTitleCase(x)}">${abbrevSub(x,shorten)}</th>`).join('')}<th>Top.Net</th><th>Puan</th><th>Snf(S/K)</th><th>Okul(S/K)</th><th>İlçe(S/K)</th><th>İl(S/K)</th><th>Gen(S/K)</th></tr></thead><tbody>`;
     
     let kIdx = 1;
     el.forEach(e=>{
@@ -2352,7 +2408,7 @@ function rH(){
 
     let canvasId='cKarne_'+t.replace(/[^a-zA-Z0-9]/g,'_');
     let bpKarneId='bpKarne_'+t.replace(/[^a-zA-Z0-9]/g,'_');
-    h+=`</tbody></table></div><div class="chart-box avoid-break" style="margin:10px 0 18px 0; height:220px;"><div style="font-size:11px;font-weight:bold;color:#4a6fa5;margin-bottom:4px;text-align:left;">${t} — Toplam Net Gelişimi</div><canvas id="${canvasId}"></canvas></div><div id="${bpKarneId}"></div></div>`;
+    h+=`</tbody></table></div><div class="chart-box avoid-break" style="margin:8px 0 10px 0; height:200px;"><div style="font-size:11px;font-weight:bold;color:#4a6fa5;margin-bottom:4px;text-align:left;">${t} — Toplam Net Gelişimi</div><canvas id="${canvasId}"></canvas></div></div>`;
   });
 
   h+=`</div></div>`;
@@ -2531,9 +2587,9 @@ function rAnl(){
       </div>
       <div class="card-body" style="padding-top:5px;">
         ${perfHtml}${trendHtml}
+        <div id="stuBoxPlotArea"></div>
         <div class="table-responsive"><table class="table table-sm table-hover table-bordered" id="tS"><thead><tr><th>#</th><th>Tarih</th><th>Yayınevi</th><th>${valHeader}</th><th>Değişim</th></tr></thead><tbody>${rows}${avgRowHtml}</tbody></table></div>
         <div class="chart-box avoid-break" style="margin-top:10px;"><canvas id="cA"></canvas></div>
-        <div id="stuBoxPlotArea"></div>
       </div>
     </div>`;
     r.innerHTML=h;
@@ -2743,10 +2799,10 @@ function rAnl(){
       <div class="card-body" style="padding-top:5px;">
         ${clsPerfHtml}
         ${clsTrendHtml}
+        <div id="clsBoxPlotArea"></div>
         <div class="table-responsive"><table class="table table-sm table-hover table-bordered" id="tC"><thead><tr><th>#</th><th>Sınıf</th><th>Tarih</th><th>Yayınevi</th><th>Ortalama</th></tr></thead><tbody>${tr.join('')}${clsAvgRow}</tbody></table></div>
         ${top5Bottom5Html}
         <div class="chart-box avoid-break" style="margin-top:10px;"><canvas id="cA"></canvas></div>
-        <div id="clsBoxPlotArea"></div>
       </div>
     </div>`;
     r.innerHTML=h;
@@ -2759,21 +2815,22 @@ function rAnl(){
         data:sd.map(dt=>{ let o=(d[dt]||[]).filter(x=>x.studentClass===cl); let n=o.map(x=>{ if(sb === 'score') return x.score; if(sb === 'totalNet' || !sb) return x.totalNet; return x.subs[toTitleCase(sb.replace('s_',''))]?.net || 0; }); return n.length?n.reduce((x,y)=>x+y,0)/n.length:null; })
       })); 
       c.a=mkChart('cA',sdLabels,ds);
-      // Kutu grafikleri — sınıflar arası bireysel dağılım
+      // Kutu grafikleri — sınıflar arası bireysel dağılım (Tümü dahil)
       let clsBPArea = getEl('clsBoxPlotArea');
       if(clsBPArea) {
         let classDataMap = {};
+        let allValsForBP = [];
         [...cs].sort().forEach(clsName => {
           let vals = ex.filter(x => x.studentClass === clsName).map(x => {
             if(sb==='score') return x.score;
             if(sb==='totalNet'||!sb) return x.totalNet;
             return x.subs[toTitleCase(sb.replace('s_',''))]?.net ?? null;
           }).filter(v => v !== null);
-          if(vals.length >= 3) classDataMap[clsName] = vals;
+          if(vals.length >= 3) { classDataMap[clsName] = vals; allValsForBP.push(...vals); }
         });
-        if(Object.keys(classDataMap).length >= 2) {
+        if(Object.keys(classDataMap).length >= 1) {
           let lbl = sb === 'score' ? 'Puan' : (sb === 'totalNet' || !sb ? 'Toplam Net' : toTitleCase(sb.replace('s_','')) + ' Neti');
-          clsBPArea.innerHTML = `<div class="boxplot-card mt-2"><div class="boxplot-title"><i class="fas fa-box-open mr-1 text-success"></i>Sınıflar Arası Dağılım — ${lbl} (Bireysel Sonuçlar)</div>${mkMultiClassBoxPlot(classDataMap, null, {height:220, title:''})}</div>`;
+          clsBPArea.innerHTML = `<div class="boxplot-card mb-3"><div class="boxplot-title"><i class="fas fa-box-open mr-1 text-success"></i>Sınıflar Arası Dağılım — ${lbl} (Bireysel Sonuçlar)</div>${mkMultiClassBoxPlot(classDataMap, null, {height:220, title:''}, allValsForBP.length>=3?allValsForBP:null)}</div>`;
         }
       }
     },100);
@@ -2918,13 +2975,13 @@ function rAnl(){
           <div class="col-md-6 col-lg flex-fill mb-2"><div class="info-box h-100" style="background:#6c757d; color:#fff;"><span class="info-box-icon"><i class="fas fa-chart-pie text-white"></i></span><div class="info-box-content"><span class="info-box-text">Katılım Oranı</span><span class="info-box-number">%${partRateS}</span><span class="progress-description" style="color:#e0e0e0;">${attendedCountS} / ${baseCountS} Katılım</span></div></div></div>
         </div>
         ${subjTrendHtml}
+        <div id="subjBoxPlotArea"></div>
         <div class="row">
           <div class="col-lg-4"><div class="card shadow-sm avoid-break"><div class="card-header bg-success text-white"><h3 class="card-title m-0"><i class="fas fa-trophy mr-1"></i> En İyi 5 Öğrenci</h3></div><div class="card-body p-0 table-responsive"><table class="table table-sm table-striped m-0" style="font-size:0.85em;"><thead><tr><th>#</th><th>Ad Soyad</th><th>Sınıf</th><th>Ort.Net</th></tr></thead><tbody>${top5.map((s,i) => `<tr><td>${i+1}</td><td>${s.name}</td><td>${s.cls}</td><td><strong>${s.avg.toFixed(2)}</strong></td></tr>`).join('')}</tbody></table></div></div></div>
           <div class="col-lg-4"><div class="card shadow-sm avoid-break"><div class="card-header bg-danger text-white"><h3 class="card-title m-0"><i class="fas fa-exclamation-circle mr-1"></i> En Düşük 5 Öğrenci</h3></div><div class="card-body p-0 table-responsive"><table class="table table-sm table-striped m-0" style="font-size:0.85em;"><thead><tr><th>#</th><th>Ad Soyad</th><th>Sınıf</th><th>Ort.Net</th></tr></thead><tbody>${bottom5.map((s,i) => `<tr><td>${i+1}</td><td>${s.name}</td><td>${s.cls}</td><td><strong>${s.avg.toFixed(2)}</strong></td></tr>`).join('')}</tbody></table></div></div></div>
           <div class="col-lg-4"><div class="card shadow-sm avoid-break"><div class="card-header bg-info text-white"><h3 class="card-title m-0"><i class="fas fa-school mr-1"></i> Sınıf Ortalamaları</h3></div><div class="card-body p-0 table-responsive" style="max-height:200px;"><table class="table table-sm table-striped m-0" style="font-size:0.85em;"><thead><tr><th>#</th><th>Sınıf</th><th>Ort.Net</th><th>Kayıt</th></tr></thead><tbody>${clsArr.map((c,i) => `<tr><td>${i+1}</td><td>${c.cls}</td><td><strong>${c.avg.toFixed(2)}</strong></td><td>${c.count}</td></tr>`).join('')}</tbody></table></div></div></div>
         </div>
         <div class="chart-box mt-3 avoid-break" style="height:260px;"><canvas id="cA"></canvas></div>
-        <div id="subjBoxPlotArea"></div>
       </div>
     </div>`;
     r.innerHTML = h;
@@ -2945,12 +3002,10 @@ function rAnl(){
         });
         if(Object.keys(subjectClassMap).length >= 1) {
           let allSubjVals = ex.map(e => e.subs[toTitleCase(subj)].net);
-          let overallSVG = mkBoxPlotSVG([{label:'Tümü', values: allSubjVals, color:'#17a2b8'}], null, {title:'Genel Dağılım', height:180});
-          let multiSVG = Object.keys(subjectClassMap).length >= 2 ? mkMultiClassBoxPlot(subjectClassMap, null, {height:220}) : '';
-          subjBPArea.innerHTML = `<div class="row mt-2">
-            <div class="col-md-4"><div class="boxplot-card"><div class="boxplot-title"><i class="fas fa-box-open mr-1 text-info"></i>Genel Dağılım — ${toTitleCase(subj)}</div>${overallSVG}</div></div>
-            ${multiSVG ? `<div class="col-md-8"><div class="boxplot-card"><div class="boxplot-title"><i class="fas fa-box-open mr-1 text-success"></i>Sınıflar Arası Dağılım — ${toTitleCase(subj)}</div>${multiSVG}</div></div>` : ''}
-          </div>`;
+          let multiSVG = mkMultiClassBoxPlot(subjectClassMap, null, {height:220}, allSubjVals.length >= 3 ? allSubjVals : null);
+          if(multiSVG) {
+            subjBPArea.innerHTML = `<div class="boxplot-card mt-2 mb-3"><div class="boxplot-title"><i class="fas fa-box-open mr-1 text-success"></i>Sınıflar Arası Dağılım — ${toTitleCase(subj)}</div>${multiSVG}</div>`;
+          }
         }
       }
     }, 100);
@@ -3069,34 +3124,30 @@ function rAnl(){
                   <div class="col-md-4 col-sm-12"><div class="info-box" style="background:#dc3545; color:#fff;"><span class="info-box-icon"><i class="fas fa-arrow-down"></i></span><div class="info-box-content"><span class="info-box-text">Ortalaması En Çok Düşen Ders</span><span class="info-box-number" style="font-size:1.1em;">${worstSub ? toTitleCase(worstSub.sub) : 'Veri Yok'}</span><span class="progress-description" style="font-size:0.9em;">${worstSub ? `${worstSub.diff.toFixed(2)} Net (${worstSub.fAvg.toFixed(2)} ➔ ${worstSub.lAvg.toFixed(2)})` : 'Karşılaştırma için veri yetersiz'}</span></div></div></div>
                   <div class="col-md-4 col-sm-12"><div class="info-box" style="background:#6c757d; color:#fff;"><span class="info-box-icon"><i class="fas fa-users text-white"></i></span><div class="info-box-content"><span class="info-box-text">Genel Katılım Oranı</span><span class="info-box-number" style="font-size:1.1em;">%${partRateGS}</span><span class="progress-description" style="font-size:0.9em; color:#e0e0e0;">${attendedCountGS} / ${baseCountGS} Katılım</span></div></div></div>
               </div>
+              <div id="genSummaryBPArea"></div>
               <div class="row mt-3">
                   <div class="col-lg-6"><div class="card shadow-sm avoid-break"><div class="card-header bg-success text-white"><h3 class="card-title m-0"><i class="fas fa-angle-double-up mr-1"></i> En Çok İlk 5'e Girenler</h3></div><div class="card-body p-0 table-responsive"><table class="table table-sm table-striped m-0" style="font-size:0.9em;"><thead><tr><th>Sıra</th><th>No</th><th>Ad Soyad</th><th>Sınıf</th><th>Sayı</th><th>Ort.Net</th><th>Ort.Puan</th></tr></thead><tbody>${top5Html}</tbody></table></div></div></div>
                   <div class="col-lg-6"><div class="card shadow-sm avoid-break"><div class="card-header bg-danger text-white"><h3 class="card-title m-0"><i class="fas fa-angle-double-down mr-1"></i> En Çok Son 5'e Girenler</h3></div><div class="card-body p-0 table-responsive"><table class="table table-sm table-striped m-0" style="font-size:0.9em;"><thead><tr><th>Sıra</th><th>No</th><th>Ad Soyad</th><th>Sınıf</th><th>Sayı</th><th>Ort.Net</th><th>Ort.Puan</th></tr></thead><tbody>${bottom5Html}</tbody></table></div></div></div>
               </div>
-              <div id="genSummaryBPArea"></div>
             </div>
         </div>`; r.innerHTML = h;
-        // Genel özet kutu grafiği — sınav bazlı net dağılımı
+        // Genel özet kutu grafiği — sınıf bazlı dağılım (Tümü dahil)
         setTimeout(() => {
           let bpArea = getEl('genSummaryBPArea');
           if(!bpArea) return;
-          // Her öğrencinin tüm sınavlardaki ortalama neti
           let stuAvgVals = Object.values(stuStats).filter(s => s.exList && s.exList.length > 0).map(s => s.avgNet);
-          // Sınıf bazlı dağılım
           let genClassMap = {};
           Object.values(stuStats).forEach(s => {
             if(!s.exList || !s.exList.length) return;
-            let cls = s.cls;
-            if(!genClassMap[cls]) genClassMap[cls] = [];
-            genClassMap[cls].push(s.avgNet);
+            if(!genClassMap[s.cls]) genClassMap[s.cls] = [];
+            genClassMap[s.cls].push(s.avgNet);
           });
-          if(stuAvgVals.length >= 3) {
-            let overallGSBP = mkBoxPlotSVG([{label:'Tümü', values:stuAvgVals, color:'#0d6efd'}], null, {height:180, title:'Genel Net Dağılımı (Öğrenci Ort. Bazlı)'});
-            let multiGSBP = Object.keys(genClassMap).filter(c=>genClassMap[c].length>=3).length >= 2 ? mkMultiClassBoxPlot(Object.fromEntries(Object.entries(genClassMap).filter(([c,v])=>v.length>=3)), null, {height:220}) : '';
-            bpArea.innerHTML = `<div class="row mt-2">
-              <div class="${multiGSBP ? 'col-md-4' : 'col-12'}"><div class="boxplot-card"><div class="boxplot-title"><i class="fas fa-box-open mr-1 text-primary"></i>Genel Net Dağılımı — Tüm Öğrenciler</div>${overallGSBP}</div></div>
-              ${multiGSBP ? `<div class="col-md-8"><div class="boxplot-card"><div class="boxplot-title"><i class="fas fa-box-open mr-1 text-success"></i>Sınıflar Arası Dağılım</div>${multiGSBP}</div></div>` : ''}
-            </div>`;
+          let validClsMap = Object.fromEntries(Object.entries(genClassMap).filter(([c,v])=>v.length>=3));
+          if(stuAvgVals.length >= 3 && Object.keys(validClsMap).length >= 1) {
+            let multiGSBP = mkMultiClassBoxPlot(validClsMap, null, {height:220}, stuAvgVals);
+            if(multiGSBP) {
+              bpArea.innerHTML = `<div class="boxplot-card mb-3"><div class="boxplot-title"><i class="fas fa-box-open mr-1 text-success"></i>Sınıflar Arası Dağılım — Öğrenci Ort. Bazlı</div>${multiGSBP}</div>`;
+            }
           }
         }, 50);
 
@@ -3166,14 +3217,14 @@ function rAnl(){
                 <div class="col-md-4 col-sm-12"><div class="info-box" style="background:#dc3545; color:#fff;"><span class="info-box-icon"><i class="fas fa-arrow-down"></i></span><div class="info-box-content"><span class="info-box-text">Ortalaması En Çok Düşen Ders</span><span class="info-box-number" style="font-size:1.1em;">${worstSub ? toTitleCase(worstSub.sub) : 'Veri Yok'}</span><span class="progress-description" style="font-size:0.9em;">${worstSub ? `${worstSub.diff.toFixed(2)} Net (${worstSub.prevAvg.toFixed(2)} ➔ ${worstSub.curAvg.toFixed(2)})` : 'Önceki sınav bulunamadı'}</span></div></div></div>
                 <div class="col-md-4 col-sm-12"><div class="info-box" style="background:#6c757d; color:#fff;"><span class="info-box-icon"><i class="fas fa-users text-white"></i></span><div class="info-box-content"><span class="info-box-text">Sınav Katılım Oranı</span><span class="info-box-number" style="font-size:1.1em;">%${partRateE}</span><span class="progress-description" style="font-size:0.9em; color:#e0e0e0;">${currentExams.length} / ${eligibleStusE.length} Öğrenci</span></div></div></div>
             </div>
+            <div id="examSummaryBPArea"></div>
             <div class="row mt-3">
                 <div class="col-lg-6"><div class="card shadow-sm avoid-break"><div class="card-header bg-success text-white"><h3 class="card-title m-0"><i class="fas fa-angle-double-up mr-1"></i> İlk 5 Öğrenci</h3></div><div class="card-body p-0 table-responsive"><table class="table table-sm table-striped m-0" style="font-size:0.9em;"><thead><tr><th>Sıra</th><th>No</th><th>Ad Soyad</th><th>Sınıf</th><th>Net</th><th>Puan</th></tr></thead><tbody>${top5Html}</tbody></table></div></div></div>
                 <div class="col-lg-6"><div class="card shadow-sm avoid-break"><div class="card-header bg-danger text-white"><h3 class="card-title m-0"><i class="fas fa-angle-double-down mr-1"></i> Son 5 Öğrenci</h3></div><div class="card-body p-0 table-responsive"><table class="table table-sm table-striped m-0" style="font-size:0.9em;"><thead><tr><th>Sıra</th><th>No</th><th>Ad Soyad</th><th>Sınıf</th><th>Net</th><th>Puan</th></tr></thead><tbody>${bottom5Html}</tbody></table></div></div></div>
             </div>
-            <div id="examSummaryBPArea"></div>
           </div>
       </div>`; r.innerHTML = h;
-      // Tek sınav kutu grafiği — sınıflar arası net dağılımı
+      // Tek sınav kutu grafiği — sınıflar arası net dağılımı (Tümü dahil)
       setTimeout(() => {
         let bpArea = getEl('examSummaryBPArea');
         if(!bpArea) return;
@@ -3183,13 +3234,12 @@ function rAnl(){
           examClassMap[e.studentClass].push(e.totalNet);
         });
         let allNets = currentExams.map(e => e.totalNet);
+        let validClasses = Object.fromEntries(Object.entries(examClassMap).filter(([c,v])=>v.length>=3));
         if(allNets.length >= 3) {
-          let overallBP = mkBoxPlotSVG([{label:'Tümü', values:allNets, color:'#17a2b8'}], null, {height:180, title:'Genel Net Dağılımı'});
-          let multiClsBP = Object.keys(examClassMap).filter(c=>examClassMap[c].length>=3).length >= 2 ? mkMultiClassBoxPlot(Object.fromEntries(Object.entries(examClassMap).filter(([c,v])=>v.length>=3)), null, {height:220}) : '';
-          bpArea.innerHTML = `<div class="row mt-2">
-            <div class="${multiClsBP ? 'col-md-4' : 'col-12'}"><div class="boxplot-card"><div class="boxplot-title"><i class="fas fa-box-open mr-1 text-info"></i>Net Dağılımı — Tüm Katılımcılar</div>${overallBP}</div></div>
-            ${multiClsBP ? `<div class="col-md-8"><div class="boxplot-card"><div class="boxplot-title"><i class="fas fa-box-open mr-1 text-success"></i>Sınıflar Arası Net Dağılımı</div>${multiClsBP}</div></div>` : ''}
-          </div>`;
+          let multiClsBP = Object.keys(validClasses).length >= 1 ? mkMultiClassBoxPlot(validClasses, null, {height:220}, allNets) : '';
+          if(multiClsBP) {
+            bpArea.innerHTML = `<div class="boxplot-card mb-3"><div class="boxplot-title"><i class="fas fa-box-open mr-1 text-success"></i>Sınıflar Arası Net Dağılımı</div>${multiClsBP}</div>`;
+          }
         }
       }, 50);
 
@@ -3375,7 +3425,7 @@ async function generateRapor() {
     let isLastStu = stuIdx === students.length - 1;
     let stGrade = getGrade(stu.class);
 
-    html += `<div class="student-rapor-wrapper" style="${isLastStu?'':'page-break-after:always;'}">`;
+    html += `<div class="student-rapor-wrapper">`;
     html += `<div class="report-header" style="margin-bottom:10px;"><span style="font-size:16px;"><i class="fas fa-user-graduate mr-2"></i><strong>${stu.name}</strong> — Genel Karne Özeti</span><span style="font-size:13px;">Sınıf: ${stu.class} | ${new Date().toLocaleDateString('tr-TR')}</span></div>`;
 
     typs.forEach(t => {
@@ -3413,14 +3463,14 @@ async function generateRapor() {
       
       let chartId = 'rKarneChart_' + stu.no.replace(/[^a-zA-Z0-9]/g,'_') + '_' + t.replace(/[^a-zA-Z0-9]/g,'_');
       let bpId = 'rBP_' + stu.no.replace(/[^a-zA-Z0-9]/g,'_') + '_' + t.replace(/[^a-zA-Z0-9]/g,'_');
-      html += `<div class="card shadow-sm mb-4 avoid-break exam-type-block" data-stu-name="${stu.name.replace(/"/g,'&quot;')}" data-stu-class="${stu.class}" style="border-top:3px solid #0d6efd;">
+      html += `<div class="card shadow-sm mb-4 exam-type-block${typs.indexOf(t)===0?' exam-type-first':''}" data-stu-name="${stu.name.replace(/"/g,'&quot;')}" data-stu-class="${stu.class}" style="border-top:3px solid #0d6efd;">
         <div class="card-header bg-light"><h3 class="card-title m-0" style="font-size:15px; font-weight:bold; color:#4a6fa5;"><i class="fas fa-book mr-2"></i>${t} Sınavları</h3></div>
         <div class="card-body p-2">
           ${cardsHtml}
           ${riskCardsHtml}
-          <div class="scroll"><table class="table table-sm table-bordered table-striped"><thead><tr><th>#</th><th>Tarih</th><th>Yayınevi</th>${sb.map(x=>`<th title="${toTitleCase(x)}">${abbrev(x)}</th>`).join('')}<th>Top.Net</th><th>Puan</th><th>Snf(S/K)</th><th>Okul(S/K)</th><th>İlçe(S/K)</th><th>İl(S/K)</th><th>Gen(S/K)</th></tr></thead><tbody>${karneRows}${avgRow}</tbody></table></div>
-          <div class="chart-box avoid-break" style="height:220px;margin-top:8px;"><canvas id="${chartId}"></canvas></div>
           <div id="${bpId}"></div>
+          <div class="scroll"><table class="table table-sm table-bordered table-striped"><thead><tr><th>#</th><th>Tarih</th><th>Yayınevi</th>${sb.map(x=>`<th title="${toTitleCase(x)}">${abbrev(x)}</th>`).join('')}<th>Top.Net</th><th>Puan</th><th>Snf(S/K)</th><th>Okul(S/K)</th><th>İlçe(S/K)</th><th>İl(S/K)</th><th>Gen(S/K)</th></tr></thead><tbody>${karneRows}${avgRow}</tbody></table></div>
+          <div class="chart-box avoid-break" style="height:190px;margin-top:6px;"><canvas id="${chartId}"></canvas></div>
         </div></div>`;
     });
     html += `</div>`;
