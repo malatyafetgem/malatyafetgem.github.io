@@ -479,17 +479,92 @@ body.is-admin button.btn-block.admin-only { display:block !important; }
             <div class="card" style="border-top:3px solid #e05260; box-shadow:0 2px 12px rgba(220,53,69,0.10);">
               <div class="card-header" style="background:linear-gradient(135deg,#fff0f2 0%,#fde8eb 100%);border-bottom:1px solid rgba(220,53,69,0.15);padding:10px 14px;">
                 <div class="risk-panel-header">
-                  <h6 style="color:#842029;"><i class="fas fa-shield-alt" style="color:#dc3545;"></i>Risk Altındaki Öğrenciler <span id="riskTotalBadge" style="background:rgba(220,53,69,0.12);color:#842029;padding:1px 8px;border-radius:12px;font-size:0.82em;font-weight:700;margin-left:4px;border:1px solid rgba(220,53,69,0.2);"></span></h6>
-                  <div class="risk-filter-bar">
-                    <select id="riskExTypeFilter" onchange="renderRiskPanel()" style="border-radius:6px;"><option value="">Tüm Sınav Türleri</option></select>
-                    <select id="riskGradeFilter" onchange="renderRiskPanel()" style="border-radius:6px;"><option value="">Tüm Sınıflar</option><option value="9">9. Sınıf</option><option value="10">10. Sınıf</option><option value="11">11. Sınıf</option><option value="12">12. Sınıf</option></select>
-                    <select id="riskBranchFilter" onchange="renderRiskPanel()" style="border-radius:6px;"><option value="">Tüm Şubeler</option><option value="A">A Şubesi</option><option value="B">B Şubesi</option><option value="C">C Şubesi</option><option value="D">D Şubesi</option></select>
-                    <select id="riskLevelFilter" onchange="renderRiskPanel()" style="border-radius:6px;"><option value="">Tüm Riskler</option><option value="high">🔴 Yüksek</option><option value="med">🟠 Orta</option><option value="low">🟡 Düşük</option></select>
-                  </div>
+                  <h6 style="color:#842029;"><i class="fas fa-shield-alt" style="color:#dc3545;"></i>Risk Analizi <span id="riskTotalBadge" style="background:rgba(220,53,69,0.12);color:#842029;padding:1px 8px;border-radius:12px;font-size:0.82em;font-weight:700;margin-left:4px;border:1px solid rgba(220,53,69,0.2);"></span></h6>
                 </div>
               </div>
               <div class="card-body" style="padding:12px 14px;">
-                <div class="risk-summary-bar" id="riskSummaryBar"></div>
+                <!-- Filtreler -->
+                <div class="row mb-3" id="riskFiltersRow">
+                  <div class="col-sm-6 col-md-3 mb-2">
+                    <label class="small font-weight-bold text-muted mb-1">Sınıf Seviyesi</label>
+                    <select id="riskGradeFilter" class="form-control form-control-sm" onchange="renderRiskPanel()">
+                      <option value="">Tüm Sınıflar</option>
+                      <option value="9">9. Sınıf</option>
+                      <option value="10">10. Sınıf</option>
+                      <option value="11">11. Sınıf</option>
+                      <option value="12">12. Sınıf</option>
+                    </select>
+                  </div>
+                  <div class="col-sm-6 col-md-3 mb-2">
+                    <label class="small font-weight-bold text-muted mb-1">Şube</label>
+                    <select id="riskBranchFilter" class="form-control form-control-sm" onchange="renderRiskPanel()">
+                      <option value="">Tüm Şubeler</option>
+                      <option value="A">A Şubesi</option>
+                      <option value="B">B Şubesi</option>
+                      <option value="C">C Şubesi</option>
+                      <option value="D">D Şubesi</option>
+                    </select>
+                  </div>
+                  <div class="col-sm-6 col-md-3 mb-2">
+                    <label class="small font-weight-bold text-muted mb-1">Sınav Türü</label>
+                    <select id="riskExTypeFilter" class="form-control form-control-sm" onchange="renderRiskPanel()">
+                      <option value="">Tüm Sınav Türleri</option>
+                    </select>
+                  </div>
+                  <div class="col-sm-6 col-md-3 mb-2">
+                    <label class="small font-weight-bold text-muted mb-1">Risk Türü</label>
+                    <select id="riskLevelFilter" class="form-control form-control-sm" onchange="renderRiskPanel()">
+                      <option value="">Tüm Riskler</option>
+                      <option value="high">🔴 Yüksek Risk</option>
+                      <option value="med">🟠 Orta Risk</option>
+                      <option value="low">🟡 Düşük Risk</option>
+                    </select>
+                  </div>
+                </div>
+                <!-- Özet Kartlar -->
+                <div class="row mb-3" id="riskStatCards">
+                  <div class="col-6 col-md-3 mb-2">
+                    <div class="info-box mb-0" style="min-height:64px;background:linear-gradient(135deg,#dc3545,#b02a37);color:#fff;border-radius:8px;cursor:pointer;" onclick="setRiskLevel('high')">
+                      <span class="info-box-icon" style="width:50px;font-size:1.2rem;color:#fff;background:rgba(0,0,0,0.15);border-radius:8px 0 0 8px;"><i class="fas fa-exclamation-circle"></i></span>
+                      <div class="info-box-content" style="padding:5px 10px;">
+                        <span class="info-box-text" style="font-size:0.72em;color:#fff;">Yüksek Risk</span>
+                        <span class="info-box-number" style="font-size:1.4em;color:#fff;" id="riskCardHigh">0</span>
+                        <span class="progress-description" style="font-size:0.7em;color:rgba(255,255,255,0.85);">öğrenci</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-6 col-md-3 mb-2">
+                    <div class="info-box mb-0" style="min-height:64px;background:linear-gradient(135deg,#fd7e14,#e06a10);color:#fff;border-radius:8px;cursor:pointer;" onclick="setRiskLevel('med')">
+                      <span class="info-box-icon" style="width:50px;font-size:1.2rem;color:#fff;background:rgba(0,0,0,0.15);border-radius:8px 0 0 8px;"><i class="fas fa-exclamation-triangle"></i></span>
+                      <div class="info-box-content" style="padding:5px 10px;">
+                        <span class="info-box-text" style="font-size:0.72em;color:#fff;">Orta Risk</span>
+                        <span class="info-box-number" style="font-size:1.4em;color:#fff;" id="riskCardMed">0</span>
+                        <span class="progress-description" style="font-size:0.7em;color:rgba(255,255,255,0.85);">öğrenci</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-6 col-md-3 mb-2">
+                    <div class="info-box mb-0" style="min-height:64px;background:linear-gradient(135deg,#ffc107,#d4a000);color:#fff;border-radius:8px;cursor:pointer;" onclick="setRiskLevel('low')">
+                      <span class="info-box-icon" style="width:50px;font-size:1.2rem;color:#fff;background:rgba(0,0,0,0.15);border-radius:8px 0 0 8px;"><i class="fas fa-info-circle"></i></span>
+                      <div class="info-box-content" style="padding:5px 10px;">
+                        <span class="info-box-text" style="font-size:0.72em;color:#212529;">Düşük Risk</span>
+                        <span class="info-box-number" style="font-size:1.4em;color:#212529;" id="riskCardLow">0</span>
+                        <span class="progress-description" style="font-size:0.7em;color:rgba(0,0,0,0.65);">öğrenci</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-6 col-md-3 mb-2">
+                    <div class="info-box mb-0" style="min-height:64px;background:linear-gradient(135deg,#0d6efd,#0a58ca);color:#fff;border-radius:8px;">
+                      <span class="info-box-icon" style="width:50px;font-size:1.2rem;color:#fff;background:rgba(0,0,0,0.15);border-radius:8px 0 0 8px;"><i class="fas fa-users"></i></span>
+                      <div class="info-box-content" style="padding:5px 10px;">
+                        <span class="info-box-text" style="font-size:0.72em;color:#fff;">Toplam Riskteki</span>
+                        <span class="info-box-number" style="font-size:1.4em;color:#fff;" id="riskCardTotal">0</span>
+                        <span class="progress-description" style="font-size:0.7em;color:rgba(255,255,255,0.85);">öğrenci</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Liste -->
                 <div class="risk-list-wrap" id="riskList"></div>
               </div>
             </div>
@@ -1029,9 +1104,9 @@ function calcRiskScores() {
     return m ? m[1] : '';
   }
 
-  // examType + grade kombinasyonlarını bul
+  // examType + grade kombinasyonlarını bul (tüm kayıtlar, abs dahil)
   let combos = new Set();
-  DB.e.filter(x=>!x.abs).forEach(x => {
+  DB.e.forEach(x => {
     let gr = gradeOf(x.studentNo);
     if(gr) combos.add(x.examType + '||' + gr);
   });
@@ -1041,9 +1116,14 @@ function calcRiskScores() {
   combos.forEach(combo => {
     let [eType, grade] = combo.split('||');
 
-    // Bu kombinasyona ait sınavlar
+    // Bu kombinasyona ait katılmış sınavlar (metrik hesabı için)
     let allExams = DB.e.filter(x => x.examType === eType && !x.abs && gradeOf(x.studentNo) === grade);
     if(allExams.length < 2) return;
+
+    // Bu kombinasyona ait TÜM öğrenciler (abs dahil) — katılım metrigi için
+    let allStuNosInCombo = [...new Set(
+      DB.e.filter(x => x.examType === eType && gradeOf(x.studentNo) === grade).map(x => x.studentNo)
+    )];
 
     let stuNos = [...new Set(allExams.map(x=>x.studentNo))];
 
@@ -1126,11 +1206,16 @@ function calcRiskScores() {
     });
 
     // ---- METRİK 4: KATILIM ORANI ----
-    let totalExamKeys = new Set(allExams.map(x=>x.date+'||'+(x.publisher||'')));
+    // Tüm unique sınav anahtarları (katılmamış öğrenciler dahil tüm kayıtlardan)
+    let totalExamKeys = new Set(
+      DB.e.filter(x => x.examType === eType && gradeOf(x.studentNo) === grade)
+          .map(x => x.date + '||' + (x.publisher || ''))
+    );
     let totalCount = totalExamKeys.size;
     if(totalCount < 2) return;
     let absMap = {};
-    stuNos.forEach(no => {
+    // Katılım hesabı: katılmış (abs=false) ve hiç katılmamış (abs=true) tüm öğrenciler dahil
+    allStuNosInCombo.forEach(no => {
       let attended = DB.e.filter(x=>x.studentNo===no&&x.examType===eType&&!x.abs).length;
       absMap[no] = attended / totalCount;
     });
@@ -1171,6 +1256,8 @@ function renderRiskPanel() {
   // Veri yoksa içeriği temizle ama paneli gizleme (uUI yönetiyor)
   if(!risks.length) {
     let listEl2 = getEl('riskList'); if(listEl2) listEl2.innerHTML = '<div class="risk-empty"><i class="fas fa-info-circle mr-2"></i>Henüz yeterli sınav verisi bulunmuyor.</div>';
+    ['riskCardHigh','riskCardMed','riskCardLow','riskCardTotal'].forEach(id => { let el=getEl(id); if(el) el.textContent='0'; });
+    let badge = getEl('riskTotalBadge'); if(badge) badge.textContent = '';
     return;
   }
 
@@ -1199,20 +1286,20 @@ function renderRiskPanel() {
     exTypeEl.innerHTML = '<option value="">Tüm Sınav Türleri</option>' + allTypes.map(t=>`<option value="${t}">${t}</option>`).join('');
   }
 
-  // Özet pills — filtreye göre sayılar değişir
+  // Özet kartlarını güncelle (filtreli sayılar)
   let hi = filtered.filter(r=>r.level==='high').length;
   let me = filtered.filter(r=>r.level==='med').length;
   let lo = filtered.filter(r=>r.level==='low').length;
-  let summBar = getEl('riskSummaryBar');
-  if(summBar) summBar.innerHTML = `
-    ${hi ? `<span class="risk-sum-pill rsp-high" style="cursor:pointer;" onclick="setRiskLevel('high')"><i class="fas fa-circle" style="font-size:0.6em;"></i> Yüksek Risk: <strong>${hi}</strong> öğrenci</span>` : ''}
-    ${me ? `<span class="risk-sum-pill rsp-med"  style="cursor:pointer;" onclick="setRiskLevel('med')"><i class="fas fa-circle" style="font-size:0.6em;"></i> Orta Risk: <strong>${me}</strong> öğrenci</span>` : ''}
-    ${lo ? `<span class="risk-sum-pill rsp-low"  style="cursor:pointer;" onclick="setRiskLevel('low')"><i class="fas fa-circle" style="font-size:0.6em;"></i> Düşük Risk: <strong>${lo}</strong> öğrenci</span>` : ''}
-  `;
+  let tot = filtered.length;
+  let cH=getEl('riskCardHigh'),cM=getEl('riskCardMed'),cL=getEl('riskCardLow'),cT=getEl('riskCardTotal');
+  if(cH) cH.textContent = hi;
+  if(cM) cM.textContent = me;
+  if(cL) cL.textContent = lo;
+  if(cT) cT.textContent = tot;
 
   // Badge toplam
   let badge = getEl('riskTotalBadge');
-  if(badge) badge.textContent = filtered.length + ' öğrenci';
+  if(badge) badge.textContent = tot + ' öğrenci riskte';
 
   // Uyarı kartları
   const levelIcon = { high:'fa-exclamation-circle', med:'fa-exclamation-triangle', low:'fa-info-circle' };
@@ -1888,6 +1975,57 @@ function calcKarneSummaryCards(stuNo, examType, grade, examsData) {
   return {stuAvg, genAvg, rank, totalStudents, classRank, classTotalStudents, partRate, attendedCount, totalExamCount, trend};
 }
 
+// Risk kartı oluşturucu: öğrenci için sınıf ve kurum bazlı risk bilgisi
+function buildRiskInfoCards(stuNo, examType, stuClass) {
+  let risks = (_riskCache && _riskCache.results) ? _riskCache.results : calcRiskScores();
+  let stuRisk = risks.find(r => r.no === stuNo && r.examTypes.includes(examType));
+  if(!stuRisk) return '';
+
+  const levelLabel = { high:'Yüksek Risk', med:'Orta Risk', low:'Düşük Risk' };
+  const levelColor = { high:'#dc3545', med:'#fd7e14', low:'#856404' };
+  const levelBg    = { high:'linear-gradient(135deg,#fff0f0,#ffd6d8)', med:'linear-gradient(135deg,#fff8f0,#ffe5cc)', low:'linear-gradient(135deg,#fffdf0,#fff3cc)' };
+  const levelBorder= { high:'#dc3545', med:'#fd7e14', low:'#ffc107' };
+  const typeIcon   = { trend:'fa-chart-line', rank:'fa-sort-amount-up', subj:'fa-book', abs:'fa-calendar-times' };
+  const typeLabel  = { trend:'Düşüş Trendi', rank:'Sıra Gerileme', subj:'Ders Düşüşü', abs:'Devamsızlık' };
+
+  // Bu sınav türüne ait flagler
+  let examFlags = stuRisk.flags.filter(f => f.examType === examType);
+  if(!examFlags.length) return '';
+
+  let badgesHtml = examFlags.map(f =>
+    `<span class="risk-badge rb-${f.type}" title="${f.detail}" style="font-size:0.72rem;padding:2px 8px;border-radius:20px;display:inline-flex;align-items:center;gap:3px;font-weight:600;margin:2px;">
+       <i class="fas ${typeIcon[f.type]}" style="font-size:0.75em;"></i>${typeLabel[f.type]}
+     </span>`
+  ).join('');
+
+  let col = levelColor[stuRisk.level];
+  let bg  = levelBg[stuRisk.level];
+  let brd = levelBorder[stuRisk.level];
+
+  let cardInner = `<div style="border:1px solid ${brd};border-radius:8px;background:${bg};padding:10px 13px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">
+      <div>
+        <span style="font-weight:700;font-size:0.9em;color:${col};">
+          <i class="fas fa-exclamation-triangle mr-1"></i>${levelLabel[stuRisk.level]}
+        </span>
+        <span style="margin-left:8px;font-size:0.78em;color:#6c757d;">Risk Puanı: <strong style="color:${col};">${stuRisk.score.toFixed(1)}</strong></span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:3px;">${badgesHtml}</div>
+    </div>
+  </div>`;
+
+  return `<div class="row mb-2">
+    <div class="col-md-6 mb-2">
+      <div style="font-size:0.78em;font-weight:700;color:#6c757d;margin-bottom:4px;"><i class="fas fa-school mr-1"></i>Sınıf Risk Analizi (${stuClass})</div>
+      ${cardInner}
+    </div>
+    <div class="col-md-6 mb-2">
+      <div style="font-size:0.78em;font-weight:700;color:#6c757d;margin-bottom:4px;"><i class="fas fa-building mr-1"></i>Kurum Risk Analizi</div>
+      ${cardInner}
+    </div>
+  </div>`;
+}
+
 function buildKarneExamCards(summary, examType) {
   if(!summary) return '';
   let {stuAvg, genAvg, rank, totalStudents, classRank, classTotalStudents, partRate, attendedCount, totalExamCount, trend} = summary;
@@ -1918,7 +2056,6 @@ function buildKarneExamCards(summary, examType) {
     </div></div>`;
   }
 
-  /* Sıralama: Ortalama Net | Katılım | Sınıf Derece | Kurum Derece */
   let cardsHtml = `<div class="row mb-2">
     <div class="col-md-3 col-sm-6">
       <div class="info-box" style="min-height:72px;background:linear-gradient(135deg,#198754,#20c997);color:#fff;">
@@ -1987,8 +2124,9 @@ function rH(){
     
     let summary = calcKarneSummaryCards(aNo, t, stGrade, el);
     let cardsHtml = buildKarneExamCards(summary, t);
+    let riskCardsHtml = buildRiskInfoCards(aNo, t, s.class);
     
-    h+=`<div class="karne-bolum exam-type-block" data-stu-name="${s.name.replace(/"/g,'&quot;')}" data-stu-class="${s.class}"><h5 class="mt-3 mb-2 text-primary border-bottom pb-2">${t} Sınavları</h5>${cardsHtml}<div class="scroll-hint"><i class="fas fa-arrows-alt-h mr-1"></i>Tabloyu kaydırın</div><div class="scroll"><table class="table table-sm table-bordered table-striped" data-sh="${t}"><thead><tr><th>#</th><th>Tarih</th><th>Yayınevi</th>${sb.map(x=>`<th title="${toTitleCase(x)}">${abbrevSub(x,shorten)}</th>`).join('')}<th>Top.Net</th><th>Puan</th><th>Snf(S/K)</th><th>Okul(S/K)</th><th>İlçe(S/K)</th><th>İl(S/K)</th><th>Gen(S/K)</th></tr></thead><tbody>`;
+    h+=`<div class="karne-bolum exam-type-block" data-stu-name="${s.name.replace(/"/g,'&quot;')}" data-stu-class="${s.class}"><h5 class="mt-3 mb-2 text-primary border-bottom pb-2">${t} Sınavları</h5>${cardsHtml}${riskCardsHtml}<div class="scroll-hint"><i class="fas fa-arrows-alt-h mr-1"></i>Tabloyu kaydırın</div><div class="scroll"><table class="table table-sm table-bordered table-striped" data-sh="${t}"><thead><tr><th>#</th><th>Tarih</th><th>Yayınevi</th>${sb.map(x=>`<th title="${toTitleCase(x)}">${abbrevSub(x,shorten)}</th>`).join('')}<th>Top.Net</th><th>Puan</th><th>Snf(S/K)</th><th>Okul(S/K)</th><th>İlçe(S/K)</th><th>İl(S/K)</th><th>Gen(S/K)</th></tr></thead><tbody>`;
     
     let kIdx = 1;
     el.forEach(e=>{
@@ -3049,6 +3187,7 @@ async function generateRapor() {
       
       let summary = calcKarneSummaryCards(stu.no, t, stGrade, el);
       let cardsHtml = buildKarneExamCards(summary, t);
+      let riskCardsHtml = buildRiskInfoCards(stu.no, t, stu.class);
       
       let karneRows = '', kIdx = 1;
       el.forEach(e => {
@@ -3081,6 +3220,7 @@ async function generateRapor() {
         <div class="card-header bg-light"><h3 class="card-title m-0" style="font-size:15px; font-weight:bold; color:#4a6fa5;"><i class="fas fa-book mr-2"></i>${t} Sınavları</h3></div>
         <div class="card-body p-2">
           ${cardsHtml}
+          ${riskCardsHtml}
           <div class="scroll"><table class="table table-sm table-bordered table-striped"><thead><tr><th>#</th><th>Tarih</th><th>Yayınevi</th>${sb.map(x=>`<th title="${toTitleCase(x)}">${abbrev(x)}</th>`).join('')}<th>Top.Net</th><th>Puan</th><th>Snf(S/K)</th><th>Okul(S/K)</th><th>İlçe(S/K)</th><th>İl(S/K)</th><th>Gen(S/K)</th></tr></thead><tbody>${karneRows}${avgRow}</tbody></table></div>
           <div class="chart-box avoid-break" style="height:220px;margin-top:8px;"><canvas id="${chartId}"></canvas></div>
           <div id="${bpId}"></div>
