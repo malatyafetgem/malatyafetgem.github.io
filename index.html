@@ -295,6 +295,46 @@ body.is-admin button.btn-block.admin-only { display:block !important; }
 .sys-mgmt-danger .btn-danger-modern { background: linear-gradient(135deg, #dc3545, #b02a37); color: #fff; border: none; border-radius: 8px; padding: 8px 16px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.2s; flex-shrink: 0; box-shadow: 0 2px 6px rgba(220,53,69,0.3); }
 .sys-mgmt-danger .btn-danger-modern:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(220,53,69,0.4); }
 
+/* ===== RİSK UYARI SİSTEMİ ===== */
+#riskPanel { margin-top: 14px; }
+.risk-panel-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.risk-panel-header h6 { margin: 0; font-weight: 700; color: #842029; font-size: 0.95rem; display: flex; align-items: center; gap: 7px; }
+.risk-filter-bar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.risk-filter-bar select { font-size: 0.8rem; padding: 3px 8px; border: 1px solid #ced4da; border-radius: 6px; background: #fff; color: #212529; }
+.risk-card { border-radius: 10px; border: 1px solid #f5c2c7; background: linear-gradient(135deg, #fff5f5 0%, #ffe9ec 100%); padding: 11px 14px; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 12px; cursor: pointer; transition: box-shadow 0.18s, transform 0.15s; }
+.risk-card:hover { box-shadow: 0 4px 14px rgba(220,53,69,0.18); transform: translateY(-1px); }
+.risk-card.risk-high { border-color: #dc3545; background: linear-gradient(135deg, #fff0f0, #ffd6d8); }
+.risk-card.risk-med  { border-color: #fd7e14; background: linear-gradient(135deg, #fff8f0, #ffe5cc); }
+.risk-card.risk-low  { border-color: #ffc107; background: linear-gradient(135deg, #fffdf0, #fff3cc); }
+.risk-avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1em; flex-shrink: 0; color: #fff; }
+.risk-high .risk-avatar { background: linear-gradient(135deg, #dc3545, #b02a37); }
+.risk-med  .risk-avatar { background: linear-gradient(135deg, #fd7e14, #e06a10); }
+.risk-low  .risk-avatar { background: linear-gradient(135deg, #ffc107, #d4a000); }
+.risk-body { flex: 1; min-width: 0; }
+.risk-name { font-weight: 700; font-size: 0.92rem; color: #212529; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.risk-class { font-size: 0.78rem; color: #6c757d; margin-bottom: 4px; }
+.risk-badges { display: flex; flex-wrap: wrap; gap: 4px; }
+.risk-badge { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; white-space: nowrap; }
+.rb-trend  { background: rgba(220,53,69,0.12);  color: #842029; }
+.rb-rank   { background: rgba(108,117,125,0.12); color: #495057; }
+.rb-subj   { background: rgba(111,66,193,0.12);  color: #4a1d8a; }
+.rb-abs    { background: rgba(255,193,7,0.18);   color: #664d03; }
+.risk-score-badge { flex-shrink: 0; text-align: center; }
+.risk-score-badge span { display: block; font-size: 1.3em; font-weight: 800; line-height: 1; }
+.risk-score-badge small { font-size: 0.68rem; color: #6c757d; display: block; margin-top: 2px; }
+.risk-high .risk-score-badge span { color: #dc3545; }
+.risk-med  .risk-score-badge span { color: #fd7e14; }
+.risk-low  .risk-score-badge span { color: #856404; }
+.risk-empty { text-align: center; padding: 18px 10px; color: #6c757d; font-size: 0.88rem; }
+.risk-summary-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.risk-sum-pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+.rsp-high { background: rgba(220,53,69,0.12);  color: #842029; border: 1px solid rgba(220,53,69,0.25); }
+.rsp-med  { background: rgba(253,126,20,0.12);  color: #7d3a00; border: 1px solid rgba(253,126,20,0.25); }
+.rsp-low  { background: rgba(255,193,7,0.15);   color: #664d03; border: 1px solid rgba(255,193,7,0.3); }
+.risk-list-wrap { max-height: 420px; overflow-y: auto; padding-right: 2px; }
+.risk-list-wrap::-webkit-scrollbar { width: 5px; } .risk-list-wrap::-webkit-scrollbar-thumb { background: #dee2e6; border-radius: 4px; }
+@media (max-width: 768px) { .risk-card { flex-wrap: wrap; } .risk-score-badge { order: -1; } }
+
 </style>
 </head>
 <body class="hold-transition sidebar-mini layout-fixed">
@@ -416,6 +456,24 @@ body.is-admin button.btn-block.admin-only { display:block !important; }
             <div class="col-md-3 col-sm-6 col-12 admin-only"><div class="info-box bg-warning" onclick="sTab('ayarlar', document.getElementById('nav-ayarlar'))" style="cursor:pointer; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'"><span class="info-box-icon"><i class="fas fa-cog text-white"></i></span><div class="info-box-content text-white"><span class="info-box-text">Ayarlar & Yükleme</span><span class="progress-description" style="font-size:0.8em;">Excel ile veri aktarımı</span></div></div></div>
           </div>
           <div class="card card-outline card-info"><div class="card-header"><h3 class="card-title"><i class="fas fa-tachometer-alt mr-2"></i>Sistem Özeti</h3></div><div class="card-body"><div class="row" id="dynamicStatsGrid"></div></div></div>
+
+          <!-- RİSK UYARI PANELİ -->
+          <div id="riskPanel" class="card" style="border-top:3px solid #dc3545; display:none;">
+            <div class="card-header" style="background:linear-gradient(135deg,#dc3545,#b02a37);border:none;">
+              <div class="risk-panel-header">
+                <h6 style="color:#fff;"><i class="fas fa-exclamation-triangle"></i>Risk Altındaki Öğrenciler <span id="riskTotalBadge" style="background:rgba(255,255,255,0.2);padding:1px 8px;border-radius:12px;font-size:0.82em;font-weight:600;margin-left:4px;"></span></h6>
+                <div class="risk-filter-bar">
+                  <select id="riskExTypeFilter" onchange="renderRiskPanel()" style="border-radius:6px;"><option value="">Tüm Sınav Türleri</option></select>
+                  <select id="riskClassFilter" onchange="renderRiskPanel()" style="border-radius:6px;"><option value="">Tüm Sınıflar</option></select>
+                  <select id="riskLevelFilter" onchange="renderRiskPanel()" style="border-radius:6px;"><option value="">Tüm Riskler</option><option value="high">🔴 Yüksek</option><option value="med">🟠 Orta</option><option value="low">🟡 Düşük</option></select>
+                </div>
+              </div>
+            </div>
+            <div class="card-body" style="padding:12px 14px;">
+              <div class="risk-summary-bar" id="riskSummaryBar"></div>
+              <div class="risk-list-wrap" id="riskList"></div>
+            </div>
+          </div>
         </div>
 
         <div id="anasayfa" class="pane">
@@ -906,6 +964,263 @@ function linRegSlope(values){
   return (n*sumXY - sumX*sumY) / denom;
 }
 
+// ===== RİSK UYARI SİSTEMİ =====
+/*
+  İstatistiksel eşik mantığı:
+  Her metrik için önce tüm öğrencilerin popülasyon değerleri hesaplanır.
+  Bir öğrenci, kendi değeri (popülasyon ortalaması - k×std) altındaysa uyarı alır.
+  k = 1.0 → alt %16 → "düşük risk"
+  k = 1.5 → alt %7  → "orta risk"
+  k = 2.0 → alt %2  → "yüksek risk"
+
+  Metrikler:
+  1. Trend skoru       : linRegSlope(son sınavlar) — negatif eğim kötüye gidiş
+  2. Sıralama gerileme : Kurum sırası z-skoru (yüksek sıra = kötü, bu metrikte ters)
+  3. Ders düşüşü       : Son sınavdaki her dersin z-skoru kendi popülasyonunda
+  4. Katılım oranı     : Katılım % z-skoru (düşük katılım = risk)
+*/
+
+let _riskCache = null; // { timestamp, results }
+
+function calcRiskScores() {
+  // Yeterli veri yoksa çalıştırma
+  if(!DB.e.length || !DB.s.length) return [];
+
+  // --- Yardımcı: popülasyon için ortalama ve std ---
+  function popStats(arr) {
+    let a = arr.filter(v => v !== null && !isNaN(v));
+    if(a.length < 2) return { mean: 0, std: 1 };
+    let mean = a.reduce((s,v)=>s+v,0)/a.length;
+    let variance = a.reduce((s,v)=>s+(v-mean)**2,0)/a.length;
+    return { mean, std: Math.sqrt(variance) || 1 };
+  }
+
+  // --- Yardımcı: z-skoru (negatif = kötü yön) ---
+  function zScore(val, mean, std, invertBad) {
+    // invertBad=true: yüksek değer kötü (sıralama, devamsızlık)
+    let z = (val - mean) / std;
+    return invertBad ? z : -z; // negatif çıktı = kötüye gidiş
+  }
+
+  let examTypes = [...new Set(Object.values(EXAM_META).map(m=>m.examType))];
+  let studentRisks = {}; // { studentNo: { flags: [], riskScore, level } }
+
+  examTypes.forEach(eType => {
+    let allExams = DB.e.filter(x => x.examType === eType && !x.abs);
+    if(allExams.length < 3) return; // bu sınav türünde yeterli veri yok
+
+    // Tüm öğrencileri bul
+    let stuNos = [...new Set(allExams.map(x=>x.studentNo))];
+
+    // ---- METRİK 1: TREND (linRegSlope) ----
+    let trendMap = {}; // stuNo -> slope
+    stuNos.forEach(no => {
+      let nets = DB.e.filter(x=>x.studentNo===no&&x.examType===eType&&!x.abs)
+                     .sort((a,b)=>srt(a.date,b.date)).map(x=>x.totalNet);
+      if(nets.length >= 3) trendMap[no] = linRegSlope(nets);
+    });
+    let trendVals = Object.values(trendMap);
+    if(trendVals.length >= 4) {
+      let ts = popStats(trendVals);
+      Object.entries(trendMap).forEach(([no, slope]) => {
+        // Negatif eğim = kötüye gidiş; z ne kadar negatifse o kadar kötü
+        let z = (slope - ts.mean) / ts.std; // düşük slope → negatif z
+        let severity = z < -2.0 ? 'high' : z < -1.5 ? 'med' : z < -1.0 ? 'low' : null;
+        if(severity) {
+          if(!studentRisks[no]) studentRisks[no] = { flags:[], examTypes: new Set() };
+          studentRisks[no].examTypes.add(eType);
+          let slopePretty = (slope>=0?'+':'')+slope.toFixed(2);
+          studentRisks[no].flags.push({ type:'trend', severity, examType:eType, detail:`${eType}: Net eğimi ${slopePretty}/sınav`, z });
+        }
+      });
+    }
+
+    // ---- METRİK 2: SIRALAMA GERİLEME ----
+    // Her öğrencinin son sınavdaki kurum sırası / toplam öğrenci oranı (0-1, yüksek = kötü)
+    let rankMap = {};
+    stuNos.forEach(no => {
+      let exams = DB.e.filter(x=>x.studentNo===no&&x.examType===eType&&!x.abs)
+                      .sort((a,b)=>srt(a.date,b.date));
+      if(!exams.length) return;
+      let last = exams[exams.length-1];
+      let iR = parseFloat(last.iR), iP = parseFloat(last.iP);
+      if(iR > 0 && iP > 0) rankMap[no] = iR / iP; // oran: yüksek kötü
+    });
+    let rankVals = Object.values(rankMap);
+    if(rankVals.length >= 4) {
+      let rs = popStats(rankVals);
+      Object.entries(rankMap).forEach(([no, ratio]) => {
+        let z = (ratio - rs.mean) / rs.std; // yüksek ratio (kötü sıra) → pozitif z → uyarı
+        let severity = z > 2.0 ? 'high' : z > 1.5 ? 'med' : z > 1.0 ? 'low' : null;
+        if(severity) {
+          if(!studentRisks[no]) studentRisks[no] = { flags:[], examTypes: new Set() };
+          studentRisks[no].examTypes.add(eType);
+          let last2 = DB.e.filter(x=>x.studentNo===no&&x.examType===eType&&!x.abs).sort((a,b)=>srt(a.date,b.date)).pop();
+          let rankStr = last2 ? `${last2.iR}/${last2.iP}` : '—';
+          studentRisks[no].flags.push({ type:'rank', severity, examType:eType, detail:`${eType}: Kurum sırası ${rankStr}`, z:z });
+        }
+      });
+    }
+
+    // ---- METRİK 3: DERS DÜŞÜŞÜ ----
+    // Son sınavdaki her ders netinin sınıf popülasyonu içindeki z-skoru
+    let lastDates = [...new Set(allExams.map(x=>x.date))].sort(srt);
+    let lastDate = lastDates[lastDates.length-1];
+    let lastExams = allExams.filter(x=>x.date===lastDate);
+    if(lastExams.length >= 4) {
+      let allSubjs = [...new Set(lastExams.flatMap(x=>Object.keys(x.subs||{})))];
+      allSubjs.forEach(subj => {
+        let subjVals = lastExams.map(x => x.subs[subj]!==undefined ? x.subs[subj].net : null).filter(v=>v!==null);
+        if(subjVals.length < 4) return;
+        let ss = popStats(subjVals);
+        lastExams.forEach(ex => {
+          if(!ex.subs[subj]) return;
+          let val = ex.subs[subj].net;
+          let z = (val - ss.mean) / ss.std;
+          let severity = z < -2.0 ? 'high' : z < -1.5 ? 'med' : z < -1.0 ? 'low' : null;
+          if(severity) {
+            let no = ex.studentNo;
+            if(!studentRisks[no]) studentRisks[no] = { flags:[], examTypes: new Set() };
+            studentRisks[no].examTypes.add(eType);
+            studentRisks[no].flags.push({ type:'subj', severity, examType:eType, detail:`${eType}/${toTitleCase(subj)}: ${val.toFixed(1)} net (ort. ${ss.mean.toFixed(1)})`, z });
+          }
+        });
+      });
+    }
+
+    // ---- METRİK 4: KATILIM ORANI ----
+    let totalExamKeys = new Set(allExams.map(x=>x.date+'||'+(x.publisher||'')));
+    let totalCount = totalExamKeys.size;
+    if(totalCount < 2) return;
+    let absMap = {};
+    stuNos.forEach(no => {
+      let attended = DB.e.filter(x=>x.studentNo===no&&x.examType===eType&&!x.abs).length;
+      absMap[no] = attended / totalCount;
+    });
+    let absVals = Object.values(absMap);
+    if(absVals.length >= 4) {
+      let as = popStats(absVals);
+      Object.entries(absMap).forEach(([no, rate]) => {
+        let z = (rate - as.mean) / as.std;
+        let severity = z < -2.0 ? 'high' : z < -1.5 ? 'med' : z < -1.0 ? 'low' : null;
+        if(severity) {
+          if(!studentRisks[no]) studentRisks[no] = { flags:[], examTypes: new Set() };
+          studentRisks[no].examTypes.add(eType);
+          let attended = DB.e.filter(x=>x.studentNo===no&&x.examType===eType&&!x.abs).length;
+          studentRisks[no].flags.push({ type:'abs', severity, examType:eType, detail:`${eType}: Katılım %${Math.round(rate*100)} (${attended}/${totalCount} sınav)`, z });
+        }
+      });
+    }
+  });
+
+  // --- Risk seviyesi ve skor hesapla ---
+  const sevW = { high: 3, med: 2, low: 1 };
+  let results = [];
+  Object.entries(studentRisks).forEach(([no, data]) => {
+    let stu = DB.s.find(x=>x.no===no); if(!stu) return;
+    // Ağırlıklı risk skoru: her flag'in z büyüklüğü × ağırlık
+    let score = data.flags.reduce((s,f) => s + sevW[f.severity] * Math.abs(f.z), 0);
+    // En kötü tek flag seviyesi
+    let topLevel = data.flags.some(f=>f.severity==='high') ? 'high'
+                 : data.flags.some(f=>f.severity==='med')  ? 'med'  : 'low';
+    // Öğrencinin aktif sınav türlerini de sakla
+    let examTypesArr = [...(data.examTypes||[])].sort();
+    results.push({ no, name: stu.name, cls: stu.class, score, level: topLevel, flags: data.flags, examTypes: examTypesArr });
+  });
+
+  // Skora göre azalan sırala
+  results.sort((a,b) => b.score - a.score);
+  _riskCache = { ts: Date.now(), results };
+  return results;
+}
+
+function renderRiskPanel() {
+  let panelEl = getEl('riskPanel'); if(!panelEl) return;
+  let risks = (_riskCache && _riskCache.results) ? _riskCache.results : calcRiskScores();
+  if(!risks.length) { panelEl.style.display='none'; return; }
+
+  // Filtreler
+  let exTypeF = (getEl('riskExTypeFilter')||{}).value || '';
+  let classF  = (getEl('riskClassFilter')||{}).value  || '';
+  let levelF  = (getEl('riskLevelFilter')||{}).value  || '';
+
+  let filtered = risks.filter(r => {
+    if(exTypeF && !r.examTypes.includes(exTypeF)) return false;
+    if(classF  && r.cls !== classF) return false;
+    if(levelF  && r.level !== levelF) return false;
+    return true;
+  });
+
+  // Filtre dropdown'larını doldur (ilk çalışmada)
+  let exTypeEl = getEl('riskExTypeFilter'), classEl = getEl('riskClassFilter');
+  if(exTypeEl && exTypeEl.options.length <= 1) {
+    let allTypes = [...new Set(risks.flatMap(r=>r.examTypes))].sort();
+    exTypeEl.innerHTML = '<option value="">Tüm Sınav Türleri</option>' + allTypes.map(t=>`<option value="${t}">${t}</option>`).join('');
+  }
+  if(classEl && classEl.options.length <= 1) {
+    let allCls = [...new Set(risks.map(r=>r.cls))].sort();
+    classEl.innerHTML = '<option value="">Tüm Sınıflar</option>' + allCls.map(c=>`<option value="${c}">${c}</option>`).join('');
+  }
+
+  // Özet pills
+  let hi = risks.filter(r=>r.level==='high').length;
+  let me = risks.filter(r=>r.level==='med').length;
+  let lo = risks.filter(r=>r.level==='low').length;
+  let summBar = getEl('riskSummaryBar');
+  if(summBar) summBar.innerHTML = `
+    ${hi ? `<span class="risk-sum-pill rsp-high"><i class="fas fa-circle" style="font-size:0.6em;"></i> Yüksek Risk: <strong>${hi}</strong> öğrenci</span>` : ''}
+    ${me ? `<span class="risk-sum-pill rsp-med"><i class="fas fa-circle" style="font-size:0.6em;"></i> Orta Risk: <strong>${me}</strong> öğrenci</span>` : ''}
+    ${lo ? `<span class="risk-sum-pill rsp-low"><i class="fas fa-circle" style="font-size:0.6em;"></i> Düşük Risk: <strong>${lo}</strong> öğrenci</span>` : ''}
+  `;
+
+  // Badge toplam
+  let badge = getEl('riskTotalBadge');
+  if(badge) badge.textContent = filtered.length + ' öğrenci';
+
+  // Uyarı kartları
+  const levelIcon = { high:'fa-exclamation-circle', med:'fa-exclamation-triangle', low:'fa-info-circle' };
+  const typeIcon  = { trend:'fa-chart-line', rank:'fa-sort-amount-up', subj:'fa-book', abs:'fa-calendar-times' };
+  const typeLabel = { trend:'Düşüş Trendi', rank:'Sıra Gerileme', subj:'Ders Düşüşü', abs:'Devamsızlık' };
+
+  let listEl = getEl('riskList');
+  if(!filtered.length) {
+    listEl.innerHTML = `<div class="risk-empty"><i class="fas fa-filter mr-2"></i>Seçili filtreye uyan riskli öğrenci bulunamadı.</div>`;
+    panelEl.style.display='block'; return;
+  }
+
+  // Benzersiz flag türlerini grupla (bir öğrenci için en kötü flag önce)
+  let html = filtered.map(r => {
+    // Her flag türünden en kötü birini göster (max 4 rozet)
+    let seen = new Set();
+    let topFlags = r.flags.filter(f => { let k=f.type+'|'+f.examType; if(seen.has(k)) return false; seen.add(k); return true; })
+                          .sort((a,b) => sevW[b.severity]-sevW[a.severity]).slice(0,4);
+    let badgesHtml = topFlags.map(f =>
+      `<span class="risk-badge rb-${f.type}" title="${f.detail}"><i class="fas ${typeIcon[f.type]}" style="font-size:0.8em;"></i>${typeLabel[f.type]}</span>`
+    ).join('');
+    return `<div class="risk-card risk-${r.level}" onclick="goToStudent('${r.no}')">
+      <div class="risk-avatar"><i class="fas ${levelIcon[r.level]}"></i></div>
+      <div class="risk-body">
+        <div class="risk-name">${r.name}</div>
+        <div class="risk-class"><i class="fas fa-school mr-1" style="font-size:0.75em;"></i>${r.cls} &nbsp;·&nbsp; ${r.examTypes.join(', ')}</div>
+        <div class="risk-badges">${badgesHtml}</div>
+      </div>
+      <div class="risk-score-badge">
+        <span>${r.score.toFixed(1)}</span>
+        <small>risk puanı</small>
+      </div>
+    </div>`;
+  }).join('');
+  listEl.innerHTML = html;
+  panelEl.style.display = 'block';
+}
+
+function goToStudent(no) {
+  sAct(no, true);
+  // Öğrenci sekmesine geç
+  let navEl = getEl('nav-anasayfa');
+  sTab('anasayfa', navEl);
+}
+
 // ===== KUTU GRAFİĞİ HESAPLAMA & ÇİZİM =====
 function calcBoxPlot(values) {
   // null/undefined önce filtrele, sonra sayıya çevir (Number(null)=0 tuzağından kaçın)
@@ -1224,6 +1539,9 @@ function uStat(){
   let h='',i=0;
   for(const [t,count] of Object.entries(u)){ h+=`<div class="col-md-3 col-sm-6 col-12"><div class="info-box mb-3"><span class="info-box-icon bg-${cl[i%cl.length]} elevation-1"><i class="${ic[i%ic.length]}"></i></span><div class="info-box-content"><span class="info-box-text">${t} Sınavı</span><span class="info-box-number">${count} <small>deneme</small></span></div></div></div>`; i++; }
   if(g)g.innerHTML=h;
+  // Risk panelini hesapla ve göster (önbellek geçersizleştir)
+  _riskCache = null;
+  setTimeout(() => renderRiskPanel(), 50);
 }
 
 function uDrp(){
