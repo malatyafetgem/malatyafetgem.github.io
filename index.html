@@ -455,25 +455,6 @@ body.is-admin button.btn-block.admin-only { display:block !important; }
             <div class="col-md-3 col-sm-6 col-12"><div class="info-box bg-info" onclick="sTab('rapor', document.getElementById('nav-rapor'))" style="cursor:pointer; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'"><span class="info-box-icon"><i class="fas fa-file-alt"></i></span><div class="info-box-content"><span class="info-box-text">Toplu Rapor</span><span class="progress-description" style="font-size:0.8em;">Sınıf karneleri yazdır</span></div></div></div>
             <div class="col-md-3 col-sm-6 col-12 admin-only"><div class="info-box bg-warning" onclick="sTab('ayarlar', document.getElementById('nav-ayarlar'))" style="cursor:pointer; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'"><span class="info-box-icon"><i class="fas fa-cog text-white"></i></span><div class="info-box-content text-white"><span class="info-box-text">Ayarlar & Yükleme</span><span class="progress-description" style="font-size:0.8em;">Excel ile veri aktarımı</span></div></div></div>
           </div>
-          <!-- RİSK UYARI PANELİ -->
-          <div id="riskPanel" class="card" style="border-top:3px solid #e05260; display:none; box-shadow:0 2px 12px rgba(220,53,69,0.10);">
-            <div class="card-header" style="background:linear-gradient(135deg,#fff0f2 0%,#fde8eb 100%);border-bottom:1px solid rgba(220,53,69,0.15);padding:10px 14px;">
-              <div class="risk-panel-header">
-                <h6 style="color:#842029;"><i class="fas fa-shield-alt" style="color:#dc3545;"></i>Risk Altındaki Öğrenciler <span id="riskTotalBadge" style="background:rgba(220,53,69,0.12);color:#842029;padding:1px 8px;border-radius:12px;font-size:0.82em;font-weight:700;margin-left:4px;border:1px solid rgba(220,53,69,0.2);"></span></h6>
-                <div class="risk-filter-bar">
-                  <select id="riskExTypeFilter" onchange="renderRiskPanel()" style="border-radius:6px;"><option value="">Tüm Sınav Türleri</option></select>
-                  <select id="riskGradeFilter" onchange="renderRiskPanel()" style="border-radius:6px;"><option value="">Tüm Sınıflar</option><option value="9">9. Sınıf</option><option value="10">10. Sınıf</option><option value="11">11. Sınıf</option><option value="12">12. Sınıf</option></select>
-                  <select id="riskBranchFilter" onchange="renderRiskPanel()" style="border-radius:6px;"><option value="">Tüm Şubeler</option><option value="A">A Şubesi</option><option value="B">B Şubesi</option><option value="C">C Şubesi</option><option value="D">D Şubesi</option></select>
-                  <select id="riskLevelFilter" onchange="renderRiskPanel()" style="border-radius:6px;"><option value="">Tüm Riskler</option><option value="high">🔴 Yüksek</option><option value="med">🟠 Orta</option><option value="low">🟡 Düşük</option></select>
-                </div>
-              </div>
-            </div>
-            <div class="card-body" style="padding:12px 14px;">
-              <div class="risk-summary-bar" id="riskSummaryBar"></div>
-              <div class="risk-list-wrap" id="riskList"></div>
-            </div>
-          </div>
-
           <div class="card card-outline card-info"><div class="card-header"><h3 class="card-title"><i class="fas fa-tachometer-alt mr-2"></i>Sistem Özeti</h3></div><div class="card-body"><div class="row" id="dynamicStatsGrid"></div></div></div>
         </div>
 
@@ -484,7 +465,7 @@ body.is-admin button.btn-block.admin-only { display:block !important; }
 
         <div id="sonuclar" class="pane">
           <div class="card card-primary card-outline"><div class="card-header"><h3 class="card-title"><i class="fas fa-filter mr-2"></i>Analiz Filtreleri</h3></div><div class="card-body"><div class="row">
-            <div class="col-sm-6 col-md-4 col-lg-2"><div class="form-group"><label>Analiz Türü</label><select id="aType" class="form-control" onchange="reqUI()"><option value="student">Öğrenci Analizi</option><option value="class">Sınıf Analizi</option><option value="subject">Ders Analizi</option><option value="examdetail">Sınav Analizi</option></select></div></div>
+            <div class="col-sm-6 col-md-4 col-lg-2"><div class="form-group"><label>Analiz Türü</label><select id="aType" class="form-control" onchange="reqUI()"><option value="student">Öğrenci Analizi</option><option value="class">Sınıf Analizi</option><option value="subject">Ders Analizi</option><option value="examdetail">Sınav Analizi</option><option value="risk">Risk Analizi</option></select></div></div>
             <div class="col-sm-6 col-md-4 col-lg-3" id="gStu"><div class="form-group"><label>Öğrenci Seçin</label><div id="anlStuSearchWrapper"><div class="input-group"><input type="text" id="anlStuInp" class="form-control" placeholder="Ad, soyad veya numara..." onkeyup="anlStuDoSearch()" autocomplete="off"><div class="input-group-append"><button class="btn btn-outline-secondary" onclick="anlStuClear()" style="border-color:#ced4da;"><i class="fas fa-times"></i></button></div></div><div id="anlStuRes"></div></div><div id="anlStuBadge"></div></div></div>
             <div class="col-sm-6 col-md-4 col-lg-2" id="gLvl" style="display:none;"><div class="form-group"><label>Sınıf Seviyesi</label><select id="aLvl" class="form-control" onchange="onLvlChange()"><option value="" disabled selected>Sınıf Seviyesi Seç</option></select></div></div>
             <div class="col-sm-6 col-md-4 col-lg-1" id="gBr" style="display:none;"><div class="form-group"><label>Şube</label><select id="aBr" class="form-control" onchange="onBrChange()"><option value="" disabled selected>Şube Seç</option></select></div></div>
@@ -493,6 +474,26 @@ body.is-admin button.btn-block.admin-only { display:block !important; }
             <div class="col-sm-6 col-md-4 col-lg-2" id="gSub" style="display:none;"><div class="form-group"><label id="lblSub">Veri</label><select id="aSub" class="form-control" onchange="handleSubChange()"></select></div></div>
           </div></div></div>
           <div id="anlRes"></div>
+          <!-- RİSK ANALİZİ PANELİ -->
+          <div id="riskPanel" style="display:none;">
+            <div class="card" style="border-top:3px solid #e05260; box-shadow:0 2px 12px rgba(220,53,69,0.10);">
+              <div class="card-header" style="background:linear-gradient(135deg,#fff0f2 0%,#fde8eb 100%);border-bottom:1px solid rgba(220,53,69,0.15);padding:10px 14px;">
+                <div class="risk-panel-header">
+                  <h6 style="color:#842029;"><i class="fas fa-shield-alt" style="color:#dc3545;"></i>Risk Altındaki Öğrenciler <span id="riskTotalBadge" style="background:rgba(220,53,69,0.12);color:#842029;padding:1px 8px;border-radius:12px;font-size:0.82em;font-weight:700;margin-left:4px;border:1px solid rgba(220,53,69,0.2);"></span></h6>
+                  <div class="risk-filter-bar">
+                    <select id="riskExTypeFilter" onchange="renderRiskPanel()" style="border-radius:6px;"><option value="">Tüm Sınav Türleri</option></select>
+                    <select id="riskGradeFilter" onchange="renderRiskPanel()" style="border-radius:6px;"><option value="">Tüm Sınıflar</option><option value="9">9. Sınıf</option><option value="10">10. Sınıf</option><option value="11">11. Sınıf</option><option value="12">12. Sınıf</option></select>
+                    <select id="riskBranchFilter" onchange="renderRiskPanel()" style="border-radius:6px;"><option value="">Tüm Şubeler</option><option value="A">A Şubesi</option><option value="B">B Şubesi</option><option value="C">C Şubesi</option><option value="D">D Şubesi</option></select>
+                    <select id="riskLevelFilter" onchange="renderRiskPanel()" style="border-radius:6px;"><option value="">Tüm Riskler</option><option value="high">🔴 Yüksek</option><option value="med">🟠 Orta</option><option value="low">🟡 Düşük</option></select>
+                  </div>
+                </div>
+              </div>
+              <div class="card-body" style="padding:12px 14px;">
+                <div class="risk-summary-bar" id="riskSummaryBar"></div>
+                <div class="risk-list-wrap" id="riskList"></div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div id="rapor" class="pane">
@@ -819,6 +820,9 @@ async function reqProfile() {
 async function reqAnl() {
   let eT = getEl('aEx').value, dt = getEl('aDate') ? getEl('aDate').value : '', aT = getEl('aType').value, sub = getEl('aSub') ? getEl('aSub').value : '';
   let needed = [];
+
+  // Risk analizi modu: fetch gerekmez, renderRiskPanel zaten uUI'dan çağrılıyor
+  if(aT === 'risk') return;
 
   if(!eT){ getEl('anlRes').innerHTML=''; return; }
 
@@ -1164,7 +1168,11 @@ function calcRiskScores() {
 function renderRiskPanel() {
   let panelEl = getEl('riskPanel'); if(!panelEl) return;
   let risks = (_riskCache && _riskCache.results) ? _riskCache.results : calcRiskScores();
-  if(!risks.length) { panelEl.style.display='none'; return; }
+  // Veri yoksa içeriği temizle ama paneli gizleme (uUI yönetiyor)
+  if(!risks.length) {
+    let listEl2 = getEl('riskList'); if(listEl2) listEl2.innerHTML = '<div class="risk-empty"><i class="fas fa-info-circle mr-2"></i>Henüz yeterli sınav verisi bulunmuyor.</div>';
+    return;
+  }
 
   // Filtreler
   let exTypeF = (getEl('riskExTypeFilter')||{}).value || '';
@@ -1214,7 +1222,7 @@ function renderRiskPanel() {
   let listEl = getEl('riskList');
   if(!filtered.length) {
     listEl.innerHTML = `<div class="risk-empty"><i class="fas fa-filter mr-2"></i>Seçili filtreye uyan riskli öğrenci bulunamadı.</div>`;
-    panelEl.style.display='block'; return;
+    return;
   }
 
   // Benzersiz flag türlerini grupla (bir öğrenci için en kötü flag önce)
@@ -1240,7 +1248,6 @@ function renderRiskPanel() {
     </div>`;
   }).join('');
   listEl.innerHTML = html;
-  panelEl.style.display = 'block';
 }
 
 function setRiskLevel(level) {
@@ -1753,45 +1760,59 @@ function uExamDates(){
 
 function uUI(){
   let t=getEl('aType').value;
+  let isRisk = t === 'risk';
+
+  // Risk modunda ana filtre alanlarını gizle, diğerlerinde normal davran
   getEl('gStu').style.display=(t==='student')?'block':'none';
   getEl('gLvl').style.display=(t==='class'||t==='examdetail'||t==='subject')?'block':'none';
   getEl('gBr').style.display=(t==='class'||t==='subject'||t==='examdetail')?'block':'none';
 
-  // gDate ve gSub görünürlüğü ve etiketleri
-  // Sınıf/Ders Analizi: Sınav Seç her zaman görünür, Veri de görünür
-  // Sınav Analizi: Veri seçimine göre gDate görünür
-  // Öğrenci Analizi: Sınav Seç gizli, Veri görünür
-  if(t==='class'){
-    getEl('gDate').style.display='block';
-    let dateLbl=getEl('lblDate'); if(dateLbl) dateLbl.textContent='Sınav Seç';
-    getEl('gSub').style.display='block'; getEl('lblSub').textContent='Veri';
-  } else if(t==='subject'){
-    getEl('gDate').style.display='block';
-    let dateLbl=getEl('lblDate'); if(dateLbl) dateLbl.textContent='Sınav Seç';
-    getEl('gSub').style.display='block'; getEl('lblSub').textContent='Ders';
-  } else if(t==='examdetail'){
-    getEl('gSub').style.display='block'; getEl('lblSub').textContent='Veri';
-    // gDate: Veri seçimi 'general_summary' veya 'list_all' ise gizle, aksi halde göster
-    let sub=getEl('aSub')?getEl('aSub').value:'';
-    getEl('gDate').style.display=(sub==='general_summary'||sub==='list_all')?'none':'block';
-    let dateLbl=getEl('lblDate'); if(dateLbl) dateLbl.textContent='Sınav Seç';
-  } else if(t==='student'){
-    getEl('gDate').style.display='none';
-    getEl('gSub').style.display='block'; getEl('lblSub').textContent='Veri';
-  }
+  // Risk modunda sınav türü, tarih, veri filtrelerini gizle
+  let aExWrapper = getEl('aEx') ? getEl('aEx').closest('.form-group').parentElement : null;
+  if(aExWrapper) aExWrapper.style.display = isRisk ? 'none' : '';
+  getEl('gDate').style.display = isRisk ? 'none' : (t==='student' ? 'none' : 'block');
+  getEl('gSub').style.display = isRisk ? 'none' : 'block';
 
-  if(t==='class'){
-    let l=new Set(),b=new Set(); DB.s.forEach(s=>{let m=s.class.match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/);if(m){l.add(m[1]);b.add(m[2].toLocaleUpperCase('tr-TR'));}});
-    let _pL=getEl('aLvl').value, _pB=getEl('aBr').value;
-    getEl('aLvl').innerHTML=`<option value="" disabled${_pL?'':' selected'}>Sınıf Seviyesi Seç</option>`+[...l].sort((a,b)=>parseInt(a)-parseInt(b)).map(x=>`<option value="${x}">${x}. Sınıf</option>`).join('');
-    if(_pL && [...l].includes(_pL)) getEl('aLvl').value=_pL;
-  } else if (t==='examdetail' || t==='subject') {
-    let l=new Set(); DB.s.forEach(s=>{ let m=s.class.match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/); if(m) l.add(m[1]); });
-    let _pL=getEl('aLvl').value;
-    getEl('aLvl').innerHTML=`<option value="" disabled${_pL?'':' selected'}>Sınıf Seviyesi Seç</option>`+[...l].sort((a,b)=>parseInt(a)-parseInt(b)).map(x=>`<option value="${x}">${x}. Sınıf</option>`).join('');
-    if(_pL && [...l].includes(_pL)) getEl('aLvl').value=_pL;
+  // anlRes ve riskPanel görünürlüğü
+  getEl('anlRes').style.display = isRisk ? 'none' : 'block';
+  getEl('riskPanel').style.display = isRisk ? 'block' : 'none';
+
+  if(!isRisk){
+    // gDate ve gSub görünürlüğü ve etiketleri
+    if(t==='class'){
+      getEl('gDate').style.display='block';
+      let dateLbl=getEl('lblDate'); if(dateLbl) dateLbl.textContent='Sınav Seç';
+      getEl('gSub').style.display='block'; getEl('lblSub').textContent='Veri';
+    } else if(t==='subject'){
+      getEl('gDate').style.display='block';
+      let dateLbl=getEl('lblDate'); if(dateLbl) dateLbl.textContent='Sınav Seç';
+      getEl('gSub').style.display='block'; getEl('lblSub').textContent='Ders';
+    } else if(t==='examdetail'){
+      getEl('gSub').style.display='block'; getEl('lblSub').textContent='Veri';
+      let sub=getEl('aSub')?getEl('aSub').value:'';
+      getEl('gDate').style.display=(sub==='general_summary'||sub==='list_all')?'none':'block';
+      let dateLbl=getEl('lblDate'); if(dateLbl) dateLbl.textContent='Sınav Seç';
+    } else if(t==='student'){
+      getEl('gDate').style.display='none';
+      getEl('gSub').style.display='block'; getEl('lblSub').textContent='Veri';
+    }
+
+    if(t==='class'){
+      let l=new Set(),b=new Set(); DB.s.forEach(s=>{let m=s.class.match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/);if(m){l.add(m[1]);b.add(m[2].toLocaleUpperCase('tr-TR'));}});
+      let _pL=getEl('aLvl').value, _pB=getEl('aBr').value;
+      getEl('aLvl').innerHTML=`<option value="" disabled${_pL?'':' selected'}>Sınıf Seviyesi Seç</option>`+[...l].sort((a,b)=>parseInt(a)-parseInt(b)).map(x=>`<option value="${x}">${x}. Sınıf</option>`).join('');
+      if(_pL && [...l].includes(_pL)) getEl('aLvl').value=_pL;
+    } else if (t==='examdetail' || t==='subject') {
+      let l=new Set(); DB.s.forEach(s=>{ let m=s.class.match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/); if(m) l.add(m[1]); });
+      let _pL=getEl('aLvl').value;
+      getEl('aLvl').innerHTML=`<option value="" disabled${_pL?'':' selected'}>Sınıf Seviyesi Seç</option>`+[...l].sort((a,b)=>parseInt(a)-parseInt(b)).map(x=>`<option value="${x}">${x}. Sınıf</option>`).join('');
+      if(_pL && [...l].includes(_pL)) getEl('aLvl').value=_pL;
+    }
+    uBranches(); uExamTypes(); uExamDates(); uSub();
+  } else {
+    // Risk modunda filtreleri render et
+    renderRiskPanel();
   }
-  uBranches(); uExamTypes(); uExamDates(); uSub();
 }
 
 function handleSubChange(){ 
@@ -2075,6 +2096,7 @@ function buildStuBoxPlots(stuNo, examType, stuClass, stuGrade, sb) {
 
 function rAnl(){
   let aT=getEl('aType').value,eT=getEl('aEx').value, sb=getEl('aSub')?getEl('aSub').value:'', r=getEl('anlRes');
+  if(aT === 'risk') return; // Risk analizi renderRiskPanel tarafından yönetilir
   if(c.a){ c.a.destroy(); c.a=null; } clearTimeout(chartTimer); 
   if(!eT){r.innerHTML='<div class="alert alert-default-info">Sınav verisi yok.</div>';return;}
   // (placeholder kept; user must explicitly choose data type)
