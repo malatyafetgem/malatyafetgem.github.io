@@ -1293,10 +1293,10 @@ function calcKarneSummaryCards(stuNo, examType, grade, examsData) {
   let attended = examsData.filter(e => !e.abs);
   if(!attended.length) return null;
   let stuAvg = attended.reduce((a,e)=>a+e.totalNet,0) / attended.length;
-  
+
   let allSameGrade = DB.e.filter(x => x.examType===examType && !x.abs && getGrade(x.studentClass)===grade);
   let genAvg = allSameGrade.length ? allSameGrade.reduce((a,e)=>a+e.totalNet,0)/allSameGrade.length : null;
-  
+
   let stuMap = {};
   allSameGrade.forEach(e => {
     if(!stuMap[e.studentNo]) stuMap[e.studentNo] = {scoreSum:0,netSum:0,cnt:0};
@@ -1304,31 +1304,71 @@ function calcKarneSummaryCards(stuNo, examType, grade, examsData) {
     stuMap[e.studentNo].netSum  += (e.totalNet||0);
     stuMap[e.studentNo].cnt++;
   });
-  // === Sıralama her zaman PUAN'a (score) göre; eşitlikte totalNet ===
+  // Sıralama her zaman PUAN'a (score) göre; eşitlikte totalNet
   let rankings = Object.entries(stuMap).map(([no,v])=>({no,avgScore:v.scoreSum/v.cnt,avgNet:v.netSum/v.cnt})).sort((a,b)=>{
     let dp=(b.avgScore||0)-(a.avgScore||0); if(dp!==0) return dp; return (b.avgNet||0)-(a.avgNet||0);
   });
   let rank = rankings.findIndex(x=>x.no===stuNo)+1;
   let totalStudents = rankings.length;
-  
+
+  // Katılım: öğrencinin sınıf seviyesinde o sınav türüne ait tüm unique sınavlar baz alınır
+  let gradeExamKeys = new Set();
+  DB.e.forEach(x => { if(x.examType===examType && getGrade(x.studentClass)===grade) gradeExamKeys.add(x.date+'||'+( x.publisher||'')); });
+  let attendedKeys = new Set();
+  DB.e.forEach(x => { if(x.studentNo===stuNo && x.examType===examType && !x.abs) attendedKeys.add(x.date+'||'+( x.publisher||'')); });
+  let totalExamCount = gradeExamKeys.size;
+  let attendedCount  = attendedKeys.size;
+  let partRate = totalExamCount > 0 ? Math.max(0, Math.min(100, Math.round(attendedCount / totalExamCount * 100))) : 0;
+
+  // Trend: katıldığı sınavların toplam net serisi üzerinden lineer regresyon
   let nets = attended.map(e=>e.totalNet);
   let trend = null;
   if(nets.length >= 2){
-    // === FIX: Trend artık Lineer Regresyon eğimi ile hesaplanır (ortadaki sınavlar da etkili) ===
     let slope = linRegSlope(nets);
-    let totalChange = slope * (nets.length - 1); // baştan sona regresyon farkı
-    let avgChange = slope; // sınav başına ortalama eğim
-    trend = {totalChange, avgChange, count: nets.length, slope, trendClass: slope>0?'trend-up':(slope<0?'trend-down':'trend-stable'), trendIcon: slope>0?'fa-arrow-up':(slope<0?'fa-arrow-down':'fa-minus'), trendText: slope>0?'Yükseliş':(slope<0?'Düşüş':'Sabit')};
+    let totalChange = slope * (nets.length - 1);
+    trend = {
+      totalChange, slope, count: nets.length,
+      trendClass: slope>0?'trend-up':(slope<0?'trend-down':'trend-stable'),
+      trendIcon:  slope>0?'fa-arrow-up':(slope<0?'fa-arrow-down':'fa-minus'),
+      trendText:  slope>0?'Yükseliş':(slope<0?'Düşüş':'Sabit')
+    };
   }
-  
-  return {stuAvg, genAvg, rank, totalStudents, trend};
+
+  return {stuAvg, genAvg, rank, totalStudents, partRate, attendedCount, totalExamCount, trend};
 }
 
 function buildKarneExamCards(summary, examType) {
   if(!summary) return '';
-  let {stuAvg, genAvg, rank, totalStudents} = summary;
+  let {stuAvg, genAvg, rank, totalStudents, partRate, attendedCount, totalExamCount, trend} = summary;
+
+  // Katılım kartı + trend bloğu oluştur
+  let trendHtml = '';
+  if(trend) {
+    let tColor = trend.trendClass==='trend-up' ? '#28a745' : (trend.trendClass==='trend-down' ? '#dc3545' : '#6c757d');
+    let tSign  = trend.totalChange > 0 ? '+' : '';
+    let sSign  = trend.slope > 0 ? '+' : '';
+    trendHtml = `<div class="trend-card mt-2 mb-1"><div class="row align-items-center text-center">
+      <div class="col-6 col-md-3 mb-1">
+        <span class="trend-indicator ${trend.trendClass}" style="font-size:0.8em;"><i class="fas ${trend.trendIcon} mr-1"></i>${trend.trendText}</span>
+        <div class="small text-muted mt-1" style="font-size:0.75em;">Genel Trend</div>
+      </div>
+      <div class="col-6 col-md-3 border-left mb-1">
+        <div style="font-size:1.1em;font-weight:bold;color:${tColor};">${tSign}${trend.totalChange.toFixed(2)}</div>
+        <div class="small text-muted" style="font-size:0.75em;">Toplam Değişim (Regresyon)</div>
+      </div>
+      <div class="col-6 col-md-3 border-left mb-1">
+        <div style="font-size:1.1em;font-weight:bold;color:${tColor};">${sSign}${trend.slope.toFixed(2)}</div>
+        <div class="small text-muted" style="font-size:0.75em;">Sınav Başı Ort. Eğim</div>
+      </div>
+      <div class="col-6 col-md-3 border-left mb-1">
+        <div style="font-size:1.1em;font-weight:bold;">${trend.count}</div>
+        <div class="small text-muted" style="font-size:0.75em;">Toplam Sınav</div>
+      </div>
+    </div></div>`;
+  }
+
   let cardsHtml = `<div class="row mb-2">
-    <div class="col-md-6 col-sm-6">
+    <div class="col-md-4 col-sm-6">
       <div class="info-box bg-success" style="min-height:72px;">
         <span class="info-box-icon" style="width:55px;font-size:1.3rem;"><i class="fas fa-chart-bar"></i></span>
         <div class="info-box-content" style="padding:6px 10px;">
@@ -1338,7 +1378,7 @@ function buildKarneExamCards(summary, examType) {
         </div>
       </div>
     </div>
-    <div class="col-md-6 col-sm-6">
+    <div class="col-md-4 col-sm-6">
       <div class="info-box bg-primary" style="min-height:72px;">
         <span class="info-box-icon" style="width:55px;font-size:1.3rem;"><i class="fas fa-trophy"></i></span>
         <div class="info-box-content" style="padding:6px 10px;">
@@ -1348,7 +1388,17 @@ function buildKarneExamCards(summary, examType) {
         </div>
       </div>
     </div>
-  </div>`;
+    <div class="col-md-4 col-sm-6">
+      <div class="info-box bg-info" style="min-height:72px;">
+        <span class="info-box-icon" style="width:55px;font-size:1.3rem;"><i class="fas fa-percentage"></i></span>
+        <div class="info-box-content" style="padding:6px 10px;">
+          <span class="info-box-text" style="font-size:0.75em;">Katılım</span>
+          <span class="info-box-number" style="font-size:1.3em;">${partRate}%</span>
+          <span class="progress-description" style="font-size:0.75em;opacity:0.85;">${attendedCount}/${totalExamCount} Sınav</span>
+        </div>
+      </div>
+    </div>
+  </div>${trendHtml}`;
   return cardsHtml;
 }
 
@@ -1440,19 +1490,33 @@ function rAnl(){
     let isRank = sb.startsWith('rank_');
     let ls = sb === 'score' ? 'Puan' : (sb === 'rank_c' ? 'Sınıf Sırası' : (sb === 'rank_i' ? 'Kurum Sırası' : (sb === 'rank_g' ? 'Genel Sıra' : (sb === 'totalNet' || !sb ? 'Toplam Net' : toTitleCase(sb.replace('s_','')) + ' Neti'))));
     let valHeader = isRank ? 'Sıra' : (sb === 'score' ? 'Puan' : 'Net');
-    let getVal = (e) => { if (e.abs) return null; if (sb === 'score') return e.score; if (sb === 'rank_c') return pN(e.cR); if (sb === 'rank_i') return pN(e.iR); if (sb === 'rank_g') return pN(e.gR); if (sb === 'totalNet' || !sb) return e.totalNet; return e.subs[toTitleCase(sb.replace('s_',''))]?.net ?? 0; };
+    // Ders neti yoksa null döndür (0 değil) — eksik kayıtlar trend/ortalama hesabını bozmasın
+    let getVal = (e) => { if (e.abs) return null; if (sb === 'score') return e.score; if (sb === 'rank_c') return pN(e.cR); if (sb === 'rank_i') return pN(e.iR); if (sb === 'rank_g') return pN(e.gR); if (sb === 'totalNet' || !sb) return e.totalNet; let _sn = e.subs[toTitleCase(sb.replace('s_',''))]; return (_sn !== undefined && _sn !== null) ? _sn.net : null; };
 
     ex.forEach((e,i)=>{
       let n=getVal(e), pn=i>0 ? getVal(ex[i-1]) : n; let dfStr = '', cl = '';
-      if(i > 0) { if(isRank) { let df = pn - n; cl = df > 0 ? 'text-success' : (df < 0 ? 'text-danger' : ''); dfStr = df > 0 ? '+' + df : df; } else { let df = (n - pn).toFixed(2); cl = df > 0 ? 'text-success' : (df < 0 ? 'text-danger' : ''); dfStr = df > 0 ? '+' + df : df; } } else { dfStr = '-'; }
+      if(i > 0) {
+        if(n === null || pn === null) { dfStr = '—'; }
+        else if(isRank) { let df = pn - n; cl = df > 0 ? 'text-success' : (df < 0 ? 'text-danger' : ''); dfStr = df > 0 ? '+' + df : df; }
+        else { let df = (n - pn).toFixed(2); cl = parseFloat(df) > 0 ? 'text-success' : (parseFloat(df) < 0 ? 'text-danger' : ''); dfStr = parseFloat(df) > 0 ? '+' + df : df; }
+      } else { dfStr = '-'; }
       let pub = e.publisher || '—';
-      rows+=`<tr><td>${i+1}</td><td>${e.date}</td><td>${toTitleCase(pub)}</td><td>${isRank ? n : n.toFixed(2)}</td><td class="${cl} font-weight-bold">${dfStr}</td></tr>`; dD.push(n);
-      if(!isRank){ let cn=DB.e.filter(x=>x.date===e.date&&x.examType===eT&&x.studentClass===st.class&&!x.abs).map(getVal); clsArr.push(cn.length?(cn.reduce((a,b)=>a+b,0)/cn.length):null); let iv=DB.e.filter(x=>x.date===e.date&&x.examType===eT&&!x.abs&&getGrade(x.studentClass)===stGrade).map(getVal); instArr.push(iv.length?(iv.reduce((a,b)=>a+b,0)/iv.length):null); }
+      let nDisplay = n === null ? '—' : (isRank ? n : n.toFixed(2));
+      rows+=`<tr><td>${i+1}</td><td>${e.date}</td><td>${toTitleCase(pub)}</td><td>${nDisplay}</td><td class="${cl} font-weight-bold">${dfStr}</td></tr>`; dD.push(n);
+      if(!isRank){
+        let cn=DB.e.filter(x=>x.date===e.date&&x.examType===eT&&x.studentClass===st.class&&!x.abs).map(getVal).filter(v=>v!==null);
+        clsArr.push(cn.length?(cn.reduce((a,b)=>a+b,0)/cn.length):null);
+        let iv=DB.e.filter(x=>x.date===e.date&&x.examType===eT&&!x.abs&&getGrade(x.studentClass)===stGrade).map(getVal).filter(v=>v!==null);
+        instArr.push(iv.length?(iv.reduce((a,b)=>a+b,0)/iv.length):null);
+      }
     });
 
+    // null olmayan geçerli değerler üzerinden tüm hesaplar yapılır
+    let dDValid = dD.filter(v => v !== null && !isNaN(v));
+
     let avgRowHtml = '';
-    if(dD.length > 0){ 
-      let stuAvg = dD.reduce((a,b)=>a+b,0) / dD.length;
+    if(dDValid.length > 0){ 
+      let stuAvg = dDValid.reduce((a,b)=>a+b,0) / dDValid.length;
       let clsAvg = clsArr.filter(x=>x!==null).length > 0 ? clsArr.filter(x=>x!==null).reduce((a,b)=>a+b,0) / clsArr.filter(x=>x!==null).length : null;
       let genAvg = instArr.filter(x=>x!==null).length > 0 ? instArr.filter(x=>x!==null).reduce((a,b)=>a+b,0) / instArr.filter(x=>x!==null).length : null;
       let displayStu = isRank ? Math.round(stuAvg) : stuAvg.toFixed(2);
@@ -1462,14 +1526,11 @@ function rAnl(){
     }
 
     let trendHtml = '';
-    // === FIX v11: Trend Lineer Regresyon eğimi ile hesaplanır + Sıralama (rank) analizinde de gösterilir ===
-    // Sıralamada düşük sayı iyidir; bu yüzden rank için "iyileşme" eğimin NEGATİF olmasıdır → renk/yön ters çevrilir.
-    let _trendNets = dD.filter(v => v !== null && v !== undefined && !isNaN(v));
+    let _trendNets = dDValid; // zaten null ve NaN filtrelenmiş
     if(_trendNets.length >= 2) {
       let slope = linRegSlope(_trendNets);
       let totalChange = slope * (_trendNets.length - 1);
       let avgChange = slope;
-      // İyileşme yönü: not/puan için artış iyi, sıralama için azalış iyi
       let improving = isRank ? (slope < 0) : (slope > 0);
       let worsening = isRank ? (slope > 0) : (slope < 0);
       let trendClass = improving ? 'trend-up' : (worsening ? 'trend-down' : 'trend-stable');
@@ -1480,7 +1541,7 @@ function rAnl(){
       let totalColor = improving ? posColor : (worsening ? negColor : '#6c757d');
       let avgColor   = improving ? posColor : (worsening ? negColor : '#6c757d');
       let totalDisplay = (isRank ? Math.round(totalChange) : totalChange.toFixed(2));
-      let avgDisplay   = (isRank ? avgChange.toFixed(2) : avgChange.toFixed(2));
+      let avgDisplay   = avgChange.toFixed(2);
       let totalSign = totalChange > 0 ? '+' : '';
       let avgSign   = avgChange > 0 ? '+' : '';
       let totalLabel = isRank ? 'Sıra Değişimi (Regresyon)' : 'Toplam Değişim (Regresyon)';
@@ -1489,8 +1550,8 @@ function rAnl(){
     }
     
     let perfHtml = '';
-    if(!isRank && dD.length > 0) {
-      let maxVal = Math.max(...dD), minVal = Math.min(...dD), avgVal = dD.reduce((a,b)=>a+b,0)/dD.length;
+    if(!isRank && dDValid.length > 0) {
+      let maxVal = Math.max(...dDValid), minVal = Math.min(...dDValid), avgVal = dDValid.reduce((a,b)=>a+b,0)/dDValid.length;
       // Katılım: öğrencinin sınıf seviyesinde düzenlenen aynı sınav türüne ait TÜM sınavlar baz alınır
       let gradeExamKeys = new Set();
       DB.e.forEach(x => { if(x.examType===eT && getGrade(x.studentClass)===stGrade) gradeExamKeys.add(x.date+'||'+(x.publisher||'')); });
@@ -1650,6 +1711,68 @@ function rAnl(){
       <div class="col-lg-6"><div class="card shadow-sm avoid-break"><div class="card-header bg-danger text-white"><h3 class="card-title m-0"><i class="fas fa-exclamation-circle mr-1"></i> En Düşük 5 Öğrenci</h3></div><div class="card-body p-0 table-responsive"><table class="table table-sm table-striped m-0" style="font-size:0.85em;"><thead><tr><th>#</th><th>Ad Soyad</th><th>Sınıf</th><th>Ort. (${ls})</th></tr></thead><tbody>${stuBottom5Html}</tbody></table></div></div></div>
     </div>` : '';
 
+    // === Sınıf Analizi: Kurum ortalaması üzerinden Trend + SS bloğu ===
+    // Her sınav tarihindeki kurum geneli ortalama bir seri oluşturur; bu seri üzerinden lineer regresyon uygulanır.
+    let clsTrendHtml = '';
+    if(sd.length >= 2) {
+      // Tarih başına kurum ortalaması (seçili veri tipine göre)
+      let dateAvgSeries = sd.map(dt => {
+        let vals = (d[dt]||[]).map(x => { if(sb==='score') return x.score; if(sb==='totalNet'||!sb) return x.totalNet; return x.subs[toTitleCase(sb.replace('s_',''))]?.net||0; });
+        return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
+      }).filter(v => v !== null);
+
+      if(dateAvgSeries.length >= 2) {
+        let clsTSlope    = linRegSlope(dateAvgSeries);
+        let clsTTotal    = clsTSlope * (dateAvgSeries.length - 1);
+        let clsTImproving = clsTSlope > 0, clsTWorsening = clsTSlope < 0;
+        let clsTClass   = clsTImproving ? 'trend-up' : (clsTWorsening ? 'trend-down' : 'trend-stable');
+        let clsTIcon    = clsTImproving ? 'fa-arrow-up' : (clsTWorsening ? 'fa-arrow-down' : 'fa-minus');
+        let clsTText    = clsTImproving ? 'Yükseliş' : (clsTWorsening ? 'Düşüş' : 'Sabit');
+        let clsTColor   = clsTImproving ? '#28a745' : (clsTWorsening ? '#dc3545' : '#6c757d');
+        let clsTSign    = clsTTotal > 0 ? '+' : '';
+        let clsSSign    = clsTSlope > 0 ? '+' : '';
+
+        // Standart Sapma: d (dateFilter+abs uygulanmış) içindeki tüm bireysel değerler üzerinden.
+        // allVals exForAvg'dan geliyor ve dateFilter içermeyebilir; d üzerinden hesaplamak tutarlıdır.
+        let ssRawVals = sd.flatMap(dt => (d[dt]||[]).map(x => { if(sb==='score') return x.score; if(sb==='totalNet'||!sb) return x.totalNet; return x.subs[toTitleCase(sb.replace('s_',''))]?.net||0; }));
+        let ssMean = ssRawVals.length ? ssRawVals.reduce((a,b)=>a+b,0)/ssRawVals.length : 0;
+        let ssVal  = ssRawVals.length > 1 ? Math.sqrt(ssRawVals.map(v=>(v-ssMean)**2).reduce((a,b)=>a+b,0)/ssRawVals.length) : 0;
+        // Sınıflar Arası Fark: sınıf ortalamaları d üzerinden hesaplanır (dateFilter ile tutarlı)
+        let _clsAvgsForMM = sortedClasses.map(clsName => {
+          let vals = sd.flatMap(dt => (d[dt]||[]).filter(x=>x.studentClass===clsName).map(x=>{ if(sb==='score')return x.score; if(sb==='totalNet'||!sb)return x.totalNet; return x.subs[toTitleCase(sb.replace('s_',''))]?.net||0; }));
+          return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
+        }).filter(v=>v!==null);
+        let mmDiff = _clsAvgsForMM.length > 1 ? Math.max(..._clsAvgsForMM) - Math.min(..._clsAvgsForMM) : null;
+
+        clsTrendHtml = `<div class="trend-card mb-3"><div class="row align-items-center">
+          <div class="col-6 col-md-2 text-center mb-2 mb-md-0">
+            <span class="trend-indicator ${clsTClass}"><i class="fas ${clsTIcon} mr-1"></i>${clsTText}</span>
+            <div class="mt-2 small text-muted">Genel Trend</div>
+          </div>
+          <div class="col-6 col-md-2 text-center border-left mb-2 mb-md-0">
+            <div style="font-size:1.4em;font-weight:bold;color:${clsTColor};">${clsTSign}${clsTTotal.toFixed(2)}</div>
+            <div class="small text-muted">Toplam Değişim (Regresyon)</div>
+          </div>
+          <div class="col-6 col-md-2 text-center border-left mb-2 mb-md-0">
+            <div style="font-size:1.4em;font-weight:bold;color:${clsTColor};">${clsSSign}${clsTSlope.toFixed(2)}</div>
+            <div class="small text-muted">Sınav Başı Ort. Eğim</div>
+          </div>
+          <div class="col-6 col-md-2 text-center border-left mb-2 mb-md-0">
+            <div style="font-size:1.4em;font-weight:bold;">${dateAvgSeries.length}</div>
+            <div class="small text-muted">Toplam Sınav</div>
+          </div>
+          <div class="col-6 col-md-2 text-center border-left mb-2 mb-md-0">
+            <div style="font-size:1.4em;font-weight:bold;color:#6f42c1;">±${ssVal.toFixed(2)}</div>
+            <div class="small text-muted">Standart Sapma</div>
+          </div>
+          <div class="col-6 col-md-2 text-center border-left mb-2 mb-md-0">
+            <div style="font-size:1.4em;font-weight:bold;color:#fd7e14;">${mmDiff !== null ? mmDiff.toFixed(2) : '—'}</div>
+            <div class="small text-muted">Sınıflar Arası Fark</div>
+          </div>
+        </div></div>`;
+      }
+    }
+
     let h=`<div class="d-flex justify-content-end mb-2 no-print"><button class="btn btn-success btn-sm mr-2" onclick="xXL('tC','Sinif_Analizi')"><i class='fas fa-file-excel mr-1'></i>Excel</button><button class="btn-print no-print" onclick="xPR('pC','Sinif_Analizi',this)"><i class='fas fa-print mr-1'></i>Yazdır</button></div>
     <div id="pC" class="card shadow-sm" style="border-top:3px solid #28a745;">
       <div class="report-header">
@@ -1658,6 +1781,7 @@ function rAnl(){
       </div>
       <div class="card-body" style="padding-top:5px;">
         ${clsPerfHtml}
+        ${clsTrendHtml}
         <div class="table-responsive"><table class="table table-sm table-hover table-bordered" id="tC"><thead><tr><th>#</th><th>Sınıf</th><th>Tarih</th><th>Yayınevi</th><th>Ortalama</th></tr></thead><tbody>${tr.join('')}${clsAvgRow}</tbody></table></div>
         ${top5Bottom5Html}
         <div class="chart-box avoid-break" style="margin-top:10px;"><canvas id="cA"></canvas></div>
@@ -1742,6 +1866,63 @@ function rAnl(){
     });
     let partRateS = baseCountS > 0 ? Math.max(0, Math.min(100, Math.round((attendedCountS / baseCountS) * 100))) : 0;
 
+    // === Ders Analizi: Tarihsel net ortalaması üzerinden Trend + SS bloğu ===
+    let subjTrendHtml = '';
+    if(dates.length >= 2) {
+      // Her sınav tarihi için o derse ait genel ortalama neti bir seri oluşturur
+      let subjDateAvgSeries = dates.map(dt => {
+        let vals = dateGroups[dt].map(e => e.subs[toTitleCase(subj)].net);
+        return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
+      }).filter(v => v !== null);
+
+      if(subjDateAvgSeries.length >= 2) {
+        let subjSlope    = linRegSlope(subjDateAvgSeries);
+        let subjTotal    = subjSlope * (subjDateAvgSeries.length - 1);
+        let subjImproving = subjSlope > 0, subjWorsening = subjSlope < 0;
+        let subjTClass  = subjImproving ? 'trend-up' : (subjWorsening ? 'trend-down' : 'trend-stable');
+        let subjTIcon   = subjImproving ? 'fa-arrow-up' : (subjWorsening ? 'fa-arrow-down' : 'fa-minus');
+        let subjTText   = subjImproving ? 'Yükseliş' : (subjWorsening ? 'Düşüş' : 'Sabit');
+        let subjTColor  = subjImproving ? '#28a745' : (subjWorsening ? '#dc3545' : '#6c757d');
+        let subjTSign   = subjTotal > 0 ? '+' : '';
+        let subjSSign   = subjSlope > 0 ? '+' : '';
+
+        // Standart Sapma: tüm bireysel net değerleri üzerinden
+        let subjAllNets = ex.map(e => e.subs[toTitleCase(subj)].net);
+        let subjMean    = subjAllNets.reduce((a,b)=>a+b,0)/subjAllNets.length;
+        let subjSS      = subjAllNets.length > 1 ? Math.sqrt(subjAllNets.map(v=>(v-subjMean)**2).reduce((a,b)=>a+b,0)/subjAllNets.length) : 0;
+        // Max-Min farkı: sınıf net ortalamaları arasında
+        let subjClsAvgs = clsArr.map(c=>c.avg);
+        let subjMMDiff  = subjClsAvgs.length > 1 ? Math.max(...subjClsAvgs) - Math.min(...subjClsAvgs) : null;
+
+        subjTrendHtml = `<div class="trend-card mb-3"><div class="row align-items-center">
+          <div class="col-6 col-md-2 text-center mb-2 mb-md-0">
+            <span class="trend-indicator ${subjTClass}"><i class="fas ${subjTIcon} mr-1"></i>${subjTText}</span>
+            <div class="mt-2 small text-muted">Genel Trend</div>
+          </div>
+          <div class="col-6 col-md-2 text-center border-left mb-2 mb-md-0">
+            <div style="font-size:1.4em;font-weight:bold;color:${subjTColor};">${subjTSign}${subjTotal.toFixed(2)}</div>
+            <div class="small text-muted">Toplam Değişim (Regresyon)</div>
+          </div>
+          <div class="col-6 col-md-2 text-center border-left mb-2 mb-md-0">
+            <div style="font-size:1.4em;font-weight:bold;color:${subjTColor};">${subjSSign}${subjSlope.toFixed(2)}</div>
+            <div class="small text-muted">Sınav Başı Ort. Eğim</div>
+          </div>
+          <div class="col-6 col-md-2 text-center border-left mb-2 mb-md-0">
+            <div style="font-size:1.4em;font-weight:bold;">${subjDateAvgSeries.length}</div>
+            <div class="small text-muted">Toplam Sınav</div>
+          </div>
+          <div class="col-6 col-md-2 text-center border-left mb-2 mb-md-0">
+            <div style="font-size:1.4em;font-weight:bold;color:#6f42c1;">±${subjSS.toFixed(2)}</div>
+            <div class="small text-muted">Standart Sapma</div>
+          </div>
+          <div class="col-6 col-md-2 text-center border-left mb-2 mb-md-0">
+            <div style="font-size:1.4em;font-weight:bold;color:#fd7e14;">${subjMMDiff !== null ? subjMMDiff.toFixed(2) : '—'}</div>
+            <div class="small text-muted">Sınıflar Arası Fark</div>
+          </div>
+        </div></div>`;
+      }
+    }
+
     let h = `
     <div class="d-flex justify-content-end mb-2 no-print"><button class="btn-print no-print" onclick="xPR('pSubj','${toTitleCase(subj)}_Analizi',this)"><i class='fas fa-print mr-1'></i>Yazdır</button></div>
     <div id="pSubj" class="card shadow-sm" style="border-top:3px solid #007bff; background:#f4f6f9;">
@@ -1757,6 +1938,7 @@ function rAnl(){
           <div class="col-md-6 col-lg flex-fill mb-2"><div class="info-box bg-danger h-100"><span class="info-box-icon"><i class="fas fa-exclamation-triangle"></i></span><div class="info-box-content"><span class="info-box-text">En Zayıf Öğrenci</span><span class="info-box-number" style="font-size:0.95em;">${worstStudent ? worstStudent.name : 'Veri Yok'}</span><span class="progress-description">${worstStudent ? `${worstStudent.avg.toFixed(2)} Net (Ort)` : ''}</span></div></div></div>
           <div class="col-md-6 col-lg flex-fill mb-2"><div class="info-box h-100" style="background:#6c757d; color:#fff;"><span class="info-box-icon"><i class="fas fa-chart-pie text-white"></i></span><div class="info-box-content"><span class="info-box-text">Katılım Oranı</span><span class="info-box-number">%${partRateS}</span><span class="progress-description" style="color:#e0e0e0;">${attendedCountS} / ${baseCountS} Katılım</span></div></div></div>
         </div>
+        ${subjTrendHtml}
         <div class="row">
           <div class="col-lg-4"><div class="card shadow-sm avoid-break"><div class="card-header bg-success text-white"><h3 class="card-title m-0"><i class="fas fa-trophy mr-1"></i> En İyi 5 Öğrenci</h3></div><div class="card-body p-0 table-responsive"><table class="table table-sm table-striped m-0" style="font-size:0.85em;"><thead><tr><th>#</th><th>Ad Soyad</th><th>Sınıf</th><th>Ort.Net</th></tr></thead><tbody>${top5.map((s,i) => `<tr><td>${i+1}</td><td>${s.name}</td><td>${s.cls}</td><td><strong>${s.avg.toFixed(2)}</strong></td></tr>`).join('')}</tbody></table></div></div></div>
           <div class="col-lg-4"><div class="card shadow-sm avoid-break"><div class="card-header bg-danger text-white"><h3 class="card-title m-0"><i class="fas fa-exclamation-circle mr-1"></i> En Düşük 5 Öğrenci</h3></div><div class="card-body p-0 table-responsive"><table class="table table-sm table-striped m-0" style="font-size:0.85em;"><thead><tr><th>#</th><th>Ad Soyad</th><th>Sınıf</th><th>Ort.Net</th></tr></thead><tbody>${bottom5.map((s,i) => `<tr><td>${i+1}</td><td>${s.name}</td><td>${s.cls}</td><td><strong>${s.avg.toFixed(2)}</strong></td></tr>`).join('')}</tbody></table></div></div></div>
