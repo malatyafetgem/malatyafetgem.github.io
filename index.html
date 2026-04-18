@@ -779,6 +779,8 @@ async function init(){
     if(getEl('sonuclar').classList.contains('active-pane')) reqAnl();
     if(aNo) reqProfile();
     ld(0);
+    // Risk paneli için arka planda tüm batch'leri yükle
+    fetchAllBatchesForRisk();
   });
 }
 
@@ -790,6 +792,29 @@ async function fetchBatches(batchIds) {
   // === FIX: Silinmiş öğrencilerin (orphan) sonuçlarını analizden çıkar ===
   let validNos = new Set(DB.s.map(s => s.no));
   DB.e = virtual_e.filter(e => e && e.studentNo && validNos.has(e.studentNo));
+}
+
+// Risk paneli için tüm batch'leri sessizce yükler (loader göstermez)
+let _riskFetchPending = false;
+async function fetchAllBatchesForRisk() {
+  if(_riskFetchPending) return;
+  _riskFetchPending = true;
+  let allIds = Object.keys(EXAM_META);
+  let missing = allIds.filter(bId => !CACHED_RESULTS[bId]);
+  if(missing.length > 0) {
+    await Promise.all(missing.map(bId =>
+      database.ref('db_v2/examResults/' + bId).once('value').then(snap => { CACHED_RESULTS[bId] = snap.val() || []; })
+    ));
+  }
+  // DB.e'yi güncelle (mevcut sayfa yüklü verilerle birleştir)
+  let validNos = new Set(DB.s.map(s => s.no));
+  let allE = [];
+  allIds.forEach(bId => { if(CACHED_RESULTS[bId]) allE = allE.concat(CACHED_RESULTS[bId]); });
+  DB.e = allE.filter(e => e && e.studentNo && validNos.has(e.studentNo));
+  _riskFetchPending = false;
+  // Şimdi risk hesabını yap ve paneli göster
+  _riskCache = null;
+  renderRiskPanel();
 }
 
 async function reqProfile() {
@@ -981,62 +1006,57 @@ function linRegSlope(values){
 */
 
 let _riskCache = null; // { timestamp, results }
+// sevW global: renderRiskPanel da kullanıyor
+const RISK_SEV_W = { high: 3, med: 2, low: 1 };
 
 function calcRiskScores() {
-  // Yeterli veri yoksa çalıştırma
   if(!DB.e.length || !DB.s.length) return [];
 
-  // --- Yardımcı: popülasyon için ortalama ve std ---
+  // --- Yardımcı: popülasyon ort. ve std ---
   function popStats(arr) {
-    let a = arr.filter(v => v !== null && !isNaN(v));
-    if(a.length < 2) return { mean: 0, std: 1 };
+    let a = arr.filter(v => v !== null && v !== undefined && !isNaN(v));
+    if(a.length < 1) return { mean: 0, std: 1 };
     let mean = a.reduce((s,v)=>s+v,0)/a.length;
-    let variance = a.reduce((s,v)=>s+(v-mean)**2,0)/a.length;
+    let variance = a.length > 1 ? a.reduce((s,v)=>s+(v-mean)**2,0)/a.length : 0;
     return { mean, std: Math.sqrt(variance) || 1 };
   }
 
-  // --- Yardımcı: z-skoru (negatif = kötü yön) ---
-  function zScore(val, mean, std, invertBad) {
-    // invertBad=true: yüksek değer kötü (sıralama, devamsızlık)
-    let z = (val - mean) / std;
-    return invertBad ? z : -z; // negatif çıktı = kötüye gidiş
-  }
-
   let examTypes = [...new Set(Object.values(EXAM_META).map(m=>m.examType))];
-  let studentRisks = {}; // { studentNo: { flags: [], riskScore, level } }
+  let studentRisks = {};
 
   examTypes.forEach(eType => {
     let allExams = DB.e.filter(x => x.examType === eType && !x.abs);
-    if(allExams.length < 3) return; // bu sınav türünde yeterli veri yok
+    if(allExams.length < 2) return;
 
-    // Tüm öğrencileri bul
     let stuNos = [...new Set(allExams.map(x=>x.studentNo))];
 
-    // ---- METRİK 1: TREND (linRegSlope) ----
-    let trendMap = {}; // stuNo -> slope
+    // ---- METRİK 1: TREND ----
+    // Her öğrencinin net eğimi; en az 2 sınavı olan herkesi dahil et
+    let trendMap = {};
     stuNos.forEach(no => {
       let nets = DB.e.filter(x=>x.studentNo===no&&x.examType===eType&&!x.abs)
                      .sort((a,b)=>srt(a.date,b.date)).map(x=>x.totalNet);
-      if(nets.length >= 3) trendMap[no] = linRegSlope(nets);
+      if(nets.length >= 2) trendMap[no] = linRegSlope(nets);
     });
     let trendVals = Object.values(trendMap);
-    if(trendVals.length >= 4) {
+    if(trendVals.length >= 3) {
       let ts = popStats(trendVals);
       Object.entries(trendMap).forEach(([no, slope]) => {
-        // Negatif eğim = kötüye gidiş; z ne kadar negatifse o kadar kötü
-        let z = (slope - ts.mean) / ts.std; // düşük slope → negatif z
+        let z = (slope - ts.mean) / ts.std;
+        // Düşük slope (kötüye gidiş) → negatif z → severity
         let severity = z < -2.0 ? 'high' : z < -1.5 ? 'med' : z < -1.0 ? 'low' : null;
+        // Eğer popülasyon std çok küçükse (herkes benzer) ve slope gerçekten negatifse de yakala
+        if(!severity && slope < 0 && ts.std < 0.5) severity = 'low';
         if(severity) {
           if(!studentRisks[no]) studentRisks[no] = { flags:[], examTypes: new Set() };
           studentRisks[no].examTypes.add(eType);
-          let slopePretty = (slope>=0?'+':'')+slope.toFixed(2);
-          studentRisks[no].flags.push({ type:'trend', severity, examType:eType, detail:`${eType}: Net eğimi ${slopePretty}/sınav`, z });
+          let sp = (slope>=0?'+':'')+slope.toFixed(2);
+          studentRisks[no].flags.push({ type:'trend', severity, examType:eType, detail:`${eType}: Net eğimi ${sp}/sınav`, z: z });
         }
       });
     }
 
     // ---- METRİK 2: SIRALAMA GERİLEME ----
-    // Her öğrencinin son sınavdaki kurum sırası / toplam öğrenci oranı (0-1, yüksek = kötü)
     let rankMap = {};
     stuNos.forEach(no => {
       let exams = DB.e.filter(x=>x.studentNo===no&&x.examType===eType&&!x.abs)
@@ -1044,34 +1064,33 @@ function calcRiskScores() {
       if(!exams.length) return;
       let last = exams[exams.length-1];
       let iR = parseFloat(last.iR), iP = parseFloat(last.iP);
-      if(iR > 0 && iP > 0) rankMap[no] = iR / iP; // oran: yüksek kötü
+      if(iR > 0 && iP > 0) rankMap[no] = iR / iP;
     });
     let rankVals = Object.values(rankMap);
-    if(rankVals.length >= 4) {
+    if(rankVals.length >= 3) {
       let rs = popStats(rankVals);
       Object.entries(rankMap).forEach(([no, ratio]) => {
-        let z = (ratio - rs.mean) / rs.std; // yüksek ratio (kötü sıra) → pozitif z → uyarı
+        let z = (ratio - rs.mean) / rs.std;
         let severity = z > 2.0 ? 'high' : z > 1.5 ? 'med' : z > 1.0 ? 'low' : null;
         if(severity) {
           if(!studentRisks[no]) studentRisks[no] = { flags:[], examTypes: new Set() };
           studentRisks[no].examTypes.add(eType);
           let last2 = DB.e.filter(x=>x.studentNo===no&&x.examType===eType&&!x.abs).sort((a,b)=>srt(a.date,b.date)).pop();
           let rankStr = last2 ? `${last2.iR}/${last2.iP}` : '—';
-          studentRisks[no].flags.push({ type:'rank', severity, examType:eType, detail:`${eType}: Kurum sırası ${rankStr}`, z:z });
+          studentRisks[no].flags.push({ type:'rank', severity, examType:eType, detail:`${eType}: Kurum sırası ${rankStr}`, z });
         }
       });
     }
 
     // ---- METRİK 3: DERS DÜŞÜŞÜ ----
-    // Son sınavdaki her ders netinin sınıf popülasyonu içindeki z-skoru
     let lastDates = [...new Set(allExams.map(x=>x.date))].sort(srt);
     let lastDate = lastDates[lastDates.length-1];
     let lastExams = allExams.filter(x=>x.date===lastDate);
-    if(lastExams.length >= 4) {
+    if(lastExams.length >= 3) {
       let allSubjs = [...new Set(lastExams.flatMap(x=>Object.keys(x.subs||{})))];
       allSubjs.forEach(subj => {
         let subjVals = lastExams.map(x => x.subs[subj]!==undefined ? x.subs[subj].net : null).filter(v=>v!==null);
-        if(subjVals.length < 4) return;
+        if(subjVals.length < 3) return;
         let ss = popStats(subjVals);
         lastExams.forEach(ex => {
           if(!ex.subs[subj]) return;
@@ -1098,7 +1117,7 @@ function calcRiskScores() {
       absMap[no] = attended / totalCount;
     });
     let absVals = Object.values(absMap);
-    if(absVals.length >= 4) {
+    if(absVals.length >= 3) {
       let as = popStats(absVals);
       Object.entries(absMap).forEach(([no, rate]) => {
         let z = (rate - as.mean) / as.std;
@@ -1113,22 +1132,16 @@ function calcRiskScores() {
     }
   });
 
-  // --- Risk seviyesi ve skor hesapla ---
-  const sevW = { high: 3, med: 2, low: 1 };
   let results = [];
   Object.entries(studentRisks).forEach(([no, data]) => {
     let stu = DB.s.find(x=>x.no===no); if(!stu) return;
-    // Ağırlıklı risk skoru: her flag'in z büyüklüğü × ağırlık
-    let score = data.flags.reduce((s,f) => s + sevW[f.severity] * Math.abs(f.z), 0);
-    // En kötü tek flag seviyesi
+    let score = data.flags.reduce((s,f) => s + RISK_SEV_W[f.severity] * Math.abs(f.z), 0);
     let topLevel = data.flags.some(f=>f.severity==='high') ? 'high'
                  : data.flags.some(f=>f.severity==='med')  ? 'med'  : 'low';
-    // Öğrencinin aktif sınav türlerini de sakla
     let examTypesArr = [...(data.examTypes||[])].sort();
     results.push({ no, name: stu.name, cls: stu.class, score, level: topLevel, flags: data.flags, examTypes: examTypesArr });
   });
 
-  // Skora göre azalan sırala
   results.sort((a,b) => b.score - a.score);
   _riskCache = { ts: Date.now(), results };
   return results;
@@ -1193,7 +1206,7 @@ function renderRiskPanel() {
     // Her flag türünden en kötü birini göster (max 4 rozet)
     let seen = new Set();
     let topFlags = r.flags.filter(f => { let k=f.type+'|'+f.examType; if(seen.has(k)) return false; seen.add(k); return true; })
-                          .sort((a,b) => sevW[b.severity]-sevW[a.severity]).slice(0,4);
+                          .sort((a,b) => RISK_SEV_W[b.severity]-RISK_SEV_W[a.severity]).slice(0,4);
     let badgesHtml = topFlags.map(f =>
       `<span class="risk-badge rb-${f.type}" title="${f.detail}"><i class="fas ${typeIcon[f.type]}" style="font-size:0.8em;"></i>${typeLabel[f.type]}</span>`
     ).join('');
@@ -1535,13 +1548,9 @@ document.addEventListener('click',e=>{ let res=getEl('anlStuRes'),inp=getEl('anl
 function uStat(){
   const g=getEl('dynamicStatsGrid'), u={}; Object.values(EXAM_META).forEach(m => { u[m.examType] = (u[m.examType]||0) + 1; });
   const cl=['primary','success','warning','danger','info'],ic=['fas fa-file-alt','fas fa-check-circle','fas fa-star','fas fa-trophy','fas fa-bookmark'];
-  
   let h='',i=0;
   for(const [t,count] of Object.entries(u)){ h+=`<div class="col-md-3 col-sm-6 col-12"><div class="info-box mb-3"><span class="info-box-icon bg-${cl[i%cl.length]} elevation-1"><i class="${ic[i%ic.length]}"></i></span><div class="info-box-content"><span class="info-box-text">${t} Sınavı</span><span class="info-box-number">${count} <small>deneme</small></span></div></div></div>`; i++; }
   if(g)g.innerHTML=h;
-  // Risk panelini hesapla ve göster (önbellek geçersizleştir)
-  _riskCache = null;
-  setTimeout(() => renderRiskPanel(), 50);
 }
 
 function uDrp(){
