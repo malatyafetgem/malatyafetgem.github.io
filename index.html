@@ -462,7 +462,8 @@ body.is-admin button.btn-block.admin-only { display:block !important; }
                 <h6 style="color:#842029;"><i class="fas fa-shield-alt" style="color:#dc3545;"></i>Risk Altındaki Öğrenciler <span id="riskTotalBadge" style="background:rgba(220,53,69,0.12);color:#842029;padding:1px 8px;border-radius:12px;font-size:0.82em;font-weight:700;margin-left:4px;border:1px solid rgba(220,53,69,0.2);"></span></h6>
                 <div class="risk-filter-bar">
                   <select id="riskExTypeFilter" onchange="renderRiskPanel()" style="border-radius:6px;"><option value="">Tüm Sınav Türleri</option></select>
-                  <select id="riskClassFilter" onchange="renderRiskPanel()" style="border-radius:6px;"><option value="">Tüm Sınıflar</option></select>
+                  <select id="riskGradeFilter" onchange="renderRiskPanel()" style="border-radius:6px;"><option value="">Tüm Sınıflar</option><option value="9">9. Sınıf</option><option value="10">10. Sınıf</option><option value="11">11. Sınıf</option><option value="12">12. Sınıf</option></select>
+                  <select id="riskBranchFilter" onchange="renderRiskPanel()" style="border-radius:6px;"><option value="">Tüm Şubeler</option><option value="A">A Şubesi</option><option value="B">B Şubesi</option><option value="C">C Şubesi</option><option value="D">D Şubesi</option></select>
                   <select id="riskLevelFilter" onchange="renderRiskPanel()" style="border-radius:6px;"><option value="">Tüm Riskler</option><option value="high">🔴 Yüksek</option><option value="med">🟠 Orta</option><option value="low">🟡 Düşük</option></select>
                 </div>
               </div>
@@ -799,20 +800,28 @@ let _riskFetchPending = false;
 async function fetchAllBatchesForRisk() {
   if(_riskFetchPending) return;
   _riskFetchPending = true;
+
+  // Eğer DB.e zaten doluysa hemen render et, bekletme
+  if(DB.e.length > 0) {
+    _riskCache = null;
+    renderRiskPanel();
+  }
+
   let allIds = Object.keys(EXAM_META);
   let missing = allIds.filter(bId => !CACHED_RESULTS[bId]);
   if(missing.length > 0) {
     await Promise.all(missing.map(bId =>
       database.ref('db_v2/examResults/' + bId).once('value').then(snap => { CACHED_RESULTS[bId] = snap.val() || []; })
     ));
+    // DB.e'yi tüm verilerle güncelle
+    let validNos = new Set(DB.s.map(s => s.no));
+    let allE = [];
+    allIds.forEach(bId => { if(CACHED_RESULTS[bId]) allE = allE.concat(CACHED_RESULTS[bId]); });
+    DB.e = allE.filter(e => e && e.studentNo && validNos.has(e.studentNo));
   }
-  // DB.e'yi güncelle (mevcut sayfa yüklü verilerle birleştir)
-  let validNos = new Set(DB.s.map(s => s.no));
-  let allE = [];
-  allIds.forEach(bId => { if(CACHED_RESULTS[bId]) allE = allE.concat(CACHED_RESULTS[bId]); });
-  DB.e = allE.filter(e => e && e.studentNo && validNos.has(e.studentNo));
+
   _riskFetchPending = false;
-  // Şimdi risk hesabını yap ve paneli göster
+  // Tüm verilerle güncel render
   _riskCache = null;
   renderRiskPanel();
 }
@@ -1154,36 +1163,38 @@ function renderRiskPanel() {
 
   // Filtreler
   let exTypeF = (getEl('riskExTypeFilter')||{}).value || '';
-  let classF  = (getEl('riskClassFilter')||{}).value  || '';
+  let gradeF  = (getEl('riskGradeFilter')||{}).value  || '';
+  let branchF = (getEl('riskBranchFilter')||{}).value || '';
   let levelF  = (getEl('riskLevelFilter')||{}).value  || '';
+
+  // Sınıf adından grade ve şubeyi ayıkla (örn. "10-A" → grade:"10", branch:"A")
+  function getGradeFromCls(cls) { let m = String(cls||'').match(/^(\d+)/); return m ? m[1] : ''; }
+  function getBranchFromCls(cls) { let m = String(cls||'').match(/[A-Za-z]+$/); return m ? m[0].toUpperCase() : ''; }
 
   let filtered = risks.filter(r => {
     if(exTypeF && !r.examTypes.includes(exTypeF)) return false;
-    if(classF  && r.cls !== classF) return false;
+    if(gradeF  && getGradeFromCls(r.cls) !== gradeF) return false;
+    if(branchF && getBranchFromCls(r.cls) !== branchF) return false;
     if(levelF  && r.level !== levelF) return false;
     return true;
   });
 
-  // Filtre dropdown'larını doldur (ilk çalışmada)
-  let exTypeEl = getEl('riskExTypeFilter'), classEl = getEl('riskClassFilter');
+  // ExType dropdown'unu doldur (ilk çalışmada)
+  let exTypeEl = getEl('riskExTypeFilter');
   if(exTypeEl && exTypeEl.options.length <= 1) {
     let allTypes = [...new Set(risks.flatMap(r=>r.examTypes))].sort();
     exTypeEl.innerHTML = '<option value="">Tüm Sınav Türleri</option>' + allTypes.map(t=>`<option value="${t}">${t}</option>`).join('');
   }
-  if(classEl && classEl.options.length <= 1) {
-    let allCls = [...new Set(risks.map(r=>r.cls))].sort();
-    classEl.innerHTML = '<option value="">Tüm Sınıflar</option>' + allCls.map(c=>`<option value="${c}">${c}</option>`).join('');
-  }
 
-  // Özet pills
-  let hi = risks.filter(r=>r.level==='high').length;
-  let me = risks.filter(r=>r.level==='med').length;
-  let lo = risks.filter(r=>r.level==='low').length;
+  // Özet pills — filtreye göre sayılar değişir
+  let hi = filtered.filter(r=>r.level==='high').length;
+  let me = filtered.filter(r=>r.level==='med').length;
+  let lo = filtered.filter(r=>r.level==='low').length;
   let summBar = getEl('riskSummaryBar');
   if(summBar) summBar.innerHTML = `
-    ${hi ? `<span class="risk-sum-pill rsp-high"><i class="fas fa-circle" style="font-size:0.6em;"></i> Yüksek Risk: <strong>${hi}</strong> öğrenci</span>` : ''}
-    ${me ? `<span class="risk-sum-pill rsp-med"><i class="fas fa-circle" style="font-size:0.6em;"></i> Orta Risk: <strong>${me}</strong> öğrenci</span>` : ''}
-    ${lo ? `<span class="risk-sum-pill rsp-low"><i class="fas fa-circle" style="font-size:0.6em;"></i> Düşük Risk: <strong>${lo}</strong> öğrenci</span>` : ''}
+    ${hi ? `<span class="risk-sum-pill rsp-high" style="cursor:pointer;" onclick="setRiskLevel('high')"><i class="fas fa-circle" style="font-size:0.6em;"></i> Yüksek Risk: <strong>${hi}</strong> öğrenci</span>` : ''}
+    ${me ? `<span class="risk-sum-pill rsp-med"  style="cursor:pointer;" onclick="setRiskLevel('med')"><i class="fas fa-circle" style="font-size:0.6em;"></i> Orta Risk: <strong>${me}</strong> öğrenci</span>` : ''}
+    ${lo ? `<span class="risk-sum-pill rsp-low"  style="cursor:pointer;" onclick="setRiskLevel('low')"><i class="fas fa-circle" style="font-size:0.6em;"></i> Düşük Risk: <strong>${lo}</strong> öğrenci</span>` : ''}
   `;
 
   // Badge toplam
@@ -1225,6 +1236,13 @@ function renderRiskPanel() {
   }).join('');
   listEl.innerHTML = html;
   panelEl.style.display = 'block';
+}
+
+function setRiskLevel(level) {
+  let el = getEl('riskLevelFilter');
+  if(!el) return;
+  el.value = (el.value === level) ? '' : level;
+  renderRiskPanel();
 }
 
 function goToStudent(no) {
