@@ -1,4 +1,4 @@
-const CACHE = 'sinav-v2';
+const CACHE = 'sinav-v3';
 const FILES = [
   './index.html',
   './style.css',
