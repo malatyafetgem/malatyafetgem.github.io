@@ -1319,9 +1319,10 @@ function renderRiskPanel() {
     let seen = new Set();
     let topFlags = r.flags.filter(f => { let k=f.type+'|'+f.examType; if(seen.has(k)) return false; seen.add(k); return true; })
                           .sort((a,b) => RISK_SEV_W[b.severity]-RISK_SEV_W[a.severity]).slice(0,4);
-    let badgesHtml = topFlags.map(f =>
-      `<span class="risk-badge rb-${f.type}" title="${f.detail}"><i class="fas ${typeIcon[f.type]}" style="font-size:0.8em;"></i>${typeLabel[f.type]}</span>`
-    ).join('');
+    let badgesHtml = topFlags.map(f => {
+      let safeDetail = f.detail.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+      return `<span class="risk-badge rb-${f.type}" title="${f.detail}" onclick="showToast('${safeDetail}', 'warning', 4000)" style="cursor:pointer;"><i class="fas ${typeIcon[f.type]}" style="font-size:0.8em;"></i>${typeLabel[f.type]}</span>`;
+    }).join('');
     return `<div class="risk-card risk-${r.level}">
       <div class="risk-avatar"><i class="fas ${levelIcon[r.level]}"></i></div>
       <div class="risk-body">
@@ -2298,11 +2299,12 @@ function buildRiskInfoCards(stuNo, examType, stuClass) {
   let examFlags = stuRisk.flags.filter(f => f.examType === examType);
   if(!examFlags.length) return '';
 
-  let badgesHtml = examFlags.map(f =>
-    `<span class="risk-badge rb-${f.type}" title="${f.detail}" style="font-size:0.72rem;padding:2px 8px;border-radius:20px;display:inline-flex;align-items:center;gap:3px;font-weight:600;margin:2px;">
+  let badgesHtml = examFlags.map(f => {
+    let safeDetail = f.detail.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    return `<span class="risk-badge rb-${f.type}" title="${f.detail}" onclick="showToast('${safeDetail}', 'warning', 4000)" style="font-size:0.72rem;padding:2px 8px;border-radius:20px;display:inline-flex;align-items:center;gap:3px;font-weight:600;margin:2px;cursor:pointer;">
        <i class="fas ${typeIcon[f.type]}" style="font-size:0.75em;"></i>${typeLabel[f.type]}
-     </span>`
-  ).join('');
+     </span>`;
+  }).join('');
 
   let col = levelColor[stuRisk.level];
   let bg  = levelBg[stuRisk.level];
