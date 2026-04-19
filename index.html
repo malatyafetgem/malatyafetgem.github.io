@@ -1619,19 +1619,25 @@ function xPR(sourceId, title, btn, orientation) {
 
     // Her exam-type-block bir sayfa bölümüdür — sayfa kırmayı her bloğa uygula
     if(isFirstInScope) {
-      // İlk blokta sadece page-break-inside: auto (içerik büyükse taşabilir, bu normal)
+      // İlk blokta kırma yok, sadece içerik taşmasına izin ver
       blk.style.cssText += '; page-break-inside: auto; break-inside: auto;';
       blk.classList.add('exam-type-first');
     } else {
-      // Diğer bloklar kesinlikle yeni sayfada başlar
-      if(stuName) {
+      let isKarne = blk.classList.contains('karne-bolum');
+      // Karne modunda başlık zaten blok içinde var — bloğun kendisi kırar, hdr eklenmez
+      // Toplu rapor modunda başlık ayrı eklenir, sonra blok kırmaz (çifte kırma önlemi)
+      if(stuName && !isKarne) {
         let hdr = document.createElement('div');
         hdr.className = 'report-header print-page-hdr';
         hdr.style.cssText = 'margin-bottom:10px; margin-top:0; page-break-before:always; break-before:page;';
         hdr.innerHTML = `<span style="font-size:15px;"><i class="fas fa-user-graduate mr-2"></i><strong>${stuName}</strong></span><span style="font-size:12px;">Sınıf: ${stuClass} | ${new Date().toLocaleDateString('tr-TR')}</span>`;
         blk.parentNode.insertBefore(hdr, blk);
+        // blk kendisi KIRMIYOR — kırmayı sadece hdr üstlendi
+        blk.style.cssText += '; page-break-before: auto; break-before: auto; page-break-inside: auto; break-inside: auto;';
+      } else {
+        // Karne modu veya başlık yoksa bloğun kendisi kırar
+        blk.style.cssText += '; page-break-before: always; break-before: page; page-break-inside: auto; break-inside: auto;';
       }
-      blk.style.cssText += '; page-break-before: always; break-before: page; page-break-inside: auto; break-inside: auto;';
     }
 
     // Tablo, grafik ve kutu grafiklerini esnek hale getir (shrink-to-fit)
@@ -1648,7 +1654,9 @@ function xPR(sourceId, title, btn, orientation) {
   });
 
   // karne-bolum (tekil öğrenci karnesi, birden fazla sınav türü varsa)
+  // Not: karne-bolum aynı zamanda exam-type-block ise zaten yukarıda işlendi — atla
   clone.querySelectorAll('.karne-bolum').forEach((blk, idx) => {
+    if(blk.classList.contains('exam-type-block')) return; // zaten işlendi
     if(idx > 0) {
       blk.style.cssText += '; page-break-before: always; break-before: page;';
     }
@@ -1834,41 +1842,11 @@ function xPR(sourceId, title, btn, orientation) {
     .rb-rank   { background: rgba(108,117,125,0.12); color: #495057; }
     .rb-subj   { background: rgba(111,66,193,0.12);  color: #4a1d8a; }
 
-    /* ── SAYFA KIRMA — KESİN ÇÖZÜM ── */
-    /* exam-type-block: her sınav türü (TYT, AYT...) kendi sayfasında.
-       İçerik sayfaya sığmazsa taşabilir (break-inside: auto) —
-       ama her blok MUTLAKA yeni sayfada başlar. */
-    .exam-type-block {
-      page-break-inside: auto !important;
-      break-inside: auto !important;
-      page-break-before: always !important;
-      break-before: page !important;
-    }
-    /* İlk blok: sayfa kırma yok (zaten sayfanın başındadır) */
-    .exam-type-block.exam-type-first,
-    .exam-type-block:first-child {
-      page-break-before: avoid !important;
-      break-before: avoid !important;
-    }
-    .print-page-hdr {
-      page-break-before: always !important;
-      break-before: page !important;
-    }
-    .student-rapor-wrapper {
-      page-break-inside: auto !important;
-      break-inside: auto !important;
-    }
-    /* karne-bolum: tek öğrenci karnesinde her sınav türü yeni sayfada */
-    .karne-bolum {
-      page-break-before: always !important;
-      break-before: page !important;
-      page-break-inside: auto !important;
-      break-inside: auto !important;
-    }
-    .karne-bolum:first-child {
-      page-break-before: avoid !important;
-      break-before: avoid !important;
-    }
+    /* ── SAYFA KIRMA — Tüm kırmalar JS inline style ile yönetilir ── */
+    /* !important kurallar YOK — JS'in inline atamaları ezilmesin diye */
+    .exam-type-block       { page-break-inside: auto; break-inside: auto; }
+    .karne-bolum           { page-break-inside: auto; break-inside: auto; }
+    .student-rapor-wrapper { page-break-inside: auto; break-inside: auto; }
 
     /* Info-box satırı: sıkıştır */
     .info-box { margin-bottom: 3px !important; }
