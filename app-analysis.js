@@ -1440,33 +1440,79 @@ function rAnl(){
                   <div class="col-lg-6"><div class="card shadow-sm avoid-break"><div class="card-header bg-success text-white"><h3 class="card-title m-0"><i class="fas fa-angle-double-up mr-1"></i> En Çok İlk 5'e Girenler</h3></div><div class="card-body p-0 table-responsive"><table class="table table-sm table-striped m-0" style="font-size:0.9em;"><thead><tr><th>Sıra</th><th>No</th><th>Ad Soyad</th><th>Sınıf</th><th>Sayı</th><th>Ort.Net</th><th>Ort.Puan</th></tr></thead><tbody>${top5Html}</tbody></table></div></div></div>
                   <div class="col-lg-6"><div class="card shadow-sm avoid-break"><div class="card-header bg-danger text-white"><h3 class="card-title m-0"><i class="fas fa-angle-double-down mr-1"></i> En Çok Son 5'e Girenler</h3></div><div class="card-body p-0 table-responsive"><table class="table table-sm table-striped m-0" style="font-size:0.9em;"><thead><tr><th>Sıra</th><th>No</th><th>Ad Soyad</th><th>Sınıf</th><th>Sayı</th><th>Ort.Net</th><th>Ort.Puan</th></tr></thead><tbody>${bottom5Html}</tbody></table></div></div></div>
               </div>
+              <div id="genSummaryChartArea" class="chart-box avoid-break mt-3" style="display:none; height:280px;"><canvas id="cGenSummaryBar"></canvas></div>
             </div>
         </div>`; r.innerHTML = h;
-        // Genel özet kutu grafiği — sınıf bazlı dağılım (Tümü: tüm sınıf seviyesi)
+        // Genel özet kutu grafiği + sınıf bazlı puan çubuk grafiği
         setTimeout(() => {
+          // --- KUTU GRAFİĞİ (sadece 10+ sınav varsa) ---
           let bpArea = getEl('genSummaryBPArea');
           let totalExamsOfType = new Set(Object.values(EXAM_META).filter(m => m.examType === eT).map(m => m.date)).size;
-          if(!bpArea || totalExamsOfType < 10) return;
-          let genClassMap = {};
+          if(bpArea && totalExamsOfType >= 10) {
+            let genClassMap = {};
+            Object.values(stuStats).forEach(s => {
+              if(!s.exList || !s.exList.length) return;
+              if(!genClassMap[s.cls]) genClassMap[s.cls] = [];
+              genClassMap[s.cls].push(s.avgNet);
+            });
+            let validClsMap = Object.fromEntries(Object.entries(genClassMap).filter(([c,v])=>v.length>=3));
+            let lvlForGenBP = targetLvl || '';
+            let allGradeStus = DB.e.filter(x => x.examType===eT && !x.abs && (lvlForGenBP ? getGrade(x.studentClass)===lvlForGenBP : true));
+            let gradeStudentAvgs = {};
+            allGradeStus.forEach(e => {
+              if(!gradeStudentAvgs[e.studentNo]) gradeStudentAvgs[e.studentNo] = [];
+              gradeStudentAvgs[e.studentNo].push(e.totalNet);
+            });
+            let allGradeStuAvgVals = Object.values(gradeStudentAvgs).map(arr => arr.reduce((a,b)=>a+b,0)/arr.length);
+            if(allGradeStuAvgVals.length >= 3 && Object.keys(validClsMap).length >= 1) {
+              let multiGSBP = mkMultiClassBoxPlot(validClsMap, null, {height:220}, allGradeStuAvgVals);
+              if(multiGSBP) {
+                bpArea.innerHTML = `<div class="boxplot-card mb-3"><div class="boxplot-title"><i class="fas fa-box-open mr-1 text-success"></i>Sınıflar Arası Dağılım — Öğrenci Ort. Bazlı</div>${multiGSBP}</div>`;
+              }
+            }
+          }
+
+          // --- SINIF BAZLI ORTALAMA PUAN ÇUBUK GRAFİĞİ (sınav sayısından bağımsız) ---
+          let clsScoreMapGS = {};
           Object.values(stuStats).forEach(s => {
             if(!s.exList || !s.exList.length) return;
-            if(!genClassMap[s.cls]) genClassMap[s.cls] = [];
-            genClassMap[s.cls].push(s.avgNet);
+            let cls = s.cls;
+            if(!clsScoreMapGS[cls]) clsScoreMapGS[cls] = { scoreSum: 0, cnt: 0 };
+            clsScoreMapGS[cls].scoreSum += s.avgScore;
+            clsScoreMapGS[cls].cnt++;
           });
-          let validClsMap = Object.fromEntries(Object.entries(genClassMap).filter(([c,v])=>v.length>=3));
-          // Tümü: aynı sınıf seviyesindeki TÜM öğrencilerin ortalama netleri (şube filtresi uygulanmaz)
-          let lvlForGenBP = targetLvl || '';
-          let allGradeStus = DB.e.filter(x => x.examType===eT && !x.abs && (lvlForGenBP ? getGrade(x.studentClass)===lvlForGenBP : true));
-          let gradeStudentAvgs = {};
-          allGradeStus.forEach(e => {
-            if(!gradeStudentAvgs[e.studentNo]) gradeStudentAvgs[e.studentNo] = [];
-            gradeStudentAvgs[e.studentNo].push(e.totalNet);
-          });
-          let allGradeStuAvgVals = Object.values(gradeStudentAvgs).map(arr => arr.reduce((a,b)=>a+b,0)/arr.length);
-          if(allGradeStuAvgVals.length >= 3 && Object.keys(validClsMap).length >= 1) {
-            let multiGSBP = mkMultiClassBoxPlot(validClsMap, null, {height:220}, allGradeStuAvgVals);
-            if(multiGSBP) {
-              bpArea.innerHTML = `<div class="boxplot-card mb-3"><div class="boxplot-title"><i class="fas fa-box-open mr-1 text-success"></i>Sınıflar Arası Dağılım — Öğrenci Ort. Bazlı</div>${multiGSBP}</div>`;
+          let gsBarLabels = Object.keys(clsScoreMapGS).sort();
+          let gsBarData = gsBarLabels.map(cls => clsScoreMapGS[cls].cnt ? clsScoreMapGS[cls].scoreSum / clsScoreMapGS[cls].cnt : 0);
+          let gsCv = getEl('cGenSummaryBar');
+          if(gsCv && gsBarLabels.length > 0) {
+            let gsChartArea = getEl('genSummaryChartArea');
+            if(gsChartArea) gsChartArea.style.display = 'block';
+            try { let _prev = Chart.getChart && Chart.getChart('cGenSummaryBar'); if(_prev) _prev.destroy(); } catch(e){}
+            new Chart(gsCv, {
+              type: 'bar',
+              data: {
+                labels: gsBarLabels,
+                datasets: [{ label: 'Ortalama Puan', data: gsBarData, backgroundColor: cols.map(c=>c+'cc'), borderColor: cols, borderWidth: 1.5 }]
+              },
+              plugins: [ChartDataLabels],
+              options: {
+                responsive: true, maintainAspectRatio: false, animation: false,
+                plugins: {
+                  legend: { display: false },
+                  datalabels: { display: true, anchor: 'end', align: 'top', font: { size: 10, weight: 'bold' }, formatter: v => v.toFixed(1), color: '#343a40' }
+                },
+                scales: {
+                  x: { grid: { color: '#e2e8f0' }, ticks: { font: { size: 10 } } },
+                  y: { grid: { color: '#e2e8f0' }, ticks: { font: { size: 10 } }, title: { display: true, text: 'Ortalama Puan', font: { size: 10 } } }
+                }
+              }
+            });
+            if(gsChartArea && !gsChartArea.dataset.titleAdded) {
+              let title = document.createElement('div');
+              title.style.cssText = 'font-size:11px;font-weight:bold;color:#4a6fa5;margin-bottom:4px;text-align:left;';
+              title.textContent = `${eT} — Sınıf Bazlı Ortalama Puan (Tüm Sınavlar)`;
+              gsChartArea.parentNode.insertBefore(title, gsChartArea);
+              gsChartArea.dataset.titleAdded = 'true';
             }
           }
         }, 50);
