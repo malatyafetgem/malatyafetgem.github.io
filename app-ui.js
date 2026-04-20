@@ -293,13 +293,6 @@ function xPR(sourceId, title, btn, orientation) {
       max-width: 100% !important;
       padding: 0 5px !important;
     }
-    /* col-md-4 col-sm-12 kombinasyonu (Sınav Analizi kartlari) — genel col-sm-12 kuralından sonra gelir, onu ezer */
-    .col-md-4.col-sm-12 {
-      flex: 0 0 ${isPortrait ? '66mm' : '95mm'} !important;
-      max-width: ${isPortrait ? '66mm' : '95mm'} !important;
-      width: ${isPortrait ? '66mm' : '95mm'} !important;
-      padding: 0 5px !important;
-    }
     .col-md-2 {
       flex: 0 0 ${isPortrait ? '33mm' : '47.5mm'} !important;
       max-width: ${isPortrait ? '33mm' : '47.5mm'} !important;
@@ -725,9 +718,7 @@ function uExamDates(){
   let placeholderOpt = `<option value="" disabled${prev?'':' selected'}>Sınav Seç</option>`;
   let allOpt = (aT === 'class' || aT === 'subject') ? '<option value="">Tüm Sınavlar</option>' : '';
   getEl('aDate').innerHTML = placeholderOpt + allOpt + dates.map(x => { let pub = datePublisherMap[x] ? ` (${toTitleCase(datePublisherMap[x])})` : ''; return `<option value="${x}">${x}${pub}</option>`; }).join('');
-  if(dates.includes(prev)) getEl('aDate').value=prev;
-  else if(aT === 'class' || aT === 'subject') getEl('aDate').value='';
-  else if(aT === 'examdetail' && dates.length > 0) getEl('aDate').value = dates[dates.length - 1]; // en son sınavı varsayılan seç
+  if(dates.includes(prev)) getEl('aDate').value=prev; else if(aT === 'class' || aT === 'subject') getEl('aDate').value='';
 }
 
 // ---- uUI (orig lines 2111-2172) ----
