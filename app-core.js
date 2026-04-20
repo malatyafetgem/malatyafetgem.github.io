@@ -1,4 +1,4 @@
-// app-core.js — Firebase init, auth, global state, init, data fetch, helpers
+// app-core.js â€” Firebase init, auth, global state, init, data fetch, helpers
 
 // ---- top-level (orig lines 674-674) ----
 Chart.register(ChartDataLabels);
@@ -26,8 +26,8 @@ const auth = firebase.auth();
 // ---- uConn (orig lines 689-693) ----
 function uConn(online){
   const d=getEl('connDot'),t=getEl('connTxt'),b=getEl('connBadge');if(!d)return;
-  if(online){d.textContent='🟢';t.textContent='Bağlı';b.className='nav-link text-success';}
-  else{d.textContent='🔴';t.textContent='Çevrimdışı';b.className='nav-link text-danger';}
+  if(online){d.textContent='ðŸŸ¢';t.textContent='BaÄŸlÄ±';b.className='nav-link text-success';}
+  else{d.textContent='ðŸ”´';t.textContent='Ã‡evrimdÄ±ÅŸÄ±';b.className='nav-link text-danger';}
 }
 
 // ---- top-level (orig lines 694-694) ----
@@ -48,10 +48,18 @@ function checkAuth(){
       if(user.uid===ADMIN_UID)document.body.classList.add('is-admin');
       init(); showPwaPopupIfReady();
       
-      // İlk girişte History API State başlat
-      setTimeout(() => { 
-        // Ana sayfa için replaceState (back = uygulamadan çık)
-        window.history.replaceState({ pane: 'anasayfa_genel' }, '', window.location.pathname);
+      // Sayfa yenilendiÄŸinde URL'deki hash'ten pane'i geri yÃ¼kle
+      setTimeout(() => {
+        let hash = window.location.hash ? window.location.hash.replace('#', '') : '';
+        let validPanes = ['anasayfa_genel', 'anasayfa', 'sonuclar', 'rapor', 'ayarlar'];
+        if(hash && validPanes.includes(hash)) {
+          // Hash geÃ§erliyse o pane'e git, history state'i gÃ¼ncelle
+          window.history.replaceState({ pane: hash }, '', '#' + hash);
+          executeTabSwitch(hash, true);
+        } else {
+          // Hash yoksa ana sayfaya replaceState (back = uygulamadan Ã§Ä±k)
+          window.history.replaceState({ pane: 'anasayfa_genel' }, '', window.location.pathname);
+        }
       }, 100);
 
     }else{
@@ -67,13 +75,13 @@ function login(){
   const em=getEl('loginEmail').value.trim(),pa=getEl('loginPass').value;
   const err=getEl('loginError'),btn=getEl('btnLogin');
   err.style.display='none';
-  if(!em||!pa){err.textContent='E-posta ve şifre gerekli.';err.style.display='block';return;}
-  const orgHTML='<i class="fas fa-sign-in-alt mr-2"></i>Giriş Yap';
-  btn.innerHTML='<span class="spinner-border spinner-border-sm mr-2"></span>Giriş yapılıyor...';btn.disabled=true;
+  if(!em||!pa){err.textContent='E-posta ve ÅŸifre gerekli.';err.style.display='block';return;}
+  const orgHTML='<i class="fas fa-sign-in-alt mr-2"></i>GiriÅŸ Yap';
+  btn.innerHTML='<span class="spinner-border spinner-border-sm mr-2"></span>GiriÅŸ yapÄ±lÄ±yor...';btn.disabled=true;
   auth.signInWithEmailAndPassword(em,pa).then(()=>{btn.innerHTML=orgHTML;btn.disabled=false;}).catch(e=>{
     btn.innerHTML=orgHTML;btn.disabled=false;
     err.className='alert alert-danger mt-3 mb-0';err.style.display='block';
-    if(e.code.includes('user-not-found')||e.code.includes('wrong-password')||e.code.includes('invalid-credential')) err.innerHTML='<i class="fas fa-exclamation-circle mr-2"></i>Hatalı e-posta veya şifre.';
+    if(e.code.includes('user-not-found')||e.code.includes('wrong-password')||e.code.includes('invalid-credential')) err.innerHTML='<i class="fas fa-exclamation-circle mr-2"></i>HatalÄ± e-posta veya ÅŸifre.';
     else err.innerHTML='<i class="fas fa-times-circle mr-2"></i>Hata: '+e.message;
   });
 }
@@ -101,12 +109,12 @@ function sendPasswordReset() {
   let em = getEl('forgotEmail').value.trim(), msg = getEl('forgotMsg');
   if(!em) { msg.innerHTML = '<span class="text-danger">E-posta adresi gerekli.</span>'; return; }
   auth.sendPasswordResetEmail(em).then(() => {
-    msg.innerHTML = '<span class="text-success"><i class="fas fa-check-circle mr-1"></i>Sıfırlama bağlantısı gönderildi. Lütfen e-postanızı kontrol edin.</span>';
+    msg.innerHTML = '<span class="text-success"><i class="fas fa-check-circle mr-1"></i>SÄ±fÄ±rlama baÄŸlantÄ±sÄ± gÃ¶nderildi. LÃ¼tfen e-postanÄ±zÄ± kontrol edin.</span>';
     setTimeout(() => jQuery('#mForgot').modal('hide'), 3000);
   }).catch(err => {
-    let errMsg = 'Bir hata oluştu.';
-    if(err.code === 'auth/user-not-found') errMsg = 'Bu e-posta ile kayıtlı kullanıcı bulunamadı.';
-    else if(err.code === 'auth/invalid-email') errMsg = 'Geçersiz e-posta adresi.';
+    let errMsg = 'Bir hata oluÅŸtu.';
+    if(err.code === 'auth/user-not-found') errMsg = 'Bu e-posta ile kayÄ±tlÄ± kullanÄ±cÄ± bulunamadÄ±.';
+    else if(err.code === 'auth/invalid-email') errMsg = 'GeÃ§ersiz e-posta adresi.';
     msg.innerHTML = `<span class="text-danger"><i class="fas fa-times-circle mr-1"></i>${errMsg}</span>`;
   });
 }
@@ -147,7 +155,7 @@ let dInf={},searchDebounceTimer=null,anlDebounceTimer=null,chartTimer=null;
 let currentExcelData=[], currentUploadType='', currentHeaders=[], PENDING_UPLOAD=null;
 
 // ---- ld (orig lines 784-784) ----
-function ld(s,m="İşlem yapılıyor..."){getEl('l-txt').textContent=m;getEl('loader').style.display=s?'flex':'none';}
+function ld(s,m="Ä°ÅŸlem yapÄ±lÄ±yor..."){getEl('l-txt').textContent=m;getEl('loader').style.display=s?'flex':'none';}
 
 // ---- showToast (orig lines 786-794) ----
 function showToast(message, type = 'info', duration = 4000) {
@@ -169,11 +177,11 @@ function toTitleCase(str) {
 // ---- init (orig lines 801-851) ----
 async function init(){
   applyTheme(false);
-  ld(1,'Sistem altyapısı hazırlanıyor...');
+  ld(1,'Sistem altyapÄ±sÄ± hazÄ±rlanÄ±yor...');
 
   let v2Snap = await database.ref('db_v2/students').once('value');
   if (!v2Snap.exists()) {
-    ld(1, 'Veritabanı yeni nesil altyapıya geçiriliyor (Sadece 1 kez yapılır)...');
+    ld(1, 'VeritabanÄ± yeni nesil altyapÄ±ya geÃ§iriliyor (Sadece 1 kez yapÄ±lÄ±r)...');
     let oldSnap = await database.ref('sinavDB').once('value'), oldDB = oldSnap.val();
     if (oldDB && oldDB.s && oldDB.e) {
       let cleanStudents = oldDB.s.filter(x => x !== null);
@@ -201,7 +209,7 @@ async function init(){
     EXAM_META = snap.val() || {}; uDrp(); rTabE(); uStat();
     if(getEl('sonuclar').classList.contains('active-pane')) reqAnl();
     if(aNo) reqProfile();
-    // examResults'i examMeta ile paralel cek — panel diger bolumlerle birlikte acilsin
+    // examResults'i examMeta ile paralel cek â€” panel diger bolumlerle birlikte acilsin
     let allIds = Object.keys(EXAM_META);
     let missing = allIds.filter(bId => !CACHED_RESULTS[bId]);
     if(missing.length > 0) {
@@ -223,8 +231,8 @@ async function init(){
 async function fetchBatches(batchIds) {
   let promises = [];
   batchIds.forEach(bId => { if(!CACHED_RESULTS[bId]) { promises.push( database.ref('db_v2/examResults/' + bId).once('value').then(snap => { CACHED_RESULTS[bId] = snap.val() || []; }) ); } });
-  if(promises.length > 0) { ld(1, 'Sonuçlar indiriliyor...'); await Promise.all(promises); ld(0); }
-  // === FIX: DB.e'yi tüm cache'teki verilerden yeniden oluştur (sadece istenen batch değil) ===
+  if(promises.length > 0) { ld(1, 'SonuÃ§lar indiriliyor...'); await Promise.all(promises); ld(0); }
+  // === FIX: DB.e'yi tÃ¼m cache'teki verilerden yeniden oluÅŸtur (sadece istenen batch deÄŸil) ===
   let allE = [];
   Object.keys(CACHED_RESULTS).forEach(bId => { if(CACHED_RESULTS[bId]) allE = allE.concat(CACHED_RESULTS[bId]); });
   let validNos = new Set(DB.s.map(s => s.no));
@@ -244,16 +252,16 @@ async function reqAnl() {
   let eT = getEl('aEx').value, dt = getEl('aDate') ? getEl('aDate').value : '', aT = getEl('aType').value, sub = getEl('aSub') ? getEl('aSub').value : '';
   let needed = [];
 
-  // Risk analizi modu: fetch gerekmez, renderRiskPanel zaten uUI'dan çağrılıyor
+  // Risk analizi modu: fetch gerekmez, renderRiskPanel zaten uUI'dan Ã§aÄŸrÄ±lÄ±yor
   if(aT === 'risk') return;
 
   if(!eT){ getEl('anlRes').innerHTML=''; return; }
 
-  // Hangi batch'lerin yüklenmesi gerektiğini belirle
+  // Hangi batch'lerin yÃ¼klenmesi gerektiÄŸini belirle
   let lvlF = (aT==='class'||aT==='subject'||aT==='examdetail') && getEl('aLvl') ? getEl('aLvl').value : '';
 
   if(aT === 'student'){
-    // Öğrenci analizi: öğrenci seçilmeli
+    // Ã–ÄŸrenci analizi: Ã¶ÄŸrenci seÃ§ilmeli
     if(!aNo){ getEl('anlRes').innerHTML=''; return; }
     let st = DB.s.find(x=>x.no===aNo), stuGrade = st ? getGrade(st.class) : null;
     Object.keys(EXAM_META).forEach(bId => {
@@ -263,7 +271,7 @@ async function reqAnl() {
       needed.push(bId);
     });
   } else if(aT === 'class' || aT === 'subject'){
-    // Sınıf/Ders analizi: öğrenci seçiminden bağımsız
+    // SÄ±nÄ±f/Ders analizi: Ã¶ÄŸrenci seÃ§iminden baÄŸÄ±msÄ±z
     Object.keys(EXAM_META).forEach(bId => {
       let m = EXAM_META[bId];
       if(m.examType !== eT) return;
@@ -272,9 +280,9 @@ async function reqAnl() {
       needed.push(bId);
     });
   } else if(aT === 'examdetail'){
-    // Sınav analizi: öğrenci seçiminden bağımsız
+    // SÄ±nav analizi: Ã¶ÄŸrenci seÃ§iminden baÄŸÄ±msÄ±z
     if(sub === 'general_summary' || sub === 'list_all'){
-      // Tüm sınavlar
+      // TÃ¼m sÄ±navlar
       Object.keys(EXAM_META).forEach(bId => {
         let m = EXAM_META[bId];
         if(m.examType !== eT) return;
@@ -282,7 +290,7 @@ async function reqAnl() {
         needed.push(bId);
       });
     } else {
-      // Tek sınav + önceki sınav (özet için)
+      // Tek sÄ±nav + Ã¶nceki sÄ±nav (Ã¶zet iÃ§in)
       let allMatchingDates = [];
       Object.keys(EXAM_META).forEach(bId => {
         let m = EXAM_META[bId];
@@ -313,14 +321,14 @@ async function reqAnl() {
 async function reqUI() { uUI(); await reqAnl(); }
 
 // ---- normTR (orig lines 1030-1030) ----
-function normTR(s){return String(s||'').toLocaleLowerCase('tr-TR').replace(/ğ/g,'g').replace(/ü/g,'u').replace(/ş/g,'s').replace(/ı/g,'i').replace(/ö/g,'o').replace(/ç/g,'c');}
+function normTR(s){return String(s||'').toLocaleLowerCase('tr-TR').replace(/ÄŸ/g,'g').replace(/Ã¼/g,'u').replace(/ÅŸ/g,'s').replace(/Ä±/g,'i').replace(/Ã¶/g,'o').replace(/Ã§/g,'c');}
 
 // ---- pN (orig lines 1031-1031) ----
 function pN(v){let n=parseFloat(String(v||0).replace(',','.'));return isNaN(n)?0:n;}
 
 // ---- srt (orig lines 1033-1045) ----
 function srt(a,b){
-  // === FIX: Tarihler her zaman GG.AA.YYYY -> Date olarak karşılaştırılır (string sıralama yok) ===
+  // === FIX: Tarihler her zaman GG.AA.YYYY -> Date olarak karÅŸÄ±laÅŸtÄ±rÄ±lÄ±r (string sÄ±ralama yok) ===
   let parseDate = (dStr) => {
     if(!dStr) return new Date(0);
     let s = String(dStr).trim();
