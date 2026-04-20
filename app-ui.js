@@ -468,7 +468,7 @@ function xPR(sourceId, title, btn, orientation) {
   </style>
 </head>
 <body>
-  <div style="padding:0 3px;">${clone.outerHTML}</div>
+  <div id="__printWrap__" style="padding:0 3px;">${clone.outerHTML}</div>
   <script>
   window.addEventListener('load', function() {
     setTimeout(function() {
@@ -476,13 +476,13 @@ function xPR(sourceId, title, btn, orientation) {
       // Target: landscape A4 = 297mm ~ 1122px at 96dpi, portrait A4 = 210mm ~ 794px
       var targetPx = ${isPortrait ? 794 : 1122};
       var screenW  = window.screen.width > 0 ? window.screen.width : window.innerWidth;
-      // Only scale down if screen is narrower than the paper target
+      // Only scale the content wrapper, not the body itself
       if (screenW < targetPx) {
         var scale = screenW / targetPx;
-        var el = document.body;
+        var el = document.getElementById('__printWrap__');
         el.style.transformOrigin = '0 0';
         el.style.transform = 'scale(' + scale + ')';
-        el.style.width = (100 / scale) + '%';
+        el.style.width = Math.round(100 / scale) + '%';
       }
       window.print();
     }, 450);
