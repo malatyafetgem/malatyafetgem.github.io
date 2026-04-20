@@ -1,9 +1,7 @@
 // app-ui.js — Tabs, navigation, dropdowns, search, filters, charts, exports
 
-// ---- top-level (orig lines 944-944) ----
 let currentPane = 'anasayfa_genel';
 
-// ---- top-level (orig lines 945-970) ----
 window.addEventListener('popstate', function(e) {
   let isMobile = window.innerWidth < 768;
   // Giriş ekranı görünüyorsa: tarayıcıyı kapat / bir önceki sayfaya git (zaten doğal davranış)
@@ -31,7 +29,6 @@ window.addEventListener('popstate', function(e) {
   executeTabSwitch(targetPane, true);
 });
 
-// ---- sTab (orig lines 972-977) ----
 function sTab(id, el) {
   try { if (window.event && window.event.preventDefault) window.event.preventDefault(); } catch(e){}
   if (id === currentPane) return false;
@@ -39,7 +36,6 @@ function sTab(id, el) {
   return false;
 }
 
-// ---- executeTabSwitch (orig lines 979-1019) ----
 function executeTabSwitch(id, isPopState) {
   if(id === 'ayarlar' && !document.body.classList.contains('is-admin')) return;
 
@@ -82,7 +78,6 @@ function executeTabSwitch(id, isPopState) {
   }
 }
 
-// ---- sAct (orig lines 1021-1028) ----
 async function sAct(no,clr=false){
   aNo=no; if(clr){let st=DB.s.find(x=>x.no===no); getEl('sInp').value=st?(st.name+' ('+st.class+')'):'';getEl('sRes').innerHTML='';getEl('sRes').style.display='none';}
   let s=DB.s.find(x=>x.no===aNo);
@@ -92,13 +87,10 @@ async function sAct(no,clr=false){
   if(no) await reqProfile(); if(getEl('sonuclar').classList.contains('active-pane')) reqUI(); 
 }
 
-// ---- getGrade (orig lines 1531-1531) ----
 function getGrade(cls){ let m=String(cls||'').match(/^(\d+)/); return m?m[1]:''; }
 
-// ---- getBrVal (orig lines 1532-1532) ----
 function getBrVal(){ let el=getEl('aBr'); if(!el) return ''; let v=el.value; return (v==='__ALL__'||!v)?'':v; }
 
-// ---- mkChart (orig lines 1534-1551) ----
 function mkChart(canvasId,labels,datasets,rev=false){
   let gCol='#e2e8f0';
   let txtCol='#475569';
@@ -118,14 +110,12 @@ function mkChart(canvasId,labels,datasets,rev=false){
   });
 }
 
-// ---- xXL (orig lines 1553-1557) ----
 function xXL(id,fn){
   let tbl=getEl(id),wb=XLSX.utils.book_new(),ws=XLSX.utils.table_to_sheet(tbl),range=XLSX.utils.decode_range(ws['!ref']||'A1:A1'),wscols=[];
   for(let C=range.s.c;C<=range.e.c;C++){let maxW=6;for(let R=range.s.r;R<=range.e.r;R++){let cell=ws[XLSX.utils.encode_cell({r:R,c:C})];if(cell&&cell.v)maxW=Math.max(maxW,String(cell.v).length+2);}wscols.push({wch:Math.min(maxW,32)});}
   ws['!cols']=wscols; XLSX.utils.book_append_sheet(wb,ws,'Rapor'); XLSX.writeFile(wb,fn+'.xlsx');
 }
 
-// ---- xXLMul (orig lines 1559-1567) ----
 function xXLMul(cId,fn){
   let wb=XLSX.utils.book_new(),ts=getEl(cId).getElementsByTagName('table');
   for(let i=0;i<ts.length;i++){
@@ -136,7 +126,6 @@ function xXLMul(cId,fn){
   XLSX.writeFile(wb,fn+'.xlsx');
 }
 
-// ---- xPR (orig lines 1569-1888) ----
 function xPR(sourceId, title, btn, orientation) {
   if(window._karneCharts) window._karneCharts.forEach(ch => { try { ch.tooltip.setActiveElements([]); ch.update('none'); } catch(e){} });
   if(window._raporCharts) window._raporCharts.forEach(ch => { try { ch.tooltip.setActiveElements([]); ch.update('none'); } catch(e){} });
@@ -243,26 +232,30 @@ function xPR(sourceId, title, btn, orientation) {
     });
   }
 
+  // SADECE Toplu Listeler (pED ve pEDAll) için özel masaüstü genişlik zorlaması koşulu
+  let isLandscapeList = (sourceId === 'pED' || sourceId === 'pEDAll');
+  let vpMeta = isLandscapeList ? 'width=1122, initial-scale=1.0, maximum-scale=1.0' : 'width=device-width, initial-scale=1.0';
+
   let printHtml = `<!DOCTYPE html>
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=1100">
+  <meta name="viewport" content="${vpMeta}">
   <title>${title}</title>
   ${cssLinks}
   <style>
     *, *::before, *::after { box-sizing: border-box; }
     html {
-      width: ${isPortrait ? '210mm' : '297mm'} !important;
-      min-width: ${isPortrait ? '210mm' : '297mm'} !important;
+      width: 100% !important;
+      min-width: unset !important;
     }
     body {
       background: #fff !important; color: #212529 !important;
       font-family: 'Source Sans Pro', Arial, sans-serif;
       font-size: 10px; margin: 0; padding: 0;
-      width: ${isPortrait ? '210mm' : '297mm'} !important;
-      min-width: ${isPortrait ? '210mm' : '297mm'} !important;
-      max-width: ${isPortrait ? '210mm' : '297mm'} !important;
+      width: 100% !important;
+      min-width: unset !important;
+      max-width: unset !important;
     }
     @page { margin: 7mm 6mm; size: ${isPortrait ? 'A4 portrait' : 'A4 landscape'}; }
 
@@ -291,6 +284,13 @@ function xPR(sourceId, title, btn, orientation) {
     .col-12, .col-sm-12, .col-lg-12 {
       flex: 0 0 100% !important;
       max-width: 100% !important;
+      padding: 0 5px !important;
+    }
+    /* col-md-4 col-sm-12 kombinasyonu (Sınav Analizi kartlari) — genel col-sm-12 kuralından sonra gelir, onu ezer */
+    .col-md-4.col-sm-12 {
+      flex: 0 0 ${isPortrait ? '66mm' : '95mm'} !important;
+      max-width: ${isPortrait ? '66mm' : '95mm'} !important;
+      width: ${isPortrait ? '66mm' : '95mm'} !important;
       padding: 0 5px !important;
     }
     .col-md-2 {
@@ -458,6 +458,23 @@ function xPR(sourceId, title, btn, orientation) {
       margin-left: 0 !important; padding-left: 0 !important; 
       width: 100% !important; max-width: 100% !important; 
     }
+    
+    ${isLandscapeList ? `
+    /* Mobilde Toplu Listelerin yana taşmasını engelleyip masaüstü gibi tek sayfaya sığdıran kural */
+    html, body { 
+      width: 1122px !important; 
+      min-width: 1122px !important; 
+      max-width: 1122px !important; 
+    }
+    .table { 
+      table-layout: auto !important; 
+      white-space: nowrap !important; 
+    }
+    .scroll, .table-responsive { 
+      width: 100% !important; 
+      overflow: visible !important; 
+    }
+    ` : ''}
   </style>
 </head>
 <body>
@@ -472,10 +489,8 @@ function xPR(sourceId, title, btn, orientation) {
   btn.innerHTML = orig; btn.disabled = false;
 }
 
-// ---- debounceSearch (orig lines 1890-1890) ----
 function debounceSearch(){clearTimeout(searchDebounceTimer);searchDebounceTimer=setTimeout(sSearch,280);}
 
-// ---- sSearch (orig lines 1891-1897) ----
 function sSearch(){
   let v=getEl('sInp').value.trim(),r=getEl('sRes'); if(!v){r.innerHTML='';r.style.display='none';return;}
   let trm=normTR(v).split(/\s+/), m=DB.s.filter(x=>{let txt=normTR(x.no+' '+x.name+' '+x.class);return trm.every(t=>txt.includes(t));});
@@ -484,13 +499,10 @@ function sSearch(){
   r.innerHTML=h; r.style.display='block';
 }
 
-// ---- clrS (orig lines 1898-1898) ----
 function clrS(){getEl('sInp').value='';getEl('sRes').innerHTML='';getEl('sRes').style.display='none';sAct(null,false);}
 
-// ---- anlStuDoSearch (orig lines 1900-1900) ----
 function anlStuDoSearch(){clearTimeout(anlDebounceTimer);anlDebounceTimer=setTimeout(execAnlStuSearch,280);}
 
-// ---- execAnlStuSearch (orig lines 1901-1906) ----
 function execAnlStuSearch(){
   let v=getEl('anlStuInp').value.trim(), res=getEl('anlStuRes'); if(!v){res.style.display='none';res.innerHTML='';return;}
   let trm=normTR(v).split(/\s+/), m=DB.s.filter(x=>{let txt=normTR(x.no+' '+x.name+' '+x.class);return trm.every(t=>txt.includes(t));});
@@ -498,20 +510,16 @@ function execAnlStuSearch(){
   res.innerHTML=m.slice(0,20).map(x=>`<div class="anlStu-item" onclick="anlStuSelect('${x.no}')"><div style="flex:1; min-width:0;"><strong>${x.no}</strong> — ${x.name} <span class="text-muted">(${x.class})</span></div></div>`).join(''); res.style.display='block';
 }
 
-// ---- anlStuSelect (orig lines 1907-1911) ----
 function anlStuSelect(no){
   getEl('anlStuRes').style.display='none'; let s=DB.s.find(x=>x.no===no); if(s) getEl('anlStuInp').value=s.name+' ('+s.class+')'; aNo = no;
   let ab=getEl('anlStuBadge'); if(ab) ab.innerHTML=s?`<span class="badge badge-success badge-pill px-2 py-1" style="font-size:0.8em;"><i class="fas fa-check-circle mr-1"></i>Seçili Öğrenci: ${s.name} (${s.class})</span>`:'';
   getEl('aBadge').innerHTML=s?`<span class="badge badge-success badge-pill px-3 py-2"><i class="fas fa-check-circle mr-1"></i>Seçili Öğrenci: ${s.name} (${s.class})</span>`:'<span class="text-muted">Seçilmedi</span>'; reqUI(); 
 }
 
-// ---- anlStuClear (orig lines 1912-1912) ----
 function anlStuClear(){ getEl('anlStuInp').value=''; getEl('anlStuRes').style.display='none'; getEl('anlStuRes').innerHTML=''; getEl('anlStuBadge').innerHTML=''; sAct(null,false); }
 
-// ---- top-level (orig lines 1913-1913) ----
 document.addEventListener('click',e=>{ let res=getEl('anlStuRes'),inp=getEl('anlStuInp'); if(res&&inp&&!res.contains(e.target)&&e.target!==inp)res.style.display='none'; let res2=getEl('sRes'),inp2=getEl('sInp'); if(res2&&inp2&&!res2.contains(e.target)&&e.target!==inp2)res2.style.display='none'; });
 
-// ---- uStat (orig lines 1915-1921) ----
 function uStat(){
   const g=getEl('dynamicStatsGrid'), u={}; Object.values(EXAM_META).forEach(m => { u[m.examType] = (u[m.examType]||0) + 1; });
   const cl=['primary','success','warning','danger','info'],ic=['fas fa-file-alt','fas fa-check-circle','fas fa-star','fas fa-trophy','fas fa-bookmark'];
@@ -520,12 +528,10 @@ function uStat(){
   if(g)g.innerHTML=h;
 }
 
-// ---- uDrp (orig lines 1923-1925) ----
 function uDrp(){
   uExamTypes(); if(aNo){ let s=DB.s.find(x=>x.no===aNo); if(s&&getEl('anlStuInp'))getEl('anlStuInp').value=s.name+' ('+s.class+')'; }
 }
 
-// ---- uBranches (orig lines 1927-1945) ----
 function uBranches(){
   // Sınıf Seviyesi'ne göre yalnızca o seviyede öğrencisi olan şubeleri DB.s'den listele
   let aT = getEl('aType') ? getEl('aType').value : '';
@@ -546,7 +552,6 @@ function uBranches(){
   else brSel.value = '';
 }
 
-// ---- uExamTypes (orig lines 1947-1986) ----
 function uExamTypes(){
   let types=new Set();
   let aT = getEl('aType') ? getEl('aType').value : '';
@@ -588,7 +593,6 @@ function uExamTypes(){
   else if(prev){ getEl('aEx').value=''; }
 }
 
-// ---- uSub (orig lines 1988-2043) ----
 function uSub(){
   let aT=getEl('aType')?getEl('aType').value:'', t=getEl('aEx').value, s=new Set();
   let lvlF = (aT==='class'||aT==='subject'||aT==='examdetail') && getEl('aLvl') ? getEl('aLvl').value : '';
@@ -646,7 +650,6 @@ function uSub(){
   }
 }
 
-// ---- _updateGDateVisibility (orig lines 2046-2056) ----
 function _updateGDateVisibility() {
   let t = getEl('aType') ? getEl('aType').value : '';
   let sub = getEl('aSub') ? getEl('aSub').value : '';
@@ -659,38 +662,32 @@ function _updateGDateVisibility() {
   }
 }
 
-// ---- _resetSel (orig lines 2059-2063) ----
 function _resetSel(id){
   let el = getEl(id); if(!el) return;
   el.value = '';
   if(el.options.length && el.options[0].disabled){ el.options[0].selected = true; }
 }
 
-// ---- onLvlChange (orig lines 2064-2067) ----
 function onLvlChange(){
   _resetSel('aBr'); _resetSel('aEx'); _resetSel('aDate'); _resetSel('aSub');
   uBranches(); uExamTypes(); uExamDates(); uSub(); _updateGDateVisibility(); reqAnl();
 }
 
-// ---- onBrChange (orig lines 2068-2071) ----
 function onBrChange(){
   _resetSel('aEx'); _resetSel('aDate'); _resetSel('aSub');
   uExamTypes(); uExamDates(); uSub(); _updateGDateVisibility(); reqAnl();
 }
 
-// ---- onExTypeChange (orig lines 2072-2075) ----
 function onExTypeChange(){
   _resetSel('aDate'); _resetSel('aSub');
   uExamDates(); uSub(); _updateGDateVisibility(); reqAnl();
 }
 
-// ---- onDateChange (orig lines 2076-2079) ----
 function onDateChange(){
   _resetSel('aSub');
   uSub(); _updateGDateVisibility(); reqAnl();
 }
 
-// ---- uExamDates (orig lines 2081-2109) ----
 function uExamDates(){
   // === FIX: uExamDates filtreleri tutarlı hale getirildi ===
   // - examdetail/summary VE list_single için aNo varsa öğrencinin sınıf seviyesi filtre olarak uygulanır
@@ -718,10 +715,11 @@ function uExamDates(){
   let placeholderOpt = `<option value="" disabled${prev?'':' selected'}>Sınav Seç</option>`;
   let allOpt = (aT === 'class' || aT === 'subject') ? '<option value="">Tüm Sınavlar</option>' : '';
   getEl('aDate').innerHTML = placeholderOpt + allOpt + dates.map(x => { let pub = datePublisherMap[x] ? ` (${toTitleCase(datePublisherMap[x])})` : ''; return `<option value="${x}">${x}${pub}</option>`; }).join('');
-  if(dates.includes(prev)) getEl('aDate').value=prev; else if(aT === 'class' || aT === 'subject') getEl('aDate').value='';
+  if(dates.includes(prev)) getEl('aDate').value=prev;
+  else if(aT === 'class' || aT === 'subject') getEl('aDate').value='';
+  else if(aT === 'examdetail' && dates.length > 0) getEl('aDate').value = dates[dates.length - 1]; // en son sınavı varsayılan seç
 }
 
-// ---- uUI (orig lines 2111-2172) ----
 function uUI(){
   let t=getEl('aType').value;
   let isRisk = t === 'risk';
@@ -785,7 +783,6 @@ function uUI(){
   }
 }
 
-// ---- _populateRiskFilterDropdowns (orig lines 2174-2220) ----
 function _populateRiskFilterDropdowns() {
   // Sınıf Seviyesi
   let gradeEl = getEl('riskGradeFilter');
@@ -834,7 +831,6 @@ function _populateRiskFilterDropdowns() {
   }
 }
 
-// ---- handleSubChange (orig lines 2222-2230) ----
 function handleSubChange(){ 
   let t = getEl('aType').value, sub = getEl('aSub').value; 
   if(t === 'examdetail') { 
