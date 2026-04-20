@@ -247,7 +247,7 @@ function xPR(sourceId, title, btn, orientation) {
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=${isPortrait ? 794 : 1123}">
+  <meta name="viewport" content="width=1100">
   <title>${title}</title>
   ${cssLinks}
   <style>
@@ -469,13 +469,31 @@ function xPR(sourceId, title, btn, orientation) {
 </head>
 <body>
   <div style="padding:0 3px;">${clone.outerHTML}</div>
-  <script>/* print iframe tarafından tetikleniyor */<\/script>
+  <script>
+  window.addEventListener('load', function() {
+    setTimeout(function() {
+      // Force correct paper width on mobile where @page size is ignored.
+      // Target: landscape A4 = 297mm ~ 1122px at 96dpi, portrait A4 = 210mm ~ 794px
+      var targetPx = ${isPortrait ? 794 : 1122};
+      var screenW  = window.screen.width > 0 ? window.screen.width : window.innerWidth;
+      // Only scale down if screen is narrower than the paper target
+      if (screenW < targetPx) {
+        var scale = screenW / targetPx;
+        var el = document.body;
+        el.style.transformOrigin = '0 0';
+        el.style.transform = 'scale(' + scale + ')';
+        el.style.width = (100 / scale) + '%';
+      }
+      window.print();
+    }, 450);
+  });
+  <\/script>
 </body>
 </html>`;
 
-  // Mevcut sayfada gizli iframe ile yazdır — mobil/tablet/masaüstü tüm cihazlarda
-  // window.open yerine iframe kullanılıyor: mobil tarayıcılar yeni pencereyi ekran
-  // genişliğinde açtığı için @page size kuralını yok sayıyor, iframe bu sorunu çözüyor.
+  // Use hidden iframe for printing — works consistently across mobile/tablet/desktop
+  // window.open is avoided because mobile browsers open it at screen width,
+  // causing @page size to be ignored and doubling the page count.
   let oldFrame = document.getElementById('__printFrame__');
   if (oldFrame) oldFrame.remove();
   let iframe = document.createElement('iframe');
