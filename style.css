@@ -184,15 +184,15 @@ body.is-admin button.btn-block.admin-only { display:block !important; }
 /* ===== ADMINLTE v4 RENK PALETİ (Bootstrap 5 tabanlı) ===== */
 .info-box.bg-primary, .info-box.bg-success, .info-box.bg-info, .info-box.bg-warning,
 .info-box.bg-danger, .info-box.bg-secondary, .info-box.bg-teal { box-shadow: 0 2px 6px rgba(0,0,0,0.08) !important; border: none; }
-.info-box.bg-primary { background: #0d6efd !important; color: #fff !important; }
+.info-box.bg-primary { background: linear-gradient(135deg, #0d6efd, #0a58ca) !important; color: #fff !important; }
 .info-box.bg-primary .info-box-icon, .info-box.bg-primary .info-box-text, .info-box.bg-primary .info-box-number, .info-box.bg-primary .progress-description, .info-box.bg-primary i { color: #fff !important; }
-.info-box.bg-success { background: #198754 !important; color: #fff !important; }
+.info-box.bg-success { background: linear-gradient(135deg, #198754, #20c997) !important; color: #fff !important; }
 .info-box.bg-success .info-box-icon, .info-box.bg-success .info-box-text, .info-box.bg-success .info-box-number, .info-box.bg-success .progress-description, .info-box.bg-success i { color: #fff !important; }
-.info-box.bg-info { background: #0dcaf0 !important; color: #055160 !important; }
-.info-box.bg-info .info-box-icon, .info-box.bg-info .info-box-text, .info-box.bg-info .info-box-number, .info-box.bg-info .progress-description, .info-box.bg-info i { color: #055160 !important; }
-.info-box.bg-warning { background: #ffc107 !important; color: #664d03 !important; }
-.info-box.bg-warning .info-box-icon, .info-box.bg-warning .info-box-text, .info-box.bg-warning .info-box-number, .info-box.bg-warning .progress-description, .info-box.bg-warning i { color: #664d03 !important; }
-.info-box.bg-danger { background: #dc3545 !important; color: #fff !important; }
+.info-box.bg-info { background: linear-gradient(135deg, #0dcaf0, #0d6efd) !important; color: #fff !important; }
+.info-box.bg-info .info-box-icon, .info-box.bg-info .info-box-text, .info-box.bg-info .info-box-number, .info-box.bg-info .progress-description, .info-box.bg-info i { color: #fff !important; }
+.info-box.bg-warning { background: linear-gradient(135deg, #fd7e14, #ffc107) !important; color: #fff !important; }
+.info-box.bg-warning .info-box-icon, .info-box.bg-warning .info-box-text, .info-box.bg-warning .info-box-number, .info-box.bg-warning .progress-description, .info-box.bg-warning i { color: #fff !important; }
+.info-box.bg-danger { background: linear-gradient(135deg, #dc3545, #b02a37) !important; color: #fff !important; }
 .info-box.bg-danger .info-box-icon, .info-box.bg-danger .info-box-text, .info-box.bg-danger .info-box-number, .info-box.bg-danger .progress-description, .info-box.bg-danger i { color: #fff !important; }
 
 /* Card header'lar — AdminLTE v4 default */
@@ -236,10 +236,10 @@ body.is-admin button.btn-block.admin-only { display:block !important; }
 .main-sidebar.sidebar-light-primary .user-panel i { color: #0d6efd !important; }
 
 /* Inline gri/danger info-box override (AdminLTE v4) */
-.info-box[style*="background:#6c757d"] { background: #6c757d !important; color: #fff !important; }
+.info-box[style*="background:#6c757d"] { background: linear-gradient(135deg, #6c757d, #495057) !important; color: #fff !important; }
 .info-box[style*="background:#6c757d"] *, .info-box[style*="background:#6c757d"] i { color: #fff !important; }
 .info-box[style*="background:#6c757d"] .progress-description { color: #e9ecef !important; }
-.info-box[style*="background:#dc3545"] { background: #dc3545 !important; color: #fff !important; }
+.info-box[style*="background:#dc3545"] { background: linear-gradient(135deg, #dc3545, #b02a37) !important; color: #fff !important; }
 .info-box[style*="background:#dc3545"] *, .info-box[style*="background:#dc3545"] i { color: #fff !important; }
 
 /* ===== SİSTEM YÖNETİMİ — MODERN TASARIM ===== */

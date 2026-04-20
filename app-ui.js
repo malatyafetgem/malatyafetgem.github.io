@@ -293,6 +293,13 @@ function xPR(sourceId, title, btn, orientation) {
       max-width: 100% !important;
       padding: 0 5px !important;
     }
+    /* col-md-4 col-sm-12 kombinasyonu (Sınav Analizi kartlari) — genel col-sm-12 kuralından sonra gelir, onu ezer */
+    .col-md-4.col-sm-12 {
+      flex: 0 0 ${isPortrait ? '66mm' : '95mm'} !important;
+      max-width: ${isPortrait ? '66mm' : '95mm'} !important;
+      width: ${isPortrait ? '66mm' : '95mm'} !important;
+      padding: 0 5px !important;
+    }
     .col-md-2 {
       flex: 0 0 ${isPortrait ? '33mm' : '47.5mm'} !important;
       max-width: ${isPortrait ? '33mm' : '47.5mm'} !important;
