@@ -468,48 +468,14 @@ function xPR(sourceId, title, btn, orientation) {
   </style>
 </head>
 <body>
-  <div id="__printWrap__" style="padding:0 3px;">${clone.outerHTML}</div>
-  <script>
-  window.addEventListener('load', function() {
-    setTimeout(function() {
-      // Force correct paper width on mobile where @page size is ignored.
-      // Target: landscape A4 = 297mm ~ 1122px at 96dpi, portrait A4 = 210mm ~ 794px
-      var targetPx = ${isPortrait ? 794 : 1122};
-      var screenW  = window.screen.width > 0 ? window.screen.width : window.innerWidth;
-      // Only scale the content wrapper, not the body itself
-      if (screenW < targetPx) {
-        var scale = screenW / targetPx;
-        var el = document.getElementById('__printWrap__');
-        el.style.transformOrigin = '0 0';
-        el.style.transform = 'scale(' + scale + ')';
-        el.style.width = Math.round(100 / scale) + '%';
-      }
-      window.print();
-    }, 450);
-  });
-  <\/script>
+  <div style="padding:0 3px;">${clone.outerHTML}</div>
+  <script>window.addEventListener('load',function(){setTimeout(function(){window.print();},450);});<\/script>
 </body>
 </html>`;
 
-  // Use hidden iframe for printing — works consistently across mobile/tablet/desktop
-  // window.open is avoided because mobile browsers open it at screen width,
-  // causing @page size to be ignored and doubling the page count.
-  let oldFrame = document.getElementById('__printFrame__');
-  if (oldFrame) oldFrame.remove();
-  let iframe = document.createElement('iframe');
-  iframe.id = '__printFrame__';
-  iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;border:none;visibility:hidden;';
-  document.body.appendChild(iframe);
-  iframe.contentDocument.open();
-  iframe.contentDocument.write(printHtml);
-  iframe.contentDocument.close();
-  iframe.contentWindow.addEventListener('load', function() {
-    setTimeout(function() {
-      iframe.contentWindow.focus();
-      iframe.contentWindow.print();
-      setTimeout(function() { iframe.remove(); }, 2000);
-    }, 450);
-  });
+  let printWin = window.open('', '_blank', `width=${isPortrait ? 900 : 1200},height=800,scrollbars=yes`);
+  if (!printWin) { showToast('Açılır pencere engellendi!', 'warning', 6000); btn.innerHTML = orig; btn.disabled = false; return; }
+  printWin.document.write(printHtml); printWin.document.close();
   btn.innerHTML = orig; btn.disabled = false;
 }
 
