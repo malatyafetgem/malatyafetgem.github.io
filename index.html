@@ -348,11 +348,11 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/admin-lte/3.2.0/js/adminlte.min.js"></script>
 
 
-<!-- Application code (split into 4 modules) -->
-<script src="./app-core.js"></script>
-<script src="./app-ui.js"></script>
-<script src="./app-analysis.js"></script>
-<script src="./app-settings.js"></script>
+<!-- Application code (split into 4 modules; defer guarantees correct load order) -->
+<script src="./app-core.js" defer></script>
+<script src="./app-ui.js" defer></script>
+<script src="./app-analysis.js" defer></script>
+<script src="./app-settings.js" defer></script>
 
 
 <footer class="main-footer text-center" style="background:#fff;border-top:1px solid #dee2e6;padding:10px;font-size:0.85em;color:#6c757d;">© 2026 AYUSTASI</footer>
