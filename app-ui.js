@@ -118,24 +118,56 @@ function mkChart(canvasId,labels,datasets,rev=false){
   });
 }
 
+// ---- Yardımcı: HTML tablosunu SheetJS'e date-parse yapmadan dönüştür ----
+function _tblToWsSafe(tbl){
+  let aoa=[], rows=tbl.querySelectorAll('tr');
+  rows.forEach(tr=>{
+    let row=[], cells=tr.querySelectorAll('th,td');
+    cells.forEach(td=>{
+      let txt=(td.innerText||td.textContent||'').trim();
+      row.push(txt);
+    });
+    aoa.push(row);
+  });
+  // aoa_to_sheet ile oluştur; tüm değerler string olarak gelir, raw:false ile parse etme
+  let ws=XLSX.utils.aoa_to_sheet(aoa, {dense:false});
+  // Tüm hücreleri string tipine zorla (sayısal görünen değerler dahil)
+  let range=XLSX.utils.decode_range(ws['!ref']||'A1:A1');
+  for(let R=range.s.r;R<=range.e.r;R++){
+    for(let C=range.s.c;C<=range.e.c;C++){
+      let ref=XLSX.utils.encode_cell({r:R,c:C});
+      let cell=ws[ref];
+      if(cell && cell.t!=='s'){ cell.t='s'; cell.v=String(cell.v); }
+    }
+  }
+  // Sütun genişliklerini hesapla
+  let wscols=[];
+  for(let C=range.s.c;C<=range.e.c;C++){
+    let maxW=6;
+    for(let R=range.s.r;R<=range.e.r;R++){
+      let cell=ws[XLSX.utils.encode_cell({r:R,c:C})];
+      if(cell&&cell.v) maxW=Math.max(maxW,String(cell.v).length+2);
+    }
+    wscols.push({wch:Math.min(maxW,32)});
+  }
+  ws['!cols']=wscols;
+  return ws;
+}
+
 // ---- xXL (orig lines 1553-1557) ----
 function xXL(id,fn){
-  let tbl=getEl(id),wb=XLSX.utils.book_new(),ws=XLSX.utils.table_to_sheet(tbl),range=XLSX.utils.decode_range(ws['!ref']||'A1:A1'),wscols=[];
-  // Tarih olarak yorumlanan "12/98" gibi sıra değerlerini string'e zorla
-  for(let R=range.s.r;R<=range.e.r;R++){for(let C=range.s.c;C<=range.e.c;C++){let ref=XLSX.utils.encode_cell({r:R,c:C});let cell=ws[ref];if(cell&&cell.t!=='s'&&typeof cell.v==='string'&&/^\d+\/\d+$/.test(cell.v)){cell.t='s';}else if(cell&&cell.t==='n'&&/^\d+\/\d+$/.test(String(cell.w||''))){cell.t='s';cell.v=String(cell.w);}}}
-  for(let C=range.s.c;C<=range.e.c;C++){let maxW=6;for(let R=range.s.r;R<=range.e.r;R++){let cell=ws[XLSX.utils.encode_cell({r:R,c:C})];if(cell&&cell.v)maxW=Math.max(maxW,String(cell.v).length+2);}wscols.push({wch:Math.min(maxW,32)});}
-  ws['!cols']=wscols; XLSX.utils.book_append_sheet(wb,ws,'Rapor'); XLSX.writeFile(wb,fn+'.xlsx');
+  let tbl=getEl(id), wb=XLSX.utils.book_new();
+  let ws=_tblToWsSafe(tbl);
+  XLSX.utils.book_append_sheet(wb,ws,'Rapor');
+  XLSX.writeFile(wb,fn+'.xlsx');
 }
 
 // ---- xXLMul (orig lines 1559-1567) ----
 function xXLMul(cId,fn){
-  let wb=XLSX.utils.book_new(),ts=getEl(cId).getElementsByTagName('table');
+  let wb=XLSX.utils.book_new(), ts=getEl(cId).getElementsByTagName('table');
   for(let i=0;i<ts.length;i++){
-    let ws=XLSX.utils.table_to_sheet(ts[i]),range=XLSX.utils.decode_range(ws['!ref']||'A1:A1'),wscols=[];
-    // Tarih olarak yorumlanan "12/98" gibi sıra değerlerini string'e zorla
-    for(let R=range.s.r;R<=range.e.r;R++){for(let C=range.s.c;C<=range.e.c;C++){let ref=XLSX.utils.encode_cell({r:R,c:C});let cell=ws[ref];if(cell&&cell.t!=='s'&&typeof cell.v==='string'&&/^\d+\/\d+$/.test(cell.v)){cell.t='s';}else if(cell&&cell.t==='n'&&/^\d+\/\d+$/.test(String(cell.w||''))){cell.t='s';cell.v=String(cell.w);}}}
-    for(let C=range.s.c;C<=range.e.c;C++){let maxW=6;for(let R=range.s.r;R<=range.e.r;R++){let cell=ws[XLSX.utils.encode_cell({r:R,c:C})];if(cell&&cell.v)maxW=Math.max(maxW,String(cell.v).length+2);}wscols.push({wch:Math.min(maxW,32)});}
-    ws['!cols']=wscols; XLSX.utils.book_append_sheet(wb,ws,ts[i].getAttribute('data-sh')||('Sayfa'+i));
+    let ws=_tblToWsSafe(ts[i]);
+    XLSX.utils.book_append_sheet(wb,ws,ts[i].getAttribute('data-sh')||('Sayfa'+i));
   }
   XLSX.writeFile(wb,fn+'.xlsx');
 }
