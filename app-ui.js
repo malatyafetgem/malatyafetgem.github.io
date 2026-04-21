@@ -236,10 +236,19 @@ function xPR(sourceId, title, btn, orientation) {
     blk.style.cssText += '; page-break-inside: auto; break-inside: auto;';
   });
 
-  // Toplu liste tablolarında satır page-break'i JS ile override et (CSS specificity sorununu bypass eder)
+  // Toplu liste tablolarında satır page-break'i JS ile override et
   if(sourceId === 'pED' || sourceId === 'pEDAll') {
+    clone.querySelectorAll('table').forEach(tbl => {
+      tbl.style.pageBreakInside = 'auto';
+      tbl.style.breakInside = 'auto';
+      tbl.style.width = '100%';
+    });
     clone.querySelectorAll('tbody tr').forEach(tr => {
-      tr.style.cssText += '; page-break-inside: auto !important; break-inside: auto !important;';
+      tr.style.pageBreakInside = 'avoid';
+      tr.style.breakInside = 'avoid';
+    });
+    clone.querySelectorAll('thead').forEach(h => {
+      h.style.display = 'table-header-group';
     });
   }
 
@@ -247,45 +256,43 @@ function xPR(sourceId, title, btn, orientation) {
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=1100">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${title}</title>
   ${cssLinks}
   <style>
     *, *::before, *::after { box-sizing: border-box; }
-    html {
-      width: ${isPortrait ? '210mm' : '297mm'} !important;
-      min-width: ${isPortrait ? '210mm' : '297mm'} !important;
+    html, body {
+      width: 100% !important;
+      min-width: 0 !important;
+      max-width: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
     }
     body {
       background: #fff !important; color: #212529 !important;
       font-family: 'Source Sans Pro', Arial, sans-serif;
-      font-size: 10px; margin: 0; padding: 0;
-      width: ${isPortrait ? '210mm' : '297mm'} !important;
-      min-width: ${isPortrait ? '210mm' : '297mm'} !important;
-      max-width: ${isPortrait ? '210mm' : '297mm'} !important;
+      font-size: 10px;
     }
     @page { margin: 7mm 6mm; size: ${isPortrait ? 'A4 portrait' : 'A4 landscape'}; }
 
-    /* ── TEMEL LAYOUT — A4 mm cinsinden sabit genişlikler ── */
-    /* Portrait iç alan: 210mm - 2×6mm kenar = 198mm kullanılabilir */
-    /* Landscape iç alan: 297mm - 2×6mm kenar = 285mm kullanılabilir */
+    /* ── TEMEL LAYOUT — Yüzde bazlı grid (portrait/landscape her ikisinde çalışır) ── */
     .row { display: flex !important; flex-wrap: wrap !important; width: 100% !important; margin: 0 -5px !important; }
     .col-6, .col-sm-6, .col-md-6, .col-lg-6 {
-      flex: 0 0 ${isPortrait ? '99mm' : '142.5mm'} !important;
-      max-width: ${isPortrait ? '99mm' : '142.5mm'} !important;
-      width: ${isPortrait ? '99mm' : '142.5mm'} !important;
+      flex: 0 0 50% !important;
+      max-width: 50% !important;
+      width: 50% !important;
       padding: 0 5px !important;
     }
     .col-md-3, .col-sm-3 {
-      flex: 0 0 ${isPortrait ? '49.5mm' : '71.25mm'} !important;
-      max-width: ${isPortrait ? '49.5mm' : '71.25mm'} !important;
-      width: ${isPortrait ? '49.5mm' : '71.25mm'} !important;
+      flex: 0 0 25% !important;
+      max-width: 25% !important;
+      width: 25% !important;
       padding: 0 5px !important;
     }
     .col-md-4, .col-lg-4 {
-      flex: 0 0 ${isPortrait ? '66mm' : '95mm'} !important;
-      max-width: ${isPortrait ? '66mm' : '95mm'} !important;
-      width: ${isPortrait ? '66mm' : '95mm'} !important;
+      flex: 0 0 33.333% !important;
+      max-width: 33.333% !important;
+      width: 33.333% !important;
       padding: 0 5px !important;
     }
     .col-12, .col-sm-12, .col-lg-12 {
@@ -293,17 +300,17 @@ function xPR(sourceId, title, btn, orientation) {
       max-width: 100% !important;
       padding: 0 5px !important;
     }
-    /* col-md-4 col-sm-12 kombinasyonu (Sınav Analizi kartlari) — genel col-sm-12 kuralından sonra gelir, onu ezer */
+    /* col-md-4 col-sm-12 kombinasyonu (Sınav Analizi kartları) */
     .col-md-4.col-sm-12 {
-      flex: 0 0 ${isPortrait ? '66mm' : '95mm'} !important;
-      max-width: ${isPortrait ? '66mm' : '95mm'} !important;
-      width: ${isPortrait ? '66mm' : '95mm'} !important;
+      flex: 0 0 33.333% !important;
+      max-width: 33.333% !important;
+      width: 33.333% !important;
       padding: 0 5px !important;
     }
     .col-md-2 {
-      flex: 0 0 ${isPortrait ? '33mm' : '47.5mm'} !important;
-      max-width: ${isPortrait ? '33mm' : '47.5mm'} !important;
-      width: ${isPortrait ? '33mm' : '47.5mm'} !important;
+      flex: 0 0 16.666% !important;
+      max-width: 16.666% !important;
+      width: 16.666% !important;
       padding: 0 5px !important;
     }
     .mb-1 { margin-bottom: 3px !important; } .mb-2 { margin-bottom: 6px !important; } .mb-3 { margin-bottom: 10px !important; } .mb-4 { margin-bottom: 14px !important; }

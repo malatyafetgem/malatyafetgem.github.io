@@ -2,7 +2,7 @@
 html,body{background:#f4f6f8 !important;}
 
 /* ===== GENEL ===== */
-#loginScreen { display:flex; justify-content:center; align-items:center; min-height:100vh; background:linear-gradient(135deg,#0d6efd 0%,#0a58ca 50%,#001f3f 100%); }
+#loginScreen { display:none; justify-content:center; align-items:center; min-height:100vh; background:linear-gradient(135deg,#0d6efd 0%,#0a58ca 50%,#001f3f 100%); }
 .login-card { width:100%; max-width:400px; box-shadow: 0 10px 40px rgba(0,0,0,0.25); border:none; border-radius:10px; overflow:hidden; }
 .login-card .card-header { background:linear-gradient(135deg,#0d6efd,#0a58ca) !important; color:#fff !important; border-radius:10px 10px 0 0 !important; border-bottom:none !important; }
 .login-card .card-header *, .login-card .card-header h3, .login-card .card-header p { color:#fff !important; }
@@ -35,10 +35,10 @@ body.is-admin button.btn-block.admin-only { display:block !important; }
 .btn-print { background: linear-gradient(135deg, #0d6efd, #0a58ca); color: #fff !important; border: none; border-radius: 4px; padding: 4px 12px; font-size: 0.875rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; box-shadow: 0 1px 3px rgba(13,110,253,0.25); height: calc(1.5em + .5rem + 2px); }
 .btn-print:hover { background: linear-gradient(135deg, #0a58ca, #a0c4e8); box-shadow: 0 4px 12px rgba(108,142,191,0.35); transform: translateY(-1px); }
 
-/* DESKTOP-FIRST PRINT (Masaüstü Zorunlu Yazdırma Optimizasyonu) */
-@media print { 
-  .no-print { display: none !important; } 
-  body { min-width: 1024px !important; background: #fff !important; zoom: 0.85; }
+/* ===== PRINT — Tüm cihazlar için temel kurallar ===== */
+@media print {
+  .no-print { display: none !important; }
+  body { background: #fff !important; }
   .container-fluid { width: 100% !important; padding: 0 !important; }
   .row { display: flex !important; flex-wrap: wrap !important; width: 100% !important; margin: 0 -8px !important;}
   .col-md-3 { flex: 0 0 25% !important; max-width: 25% !important; padding: 0 8px !important; }
@@ -50,6 +50,11 @@ body.is-admin button.btn-block.admin-only { display:block !important; }
   .content-wrapper { margin-left: 0 !important; padding: 0 !important; }
   .card { border: 1px solid #ddd !important; box-shadow: none !important; }
   .report-header { background: #4a6fa5 !important; margin-bottom: 12px; border-radius: 6px; }
+}
+
+/* ===== PRINT — Sadece masaüstü/geniş ekran optimizasyonu ===== */
+@media print and (min-width: 768px) {
+  body { min-width: 1024px !important; zoom: 0.85; }
 }
 
 /* ===== ARAMA ===== */
