@@ -673,7 +673,28 @@ function rH(){
     let canvasId='cKarne_'+t.replace(/[^a-zA-Z0-9]/g,'_');
     let bpKarneId='bpKarne_'+t.replace(/[^a-zA-Z0-9]/g,'_');
     
-    h+=`<div class="karne-bolum exam-type-block${isFirstType?' exam-type-first':''}" data-stu-name="${s.name.replace(/"/g,'&quot;')}" data-stu-class="${s.class}"><h5 class="mt-3 mb-2 text-primary border-bottom pb-2">${t} Sınavları</h5>${cardsHtml}${riskCardsHtml}<div id="${bpKarneId}"></div><div class="scroll-hint"><i class="fas fa-arrows-alt-h mr-1"></i>Tabloyu kaydırın</div><div class="scroll"><table class="table table-sm table-bordered table-striped" data-sh="${t}"><thead><tr><th>#</th><th>Tarih</th><th>Yayınevi</th>${sb.map(x=>`<th title="${toTitleCase(x)}">${abbrevSub(x,shorten)}</th>`).join('')}<th>Top.Net</th><th>Puan</th><th>Snf(S/K)</th><th>Okul(S/K)</th><th>İlçe(S/K)</th><th>İl(S/K)</th><th>Gen(S/K)</th></tr></thead><tbody>`;
+    // Sınav türüne göre renk — cols dizisiyle tutarlı
+    const examTypeColors = ['#0d6efd','#1a7f4b','#d97706','#7c3aed','#e6194b','#0ea5e9'];
+    const examTypeIcons  = ['fa-file-alt','fa-check-circle','fa-star','fa-trophy','fa-bookmark','fa-graduation-cap'];
+    const typeColorIdx   = typs.indexOf(t) % examTypeColors.length;
+    const typeColor      = examTypeColors[typeColorIdx];
+    const typeIcon       = examTypeIcons[typeColorIdx];
+    const examAttended   = grp[t].filter(e=>!e.abs).length;
+    const examTotal      = grp[t].length;
+    const dividerStyle   = isFirstType ? '' : 'margin-top:28px;';
+
+    h+=`<div class="karne-bolum exam-type-block${isFirstType?' exam-type-first':''}" data-stu-name="${s.name.replace(/"/g,'&quot;')}" data-stu-class="${s.class}" style="${dividerStyle}">
+    <div class="karne-type-header" style="background:linear-gradient(135deg,${typeColor}18,${typeColor}08);border-left:4px solid ${typeColor};border-radius:0 8px 8px 0;padding:10px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="width:32px;height:32px;border-radius:8px;background:${typeColor};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas ${typeIcon}" style="color:#fff;font-size:0.85em;"></i></span>
+        <span style="font-size:1.05em;font-weight:700;color:${typeColor};">${t} Sınavları</span>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <span style="background:${typeColor}18;color:${typeColor};border:1px solid ${typeColor}33;border-radius:20px;padding:3px 10px;font-size:0.78em;font-weight:600;"><i class="fas fa-list-ol mr-1"></i>${examTotal} Sınav</span>
+        <span style="background:#19875418;color:#198754;border:1px solid #19875433;border-radius:20px;padding:3px 10px;font-size:0.78em;font-weight:600;"><i class="fas fa-check mr-1"></i>${examAttended} Katılım</span>
+      </div>
+    </div>
+    ${cardsHtml}${riskCardsHtml}<div id="${bpKarneId}"></div><div class="scroll-hint"><i class="fas fa-arrows-alt-h mr-1"></i>Tabloyu kaydırın</div><div class="scroll"><table class="table table-sm table-bordered table-striped" data-sh="${t}"><thead><tr><th>#</th><th>Tarih</th><th>Yayınevi</th>${sb.map(x=>`<th title="${toTitleCase(x)}">${abbrevSub(x,shorten)}</th>`).join('')}<th>Top.Net</th><th>Puan</th><th>Snf(S/K)</th><th>Okul(S/K)</th><th>İlçe(S/K)</th><th>İl(S/K)</th><th>Gen(S/K)</th></tr></thead><tbody>`;
     
     let kIdx = 1;
     el.forEach(e=>{
@@ -700,22 +721,24 @@ function rH(){
       h += `<tr class="avg-row"><td colspan="3" style="text-align:right; padding-right:15px;">Kurum Ortalama (${stGrade}. Sınıflar)</td>${genAvgSubs.map(v=>`<td>${v}</td>`).join('')}<td>${genAvgNet}</td><td>${genAvgScore}</td><td colspan="5">—</td></tr>`;
     }
 
-    h+=`</tbody></table></div><div class="chart-box avoid-break" style="margin:8px 0 10px 0; height:200px;"><div style="font-size:11px;font-weight:bold;color:#4a6fa5;margin-bottom:4px;text-align:left;">${t} — Toplam Net Gelişimi</div><canvas id="${canvasId}"></canvas></div></div>`;
+    h+=`</tbody></table></div><div class="chart-box avoid-break" style="margin:8px 0 10px 0; height:200px;"><div style="font-size:11px;font-weight:bold;color:${typeColor};margin-bottom:4px;text-align:left;"><i class="fas fa-chart-line mr-1"></i>${t} — Toplam Net Gelişimi</div><canvas id="${canvasId}"></canvas></div></div>`;
   });
 
   h+=`</div></div>`;
   if(c.h){ c.h.destroy(); c.h=null; } if(window._karneCharts){window._karneCharts.forEach(ch=>{try{ch.destroy();}catch(e){}});} window._karneCharts=[];
   r.innerHTML=h; 
   
+  const _etColors = ['#0d6efd','#1a7f4b','#d97706','#7c3aed','#e6194b','#0ea5e9'];
   setTimeout(()=>{
-    typs.forEach(t=>{
+    typs.forEach((t, tIdx)=>{
       let canvasId='cKarne_'+t.replace(/[^a-zA-Z0-9]/g,'_'); let cv=getEl(canvasId); if(!cv)return;
+      let tColor = _etColors[tIdx % _etColors.length];
       let exT=DB.e.filter(x=>x.studentNo===aNo&&x.examType===t).sort((a,b)=>srt(a.date,b.date));
       let chartLabels = exT.map(e => e.publisher ? `${e.date} (${toTitleCase(e.publisher)})` : e.date);
       let stuD=exT.map(e=>e.abs?null:e.totalNet);
       let clsD=exT.map(e=>{if(e.abs)return null;let v=DB.e.filter(x=>x.date===e.date&&x.examType===t&&x.studentClass===s.class&&!x.abs).map(x=>x.totalNet);return v.length?(v.reduce((a,b)=>a+b,0)/v.length):null;});
       let insD=exT.map(e=>{if(e.abs)return null;let v=DB.e.filter(x=>x.date===e.date&&x.examType===t&&!x.abs&&getGrade(x.studentClass)===stGrade).map(x=>x.totalNet);return v.length?(v.reduce((a,b)=>a+b,0)/v.length):null;});
-      let ch=mkChart(canvasId,chartLabels,[{label:'Toplam Net',data:stuD,backgroundColor:cols[0]+'cc',borderColor:cols[0],borderWidth:1.5},{label:'Sınıf Ort.',data:clsD,backgroundColor:cols[2]+'99',borderColor:cols[2],borderWidth:1.5},{label:'Kurum Ort.',data:insD,backgroundColor:cols[3]+'99',borderColor:cols[3],borderWidth:1.5}]);
+      let ch=mkChart(canvasId,chartLabels,[{label:'Toplam Net',data:stuD,backgroundColor:tColor+'cc',borderColor:tColor,borderWidth:1.5},{label:'Sınıf Ort.',data:clsD,backgroundColor:cols[2]+'99',borderColor:cols[2],borderWidth:1.5},{label:'Kurum Ort.',data:insD,backgroundColor:cols[3]+'99',borderColor:cols[3],borderWidth:1.5}]);
       window._karneCharts.push(ch);
       // Kutu grafiği — her sınav türü için ayrı ayrı
       let bpKarneId='bpKarne_'+t.replace(/[^a-zA-Z0-9]/g,'_');
