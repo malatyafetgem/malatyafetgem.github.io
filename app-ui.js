@@ -12,10 +12,15 @@ window.addEventListener('popstate', function(e) {
 
   if(isMobile) {
     if(currentPane === 'anasayfa_genel') {
-      // Ana sayfadayken geri → uygulamadan çık (tarayıcıya bırak)
-      // history.back() sonsuz döngüye girmemek için kontrol
+      // Ana sayfadayken geri → çıkış onayı sor
       if(e.state && e.state.pane === 'anasayfa_genel') {
-        // Gerçekten çıkmak istiyoruz; window.history.go(-1) yerine Android'in doğal back'i zaten çalışacak
+        if(confirm('Uygulamadan çıkmak istiyor musunuz?')) {
+          // Kullanıcı onayladı — tarayıcıya bırak, bir önceki sayfaya git
+          window.history.go(-1);
+        } else {
+          // İptal — history'yi geri ekliyoruz ki bir sonraki geri tuşu yine bu soruyu sorsun
+          window.history.pushState({ pane: 'anasayfa_genel' }, '', window.location.pathname);
+        }
         return;
       }
       executeTabSwitch('anasayfa_genel', true);
@@ -563,11 +568,47 @@ document.addEventListener('click',e=>{ let res=getEl('anlStuRes'),inp=getEl('anl
 
 // ---- uStat (orig lines 1915-1921) ----
 function uStat(){
-  const g=getEl('dynamicStatsGrid'), u={}; Object.values(EXAM_META).forEach(m => { u[m.examType] = (u[m.examType]||0) + 1; });
-  const cl=['primary','success','warning','danger','info'],ic=['fas fa-file-alt','fas fa-check-circle','fas fa-star','fas fa-trophy','fas fa-bookmark'];
-  let h='',i=0;
-  for(const [t,count] of Object.entries(u)){ h+=`<div class="col-md-3 col-sm-6 col-12"><div class="info-box mb-3"><span class="info-box-icon bg-${cl[i%cl.length]} elevation-1"><i class="${ic[i%ic.length]}"></i></span><div class="info-box-content"><span class="info-box-text">${t} Sınavı</span><span class="info-box-number">${count} <small>deneme</small></span></div></div></div>`; i++; }
-  if(g)g.innerHTML=h;
+  const g=getEl('dynamicStatsGrid');
+  if(!g) return;
+
+  // Sınav türü bazlı: toplam batch sayısı + sınıf seviyesi dökümü
+  const typeData = {};
+  Object.values(EXAM_META).forEach(m => {
+    if(!m.examType) return;
+    if(!typeData[m.examType]) typeData[m.examType] = { total: 0, grades: {} };
+    typeData[m.examType].total++;
+    (m.grades || []).forEach(gr => {
+      typeData[m.examType].grades[gr] = (typeData[m.examType].grades[gr] || 0) + 1;
+    });
+  });
+
+  const cl  = ['primary','success','warning','danger','info'];
+  const ic  = ['fas fa-file-alt','fas fa-check-circle','fas fa-star','fas fa-trophy','fas fa-bookmark'];
+  // Sınıf seviyesi pill renkleri (9→mavi, 10→yeşil, 11→turuncu, 12→mor, diğer→gri)
+  const gradeColors = { '9':'#0d6efd','10':'#198754','11':'#fd7e14','12':'#6f42c1' };
+  const gradeDefault = '#6c757d';
+
+  let h = '', i = 0;
+  for(const [t, data] of Object.entries(typeData)){
+    const sortedGrades = Object.keys(data.grades).sort((a,b) => parseInt(a)-parseInt(b));
+    const pillsHtml = sortedGrades.map(gr => {
+      const col = gradeColors[gr] || gradeDefault;
+      return `<span class="stat-grade-pill" style="background:${col}18;color:${col};border:1px solid ${col}44;">${gr}.Snf <strong>${data.grades[gr]}</strong></span>`;
+    }).join('');
+
+    h += `<div class="col-md-3 col-sm-6 col-12">
+      <div class="info-box mb-3">
+        <span class="info-box-icon bg-${cl[i%cl.length]} elevation-1"><i class="${ic[i%ic.length]}"></i></span>
+        <div class="info-box-content">
+          <span class="info-box-text">${t} Sınavı</span>
+          <span class="info-box-number">${data.total} <small>deneme</small></span>
+          ${pillsHtml ? `<div class="stat-grade-pills">${pillsHtml}</div>` : ''}
+        </div>
+      </div>
+    </div>`;
+    i++;
+  }
+  g.innerHTML = h;
 }
 
 // ---- uDrp (orig lines 1923-1925) ----
