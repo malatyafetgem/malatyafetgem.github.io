@@ -611,13 +611,14 @@ function uStat(){
     const gradesHtml = gradeKeys.length
       ? gradeKeys.map(gr => `<span class="hsc-grade"><strong>${gr}. Sınıf</strong><small>:</small> ${info.grades[gr]} <small>Deneme</small></span>`).join('')
       : '<span class="hsc-empty">Sınıf bilgisi yok</span>';
+    
     h += `<div class="col-md-4 col-sm-6 col-12 mb-3">
       <div class="home-stat-card exam-color-${colorIdx}">
         <div class="hsc-head">
           <span class="hsc-title"><i class="${ic[colorIdx % ic.length]}"></i>${label}</span>
-          <span class="hsc-count">${info.total} <small>Deneme</small></span>
+          <span class="hsc-count" style="font-weight: bold;">${info.total} Deneme</span>
         </div>
-        <div class="hsc-grades">${gradesHtml}</div>
+        <div class="hsc-grades" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px;">${gradesHtml}</div>
       </div>
     </div>`;
   });
