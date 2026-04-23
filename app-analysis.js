@@ -731,6 +731,79 @@ function rH(){
   },150);
 }
 
+// ---- _buildSingleMetricSparkline: Tek bir metrik için (Toplam Net, Puan, ders neti, sıralama) eğilim kartı ----
+// metric: 'totalNet' | 'score' | 'rank_c'/'rank_i'/'rank_g' | 's_<dersAdı>'
+function _buildSingleMetricSparkline(stuNo, examType, curExam, metric, label){
+  let allEx = DB.e.filter(x => x.studentNo===stuNo && x.examType===examType && !x.abs).sort((a,b)=>srt(a.date,b.date));
+  if(allEx.length < 2) return '';
+  let curIdx = allEx.findIndex(e => e.date===curExam.date && (e.publisher||'')===(curExam.publisher||''));
+  if(curIdx < 0) return '';
+  let startIdx = Math.max(0, curIdx - 4);
+  let window = allEx.slice(startIdx, curIdx + 1);
+  if(window.length < 2) return '';
+  let isRank = metric && metric.indexOf('rank_')===0;
+  let getV = (e) => {
+    if(metric === 'totalNet' || !metric) return (e.totalNet!==undefined?e.totalNet:null);
+    if(metric === 'score') return (e.score!==undefined?e.score:null);
+    if(metric === 'rank_c') return pN(e.cR);
+    if(metric === 'rank_i') return pN(e.iR);
+    if(metric === 'rank_g') return pN(e.gR);
+    if(metric.indexOf('s_')===0){
+      let key = metric.replace('s_',''); let kT = toTitleCase(key);
+      let sn = e.subs ? (e.subs[key] || e.subs[kT]) : null;
+      return sn && sn.net!==null && sn.net!==undefined ? sn.net : null;
+    }
+    return null;
+  };
+  let series = window.map(getV);
+  let valid = series.filter(v => v !== null);
+  if(valid.length < 2) return '';
+  let curVal = series[series.length-1];
+  let prevVal = null;
+  for(let i=series.length-2;i>=0;i--){ if(series[i]!==null){ prevVal=series[i]; break; } }
+  let delta = (curVal!==null && prevVal!==null) ? (isRank ? (prevVal-curVal) : (curVal-prevVal)) : null;
+  let dCls = delta===null?'sec-neutral':(delta>0?'sec-pos':(delta<0?'sec-neg':'sec-neutral'));
+  let dIcon = delta===null?'fa-minus':(delta>0?'fa-arrow-up':(delta<0?'fa-arrow-down':'fa-minus'));
+  let dColor = delta===null?'#6c757d':(delta>0?'#198754':(delta<0?'#dc3545':'#6c757d'));
+  let dStr = delta===null?'—':((delta>0?'+':'')+(isRank?delta:delta.toFixed(2)));
+  let W=260, H=60, padX=6, padY=8;
+  let mn=Math.min(...valid), mx=Math.max(...valid);
+  if(mn===mx){ mn-=1; mx+=1; }
+  let toY = v => isRank
+    ? (padY + (H-padY*2) * ((v - mn)/(mx-mn)))
+    : (padY + (H-padY*2) * (1 - (v-mn)/(mx-mn)));
+  let n=series.length;
+  let xStep=(W-padX*2)/Math.max(1,n-1);
+  let pathParts=[]; let cur='';
+  series.forEach((v,i)=>{
+    if(v===null){ if(cur){pathParts.push(cur); cur='';} return; }
+    let x=padX+i*xStep, y=toY(v);
+    cur += (cur?' L':'M')+x.toFixed(1)+','+y.toFixed(1);
+  });
+  if(cur) pathParts.push(cur);
+  let pathSvg = pathParts.map(p=>`<path d="${p}" fill="none" stroke="${dColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`).join('');
+  let dots = series.map((v,i)=>{
+    if(v===null) return '';
+    let x=padX+i*xStep, y=toY(v);
+    let isLast=(i===series.length-1);
+    return isLast
+      ? `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4" fill="${dColor}" stroke="#fff" stroke-width="1.6"/>`
+      : `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.4" fill="#fff" stroke="${dColor}" stroke-width="1.4"/>`;
+  }).join('');
+  let svg = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:60px;display:block;">${pathSvg}${dots}</svg>`;
+  let curStr = curVal===null?'—':(isRank?curVal:curVal.toFixed(2));
+  return `<div class="single-exam-chart-title" style="margin-top:14px;"><i class="fas fa-chart-line"></i>${label} — Eğilim <span style="font-weight:400;color:#6c757d;font-size:0.85em;">— son ${window.length} sınav</span></div>
+    <div class="row single-exam-cards"><div class="col-md-6 col-sm-12 mb-2"><div class="sec-card ${dCls}" style="min-height:auto;padding:10px 14px;">
+      <div class="sec-body" style="width:100%;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
+          <span class="sec-label">${label}</span>
+          <span style="font-size:0.78rem;font-weight:700;color:${dColor};"><i class="fas ${dIcon} mr-1"></i>${dStr}</span>
+        </div>
+        <div style="margin-top:5px;">${svg}</div>
+        <div style="font-size:0.72rem;color:#6c757d;margin-top:3px;">Şu an: <strong>${curStr}</strong>${prevVal!==null?' · Önceki: '+(isRank?prevVal:prevVal.toFixed(2)):''}</div>
+      </div></div></div></div>`;
+}
+
 // ---- buildSubjectSparklines: Tek sınav modu — Ders Eğilimi mini-grafik paneli ----
 // Her ders için, öğrencinin aynı sınav türündeki son 5 sınavının (seçili sınav dahil)
 // neti üzerinden minik bir SVG çizgi grafiği üretir. Seçili sınavın noktası vurgulanır.
@@ -747,10 +820,10 @@ function buildSubjectSparklines(stuNo, examType, curExam, subjects){
   let window = allEx.slice(startIdx, curIdx + 1);
   if(window.length < 2) return '';
 
-  // Ortak SVG sparkline üreteci (Toplam Net + her ders için kullanılır)
-  let _buildSparkCard = (label, series, isTotal) => {
+  let cards = subjects.map(s => {
+    let series = window.map(e => (e.subs && e.subs[s] && e.subs[s].net !== undefined && e.subs[s].net !== null) ? e.subs[s].net : null);
     let valid = series.filter(v => v !== null);
-    if(valid.length < 2) return '';
+    if(valid.length < 2) return ''; // tek noktalı eğilim çizgisi anlamsız
     let curVal = series[series.length - 1];
     let prevVal = null;
     for(let i = series.length - 2; i >= 0; i--) { if(series[i] !== null) { prevVal = series[i]; break; } }
@@ -759,13 +832,18 @@ function buildSubjectSparklines(stuNo, examType, curExam, subjects){
     let dIcon = delta === null ? 'fa-minus' : (delta > 0 ? 'fa-arrow-up' : (delta < 0 ? 'fa-arrow-down' : 'fa-minus'));
     let dColor = delta === null ? '#6c757d' : (delta > 0 ? '#198754' : (delta < 0 ? '#dc3545' : '#6c757d'));
     let dStr = delta === null ? '—' : (delta > 0 ? '+' : '') + delta.toFixed(2);
+
+    // SVG sparkline
     let W = 140, H = 38, padX = 4, padY = 5;
     let mn = Math.min(...valid), mx = Math.max(...valid);
     if(mn === mx) { mn -= 1; mx += 1; }
     let n = series.length;
     let xStep = (W - padX*2) / Math.max(1, n - 1);
     let toY = v => padY + (H - padY*2) * (1 - (v - mn) / (mx - mn));
-    let pathParts = [], cur = '';
+
+    // Çizgi yolu (null değerleri atla, parça parça çiz)
+    let pathParts = [];
+    let cur = '';
     series.forEach((v, i) => {
       if(v === null) { if(cur) { pathParts.push(cur); cur = ''; } return; }
       let x = padX + i * xStep, y = toY(v);
@@ -773,6 +851,8 @@ function buildSubjectSparklines(stuNo, examType, curExam, subjects){
     });
     if(cur) pathParts.push(cur);
     let pathSvg = pathParts.map(p => `<path d="${p}" fill="none" stroke="${dColor}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>`).join('');
+
+    // Noktalar — son nokta vurgulu
     let dots = series.map((v, i) => {
       if(v === null) return '';
       let x = padX + i * xStep, y = toY(v);
@@ -781,33 +861,24 @@ function buildSubjectSparklines(stuNo, examType, curExam, subjects){
         ? `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.2" fill="${dColor}" stroke="#fff" stroke-width="1.4"/>`
         : `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2" fill="#fff" stroke="${dColor}" stroke-width="1.2"/>`;
     }).join('');
+
     let svg = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:38px;display:block;">${pathSvg}${dots}</svg>`;
-    let labelStyle = isTotal ? 'font-size:0.72rem;font-weight:700;color:#0d6efd;' : 'font-size:0.7rem;';
-    return `<div class="col-md-3 col-sm-6 mb-2"><div class="sec-card ${dCls}" style="min-height:auto;padding:8px 10px;${isTotal?'border-left:3px solid #0d6efd;':''}">
+
+    return `<div class="col-md-3 col-sm-6 mb-2"><div class="sec-card ${dCls}" style="min-height:auto;padding:8px 10px;">
       <div class="sec-body" style="width:100%;">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
-          <span class="sec-label" style="${labelStyle}">${label}</span>
+          <span class="sec-label" style="font-size:0.7rem;">${toTitleCase(s)}</span>
           <span style="font-size:0.72rem;font-weight:700;color:${dColor};"><i class="fas ${dIcon} mr-1" style="font-size:0.85em;"></i>${dStr}</span>
         </div>
         <div style="margin-top:3px;">${svg}</div>
         <div style="font-size:0.68rem;color:#6c757d;margin-top:2px;">Son ${window.length} sınav · Şu an: ${curVal===null?'—':curVal.toFixed(2)}</div>
       </div>
     </div></div>`;
-  };
-
-  // Toplam Net kartı (en başta, vurgulu)
-  let totalSeries = window.map(e => (e.totalNet !== undefined && e.totalNet !== null) ? e.totalNet : null);
-  let totalCard = _buildSparkCard('Toplam Net', totalSeries, true);
-
-  let cards = subjects.map(s => {
-    let series = window.map(e => (e.subs && e.subs[s] && e.subs[s].net !== undefined && e.subs[s].net !== null) ? e.subs[s].net : null);
-    return _buildSparkCard(toTitleCase(s), series, false);
   }).filter(x => x).join('');
 
-  let allCards = (totalCard || '') + cards;
-  if(!allCards) return '';
+  if(!cards) return '';
   return `<div class="single-exam-chart-title" style="margin-top:14px;"><i class="fas fa-chart-line"></i>Ders Eğilimi <span style="font-weight:400;color:#6c757d;font-size:0.85em;">— son ${window.length} sınav</span></div>
-    <div class="row single-exam-cards">${allCards}</div>`;
+    <div class="row single-exam-cards">${cards}</div>`;
 }
 
 // ---- buildSingleExamCards: Tek sınav modu için 4 özet kart ----
@@ -962,243 +1033,6 @@ function buildStuBoxPlots(stuNo, examType, stuClass, stuGrade, sb) {
   </div>`;
 }
 
-
-// ---- buildSingleExamFocusPanel: Tek sınav modunda Veri filtresine göre odak panel ----
-// sb değerine göre (totalNet, score, rank_*, s_DersAdı) o veriyle ilgili
-// karşılaştırmalı kartlar + dağılım grafiği + trend grafiği üretir.
-function buildSingleExamFocusPanel(stuNo, stu, eT, curExam, prevExam, stGrade, sb, allExams){
-  if(!sb) return '';
-
-  // Veri tipi çözümleme
-  let isSubj  = sb.startsWith('s_');
-  let isRank  = sb.startsWith('rank_');
-  let isScore = sb === 'score';
-  let isTotal = sb === 'totalNet' || sb === '';
-  let subjKey = isSubj ? toTitleCase(sb.replace('s_','')) : null;
-
-  // Etiket ve değer çıkarıcı
-  let label, unit, lowerIsBetter = false, color = '#0d6efd', icon = 'fa-bullseye';
-  let getVal = (e) => {
-    if(!e || e.abs) return null;
-    if(isSubj) { let s = e.subs ? e.subs[subjKey] : null; return (s && s.net !== undefined && s.net !== null) ? s.net : null; }
-    if(isRank) { let r = sb==='rank_c'?e.cR : (sb==='rank_i'?e.iR:e.gR); return (r!==undefined && r!==null) ? pN(r) : null; }
-    if(isScore) return (e.score!==undefined && e.score!==null) ? e.score : null;
-    return (e.totalNet!==undefined && e.totalNet!==null) ? e.totalNet : null;
-  };
-  if(isSubj) { label = subjKey + ' Neti'; unit = 'net'; color='#6f42c1'; icon='fa-book'; }
-  else if(isRank) { label = (sb==='rank_c'?'Sınıf Sırası':(sb==='rank_i'?'Kurum Sırası':'Genel Sıra')); unit='.'; lowerIsBetter=true; color='#fd7e14'; icon='fa-trophy'; }
-  else if(isScore) { label = 'Puan'; unit='puan'; color='#198754'; icon='fa-star'; }
-  else { label = 'Toplam Net'; unit='net'; color='#0d6efd'; icon='fa-list-ol'; }
-
-  let curVal = getVal(curExam);
-  let prevVal = prevExam ? getVal(prevExam) : null;
-  if(curVal === null) {
-    return `<div class="alert alert-warning mt-2" style="margin-bottom:10px;"><i class="fas fa-info-circle mr-2"></i>Seçilen veri (<b>${label}</b>) için bu sınavda kayıt bulunamadı.</div>`;
-  }
-
-  // Aynı sınava giren popülasyon (sınıf + kurum-sınıf seviyesi)
-  let _seDate = curExam.date, _sePub = curExam.publisher || '';
-  let popCls = DB.e.filter(x => x.date===_seDate && (x.publisher||'')===_sePub && x.examType===eT && x.studentClass===stu.class && !x.abs);
-  let popIns = DB.e.filter(x => x.date===_seDate && (x.publisher||'')===_sePub && x.examType===eT && getGrade(x.studentClass)===stGrade && !x.abs);
-  let clsValsArr = popCls.map(getVal).filter(v => v!==null && !isNaN(v));
-  let insValsArr = popIns.map(getVal).filter(v => v!==null && !isNaN(v));
-
-  let avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : null;
-  let std = arr => { if(arr.length<2) return null; let m = avg(arr); return Math.sqrt(arr.reduce((a,b)=>a+(b-m)*(b-m),0)/arr.length); };
-
-  let clsAvg = avg(clsValsArr), clsStd = std(clsValsArr);
-  let insAvg = avg(insValsArr), insStd = std(insValsArr);
-
-  // Yüzdelik dilim (rank için ters)
-  let pctRank = (val, arr) => {
-    if(!arr.length) return null;
-    let better = lowerIsBetter ? arr.filter(v => v < val).length : arr.filter(v => v > val).length;
-    // Daha iyi olan kişi sayısının tersini % olarak döndür: top X%
-    return Math.round((better / arr.length) * 100);
-  };
-  let topClsPct = pctRank(curVal, clsValsArr); // top X% (küçükse iyi)
-  let topInsPct = pctRank(curVal, insValsArr);
-
-  // Z-skoru (ranklarda anlamsız)
-  let zCls = (clsStd && clsStd > 0) ? ((curVal - clsAvg) / clsStd) : null;
-  let zIns = (insStd && insStd > 0) ? ((curVal - insAvg) / insStd) : null;
-  if(lowerIsBetter && zCls !== null) zCls = -zCls;
-  if(lowerIsBetter && zIns !== null) zIns = -zIns;
-
-  let fmt = (v, d=2) => v===null||v===undefined||isNaN(v) ? '—' : (isRank ? Math.round(v).toString() : v.toFixed(d));
-  let fmtSign = (v) => v===null ? '—' : ((v>0?'+':'') + (isRank ? Math.round(v) : v.toFixed(2)));
-
-  // Fark (önceki sınava göre)
-  let delta = (curVal!==null && prevVal!==null) ? (curVal - prevVal) : null;
-  let deltaGood = delta===null ? null : (lowerIsBetter ? delta < 0 : delta > 0);
-  let dCls = delta===null ? 'sec-neutral' : (deltaGood ? 'sec-pos' : (delta===0 ? 'sec-neutral' : 'sec-neg'));
-  let dIcon = delta===null ? 'fa-minus' : ((lowerIsBetter ? delta<0 : delta>0) ? 'fa-arrow-up' : (delta===0 ? 'fa-minus' : 'fa-arrow-down'));
-
-  // Sınıf/Kurum farkı kart sınıfları
-  let cmpCls = (val, ref) => {
-    if(val===null||ref===null) return {cls:'sec-neutral', icon:'fa-minus', txt:'—'};
-    let d = val - ref;
-    let good = lowerIsBetter ? d < 0 : d > 0;
-    return {cls: d===0?'sec-neutral':(good?'sec-pos':'sec-neg'), icon: d===0?'fa-minus':(good?'fa-arrow-up':'fa-arrow-down'), txt: fmtSign(d)};
-  };
-  let cCls = cmpCls(curVal, clsAvg), cIns = cmpCls(curVal, insAvg);
-
-  // D / Y / Boş — sadece subject veya totalNet için anlamlı
-  let dybHtml = '';
-  if(isSubj && curExam.subs && curExam.subs[subjKey]) {
-    let sn = curExam.subs[subjKey];
-    let d = sn.dogru ?? 0, y = sn.yanlis ?? 0, b = sn.bos ?? 0;
-    let tot = d+y+b;
-    if(tot > 0) {
-      let dp = (d/tot*100).toFixed(0), yp=(y/tot*100).toFixed(0), bp=(b/tot*100).toFixed(0);
-      dybHtml = `<div class="col-md-6 col-sm-12 mb-2"><div class="sec-card" style="min-height:auto;padding:10px 12px;">
-        <div class="sec-body" style="width:100%;">
-          <div class="sec-label" style="margin-bottom:6px;"><i class="fas fa-tasks mr-1"></i>Doğru / Yanlış / Boş Dağılımı</div>
-          <div style="display:flex;height:18px;border-radius:4px;overflow:hidden;border:1px solid #dee2e6;">
-            <div style="background:#28a745;width:${dp}%;color:#fff;font-size:0.7rem;text-align:center;line-height:18px;font-weight:600;" title="Doğru: ${d}">${d>0?d:''}</div>
-            <div style="background:#dc3545;width:${yp}%;color:#fff;font-size:0.7rem;text-align:center;line-height:18px;font-weight:600;" title="Yanlış: ${y}">${y>0?y:''}</div>
-            <div style="background:#adb5bd;width:${bp}%;color:#fff;font-size:0.7rem;text-align:center;line-height:18px;font-weight:600;" title="Boş: ${b}">${b>0?b:''}</div>
-          </div>
-          <div style="display:flex;justify-content:space-between;font-size:0.7rem;color:#6c757d;margin-top:4px;">
-            <span><span style="color:#28a745;">●</span> D: ${d} (${dp}%)</span>
-            <span><span style="color:#dc3545;">●</span> Y: ${y} (${yp}%)</span>
-            <span><span style="color:#adb5bd;">●</span> B: ${b} (${bp}%)</span>
-          </div>
-        </div>
-      </div></div>`;
-    }
-  }
-
-  // Kart 1: Bu öğrencinin değeri + sıralama (sınıf içi)
-  let myRankCls = clsValsArr.length ? (() => {
-    let sorted = [...clsValsArr].sort((a,b) => lowerIsBetter ? a-b : b-a);
-    return sorted.indexOf(curVal) + 1;
-  })() : null;
-  let myRankIns = insValsArr.length ? (() => {
-    let sorted = [...insValsArr].sort((a,b) => lowerIsBetter ? a-b : b-a);
-    return sorted.indexOf(curVal) + 1;
-  })() : null;
-
-  let card1 = `<div class="col-md-3 col-sm-6 mb-2"><div class="sec-card" style="border-left:3px solid ${color};">
-    <div class="sec-icon" style="color:${color};"><i class="fas ${icon}"></i></div>
-    <div class="sec-body">
-      <div class="sec-label">${label}</div>
-      <div class="sec-value" style="color:${color};">${fmt(curVal)}</div>
-      <div class="sec-sub">Sınıf içi: ${myRankCls?myRankCls+'/'+clsValsArr.length:'—'} · Kurum: ${myRankIns?myRankIns+'/'+insValsArr.length:'—'}</div>
-    </div></div></div>`;
-
-  let card2 = `<div class="col-md-3 col-sm-6 mb-2"><div class="sec-card ${dCls}">
-    <div class="sec-icon"><i class="fas ${dIcon}"></i></div>
-    <div class="sec-body">
-      <div class="sec-label">Önceki Sınava Fark</div>
-      <div class="sec-value">${delta===null?'—':fmtSign(delta)}</div>
-      <div class="sec-sub">${prevExam ? prevExam.date + (prevExam.publisher?` (${toTitleCase(prevExam.publisher)})`:'') : 'Önceki sınav yok'}</div>
-    </div></div></div>`;
-
-  let card3 = `<div class="col-md-3 col-sm-6 mb-2"><div class="sec-card ${cCls.cls}">
-    <div class="sec-icon"><i class="fas ${cCls.icon}"></i></div>
-    <div class="sec-body">
-      <div class="sec-label">Sınıf Ortalamasına Fark</div>
-      <div class="sec-value">${cCls.txt}</div>
-      <div class="sec-sub">Sınıf Ort: ${fmt(clsAvg)} · σ: ${fmt(clsStd)} · z: ${zCls===null?'—':zCls.toFixed(2)}</div>
-    </div></div></div>`;
-
-  let card4 = `<div class="col-md-3 col-sm-6 mb-2"><div class="sec-card ${cIns.cls}">
-    <div class="sec-icon"><i class="fas ${cIns.icon}"></i></div>
-    <div class="sec-body">
-      <div class="sec-label">Kurum Ortalamasına Fark</div>
-      <div class="sec-value">${cIns.txt}</div>
-      <div class="sec-sub">Kurum Ort: ${fmt(insAvg)} · σ: ${fmt(insStd)} · z: ${zIns===null?'—':zIns.toFixed(2)}</div>
-    </div></div></div>`;
-
-  // Top % kartları (rank dışı için anlamlı)
-  let pctHtml = '';
-  if(!isRank && clsValsArr.length >= 3) {
-    let pctClsLabel = topClsPct===null?'—':'Top %'+topClsPct;
-    let pctInsLabel = topInsPct===null?'—':'Top %'+topInsPct;
-    pctHtml = `<div class="col-md-6 col-sm-12 mb-2"><div class="sec-card" style="min-height:auto;padding:10px 12px;">
-      <div class="sec-body" style="width:100%;">
-        <div class="sec-label" style="margin-bottom:6px;"><i class="fas fa-percentage mr-1"></i>Yüzdelik Dilim</div>
-        <div style="display:flex;justify-content:space-around;align-items:center;text-align:center;">
-          <div><div style="font-size:1.4rem;font-weight:700;color:${color};">${pctClsLabel}</div><div style="font-size:0.7rem;color:#6c757d;">Sınıf içinde</div></div>
-          <div style="border-left:1px solid #dee2e6;height:40px;"></div>
-          <div><div style="font-size:1.4rem;font-weight:700;color:${color};">${pctInsLabel}</div><div style="font-size:0.7rem;color:#6c757d;">Kurum içinde (${stGrade}. sınıf)</div></div>
-        </div>
-      </div>
-    </div></div>`;
-  }
-
-  // Trend grafiği — bu veri için son N sınav
-  let trendCanvasId = '_focusTrend_' + Math.random().toString(36).slice(2,8);
-  let distCanvasId  = '_focusDist_'  + Math.random().toString(36).slice(2,8);
-
-  let allValsTrend = (allExams || []).map(e => ({d: e.date, p: e.publisher||'', v: getVal(e)}));
-  let trendSeries = allValsTrend.filter(x => x.v !== null);
-  let trendHtml = '';
-  if(trendSeries.length >= 2) {
-    trendHtml = `<div class="col-md-6 col-sm-12 mb-2"><div class="boxplot-card"><div class="boxplot-title"><i class="fas fa-chart-line mr-1" style="color:${color};"></i>${label} — Tüm Sınavlardaki Eğilim</div><div style="height:200px;"><canvas id="${trendCanvasId}"></canvas></div></div></div>`;
-  }
-
-  // Dağılım grafiği (kurum-sınıf seviyesi histogram)
-  let distHtml = '';
-  if(!isRank && insValsArr.length >= 5) {
-    distHtml = `<div class="col-md-6 col-sm-12 mb-2"><div class="boxplot-card"><div class="boxplot-title"><i class="fas fa-chart-bar mr-1" style="color:${color};"></i>${label} — Kurum Dağılımı (${stGrade}. sınıflar) <span style="font-weight:400;color:#dc3545;font-size:0.85em;">— kırmızı çizgi: bu öğrenci</span></div><div style="height:200px;"><canvas id="${distCanvasId}"></canvas></div></div></div>`;
-  }
-
-  // Grafikleri çizecek geç-bağlanan fonksiyonu sakla
-  window._renderFocusCharts = function(){
-    if(window._focusCharts) { window._focusCharts.forEach(ch=>{try{ch.destroy();}catch(e){}}); }
-    window._focusCharts = [];
-
-    // Trend
-    let tCv = getEl(trendCanvasId);
-    if(tCv && trendSeries.length >= 2) {
-      let labels = trendSeries.map(x => x.p ? `${x.d} (${toTitleCase(x.p)})` : x.d);
-      let data = trendSeries.map(x => x.v);
-      let ctx = tCv.getContext('2d');
-      let ch = new Chart(ctx, {
-        type: 'line',
-        data: { labels, datasets: [{ label, data, borderColor: color, backgroundColor: color+'33', tension: 0.25, fill: true, pointRadius: 3, pointHoverRadius: 5 }]},
-        options: {
-          responsive: true, maintainAspectRatio: false,
-          scales: { y: { reverse: lowerIsBetter, beginAtZero: !lowerIsBetter } },
-          plugins: { legend: { display: false }, datalabels: { display: false } }
-        }
-      });
-      window._focusCharts.push(ch);
-    }
-
-    // Dağılım (histogram)
-    let dCv = getEl(distCanvasId);
-    if(dCv && !isRank && insValsArr.length >= 5) {
-      let mn = Math.min(...insValsArr), mx = Math.max(...insValsArr);
-      let bins = 10, w = (mx - mn) / bins || 1;
-      let edges = Array.from({length: bins+1}, (_,i) => mn + i*w);
-      let counts = new Array(bins).fill(0);
-      insValsArr.forEach(v => { let idx = Math.min(bins-1, Math.floor((v - mn) / w)); counts[idx]++; });
-      let labels = counts.map((_,i) => edges[i].toFixed(1) + '–' + edges[i+1].toFixed(1));
-      let bgs = counts.map((_,i) => (curVal >= edges[i] && curVal <= edges[i+1]+0.0001) ? '#dc354599' : color+'77');
-      let bds = counts.map((_,i) => (curVal >= edges[i] && curVal <= edges[i+1]+0.0001) ? '#dc3545' : color);
-      let ctx = dCv.getContext('2d');
-      let ch = new Chart(ctx, {
-        type: 'bar',
-        data: { labels, datasets: [{ label: 'Öğrenci sayısı', data: counts, backgroundColor: bgs, borderColor: bds, borderWidth: 1.5 }]},
-        options: {
-          responsive: true, maintainAspectRatio: false,
-          scales: { x: { ticks: { font: { size: 9 } } }, y: { beginAtZero: true, ticks: { precision: 0 } } },
-          plugins: { legend: { display: false }, datalabels: { anchor:'end', align:'top', font:{size:9}, formatter: v => v>0?v:'' } }
-        }
-      });
-      window._focusCharts.push(ch);
-    }
-  };
-
-  return `<div class="single-exam-chart-title" style="margin-top:6px;"><i class="fas ${icon}" style="color:${color};"></i>Veri Odağı: <span style="color:${color};">${label}</span></div>
-    <div class="row single-exam-cards">${card1}${card2}${card3}${card4}</div>
-    <div class="row">${dybHtml}${pctHtml}</div>
-    <div class="row">${trendHtml}${distHtml}</div>`;
-}
-
 // ---- rAnl (orig lines 2552-3492) ----
 function rAnl(){
   let aT=getEl('aType').value,eT=getEl('aEx').value, sb=getEl('aSub')?getEl('aSub').value:'', r=getEl('anlRes');
@@ -1226,90 +1060,304 @@ function rAnl(){
       }
       let curIdx = ex.indexOf(curExam);
       let prevExam = curIdx > 0 ? ex[curIdx-1] : null;
-
-      let cardsHtml = buildSingleExamCards(st, eT, curExam, prevExam, stGrade);
-      let riskHtml  = buildRiskInfoCards(no, eT, st.class);
-
-      // Ders bazlı çubuk grafik verisi
       let subjects = Object.keys(curExam.subs || {}).sort();
-      let stuVals = subjects.map(s => (curExam.subs[s] && curExam.subs[s].net !== undefined) ? curExam.subs[s].net : null);
-      let clsVals = subjects.map(s => {
-        let v = DB.e.filter(x => x.date===_seDate && (x.publisher||'')===_sePub && x.examType===eT && x.studentClass===st.class && !x.abs && x.subs[s]!==undefined).map(x => x.subs[s].net);
-        return v.length ? v.reduce((a,b)=>a+b,0)/v.length : null;
-      });
-      let insVals = subjects.map(s => {
-        let v = DB.e.filter(x => x.date===_seDate && (x.publisher||'')===_sePub && x.examType===eT && getGrade(x.studentClass)===stGrade && !x.abs && x.subs[s]!==undefined).map(x => x.subs[s].net);
-        return v.length ? v.reduce((a,b)=>a+b,0)/v.length : null;
-      });
-
-      // === Toplam Net'i çubuk grafik ve tabloya en sona EK kategori olarak ekle ===
-      let stuTot = (curExam.totalNet !== undefined && curExam.totalNet !== null) ? curExam.totalNet : null;
-      let _clsTotArr = DB.e.filter(x => x.date===_seDate && (x.publisher||'')===_sePub && x.examType===eT && x.studentClass===st.class && !x.abs && x.totalNet!==undefined && x.totalNet!==null).map(x => x.totalNet);
-      let clsTot = _clsTotArr.length ? _clsTotArr.reduce((a,b)=>a+b,0)/_clsTotArr.length : null;
-      let _insTotArr = DB.e.filter(x => x.date===_seDate && (x.publisher||'')===_sePub && x.examType===eT && getGrade(x.studentClass)===stGrade && !x.abs && x.totalNet!==undefined && x.totalNet!==null).map(x => x.totalNet);
-      let insTot = _insTotArr.length ? _insTotArr.reduce((a,b)=>a+b,0)/_insTotArr.length : null;
-
-      let chartLabels = [...subjects.map(toTitleCase), 'Toplam Net'];
-      let chartStu = [...stuVals, stuTot];
-      let chartCls = [...clsVals, clsTot];
-      let chartIns = [...insVals, insTot];
-
-      // Detay tablosu
-      let rowsSE = subjects.map((s,i) => {
-        let sn = curExam.subs[s];
-        let net = sn ? sn.net : null;
-        let dog = sn && sn.dogru !== undefined ? sn.dogru : '—';
-        let yan = sn && sn.yanlis !== undefined ? sn.yanlis : '—';
-        let clsA = clsVals[i], insA = insVals[i];
-        let dCls = (net !== null && clsA !== null) ? (net - clsA) : null;
-        let dIns = (net !== null && insA !== null) ? (net - insA) : null;
-        let fmt = v => v === null ? '—' : (v>0?'+':'') + v.toFixed(2);
-        let cls = v => v === null ? '' : (v > 0 ? 'text-success' : (v < 0 ? 'text-danger' : ''));
-        return `<tr><td>${i+1}</td><td>${toTitleCase(s)}</td><td>${dog}</td><td>${yan}</td><td><strong>${net===null?'—':net.toFixed(2)}</strong></td><td>${clsA===null?'—':clsA.toFixed(2)}</td><td class="${cls(dCls)} font-weight-bold">${fmt(dCls)}</td><td>${insA===null?'—':insA.toFixed(2)}</td><td class="${cls(dIns)} font-weight-bold">${fmt(dIns)}</td></tr>`;
-      }).join('');
-
-      // Toplam Net satırı (tablonun en altında, vurgulu)
-      let _dTotCls = (stuTot !== null && clsTot !== null) ? (stuTot - clsTot) : null;
-      let _dTotIns = (stuTot !== null && insTot !== null) ? (stuTot - insTot) : null;
-      let _fmt = v => v === null ? '—' : (v>0?'+':'') + v.toFixed(2);
-      let _clsCls = v => v === null ? '' : (v > 0 ? 'text-success' : (v < 0 ? 'text-danger' : ''));
-      let totalRowSE = `<tr class="avg-row"><td colspan="2" style="text-align:right;font-weight:700;">Toplam Net</td><td>—</td><td>—</td><td><strong>${stuTot===null?'—':stuTot.toFixed(2)}</strong></td><td>${clsTot===null?'—':clsTot.toFixed(2)}</td><td class="${_clsCls(_dTotCls)} font-weight-bold">${_fmt(_dTotCls)}</td><td>${insTot===null?'—':insTot.toFixed(2)}</td><td class="${_clsCls(_dTotIns)} font-weight-bold">${_fmt(_dTotIns)}</td></tr>`;
-
-      // === GÖREV 2: Veri filtresine (sb) göre odak panel ===
-      let focusHtml = '';
-      if(sb && sb !== '') {
-        try { focusHtml = buildSingleExamFocusPanel(no, st, eT, curExam, prevExam, stGrade, sb, ex); } catch(e){ focusHtml = ''; }
-      }
-
       let _pubLbl  = curExam.publisher ? ` (${toTitleCase(curExam.publisher)})` : '';
       let _exLabel = (typeof toExamLabel==='function') ? toExamLabel(eT) : eT;
-      let h = `<div class="d-flex justify-content-end mb-2 no-print"><button class="btn-print no-print" onclick="xPR('pS','Ogrenci_Tek_Sinav',this)"><i class='fas fa-print mr-1'></i>Yazdır</button></div>
-      <div id="pS" class="card shadow-sm">
-        <div class="report-header">
-          <span style="font-size:16px;"><i class="fas fa-file-alt mr-2"></i><strong>${st.name}</strong> — ${_exLabel} (${curExam.date}${_pubLbl})</span>
-          <span style="font-size:13px;">Sınıf: ${st.class}</span>
-        </div>
-        <div class="card-body" style="padding-top:8px;">
-          <div class="single-exam-cards">${cardsHtml}</div>
-          ${riskHtml}
-          ${focusHtml}
-          <div class="single-exam-chart-title"><i class="fas fa-chart-bar"></i>Ders Bazlı Net Karşılaştırması <span style="font-weight:400;color:#6c757d;font-size:0.85em;">— Toplam Net dahil</span></div>
-          <div class="chart-box avoid-break" style="height:300px;"><canvas id="cA"></canvas></div>
-          ${buildSubjectSparklines(no, eT, curExam, subjects)}
-          <div class="table-responsive mt-3"><table class="table table-sm table-hover table-bordered" id="tS"><thead><tr><th>#</th><th>Ders</th><th>D</th><th>Y</th><th>Net</th><th>Sınıf Ort.</th><th>Sınıf Fark</th><th>Kurum Ort.</th><th>Kurum Fark</th></tr></thead><tbody>${rowsSE}${totalRowSE}</tbody></table></div>
-        </div>
-      </div>`;
-      r.innerHTML = h;
-      chartTimer = setTimeout(() => {
-        c.a = mkChart('cA', chartLabels, [
-          {label:'Öğrenci',    data: chartStu, backgroundColor: cols[0]+'cc', borderColor: cols[0], borderWidth: 1.5},
-          {label:'Sınıf Ort.', data: chartCls, backgroundColor: cols[2]+'99', borderColor: cols[2], borderWidth: 1.5},
-          {label:'Kurum Ort.', data: chartIns, backgroundColor: cols[3]+'99', borderColor: cols[3], borderWidth: 1.5}
-        ], false);
-        // Odak paneli için ayrı grafikleri çiz
-        if(typeof window._renderFocusCharts === 'function') { try { window._renderFocusCharts(); } catch(e){} }
-      }, 100);
-      return;
+
+      // ==================== SINAV ÖZETİ (summary) ====================
+      if(sb === 'summary' || sb === ''){
+        let cardsHtml = buildSingleExamCards(st, eT, curExam, prevExam, stGrade);
+        let riskHtml  = buildRiskInfoCards(no, eT, st.class);
+        // Ders bazlı çubuk grafik verisi + Toplam Net
+        let barSubjects = [...subjects];
+        let stuVals = subjects.map(s => (curExam.subs[s] && curExam.subs[s].net !== undefined) ? curExam.subs[s].net : null);
+        let clsVals = subjects.map(s => {
+          let v = DB.e.filter(x => x.date===_seDate && (x.publisher||'')===_sePub && x.examType===eT && x.studentClass===st.class && !x.abs && x.subs[s]!==undefined).map(x => x.subs[s].net);
+          return v.length ? v.reduce((a,b)=>a+b,0)/v.length : null;
+        });
+        let insVals = subjects.map(s => {
+          let v = DB.e.filter(x => x.date===_seDate && (x.publisher||'')===_sePub && x.examType===eT && getGrade(x.studentClass)===stGrade && !x.abs && x.subs[s]!==undefined).map(x => x.subs[s].net);
+          return v.length ? v.reduce((a,b)=>a+b,0)/v.length : null;
+        });
+        // Toplam Net ekleme
+        barSubjects.push('Toplam Net');
+        stuVals.push(curExam.totalNet !== undefined ? curExam.totalNet : null);
+        let clsTN = DB.e.filter(x => x.date===_seDate && (x.publisher||'')===_sePub && x.examType===eT && x.studentClass===st.class && !x.abs).map(x => x.totalNet);
+        clsVals.push(clsTN.length ? clsTN.reduce((a,b)=>a+b,0)/clsTN.length : null);
+        let insTN = DB.e.filter(x => x.date===_seDate && (x.publisher||'')===_sePub && x.examType===eT && getGrade(x.studentClass)===stGrade && !x.abs).map(x => x.totalNet);
+        insVals.push(insTN.length ? insTN.reduce((a,b)=>a+b,0)/insTN.length : null);
+
+        // Toplam Net eğilim kartı
+        let totalNetTrendCard = _buildSingleMetricSparkline(no, eT, curExam, 'totalNet', 'Toplam Net');
+
+        // Detay tablosu
+        let rowsSE = subjects.map((s,i) => {
+          let sn = curExam.subs[s];
+          let net = sn ? sn.net : null;
+          let dog = sn && sn.dogru !== undefined ? sn.dogru : '—';
+          let yan = sn && sn.yanlis !== undefined ? sn.yanlis : '—';
+          let clsA = clsVals[i], insA = insVals[i];
+          let dCls = (net !== null && clsA !== null) ? (net - clsA) : null;
+          let dIns = (net !== null && insA !== null) ? (net - insA) : null;
+          let fmt = v => v === null ? '—' : (v>0?'+':'') + v.toFixed(2);
+          let cls = v => v === null ? '' : (v > 0 ? 'text-success' : (v < 0 ? 'text-danger' : ''));
+          return `<tr><td>${i+1}</td><td>${toTitleCase(s)}</td><td>${dog}</td><td>${yan}</td><td><strong>${net===null?'—':net.toFixed(2)}</strong></td><td>${clsA===null?'—':clsA.toFixed(2)}</td><td class="${cls(dCls)} font-weight-bold">${fmt(dCls)}</td><td>${insA===null?'—':insA.toFixed(2)}</td><td class="${cls(dIns)} font-weight-bold">${fmt(dIns)}</td></tr>`;
+        }).join('');
+        // Toplam Net satırı (vurgulu)
+        let _tnStu = curExam.totalNet, _tnCls = clsVals[clsVals.length-1], _tnIns = insVals[insVals.length-1];
+        let _dTC = (_tnStu!==null&&_tnCls!==null)?(_tnStu-_tnCls):null, _dTI = (_tnStu!==null&&_tnIns!==null)?(_tnStu-_tnIns):null;
+        let _fmtT = v => v===null?'—':(v>0?'+':'')+v.toFixed(2);
+        let _clsT = v => v===null?'':(v>0?'text-success':(v<0?'text-danger':''));
+        rowsSE += `<tr class="avg-row" style="font-weight:bold;"><td></td><td>Toplam Net</td><td>—</td><td>—</td><td><strong>${_tnStu!==null&&_tnStu!==undefined?_tnStu.toFixed(2):'—'}</strong></td><td>${_tnCls!==null?_tnCls.toFixed(2):'—'}</td><td class="${_clsT(_dTC)} font-weight-bold">${_fmtT(_dTC)}</td><td>${_tnIns!==null?_tnIns.toFixed(2):'—'}</td><td class="${_clsT(_dTI)} font-weight-bold">${_fmtT(_dTI)}</td></tr>`;
+
+        let h = `<div class="d-flex justify-content-end mb-2 no-print"><button class="btn-print no-print" onclick="xPR('pS','Ogrenci_Tek_Sinav',this)"><i class='fas fa-print mr-1'></i>Yazdır</button></div>
+        <div id="pS" class="card shadow-sm">
+          <div class="report-header">
+            <span style="font-size:16px;"><i class="fas fa-file-alt mr-2"></i><strong>${st.name}</strong> — ${_exLabel} (${curExam.date}${_pubLbl})</span>
+            <span style="font-size:13px;">Sınıf: ${st.class}</span>
+          </div>
+          <div class="card-body" style="padding-top:8px;">
+            <div class="single-exam-cards">${cardsHtml}</div>
+            ${riskHtml}
+            <div class="single-exam-chart-title"><i class="fas fa-chart-bar"></i>Ders Bazlı Net Karşılaştırması</div>
+            <div class="chart-box avoid-break" style="height:280px;"><canvas id="cA"></canvas></div>
+            ${totalNetTrendCard}
+            ${buildSubjectSparklines(no, eT, curExam, subjects)}
+            <div class="table-responsive mt-3"><table class="table table-sm table-hover table-bordered" id="tS"><thead><tr><th>#</th><th>Ders</th><th>D</th><th>Y</th><th>Net</th><th>Sınıf Ort.</th><th>Sınıf Fark</th><th>Kurum Ort.</th><th>Kurum Fark</th></tr></thead><tbody>${rowsSE}</tbody></table></div>
+          </div>
+        </div>`;
+        r.innerHTML = h;
+        chartTimer = setTimeout(() => {
+          c.a = mkChart('cA', barSubjects.map(toTitleCase), [
+            {label:'Öğrenci',    data: stuVals, backgroundColor: cols[0]+'cc', borderColor: cols[0], borderWidth: 1.5},
+            {label:'Sınıf Ort.', data: clsVals, backgroundColor: cols[2]+'99', borderColor: cols[2], borderWidth: 1.5},
+            {label:'Kurum Ort.', data: insVals, backgroundColor: cols[3]+'99', borderColor: cols[3], borderWidth: 1.5}
+          ], false);
+        }, 100);
+        return;
+
+      // ==================== TEK DERS MODU (s_matematik vb.) ====================
+      } else if(sb.startsWith('s_')){
+        let subjKey = toTitleCase(sb.replace('s_',''));
+        let subjLower = sb.replace('s_','');
+        let sn = curExam.subs ? curExam.subs[subjLower] || curExam.subs[subjKey] : null;
+        let net = sn ? sn.net : null;
+        let dog = sn && sn.dogru !== undefined ? sn.dogru : null;
+        let yan = sn && sn.yanlis !== undefined ? sn.yanlis : null;
+        let bos = (dog !== null && yan !== null && sn.total) ? (sn.total - dog - yan) : null;
+
+        // Sınıf & Kurum ortalamaları
+        let _sKey = subjLower;
+        let _findSub = (e) => e.subs[_sKey] || e.subs[subjKey] || null;
+        let cvNets = DB.e.filter(x => x.date===_seDate && (x.publisher||'')===_sePub && x.examType===eT && x.studentClass===st.class && !x.abs && _findSub(x)).map(x => _findSub(x).net);
+        let ivNets = DB.e.filter(x => x.date===_seDate && (x.publisher||'')===_sePub && x.examType===eT && getGrade(x.studentClass)===stGrade && !x.abs && _findSub(x)).map(x => _findSub(x).net);
+        let clsA = cvNets.length ? cvNets.reduce((a,b)=>a+b,0)/cvNets.length : null;
+        let insA = ivNets.length ? ivNets.reduce((a,b)=>a+b,0)/ivNets.length : null;
+
+        // Z-skoru
+        let _std = (arr) => { if(arr.length<2) return null; let m=arr.reduce((a,b)=>a+b,0)/arr.length; let v=arr.reduce((a,b)=>a+(b-m)*(b-m),0)/(arr.length-1); return Math.sqrt(v); };
+        let clsStd = _std(cvNets), insStd = _std(ivNets);
+        let clsZ = (net!==null && clsA!==null && clsStd && clsStd>0) ? ((net-clsA)/clsStd) : null;
+        let insZ = (net!==null && insA!==null && insStd && insStd>0) ? ((net-insA)/insStd) : null;
+
+        // Yüzdelik dilim
+        let clsPerc = (net!==null && cvNets.length>1) ? Math.round(cvNets.filter(v=>v<=net).length/cvNets.length*100) : null;
+        let insPerc = (net!==null && ivNets.length>1) ? Math.round(ivNets.filter(v=>v<=net).length/ivNets.length*100) : null;
+
+        // Önceki sınavdan fark
+        let prevNet = null;
+        if(prevExam){
+          let _ps = prevExam.subs ? (prevExam.subs[_sKey] || prevExam.subs[subjKey]) : null;
+          prevNet = _ps ? _ps.net : null;
+        }
+        let delta = (net!==null && prevNet!==null) ? (net-prevNet) : null;
+        let dSign = delta!==null ? (delta>0?'+':'') : '';
+        let dCls = delta===null?'sec-neutral':(delta>0?'sec-pos':(delta<0?'sec-neg':'sec-neutral'));
+        let dIcon = delta===null?'fa-minus':(delta>0?'fa-arrow-up':(delta<0?'fa-arrow-down':'fa-minus'));
+
+        // Kartlar
+        let card1 = `<div class="col-md-3 col-sm-6"><div class="sec-card">
+          <div class="sec-icon"><i class="fas fa-book"></i></div>
+          <div class="sec-body"><div class="sec-label">${subjKey} Neti</div>
+          <div class="sec-value">${net!==null?net.toFixed(2):'—'}</div>
+          <div class="sec-sub">${dog!==null?'D:'+dog+' Y:'+yan+(bos!==null?' B:'+bos:''):'Detay yok'}</div>
+          </div></div></div>`;
+
+        let card2 = `<div class="col-md-3 col-sm-6"><div class="sec-card ${dCls}">
+          <div class="sec-icon"><i class="fas ${dIcon}"></i></div>
+          <div class="sec-body"><div class="sec-label">Önceki Sınava Fark</div>
+          <div class="sec-value">${delta!==null?dSign+delta.toFixed(2):'—'} <small style="font-size:0.62em;font-weight:600;color:#6c757d;">net</small></div>
+          <div class="sec-sub">${prevNet!==null?'Önceki: '+prevNet.toFixed(2):'Önceki veri yok'}</div>
+          </div></div></div>`;
+
+        let _fC = (net!==null&&clsA!==null)?(net-clsA):null;
+        let _fI = (net!==null&&insA!==null)?(net-insA):null;
+        let _fCs = _fC===null?'sec-neutral':(_fC>0?'sec-pos':(_fC<0?'sec-neg':'sec-neutral'));
+        let _fIs = _fI===null?'sec-neutral':(_fI>0?'sec-pos':(_fI<0?'sec-neg':'sec-neutral'));
+        let card3 = `<div class="col-md-3 col-sm-6"><div class="sec-card ${_fCs}">
+          <div class="sec-icon"><i class="fas fa-users"></i></div>
+          <div class="sec-body"><div class="sec-label">Sınıf Karşılaştırma</div>
+          <div class="sec-value">${clsA!==null?clsA.toFixed(2):'—'} <small style="font-size:0.62em;font-weight:600;">ort</small></div>
+          <div class="sec-sub">Fark: ${_fC!==null?(_fC>0?'+':'')+_fC.toFixed(2):'—'}${clsZ!==null?' · Z: '+clsZ.toFixed(2):''}${clsPerc!==null?' · Top %'+(100-clsPerc):''}</div>
+          </div></div></div>`;
+
+        let card4 = `<div class="col-md-3 col-sm-6"><div class="sec-card ${_fIs}">
+          <div class="sec-icon"><i class="fas fa-school"></i></div>
+          <div class="sec-body"><div class="sec-label">Kurum Karşılaştırma</div>
+          <div class="sec-value">${insA!==null?insA.toFixed(2):'—'} <small style="font-size:0.62em;font-weight:600;">ort</small></div>
+          <div class="sec-sub">Fark: ${_fI!==null?(_fI>0?'+':'')+_fI.toFixed(2):'—'}${insZ!==null?' · Z: '+insZ.toFixed(2):''}${insPerc!==null?' · Top %'+(100-insPerc):''}</div>
+          </div></div></div>`;
+
+        // D/Y/B dağılım barı
+        let dybBar = '';
+        if(dog!==null && yan!==null && sn.total){
+          let pD=Math.round(dog/sn.total*100), pY=Math.round(yan/sn.total*100), pB=100-pD-pY;
+          dybBar = `<div class="single-exam-chart-title" style="margin-top:12px;"><i class="fas fa-tasks"></i>Doğru / Yanlış / Boş Dağılımı</div>
+          <div style="display:flex;height:28px;border-radius:6px;overflow:hidden;font-size:0.75rem;font-weight:600;margin-bottom:10px;">
+            <div style="width:${pD}%;background:#28a745;color:#fff;display:flex;align-items:center;justify-content:center;">${dog} D (${pD}%)</div>
+            <div style="width:${pY}%;background:#dc3545;color:#fff;display:flex;align-items:center;justify-content:center;">${yan} Y (${pY}%)</div>
+            <div style="width:${pB}%;background:#e9ecef;color:#6c757d;display:flex;align-items:center;justify-content:center;">${bos!==null?bos:'?'} B (${pB}%)</div>
+          </div>`;
+        }
+
+        // Sadece bu dersin eğilim grafiği
+        let trendCard = _buildSingleMetricSparkline(no, eT, curExam, 's_'+_sKey, subjKey+' Neti');
+
+        // Tek ders çubuk grafik (öğrenci vs sınıf vs kurum — sadece bu ders)
+        let singleBarHtml = `<div class="single-exam-chart-title"><i class="fas fa-chart-bar"></i>${subjKey} — Karşılaştırma</div>
+          <div class="chart-box avoid-break" style="height:220px;"><canvas id="cA"></canvas></div>`;
+
+        let h = `<div class="d-flex justify-content-end mb-2 no-print"><button class="btn-print no-print" onclick="xPR('pS','Ogrenci_Ders',this)"><i class='fas fa-print mr-1'></i>Yazdır</button></div>
+        <div id="pS" class="card shadow-sm">
+          <div class="report-header">
+            <span style="font-size:16px;"><i class="fas fa-book-open mr-2"></i><strong>${st.name}</strong> — ${subjKey} (${curExam.date}${_pubLbl})</span>
+            <span style="font-size:13px;">Sınıf: ${st.class} | ${_exLabel}</span>
+          </div>
+          <div class="card-body" style="padding-top:8px;">
+            <div class="row">${card1}${card2}${card3}${card4}</div>
+            ${dybBar}
+            ${singleBarHtml}
+            ${trendCard}
+          </div>
+        </div>`;
+        r.innerHTML = h;
+
+        // Trend grafik: bu dersin tüm sınavlardaki neti
+        chartTimer = setTimeout(() => {
+          let trendExams = ex.filter(e => { let _s = e.subs ? (e.subs[_sKey]||e.subs[subjKey]) : null; return _s && _s.net !== null && _s.net !== undefined; });
+          let tLabels = trendExams.map(e => e.publisher ? `${e.date} (${toTitleCase(e.publisher)})` : e.date);
+          let tStuData = trendExams.map(e => { let _s = e.subs[_sKey]||e.subs[subjKey]; return _s.net; });
+          let tClsData = trendExams.map(e => {
+            let cv = DB.e.filter(x => x.date===e.date && (x.publisher||'')===(e.publisher||'') && x.examType===eT && x.studentClass===st.class && !x.abs && _findSub(x)).map(x=>_findSub(x).net);
+            return cv.length ? cv.reduce((a,b)=>a+b,0)/cv.length : null;
+          });
+          let tInsData = trendExams.map(e => {
+            let iv = DB.e.filter(x => x.date===e.date && (x.publisher||'')===(e.publisher||'') && x.examType===eT && getGrade(x.studentClass)===stGrade && !x.abs && _findSub(x)).map(x=>_findSub(x).net);
+            return iv.length ? iv.reduce((a,b)=>a+b,0)/iv.length : null;
+          });
+          c.a = mkChart('cA', tLabels, [
+            {label:'Öğrenci', data:tStuData, backgroundColor:cols[0]+'cc', borderColor:cols[0], borderWidth:1.5, type:'line', fill:false, tension:0.3},
+            {label:'Sınıf Ort.', data:tClsData, backgroundColor:cols[2]+'99', borderColor:cols[2], borderWidth:1.5, type:'line', fill:false, tension:0.3},
+            {label:'Kurum Ort.', data:tInsData, backgroundColor:cols[3]+'99', borderColor:cols[3], borderWidth:1.5, type:'line', fill:false, tension:0.3}
+          ], false);
+        }, 100);
+        return;
+
+      // ==================== TOPLAM NET / PUAN / SIRALAMA MODU ====================
+      } else {
+        let isRank = sb.startsWith('rank_');
+        let ls = sb === 'score' ? 'Puan' : (sb === 'rank_c' ? 'Sınıf Sırası' : (sb === 'rank_i' ? 'Kurum Sırası' : (sb === 'rank_g' ? 'Genel Sıra' : 'Toplam Net')));
+        let getValSE = (e) => { if(e.abs) return null; if(sb==='score') return e.score; if(sb==='rank_c') return pN(e.cR); if(sb==='rank_i') return pN(e.iR); if(sb==='rank_g') return pN(e.gR); return e.totalNet; };
+        let curVal = getValSE(curExam);
+        let prevVal = prevExam ? getValSE(prevExam) : null;
+        let delta = (curVal!==null && prevVal!==null) ? (isRank ? (prevVal-curVal) : (curVal-prevVal)) : null;
+        let dSign = delta!==null ? (delta>0?'+':'') : '';
+        let dCls = delta===null?'sec-neutral':(delta>0?'sec-pos':(delta<0?'sec-neg':'sec-neutral'));
+        let dIcon = delta===null?'fa-minus':(delta>0?'fa-arrow-up':(delta<0?'fa-arrow-down':'fa-minus'));
+
+        // Sınıf & Kurum ortalamaları
+        let cvAll = DB.e.filter(x => x.date===_seDate && (x.publisher||'')===_sePub && x.examType===eT && x.studentClass===st.class && !x.abs).map(getValSE).filter(v=>v!==null);
+        let ivAll = DB.e.filter(x => x.date===_seDate && (x.publisher||'')===_sePub && x.examType===eT && getGrade(x.studentClass)===stGrade && !x.abs).map(getValSE).filter(v=>v!==null);
+        let clsA = cvAll.length ? cvAll.reduce((a,b)=>a+b,0)/cvAll.length : null;
+        let insA = ivAll.length ? ivAll.reduce((a,b)=>a+b,0)/ivAll.length : null;
+
+        let _std = (arr) => { if(arr.length<2) return null; let m=arr.reduce((a,b)=>a+b,0)/arr.length; let v=arr.reduce((a,b)=>a+(b-m)*(b-m),0)/(arr.length-1); return Math.sqrt(v); };
+        let clsZ = null, insZ = null;
+        if(!isRank && curVal!==null){
+          let cs = _std(cvAll), is2 = _std(ivAll);
+          clsZ = (clsA!==null&&cs&&cs>0)?((curVal-clsA)/cs):null;
+          insZ = (insA!==null&&is2&&is2>0)?((curVal-insA)/is2):null;
+        }
+        let clsPerc = (!isRank && curVal!==null && cvAll.length>1) ? Math.round(cvAll.filter(v=> (isRank?(v>=curVal):(v<=curVal)) ).length/cvAll.length*100) : null;
+        let insPerc = (!isRank && curVal!==null && ivAll.length>1) ? Math.round(ivAll.filter(v=> (isRank?(v>=curVal):(v<=curVal)) ).length/ivAll.length*100) : null;
+
+        let fmtV = v => v===null?'—':(isRank?v:v.toFixed(2));
+
+        let card1 = `<div class="col-md-3 col-sm-6"><div class="sec-card">
+          <div class="sec-icon"><i class="fas fa-star"></i></div>
+          <div class="sec-body"><div class="sec-label">${ls}</div>
+          <div class="sec-value">${fmtV(curVal)}</div>
+          <div class="sec-sub">${curExam.date}${_pubLbl}</div>
+          </div></div></div>`;
+
+        let card2 = `<div class="col-md-3 col-sm-6"><div class="sec-card ${dCls}">
+          <div class="sec-icon"><i class="fas ${dIcon}"></i></div>
+          <div class="sec-body"><div class="sec-label">Önceki Sınava Fark</div>
+          <div class="sec-value">${delta!==null?dSign+(isRank?delta:delta.toFixed(2)):'—'}</div>
+          <div class="sec-sub">${prevVal!==null?'Önceki: '+fmtV(prevVal):'Önceki veri yok'}</div>
+          </div></div></div>`;
+
+        let _fC = (!isRank&&curVal!==null&&clsA!==null)?(curVal-clsA):null;
+        let _fI = (!isRank&&curVal!==null&&insA!==null)?(curVal-insA):null;
+        let _fCs2 = _fC===null?'sec-neutral':(_fC>0?'sec-pos':(_fC<0?'sec-neg':'sec-neutral'));
+        let _fIs2 = _fI===null?'sec-neutral':(_fI>0?'sec-pos':(_fI<0?'sec-neg':'sec-neutral'));
+
+        let card3 = `<div class="col-md-3 col-sm-6"><div class="sec-card ${_fCs2}">
+          <div class="sec-icon"><i class="fas fa-users"></i></div>
+          <div class="sec-body"><div class="sec-label">Sınıf ${isRank?'Sıra':'Karşılaştırma'}</div>
+          <div class="sec-value">${clsA!==null?fmtV(clsA):'—'} <small style="font-size:0.62em;font-weight:600;">ort</small></div>
+          <div class="sec-sub">${!isRank&&_fC!==null?'Fark: '+(_fC>0?'+':'')+_fC.toFixed(2):''}${clsZ!==null?' · Z: '+clsZ.toFixed(2):''}${clsPerc!==null?' · Top %'+(100-clsPerc):''}</div>
+          </div></div></div>`;
+
+        let card4 = `<div class="col-md-3 col-sm-6"><div class="sec-card ${_fIs2}">
+          <div class="sec-icon"><i class="fas fa-school"></i></div>
+          <div class="sec-body"><div class="sec-label">Kurum ${isRank?'Sıra':'Karşılaştırma'}</div>
+          <div class="sec-value">${insA!==null?fmtV(insA):'—'} <small style="font-size:0.62em;font-weight:600;">ort</small></div>
+          <div class="sec-sub">${!isRank&&_fI!==null?'Fark: '+(_fI>0?'+':'')+_fI.toFixed(2):''}${insZ!==null?' · Z: '+insZ.toFixed(2):''}${insPerc!==null?' · Top %'+(100-insPerc):''}</div>
+          </div></div></div>`;
+
+        // Eğilim grafiği
+        let trendCard = _buildSingleMetricSparkline(no, eT, curExam, sb, ls);
+
+        let h = `<div class="d-flex justify-content-end mb-2 no-print"><button class="btn-print no-print" onclick="xPR('pS','Ogrenci_Veri',this)"><i class='fas fa-print mr-1'></i>Yazdır</button></div>
+        <div id="pS" class="card shadow-sm">
+          <div class="report-header">
+            <span style="font-size:16px;"><i class="fas fa-chart-line mr-2"></i><strong>${st.name}</strong> — ${ls} (${curExam.date}${_pubLbl})</span>
+            <span style="font-size:13px;">Sınıf: ${st.class} | ${_exLabel}</span>
+          </div>
+          <div class="card-body" style="padding-top:8px;">
+            <div class="row">${card1}${card2}${card3}${card4}</div>
+            <div class="single-exam-chart-title"><i class="fas fa-chart-line"></i>${ls} — Sınav Trend</div>
+            <div class="chart-box avoid-break" style="height:260px;"><canvas id="cA"></canvas></div>
+            ${trendCard}
+          </div>
+        </div>`;
+        r.innerHTML = h;
+
+        chartTimer = setTimeout(() => {
+          let tLabels = ex.map(e => e.publisher ? `${e.date} (${toTitleCase(e.publisher)})` : e.date);
+          let tData = ex.map(getValSE);
+          let datasets = [{label:ls, data:tData, backgroundColor:cols[0]+'cc', borderColor:cols[0], borderWidth:1.5, type:'line', fill:false, tension:0.3}];
+          if(!isRank){
+            let tCls = ex.map(e => { let cv=DB.e.filter(x=>x.date===e.date&&(x.publisher||'')===(e.publisher||'')&&x.examType===eT&&x.studentClass===st.class&&!x.abs).map(getValSE).filter(v=>v!==null); return cv.length?cv.reduce((a,b)=>a+b,0)/cv.length:null; });
+            let tIns = ex.map(e => { let iv=DB.e.filter(x=>x.date===e.date&&(x.publisher||'')===(e.publisher||'')&&x.examType===eT&&getGrade(x.studentClass)===stGrade&&!x.abs).map(getValSE).filter(v=>v!==null); return iv.length?iv.reduce((a,b)=>a+b,0)/iv.length:null; });
+            datasets.push({label:'Sınıf Ort.', data:tCls, backgroundColor:cols[2]+'99', borderColor:cols[2], borderWidth:1.5, type:'line', fill:false, tension:0.3});
+            datasets.push({label:'Kurum Ort.', data:tIns, backgroundColor:cols[3]+'99', borderColor:cols[3], borderWidth:1.5, type:'line', fill:false, tension:0.3});
+          }
+          c.a = mkChart('cA', tLabels, datasets, isRank);
+        }, 100);
+        return;
+      }
     }
     // === TÜM SINAVLAR MODU (mevcut görünüm + risk/karne kartları) ===
     let dD=[],clsArr=[],instArr=[],rows='';

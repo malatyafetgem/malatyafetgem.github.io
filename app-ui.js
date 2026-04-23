@@ -727,10 +727,15 @@ function uSub(){
   
   if(aT === 'student' || aT === 'class') {
     let _prev = getEl('aSub').value;
-    // === FIX: class analizi için varsayılan 'score' (Puan); öğrenci analizi için 'totalNet' ===
-    let _defaultVal = (aT === 'class') ? 'score' : 'totalNet';
+    // === Tek-sınav modunda öğrenci analizi varsayılanı 'summary'; toplu modda 'totalNet'; sınıf analizinde 'score' ===
+    let _aExDateRaw = (getEl('aExDate')||{}).value || '';
+    let _isSingleExam = (aT === 'student') && !!_aExDateRaw;
+    let _defaultVal = (aT === 'class') ? 'score' : (_isSingleExam ? 'summary' : 'totalNet');
+    if(_prev === 'summary' && !_isSingleExam) _prev = '';
     let _selVal = _prev || _defaultVal;
-    let o = `<option value="" disabled${_selVal?'':' selected'}>Veri Seç</option><option value="totalNet"${_selVal==='totalNet'?' selected':''}>Toplam Net</option><option value="score"${_selVal==='score'?' selected':''}>Puan</option>`;
+    let o = `<option value="" disabled${_selVal?'':' selected'}>Veri Seç</option>`;
+    if(_isSingleExam) o += `<option value="summary"${_selVal==='summary'?' selected':''}>Sınav Özeti</option>`;
+    o += `<option value="totalNet"${_selVal==='totalNet'?' selected':''}>Toplam Net</option><option value="score"${_selVal==='score'?' selected':''}>Puan</option>`;
     if (aT === 'student') { o += `<option value="rank_c"${_selVal==='rank_c'?' selected':''}>Sınıf Sıralaması</option><option value="rank_i"${_selVal==='rank_i'?' selected':''}>Kurum Sıralaması</option><option value="rank_g"${_selVal==='rank_g'?' selected':''}>Genel Sıralama</option>`; }
     [...s].sort().forEach(x=> o += `<option value="s_${x}"${_selVal==='s_'+x?' selected':''}>${toTitleCase(x)} Neti</option>`); getEl('aSub').innerHTML = o;
     if(_selVal) { let _opt=[...getEl('aSub').options].find(o=>o.value===_selVal); if(_opt) getEl('aSub').value=_selVal; }
@@ -795,6 +800,8 @@ function onExTypeChange(){
 // ---- onExDateStudentChange: Öğrenci modu — tek sınav/Tümü ayrımı ----
 function onExDateStudentChange(){
   // aExDate boş = Tümü (toplu mod); dolu = tek sınav modu
+  // Veri (aSub) listesine 'Sınav Özeti' eklensin/çıkarılsın diye uSub'u tazele
+  uSub();
   applyExamColorToFilters();
   reqAnl();
 }
