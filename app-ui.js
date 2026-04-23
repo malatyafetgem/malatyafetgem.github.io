@@ -906,13 +906,15 @@ function uExamDates(){
     dates.push(m.date); if(m.publisher) datePublisherMap[m.date] = m.publisher;
   });
   
-  dates = [...new Set(dates)].sort(srt); let prev=getEl('aDate').value;
+  // === Sıralama: en son sınav en üstte (DESC) ===
+  dates = [...new Set(dates)].sort((a,b) => srt(b,a)); let prev=getEl('aDate').value;
   let placeholderOpt = `<option value="" disabled${prev?'':' selected'}>Sınav Seç</option>`;
+  // "Tüm Sınavlar" seçeneği (varsa) her zaman en üstte yer alır
   let allOpt = (aT === 'class' || aT === 'subject') ? '<option value="">Tüm Sınavlar</option>' : '';
   getEl('aDate').innerHTML = placeholderOpt + allOpt + dates.map(x => { let pub = datePublisherMap[x] ? ` (${toTitleCase(datePublisherMap[x])})` : ''; return `<option value="${x}">${x}${pub}</option>`; }).join('');
   if(dates.includes(prev)) getEl('aDate').value=prev;
   else if(aT === 'class' || aT === 'subject') getEl('aDate').value='';
-  else if(aT === 'examdetail' && dates.length > 0) getEl('aDate').value = dates[dates.length - 1]; // en son sınavı varsayılan seç
+  else if(aT === 'examdetail' && dates.length > 0) getEl('aDate').value = dates[0]; // en son sınavı varsayılan seç (DESC sırada ilk eleman)
 }
 
 // ---- uUI (orig lines 2111-2172) ----
