@@ -786,7 +786,94 @@ function onBrChange(){
 // ---- onExTypeChange (orig lines 2072-2075) ----
 function onExTypeChange(){
   _resetSel('aDate'); _resetSel('aSub');
-  uExamDates(); uSub(); _updateGDateVisibility(); reqAnl();
+  // Öğrenci modunda yeni sınav seçim dropdown'ı da sıfırlanır
+  let _aExDate = getEl('aExDate'); if(_aExDate) _aExDate.value = '';
+  uExamDates(); uStudentExamDates(); uSub(); _updateGDateVisibility();
+  applyExamColorToFilters(); reqAnl();
+}
+
+// ---- onExDateStudentChange: Öğrenci modu — tek sınav/Tümü ayrımı ----
+function onExDateStudentChange(){
+  // aExDate boş = Tümü (toplu mod); dolu = tek sınav modu
+  applyExamColorToFilters();
+  reqAnl();
+}
+
+// ---- uStudentExamDates: Öğrenci modunda aExDate dropdown'unu doldurur ----
+// Seçilen sınav türüne ait sınavları tarih + yayınevi ile listeler.
+// En üstte "Tümü" seçeneği, altında tarihe göre (en yeni en üstte) sıralı liste.
+function uStudentExamDates(){
+  let el = getEl('aExDate'); if(!el) return;
+  let aT = getEl('aType') ? getEl('aType').value : '';
+  let eT = getEl('aEx')   ? getEl('aEx').value   : '';
+  if(aT !== 'student' || !eT){
+    el.innerHTML = '<option value="">Tümü</option>';
+    el.value = '';
+    return;
+  }
+  // Öğrenci seçiliyse sınıf seviyesine göre filtrele
+  let stuGrade = null;
+  if(aNo){ let st = DB.s.find(x=>x.no===aNo); if(st) stuGrade = getGrade(st.class); }
+  let entries = [];
+  Object.values(EXAM_META).forEach(m => {
+    if(m.examType !== eT) return;
+    if(stuGrade && m.grades && m.grades.length > 0 && !m.grades.includes(stuGrade)) return;
+    entries.push({ date: m.date, publisher: m.publisher || '' });
+  });
+  // Unique (date+publisher), sonra tarih DESC sırala (en yeni en üstte)
+  let seen = new Set(), unique = [];
+  entries.forEach(x => { let k = x.date+'||'+x.publisher; if(!seen.has(k)){ seen.add(k); unique.push(x); } });
+  unique.sort((a,b) => srt(b.date, a.date)); // DESC
+  let prev = el.value;
+  let opts = '<option value="">Tümü</option>' + unique.map(x => {
+    let pub = x.publisher ? ` (${toTitleCase(x.publisher)})` : '';
+    return `<option value="${x.date}||${x.publisher}">${x.date}${pub}</option>`;
+  }).join('');
+  el.innerHTML = opts;
+  // Önceki seçim geçerliyse koru, değilse Tümü
+  if(prev && [...el.options].some(o=>o.value===prev)) el.value = prev;
+  else el.value = '';
+}
+
+// ---- applyExamColorToFilters: Sınav türü rengini filtre alanına ve analiz sonucuna uygular ----
+function applyExamColorToFilters(){
+  let aT = getEl('aType') ? getEl('aType').value : '';
+  let eT = getEl('aEx')   ? getEl('aEx').value   : '';
+  let filter = getEl('anlFilterCard');
+  let res    = getEl('anlRes');
+  let risk   = getEl('riskPanel');
+  let aExWrap = getEl('aEx') ? getEl('aEx').closest('.aex-wrap') : null;
+
+  // Eski sınıfları temizle
+  [filter, res, risk, aExWrap].forEach(el => {
+    if(!el) return;
+    for(let i=0;i<8;i++) el.classList.remove('exam-color-'+i);
+    el.removeAttribute('data-exam-color');
+    if(aExWrap && el === aExWrap) el.removeAttribute('data-active');
+  });
+
+  if(!eT) return;
+  let idx = (typeof examColorIdx === 'function') ? examColorIdx(eT) : 0;
+
+  [filter, res].forEach(el => {
+    if(!el) return;
+    el.classList.add('exam-color-'+idx);
+    el.setAttribute('data-exam-color', String(idx));
+  });
+  // Risk paneli sadece risk modunda ve riskExTypeFilter doluysa renk alır
+  if(risk){
+    let riskET = (getEl('riskExTypeFilter')||{}).value || '';
+    if(aT === 'risk' && riskET){
+      let rIdx = (typeof examColorIdx === 'function') ? examColorIdx(riskET) : 0;
+      risk.classList.add('exam-color-'+rIdx);
+      risk.setAttribute('data-exam-color', String(rIdx));
+    }
+  }
+  // Dropdown yan badge
+  if(aExWrap){
+    aExWrap.classList.add('exam-color-'+idx);
+    aExWrap.setAttribute('data-active','1');
+  }
 }
 
 // ---- onDateChange (orig lines 2076-2079) ----
@@ -843,6 +930,9 @@ function uUI(){
   if(aExWrapper) aExWrapper.style.display = isRisk ? 'none' : '';
   getEl('gDate').style.display = isRisk ? 'none' : (t==='student' ? 'none' : 'block');
   getEl('gSub').style.display = isRisk ? 'none' : 'block';
+  // Öğrenci modunda yeni "Sınav Seç" dropdown'ı (aExDate) görünür
+  let gExDateEl = getEl('gExDate');
+  if(gExDateEl) gExDateEl.style.display = (!isRisk && t === 'student') ? 'block' : 'none';
 
   // Risk filtre slotları
   ['gRiskGrade','gRiskBranch','gRiskExType','gRiskLevel'].forEach(id => {
