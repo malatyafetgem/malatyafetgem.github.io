@@ -573,7 +573,40 @@ function xPR(sourceId, title, btn, orientation) {
       max-height: ${isPortrait ? '120px' : '100px'} !important;
       width: 100% !important; height: auto !important;
     }
-
+/* ── TEK SINAV MODU / ÖZET KARTLARI (.sec-card) ── */
+    .sec-card {
+      background: #fff !important;
+      border: 1px solid #ccc !important;
+      border-left: 3px solid var(--exam-color, #0d6efd) !important;
+      border-right: 3px solid var(--exam-color, #0d6efd) !important;
+      border-radius: 8px !important;
+      padding: 8px !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 10px !important;
+      margin-bottom: 5px !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    .sec-icon {
+      width: 32px !important; height: 32px !important;
+      border-radius: 6px !important;
+      display: inline-flex !important; align-items: center !important; justify-content: center !important;
+      font-size: 1.1em !important; color: #fff !important;
+      background: var(--exam-color, #0d6efd) !important;
+      -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;
+    }
+    .sec-card.sec-pos .sec-icon { background: #198754 !important; }
+    .sec-card.sec-neg .sec-icon { background: #dc3545 !important; }
+    .sec-card.sec-neutral .sec-icon { background: #6c757d !important; }
+    .sec-body { flex: 1 !important; }
+    .sec-label { font-size: 8px !important; color: #6c757d !important; font-weight: bold !important; text-transform: uppercase !important; }
+    .sec-value { font-size: 13px !important; font-weight: bold !important; color: #212529 !important; margin: 2px 0 !important; }
+    .sec-card.sec-pos .sec-value { color: #198754 !important; }
+    .sec-card.sec-neg .sec-value { color: #dc3545 !important; }
+    .sec-sub { font-size: 8px !important; color: #6c757d !important; }
+    .single-exam-chart-title { font-size: 11px !important; font-weight: bold !important; color: #4a6fa5 !important; margin: 8px 0 4px !important; }
+    
     /* ── RİSK KARTLARI ── */
     [style*="border:1px solid #dc3545"], [style*="border:1px solid #fd7e14"], [style*="border:1px solid #ffc107"] {
       -webkit-print-color-adjust: exact; print-color-adjust: exact;
