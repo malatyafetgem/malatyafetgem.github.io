@@ -221,7 +221,6 @@ function xPR(sourceId, title, btn, orientation) {
     } catch(e) {}
   });
   let cssLinks = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
-  .filter(l => !l.href.includes('style.css'))
   .map(l => `<link rel="stylesheet" href="${l.href}">`).join('\n');
 
   let clone = sourceEl.cloneNode(true);
