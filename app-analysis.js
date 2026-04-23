@@ -1,30 +1,25 @@
 // app-analysis.js — Risk scoring, box plots, karne, rH, rAnl, rapor
 
-// ---- top-level (orig lines 1079-1079) ----
 let _riskCache = null;
-
-// ---- top-level (orig lines 1081-1081) ----
 const RISK_SEV_W = { high: 3, med: 2, low: 1 };
 
-// ---- calcRiskScores (orig lines 1083-1256) ----
 function calcRiskScores() {
-  if(!DB.e.length || !DB.s.length) return [];
+  if(!DB.e.length || !DB.s.length) return[];
 
   let gradeOf = (no) => { let st = DB.s.find(x=>x.no===no); return st ? (String(st.class||'').match(/^(\d+)/)?.[1] || '') : ''; };
 
-  // 1. Popülasyon Ortalamalarını (SınavTürü + SınıfSeviyesi + Tarih bazlı) önceden hesapla
   let popStats = {};
   DB.e.forEach(x => {
     if(x.abs) return;
     let gr = gradeOf(x.studentNo);
     if(!gr) return;
-    let key = x.examType + '||' + gr + '||' + x.date; // Sınıf seviyesi ve Sınav Türü kesin ayrımı
+    let key = x.examType + '||' + gr + '||' + x.date; 
     if(!popStats[key]) popStats[key] = { totalNets: [], subjs: {}, stus: 0 };
     popStats[key].totalNets.push(x.totalNet);
     popStats[key].stus++;
     if(x.subs) {
       Object.keys(x.subs).forEach(s => {
-        if(!popStats[key].subjs[s]) popStats[key].subjs[s] = [];
+        if(!popStats[key].subjs[s]) popStats[key].subjs[s] =[];
         popStats[key].subjs[s].push(x.subs[s].net);
       });
     }
@@ -40,7 +35,6 @@ function calcRiskScores() {
     };
   });
 
-  // 2. Devamsızlık hesabı için (SınavTürü + SınıfSeviyesi bazlı) yapılan sınav tarihlerini bul
   let examDatesByGroup = {};
   DB.e.forEach(x => {
     let gr = gradeOf(x.studentNo);
@@ -50,7 +44,6 @@ function calcRiskScores() {
     examDatesByGroup[key].add(x.date);
   });
 
-  // 3. Öğrencilerin sınavlarını grupla
   let stuGroups = {};
   DB.e.forEach(x => {
     if(!stuGroups[x.studentNo]) stuGroups[x.studentNo] = {};
@@ -58,9 +51,8 @@ function calcRiskScores() {
     stuGroups[x.studentNo][x.examType].push(x);
   });
 
-  let riskEntries = [];
+  let riskEntries =[];
 
-  // 4. Rubrik Bazlı Hesaplama (Her Öğrencinin Her Sınav Türü İçin Ayrı Ayrı)
   Object.entries(stuGroups).forEach(([no, types]) => {
     let stu = DB.s.find(x=>x.no===no);
     if(!stu) return;
@@ -69,14 +61,13 @@ function calcRiskScores() {
     
     Object.entries(types).forEach(([eType, exams]) => {
       let typeScore = 0; 
-      let flags = [];
+      let flags =[];
       
       exams.sort((a,b) => srt(a.date, b.date));
       let attended = exams.filter(x => !x.abs);
-      let allDatesForGroup = [...(examDatesByGroup[eType + '||' + gr] || [])].sort(srt);
+      let allDatesForGroup =[...(examDatesByGroup[eType + '||' + gr] ||[])].sort(srt);
       let totalHeld = allDatesForGroup.length;
       
-      // A) KATILIM / DEVAMSIZLIK RİSKİ KURALI (Maks 30 Puan)
       if(totalHeld >= 2) {
         let attRate = attended.length / totalHeld;
         let last2Dates = allDatesForGroup.slice(-2);
@@ -91,12 +82,10 @@ function calcRiskScores() {
         }
       }
       
-      // B ve C Kriterleri için öğrencinin en az 2 sınava girmiş olması zorunludur
       if(attended.length >= 2) {
         let lastEx = attended[attended.length - 1];
         let prevEx = attended[attended.length - 2];
         
-        // B) SIRALAMA GERİLEMESİ (Maks 40 Puan)
         let lastPct = (parseFloat(lastEx.iR) / parseFloat(lastEx.iP)) || null;
         let prevPct = (parseFloat(prevEx.iR) / parseFloat(prevEx.iP)) || null;
         
@@ -111,7 +100,6 @@ function calcRiskScores() {
           }
         }
         
-        // C) NORMALİZE EDİLMİŞ NET DÜŞÜŞÜ (Maks 30 Puan)
         let pKeyLast = eType + '||' + gr + '||' + lastEx.date;
         let pKeyPrev = eType + '||' + gr + '||' + prevEx.date;
         let aLast = popAvgs[pKeyLast];
@@ -134,7 +122,7 @@ function calcRiskScores() {
           }
 
           if(dropScore < 30 && lastEx.subs && prevEx.subs) {
-            let droppedSubjs = [];
+            let droppedSubjs =[];
             let maxSubjSeverity = null;
             Object.keys(lastEx.subs).forEach(s => {
               if(prevEx.subs[s]) {
@@ -153,12 +141,11 @@ function calcRiskScores() {
         }
       }
       
-      // Eğer bu sınav türü için öğrenci risk taşıyorsa listeye ekle
       if(typeScore > 0) {
         let topLevel = typeScore >= 70 ? 'high' : (typeScore >= 40 ? 'med' : 'low');
         
         let seenTypes = new Set();
-        let uniqueFlags = [];
+        let uniqueFlags =[];
         flags.forEach(f => {
             let k = f.type + '|' + f.examType;
             if(!seenTypes.has(k)) { seenTypes.add(k); uniqueFlags.push(f); }
@@ -171,7 +158,7 @@ function calcRiskScores() {
           score: typeScore, 
           level: topLevel, 
           flags: uniqueFlags, 
-          examTypes: [eType] // <-- Sadece filtrelenen Sınav Türü!
+          examTypes: [eType]
         });
       }
     });
@@ -182,25 +169,20 @@ function calcRiskScores() {
   return riskEntries;
 }
 
-// ---- renderRiskPanel (orig lines 1258-1340) ----
 function renderRiskPanel() {
   let panelEl = getEl('riskPanel'); if(!panelEl) return;
   let risks = (_riskCache && _riskCache.results) ? _riskCache.results : calcRiskScores();
-  // Veri yoksa içeriği temizle ama paneli gizleme (uUI yönetiyor)
   if(!risks.length) {
-    let listEl2 = getEl('riskList'); if(listEl2) listEl2.innerHTML = '<div class="risk-empty"><i class="fas fa-info-circle mr-2"></i>Henüz yeterli sınav verisi bulunmuyor.</div>';
-    ['riskCardHigh','riskCardMed','riskCardLow','riskCardTotal'].forEach(id => { let el=getEl(id); if(el) el.textContent='0'; });
+    let listEl2 = getEl('riskList'); if(listEl2) listEl2.innerHTML = '<div class="risk-empty"><i class="fas fa-info-circle mr-2"></i>Henüz yeterli sınav verisi bulunmuyor.</div>';['riskCardHigh','riskCardMed','riskCardLow','riskCardTotal'].forEach(id => { let el=getEl(id); if(el) el.textContent='0'; });
     let badge = getEl('riskTotalBadge'); if(badge) badge.textContent = '';
     return;
   }
 
-  // Filtreler
   let exTypeF = (getEl('riskExTypeFilter')||{}).value || '';
   let gradeF  = (getEl('riskGradeFilter')||{}).value  || '';
   let branchF = (getEl('riskBranchFilter')||{}).value || '';
   let levelF  = (getEl('riskLevelFilter')||{}).value  || '';
 
-  // Sınıf adından grade ve şubeyi ayıkla (örn. "10-A" → grade:"10", branch:"A")
   function getGradeFromCls(cls) { let m = String(cls||'').match(/^(\d+)/); return m ? m[1] : ''; }
   function getBranchFromCls(cls) { let m = String(cls||'').match(/[A-Za-z]+$/); return m ? m[0].toUpperCase() : ''; }
 
@@ -212,10 +194,6 @@ function renderRiskPanel() {
     return true;
   });
 
-  // ExType dropdown zaten _populateRiskFilterDropdowns tarafından doldurulur
-  // Burada sadece mevcut değerlerin geçerliliğini kontrol et
-
-  // Özet kartlarını güncelle (filtreli sayılar)
   let hi = filtered.filter(r=>r.level==='high').length;
   let me = filtered.filter(r=>r.level==='med').length;
   let lo = filtered.filter(r=>r.level==='low').length;
@@ -226,11 +204,9 @@ function renderRiskPanel() {
   if(cL) cL.textContent = lo;
   if(cT) cT.textContent = tot;
 
-  // Badge toplam
   let badge = getEl('riskTotalBadge');
   if(badge) badge.textContent = tot + ' öğrenci riskte';
 
-  // Uyarı kartları
   const levelIcon = { high:'fa-exclamation-circle', med:'fa-exclamation-triangle', low:'fa-info-circle' };
   const typeIcon  = { trend:'fa-chart-line', rank:'fa-sort-amount-up', subj:'fa-book', abs:'fa-calendar-times' };
   const typeLabel = { trend:'Düşüş Trendi', rank:'Sıra Gerileme', subj:'Ders Düşüşü', abs:'Devamsızlık' };
@@ -241,9 +217,7 @@ function renderRiskPanel() {
     return;
   }
 
-  // Benzersiz flag türlerini grupla (bir öğrenci için en kötü flag önce)
   let html = filtered.map(r => {
-    // Her flag türünden en kötü birini göster (max 4 rozet)
     let seen = new Set();
     let topFlags = r.flags.filter(f => { let k=f.type+'|'+f.examType; if(seen.has(k)) return false; seen.add(k); return true; })
                           .sort((a,b) => RISK_SEV_W[b.severity]-RISK_SEV_W[a.severity]).slice(0,4);
@@ -267,32 +241,24 @@ function renderRiskPanel() {
   listEl.innerHTML = html;
 }
 
-// ---- setRiskLevel (orig lines 1342-1349) ----
 function setRiskLevel(level) {
   let el = getEl('riskLevelFilter');
   if(!el) return;
-  // Boş string = tümünü göster; aynı seviyeye tıklamak toggle yapar
   if(level === '') { el.value = ''; }
   else { el.value = (el.value === level) ? '' : level; }
   renderRiskPanel();
 }
 
-// ---- goToStudent (orig lines 1351-1356) ----
 function goToStudent(no) {
   sAct(no, true);
-  // Öğrenci sekmesine geç
   let navEl = getEl('nav-anasayfa');
   sTab('anasayfa', navEl);
 }
 
-// ---- calcBoxPlot (orig lines 1359-1381) ----
 function calcBoxPlot(values) {
-  // null/undefined önce filtrele, sonra sayıya çevir (Number(null)=0 tuzağından kaçın)
   let arr = (values||[]).filter(v => v !== null && v !== undefined).map(Number).filter(v => !isNaN(v)).sort((a,b) => a-b);
   if(arr.length === 0) return null;
   let n = arr.length;
-  // Lineer interpolasyonlu quartile (numpy 'linear' yöntemi ile uyumlu)
-  // Küçük n'de basit index kesme yerine interpolasyon kullan
   function quantile(sorted, p) {
     let idx = p * (sorted.length - 1);
     let lo = Math.floor(idx), hi = Math.ceil(idx), frac = idx - lo;
@@ -310,7 +276,6 @@ function calcBoxPlot(values) {
   return { min: arr[0], max: arr[n-1], q1, median, q3, mean, whiskerLo, whiskerHi, outliers, n };
 }
 
-// ---- mkBoxPlotSVG (orig lines 1388-1510) ----
 function mkBoxPlotSVG(groups, studentVal, options) {
   options = options || {};
   let W = options.width || 520, H = options.height || 210;
@@ -320,7 +285,7 @@ function mkBoxPlotSVG(groups, studentVal, options) {
   let stats = groups.map(g => ({ ...g, bp: calcBoxPlot(g.values) })).filter(g => g.bp);
   if(stats.length === 0) return '<div class="text-muted small text-center py-2">Kutu grafiği için yeterli veri yok.</div>';
 
-  let allVals = stats.flatMap(g => g.bp ? [g.bp.min, g.bp.max, ...(g.bp.outliers||[])] : []);
+  let allVals = stats.flatMap(g => g.bp ?[g.bp.min, g.bp.max, ...(g.bp.outliers||[])] :[]);
   if(studentVal !== null && studentVal !== undefined) allVals.push(studentVal);
   let yMin = Math.min(...allVals), yMax = Math.max(...allVals);
   let pad = (yMax - yMin) * 0.15 || 3;
@@ -328,14 +293,12 @@ function mkBoxPlotSVG(groups, studentVal, options) {
 
   let toY = v => marginTop + plotH - ((v - yMin) / (yMax - yMin)) * plotH;
 
-  // Arka plan bantları
   let bgBands = '';
   for(let i = 0; i < 5; i++) {
     let y1 = marginTop + (plotH / 5) * i;
     if(i % 2 === 1) bgBands += `<rect x="${marginLeft}" y="${y1.toFixed(1)}" width="${plotW}" height="${(plotH/5).toFixed(1)}" fill="rgba(0,0,0,0.018)"/>`;
   }
 
-  // Grid + Y ekseni etiketleri
   let gridLines = '', gridLabels = '';
   let tickCount = 5;
   for(let i = 0; i <= tickCount; i++) {
@@ -345,7 +308,6 @@ function mkBoxPlotSVG(groups, studentVal, options) {
     gridLabels += `<text x="${(marginLeft - 5).toFixed(1)}" y="${(y + 3.5).toFixed(1)}" text-anchor="end" font-size="9" fill="#8898aa">${v.toFixed(1)}</text>`;
   }
 
-  // Kutular
   let boxWidth = Math.min(56, plotW / (stats.length * 2.0));
   let spacing = plotW / (stats.length + 1);
   let boxes = '';
@@ -359,56 +321,36 @@ function mkBoxPlotSVG(groups, studentVal, options) {
     let bx = cx - boxWidth / 2;
     let boxH = Math.abs(yQ1 - yQ3);
 
-    // Bıyık gövdesi
     boxes += `<line x1="${cx.toFixed(1)}" y1="${yQ3.toFixed(1)}" x2="${cx.toFixed(1)}" y2="${yWHi.toFixed(1)}" stroke="${color}" stroke-width="1.5" stroke-dasharray="4,2" opacity="0.7"/>`;
     boxes += `<line x1="${cx.toFixed(1)}" y1="${yQ1.toFixed(1)}" x2="${cx.toFixed(1)}" y2="${yWLo.toFixed(1)}" stroke="${color}" stroke-width="1.5" stroke-dasharray="4,2" opacity="0.7"/>`;
-    // Bıyık uçları
     let capW = boxWidth * 0.35;
     boxes += `<line x1="${(cx-capW).toFixed(1)}" y1="${yWHi.toFixed(1)}" x2="${(cx+capW).toFixed(1)}" y2="${yWHi.toFixed(1)}" stroke="${color}" stroke-width="2" stroke-linecap="round"/>`;
     boxes += `<line x1="${(cx-capW).toFixed(1)}" y1="${yWLo.toFixed(1)}" x2="${(cx+capW).toFixed(1)}" y2="${yWLo.toFixed(1)}" stroke="${color}" stroke-width="2" stroke-linecap="round"/>`;
 
-    // IQR kutusu — dolgu + dışarı kenarlık
     boxes += `<rect x="${bx.toFixed(1)}" y="${Math.min(yQ1,yQ3).toFixed(1)}" width="${boxWidth.toFixed(1)}" height="${Math.max(boxH,2).toFixed(1)}" rx="3" fill="${color}" fill-opacity="0.14" stroke="${color}" stroke-width="2"/>`;
-
-    // Medyan çizgisi
     boxes += `<line x1="${bx.toFixed(1)}" y1="${yMed.toFixed(1)}" x2="${(bx+boxWidth).toFixed(1)}" y2="${yMed.toFixed(1)}" stroke="#dc3545" stroke-width="2.5" stroke-linecap="round"/>`;
-
-    // Ortalama nokta
     boxes += `<circle cx="${cx.toFixed(1)}" cy="${yMean.toFixed(1)}" r="4.5" fill="#fd7e14" stroke="#fff" stroke-width="1.5"/>`;
 
-    // Aykırı değerler
     (bp.outliers||[]).forEach(ov => {
       boxes += `<circle cx="${cx.toFixed(1)}" cy="${toY(ov).toFixed(1)}" r="3" fill="none" stroke="#6f42c1" stroke-width="1.5"/>`;
     });
 
-    // Öğrenci nokta (vurgulu)
     if(studentVal !== null && studentVal !== undefined && !isNaN(studentVal)) {
       let sy = toY(studentVal);
       boxes += `<circle cx="${cx.toFixed(1)}" cy="${sy.toFixed(1)}" r="7" fill="#dc3545" stroke="#fff" stroke-width="2" filter="url(#stuGlow)"/>`;
     }
 
-    // X ekseni etiketi
     boxes += `<text x="${cx.toFixed(1)}" y="${(H - marginBottom + 15).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="600" fill="#343a40">${g.label}</text>`;
-    // Medyan değeri
     boxes += `<text x="${cx.toFixed(1)}" y="${(H - marginBottom + 27).toFixed(1)}" text-anchor="middle" font-size="8.5" fill="#6c757d">Md:${bp.median.toFixed(1)}</text>`;
   });
 
-  // Legend
   let lx = W - marginRight - 6;
   let hasStudent = studentVal !== null && studentVal !== undefined && !isNaN(studentVal);
-  let legendItems = [];
-  if(hasStudent) legendItems.push(`<circle cx="-10" cy="0" r="5" fill="#dc3545" stroke="#fff" stroke-width="1.5"/><text x="-2" y="4" font-size="9.5" fill="#555">Öğrenci</text>`);
-  legendItems.push(`<line x1="-10" y1="0" x2="-2" y2="0" stroke="#dc3545" stroke-width="2.5" stroke-linecap="round"/><text x="-2" y="4" font-size="9.5" fill="#555">Medyan</text>`);
-  legendItems.push(`<circle cx="-10" cy="0" r="4" fill="#fd7e14" stroke="#fff" stroke-width="1"/><text x="-2" y="4" font-size="9.5" fill="#555">Ort.</text>`);
-
-  // Legend - sağdan sola yerleştir
   let legendParts = '';
   let lxCur = lx;
-  // Ort.
   legendParts += `<circle cx="${(lxCur - 5).toFixed(1)}" cy="${(marginTop - 10).toFixed(1)}" r="4" fill="#fd7e14" stroke="#fff" stroke-width="1.5"/>`;
   legendParts += `<text x="${(lxCur + 1).toFixed(1)}" y="${(marginTop - 6).toFixed(1)}" font-size="9" fill="#6c757d">Ort.</text>`;
   lxCur -= 46;
-  // Medyan
   legendParts += `<line x1="${(lxCur - 10).toFixed(1)}" y1="${(marginTop - 10).toFixed(1)}" x2="${(lxCur - 2).toFixed(1)}" y2="${(marginTop - 10).toFixed(1)}" stroke="#dc3545" stroke-width="2.5" stroke-linecap="round"/>`;
   legendParts += `<text x="${(lxCur + 1).toFixed(1)}" y="${(marginTop - 6).toFixed(1)}" font-size="9" fill="#6c757d">Medyan</text>`;
   lxCur -= 62;
@@ -419,7 +361,8 @@ function mkBoxPlotSVG(groups, studentVal, options) {
 
   let titleText = options.title ? `<text x="${marginLeft}" y="${marginTop - 10}" font-size="10" font-weight="700" fill="#3a5a9a">${options.title}</text>` : '';
 
-  return `<div class="boxplot-wrap"><svg class="boxplot-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+  // SVG ANA ETİKETİNE YAZICI RENK AYARI EKLENDİ
+  return `<div class="boxplot-wrap"><svg class="boxplot-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="-webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;">
     <defs>
       <filter id="stuGlow" x="-50%" y="-50%" width="200%" height="200%">
         <feGaussianBlur stdDeviation="2" result="blur"/>
@@ -435,18 +378,15 @@ function mkBoxPlotSVG(groups, studentVal, options) {
   </svg></div>`;
 }
 
-// ---- mkMultiClassBoxPlot (orig lines 1513-1529) ----
 function mkMultiClassBoxPlot(classDataMap, highlightClass, options, allVals) {
   options = options || {};
   let entries = Object.entries(classDataMap).sort((a,b)=>a[0].localeCompare(b[0],'tr'));
   if(entries.length === 0) return '';
-  // Sınıf renkleri çubuk grafikteki cols ile aynı (sıralı eşleşme)
   let groups = entries.map(([cls, vals], i) => ({
     label: cls,
     values: vals,
     color: highlightClass && cls === highlightClass ? '#dc3545' : cols[i % cols.length]
   }));
-  // "Tümü" grubu: tüm bireylerin değerleri birleştirilir
   if(allVals && allVals.length >= 3) {
     groups.unshift({ label: 'Tümü', values: allVals, color: '#6c757d' });
   }
@@ -454,7 +394,6 @@ function mkMultiClassBoxPlot(classDataMap, highlightClass, options, allVals) {
   return mkBoxPlotSVG(groups, null, { ...options, width: W });
 }
 
-// ---- calcKarneSummaryCards (orig lines 2232-2294) ----
 function calcKarneSummaryCards(stuNo, examType, grade, examsData) {
   let attended = examsData.filter(e => !e.abs);
   if(!attended.length) return null;
@@ -470,14 +409,12 @@ function calcKarneSummaryCards(stuNo, examType, grade, examsData) {
     stuMap[e.studentNo].netSum  += (e.totalNet||0);
     stuMap[e.studentNo].cnt++;
   });
-  // Sıralama her zaman PUAN'a (score) göre; eşitlikte totalNet
   let rankings = Object.entries(stuMap).map(([no,v])=>({no,avgScore:v.scoreSum/v.cnt,avgNet:v.netSum/v.cnt})).sort((a,b)=>{
     let dp=(b.avgScore||0)-(a.avgScore||0); if(dp!==0) return dp; return (b.avgNet||0)-(a.avgNet||0);
   });
   let rank = rankings.findIndex(x=>x.no===stuNo)+1;
   let totalStudents = rankings.length;
 
-  // Sınıf Derecesi hesapla
   let stuClass = (DB.s.find(x=>x.no===stuNo)||{}).class || '';
   let allSameClass = DB.e.filter(x => x.examType===examType && !x.abs && x.studentClass===stuClass);
   let clsMap = {};
@@ -493,7 +430,6 @@ function calcKarneSummaryCards(stuNo, examType, grade, examsData) {
   let classRank = clsRankings.findIndex(x=>x.no===stuNo)+1;
   let classTotalStudents = clsRankings.length;
 
-  // Katılım: öğrencinin sınıf seviyesinde o sınav türüne ait tüm unique sınavlar baz alınır
   let gradeExamKeys = new Set();
   DB.e.forEach(x => { if(x.examType===examType && getGrade(x.studentClass)===grade) gradeExamKeys.add(x.date+'||'+( x.publisher||'')); });
   let attendedKeys = new Set();
@@ -502,7 +438,6 @@ function calcKarneSummaryCards(stuNo, examType, grade, examsData) {
   let attendedCount  = attendedKeys.size;
   let partRate = totalExamCount > 0 ? Math.max(0, Math.min(100, Math.round(attendedCount / totalExamCount * 100))) : 0;
 
-  // Trend: katıldığı sınavların toplam net serisi üzerinden lineer regresyon
   let nets = attended.map(e=>e.totalNet);
   let trend = null;
   if(nets.length >= 2){
@@ -519,7 +454,6 @@ function calcKarneSummaryCards(stuNo, examType, grade, examsData) {
   return {stuAvg, genAvg, rank, totalStudents, classRank, classTotalStudents, partRate, attendedCount, totalExamCount, trend};
 }
 
-// ---- buildRiskInfoCards (orig lines 2297-2342) ----
 function buildRiskInfoCards(stuNo, examType, stuClass) {
   let risks = (_riskCache && _riskCache.results) ? _riskCache.results : calcRiskScores();
   let stuRisk = risks.find(r => r.no === stuNo && r.examTypes.includes(examType));
@@ -532,7 +466,6 @@ function buildRiskInfoCards(stuNo, examType, stuClass) {
   const typeIcon   = { trend:'fa-chart-line', rank:'fa-sort-amount-up', subj:'fa-book', abs:'fa-calendar-times' };
   const typeLabel  = { trend:'Düşüş Trendi', rank:'Sıra Gerileme', subj:'Ders Düşüşü', abs:'Devamsızlık' };
 
-  // Bu sınav türüne ait flagler
   let examFlags = stuRisk.flags.filter(f => f.examType === examType);
   if(!examFlags.length) return '';
 
@@ -567,12 +500,10 @@ function buildRiskInfoCards(stuNo, examType, stuClass) {
   </div>`;
 }
 
-// ---- buildKarneExamCards (orig lines 2344-2417) ----
 function buildKarneExamCards(summary, examType) {
   if(!summary) return '';
   let {stuAvg, genAvg, rank, totalStudents, classRank, classTotalStudents, partRate, attendedCount, totalExamCount, trend} = summary;
 
-  // Katılım kartı + trend bloğu oluştur
   let trendHtml = '';
   if(trend) {
     let tColor = trend.trendClass==='trend-up' ? '#28a745' : (trend.trendClass==='trend-down' ? '#dc3545' : '#6c757d');
@@ -643,7 +574,6 @@ function buildKarneExamCards(summary, examType) {
   return cardsHtml;
 }
 
-// ---- rH (orig lines 2419-2501) ----
 function rH(){
   let s=DB.s.find(x=>x.no===aNo); if(!s)return; let r=getEl('homeArea');
   let combined=DB.e.filter(x=>x.studentNo===aNo).sort((a,b)=>srt(a.date,b.date));
@@ -720,7 +650,6 @@ function rH(){
       let insD=exT.map(e=>{if(e.abs)return null;let v=DB.e.filter(x=>x.date===e.date&&x.examType===t&&!x.abs&&getGrade(x.studentClass)===stGrade).map(x=>x.totalNet);return v.length?(v.reduce((a,b)=>a+b,0)/v.length):null;});
       let ch=mkChart(canvasId,chartLabels,[{label:'Toplam Net',data:stuD,backgroundColor:cols[0]+'cc',borderColor:cols[0],borderWidth:1.5},{label:'Sınıf Ort.',data:clsD,backgroundColor:cols[2]+'99',borderColor:cols[2],borderWidth:1.5},{label:'Kurum Ort.',data:insD,backgroundColor:cols[3]+'99',borderColor:cols[3],borderWidth:1.5}]);
       window._karneCharts.push(ch);
-      // Kutu grafiği — her sınav türü için ayrı ayrı
       let bpKarneId='bpKarne_'+t.replace(/[^a-zA-Z0-9]/g,'_');
       let bpKarneEl=getEl(bpKarneId);
       if(bpKarneEl){
@@ -731,18 +660,12 @@ function rH(){
   },150);
 }
 
-// ---- buildSubjectSparklines: Tek sınav modu — Ders Eğilimi mini-grafik paneli ----
-// Her ders için, öğrencinin aynı sınav türündeki son 5 sınavının (seçili sınav dahil)
-// neti üzerinden minik bir SVG çizgi grafiği üretir. Seçili sınavın noktası vurgulanır.
 function buildSubjectSparklines(stuNo, examType, curExam, subjects){
   if(!subjects || !subjects.length) return '';
-  // Öğrencinin bu sınav türündeki tüm sınavları (kronolojik sıra)
   let allEx = DB.e.filter(x => x.studentNo===stuNo && x.examType===examType && !x.abs).sort((a,b)=>srt(a.date,b.date));
   if(allEx.length < 2) return '';
-  // Seçili sınavın indeksi
   let curIdx = allEx.findIndex(e => e.date===curExam.date && (e.publisher||'')===(curExam.publisher||''));
   if(curIdx < 0) return '';
-  // Son 5 (seçili dahil) — yeterli geçmiş yoksa baştan al
   let startIdx = Math.max(0, curIdx - 4);
   let window = allEx.slice(startIdx, curIdx + 1);
   if(window.length < 2) return '';
@@ -750,7 +673,7 @@ function buildSubjectSparklines(stuNo, examType, curExam, subjects){
   let cards = subjects.map(s => {
     let series = window.map(e => (e.subs && e.subs[s] && e.subs[s].net !== undefined && e.subs[s].net !== null) ? e.subs[s].net : null);
     let valid = series.filter(v => v !== null);
-    if(valid.length < 2) return ''; // tek noktalı eğilim çizgisi anlamsız
+    if(valid.length < 2) return '';
     let curVal = series[series.length - 1];
     let prevVal = null;
     for(let i = series.length - 2; i >= 0; i--) { if(series[i] !== null) { prevVal = series[i]; break; } }
@@ -760,7 +683,6 @@ function buildSubjectSparklines(stuNo, examType, curExam, subjects){
     let dColor = delta === null ? '#6c757d' : (delta > 0 ? '#198754' : (delta < 0 ? '#dc3545' : '#6c757d'));
     let dStr = delta === null ? '—' : (delta > 0 ? '+' : '') + delta.toFixed(2);
 
-    // SVG sparkline
     let W = 140, H = 38, padX = 4, padY = 5;
     let mn = Math.min(...valid), mx = Math.max(...valid);
     if(mn === mx) { mn -= 1; mx += 1; }
@@ -768,8 +690,8 @@ function buildSubjectSparklines(stuNo, examType, curExam, subjects){
     let xStep = (W - padX*2) / Math.max(1, n - 1);
     let toY = v => padY + (H - padY*2) * (1 - (v - mn) / (mx - mn));
 
-    // Çizgi yolu (null değerleri atla, parça parça çiz)
-    let pathParts = [];
+    // Çizgi grafiğine (SVG) yazdırma renk koruması eklendi.
+    let pathParts =[];
     let cur = '';
     series.forEach((v, i) => {
       if(v === null) { if(cur) { pathParts.push(cur); cur = ''; } return; }
@@ -777,7 +699,8 @@ function buildSubjectSparklines(stuNo, examType, curExam, subjects){
       cur += (cur ? ' L' : 'M') + x.toFixed(1) + ',' + y.toFixed(1);
     });
     if(cur) pathParts.push(cur);
-    let pathSvg = pathParts.map(p => `<path d="${p}" fill="none" stroke="${dColor}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>`).join('');
+
+let pathSvg = pathParts.map(p => `<path d="${p}" fill="none" stroke="${dColor}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="-webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;"/>`).join('');
 
     // Noktalar — son nokta vurgulu
     let dots = series.map((v, i) => {
@@ -785,10 +708,10 @@ function buildSubjectSparklines(stuNo, examType, curExam, subjects){
       let x = padX + i * xStep, y = toY(v);
       let isLast = (i === series.length - 1);
       return isLast
-        ? `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.2" fill="${dColor}" stroke="#fff" stroke-width="1.4"/>`
-        : `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2" fill="#fff" stroke="${dColor}" stroke-width="1.2"/>`;
+        ? `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.2" fill="${dColor}" stroke="#fff" stroke-width="1.4" style="-webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;"/>`
+        : `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2" fill="#fff" stroke="${dColor}" stroke-width="1.2" style="-webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;"/>`;
     }).join('');
-
+    
     let svg = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:38px;display:block;">${pathSvg}${dots}</svg>`;
 
     return `<div class="col-md-3 col-sm-6 mb-2"><div class="sec-card ${dCls}" style="min-height:auto;padding:8px 10px;">
@@ -808,14 +731,10 @@ function buildSubjectSparklines(stuNo, examType, curExam, subjects){
     <div class="row single-exam-cards">${cards}</div>`;
 }
 
-// ---- buildSingleExamCards: Tek sınav modu için 4 özet kart ----
-// (1) Puan & Sıra  (2) Önceki Sınava Fark  (3) En Başarılı Ders  (4) En Zayıf Ders
-// Karşılaştırma: ders bazında öğrenci neti hem Sınıf hem Kurum ortalamasıyla kıyaslanır.
 function buildSingleExamCards(stu, examType, curExam, prevExam, stGrade){
-  // Card 1: Puan & Sıra
   let scoreTxt = (curExam.score!==undefined && curExam.score!==null) ? curExam.score.toFixed(2) : '—';
   let netTxt   = (curExam.totalNet!==undefined && curExam.totalNet!==null) ? curExam.totalNet.toFixed(2) : '—';
-  let rankBits = [];
+  let rankBits =[];
   if(curExam.cR) rankBits.push(`Sınıf ${curExam.cR}/${curExam.cP||'—'}`);
   if(curExam.iR) rankBits.push(`Okul ${curExam.iR}/${curExam.iP||'—'}`);
   if(curExam.gR) rankBits.push(`Genel ${curExam.gR}/${curExam.gP||'—'}`);
@@ -827,7 +746,6 @@ function buildSingleExamCards(stu, examType, curExam, prevExam, stGrade){
       <div class="sec-sub">Net: ${netTxt}${rankBits.length?' · '+rankBits.join(' · '):''}</div>
     </div></div></div>`;
 
-  // Card 2: Önceki Sınava Fark
   let card2;
   if(prevExam){
     let dN = curExam.totalNet - prevExam.totalNet;
@@ -854,7 +772,6 @@ function buildSingleExamCards(stu, examType, curExam, prevExam, stGrade){
       </div></div></div>`;
   }
 
-  // Cards 3 & 4: En Başarılı / En Zayıf Ders
   let subjects = Object.keys(curExam.subs || {});
   let perSubj = subjects.map(s => {
     let sn = curExam.subs[s];
@@ -904,15 +821,10 @@ function buildSingleExamCards(stu, examType, curExam, prevExam, stGrade){
   return `<div class="row">${card1}${card2}${card3}${card4}</div>`;
 }
 
-// ---- buildStuBoxPlots (orig lines 2503-2550) ----
 function buildStuBoxPlots(stuNo, examType, stuClass, stuGrade, sb) {
-  // 1. SİSTEMDE O SINAV TÜRÜNDEN TOPLAM KAÇ TANE YAPILDIĞINI BUL
   let totalExamsOfType = new Set(Object.values(EXAM_META).filter(m => m.examType === examType).map(m => m.date)).size;
-  
-  // 2. 10'DAN AZ SINAV VARSA KUTU GRAFİĞİNİ HİÇ OLUŞTURMA
   if(totalExamsOfType < 10) return '';
 
-  // Öğrencinin kendi değeri (tüm sınavlardaki net ortalaması)
   let getVal = (e) => {
     if(e.abs) return null;
     if(sb === 'score') return e.score;
@@ -926,7 +838,6 @@ function buildStuBoxPlots(stuNo, examType, stuClass, stuGrade, sb) {
   if(stuVals.length === 10) return '';
   let stuAvg = stuVals.reduce((a,b)=>a+b,0) / stuVals.length;
 
-  // Sınıf içindeki tüm öğrencilerin ortalamaları
   let clsStudentAvgs = {};
   DB.e.filter(x => x.examType === examType && !x.abs && x.studentClass === stuClass).forEach(e => {
     let v = getVal(e); if(v === null) return;
@@ -935,11 +846,10 @@ function buildStuBoxPlots(stuNo, examType, stuClass, stuGrade, sb) {
   });
   let clsAvgArr = Object.values(clsStudentAvgs).map(arr => arr.reduce((a,b)=>a+b,0)/arr.length);
 
-  // Okul (aynı sınıf seviyesi) içindeki tüm öğrencilerin ortalamaları
   let insStudentAvgs = {};
   DB.e.filter(x => x.examType === examType && !x.abs && getGrade(x.studentClass) === stuGrade).forEach(e => {
     let v = getVal(e); if(v === null) return;
-    if(!insStudentAvgs[e.studentNo]) insStudentAvgs[e.studentNo] = [];
+    if(!insStudentAvgs[e.studentNo]) insStudentAvgs[e.studentNo] =[];
     insStudentAvgs[e.studentNo].push(v);
   });
   let insAvgArr = Object.values(insStudentAvgs).map(arr => arr.reduce((a,b)=>a+b,0)/arr.length);
@@ -960,13 +870,11 @@ function buildStuBoxPlots(stuNo, examType, stuClass, stuGrade, sb) {
   </div>`;
 }
 
-// ---- rAnl (orig lines 2552-3492) ----
 function rAnl(){
   let aT=getEl('aType').value,eT=getEl('aEx').value, sb=getEl('aSub')?getEl('aSub').value:'', r=getEl('anlRes');
-  if(aT === 'risk') return; // Risk analizi renderRiskPanel tarafından yönetilir
+  if(aT === 'risk') return; 
   if(c.a){ c.a.destroy(); c.a=null; } clearTimeout(chartTimer); 
   if(!eT){r.innerHTML='<div class="alert alert-default-info">Sınav verisi yok.</div>';return;}
-  // (placeholder kept; user must explicitly choose data type)
   if(aT==='examdetail' && !sb) { return; }
 
   if(aT==='student'){
@@ -974,9 +882,6 @@ function rAnl(){
     let ex=DB.e.filter(x=>x.studentNo===no&&x.examType===eT&&!x.abs).sort((a,b)=>srt(a.date,b.date)), st=DB.s.find(x=>x.no===no); if(!st){r.innerHTML='';return;}
     let stGrade=getGrade(st.class);
 
-    // === TEK SINAV MODU ===
-    // aExDate dropdown'unda bir sınav seçilmişse (formatı "date||publisher"),
-    // tüm-sınavlar görünümü yerine yalnızca o sınavın özet kart seti gösterilir.
     let _aExDateRaw = (getEl('aExDate')||{}).value || '';
     if(_aExDateRaw){
       let [_seDate, _sePub=''] = _aExDateRaw.split('||');
@@ -991,7 +896,6 @@ function rAnl(){
       let cardsHtml = buildSingleExamCards(st, eT, curExam, prevExam, stGrade);
       let riskHtml  = buildRiskInfoCards(no, eT, st.class);
 
-      // Ders bazlı çubuk grafik verisi
       let subjects = Object.keys(curExam.subs || {}).sort();
       let stuVals = subjects.map(s => (curExam.subs[s] && curExam.subs[s].net !== undefined) ? curExam.subs[s].net : null);
       let clsVals = subjects.map(s => {
@@ -1003,7 +907,6 @@ function rAnl(){
         return v.length ? v.reduce((a,b)=>a+b,0)/v.length : null;
       });
 
-      // Detay tablosu
       let rowsSE = subjects.map((s,i) => {
         let sn = curExam.subs[s];
         let net = sn ? sn.net : null;
@@ -1044,13 +947,11 @@ function rAnl(){
       }, 100);
       return;
     }
-    // === TÜM SINAVLAR MODU (mevcut görünüm + risk/karne kartları) ===
     let dD=[],clsArr=[],instArr=[],rows='';
     
     let isRank = sb.startsWith('rank_');
     let ls = sb === 'score' ? 'Puan' : (sb === 'rank_c' ? 'Sınıf Sırası' : (sb === 'rank_i' ? 'Kurum Sırası' : (sb === 'rank_g' ? 'Genel Sıra' : (sb === 'totalNet' || !sb ? 'Toplam Net' : toTitleCase(sb.replace('s_','')) + ' Neti'))));
     let valHeader = isRank ? 'Sıra' : (sb === 'score' ? 'Puan' : 'Net');
-    // Ders neti yoksa null döndür (0 değil) — eksik kayıtlar trend/ortalama hesabını bozmasın
     let getVal = (e) => { if (e.abs) return null; if (sb === 'score') return e.score; if (sb === 'rank_c') return pN(e.cR); if (sb === 'rank_i') return pN(e.iR); if (sb === 'rank_g') return pN(e.gR); if (sb === 'totalNet' || !sb) return e.totalNet; let _sn = e.subs[toTitleCase(sb.replace('s_',''))]; return (_sn !== undefined && _sn !== null) ? _sn.net : null; };
 
     ex.forEach((e,i)=>{
@@ -1071,7 +972,6 @@ function rAnl(){
       }
     });
 
-    // null olmayan geçerli değerler üzerinden tüm hesaplar yapılır
     let dDValid = dD.filter(v => v !== null && !isNaN(v));
 
     let avgRowHtml = '';
@@ -1086,7 +986,7 @@ function rAnl(){
     }
 
     let trendHtml = '';
-    let _trendNets = dDValid; // zaten null ve NaN filtrelenmiş
+    let _trendNets = dDValid;
     if(_trendNets.length >= 2) {
       let slope = linRegSlope(_trendNets);
       let totalChange = slope * (_trendNets.length - 1);
@@ -1109,15 +1009,12 @@ function rAnl(){
       trendHtml = `<div class="trend-card mb-3"><div class="row align-items-center"><div class="col-md-3 text-center"><span class="trend-indicator ${trendClass}"><i class="fas ${trendIcon} mr-1"></i>${trendText}</span><div class="mt-2 small text-muted">Genel Trend</div></div><div class="col-md-3 text-center border-left"><div style="font-size:1.5em; font-weight:bold; color:${totalColor};">${totalSign}${totalDisplay}</div><div class="small text-muted">${totalLabel}</div></div><div class="col-md-3 text-center border-left"><div style="font-size:1.5em; font-weight:bold; color:${avgColor};">${avgSign}${avgDisplay}</div><div class="small text-muted">${avgLabel}</div></div><div class="col-md-3 text-center border-left"><div style="font-size:1.5em; font-weight:bold;">${_trendNets.length}</div><div class="small text-muted">Toplam Sınav</div></div></div></div>`;
     }
     
-    // Risk kartı + Sınıf/Kurum Derece kartları (Öğrenci Sayfası karne ile parite)
-    // Yalnızca toplam net veya puan üzerinden çalışan görünümlerde anlamlıdır.
     let karneCardsHtml = '';
     let stuRiskHtml = '';
     if(!isRank && (sb === '' || sb === 'totalNet' || sb === 'score')) {
       try {
         let _summary = calcKarneSummaryCards(no, eT, stGrade, ex);
         if(_summary) {
-          // İki ek kart: Sınıf Derecesi + Kurum Derecesi
           let {classRank, classTotalStudents, rank, totalStudents} = _summary;
           karneCardsHtml = `<div class="row mb-2">
             <div class="col-md-6 col-sm-6">
@@ -1149,7 +1046,6 @@ function rAnl(){
     let perfHtml = '';
     if(!isRank && dDValid.length > 0) {
       let maxVal = Math.max(...dDValid), minVal = Math.min(...dDValid), avgVal = dDValid.reduce((a,b)=>a+b,0)/dDValid.length;
-      // Katılım: öğrencinin sınıf seviyesinde düzenlenen aynı sınav türüne ait TÜM sınavlar baz alınır
       let gradeExamKeys = new Set();
       DB.e.forEach(x => { if(x.examType===eT && getGrade(x.studentClass)===stGrade) gradeExamKeys.add(x.date+'||'+(x.publisher||'')); });
       let totalGradeExams = gradeExamKeys.size;
@@ -1182,10 +1078,9 @@ function rAnl(){
     
     chartTimer=setTimeout(()=>{ 
       let chartLabels = ex.map(e => e.publisher ? `${e.date} (${toTitleCase(e.publisher)})` : e.date);
-      let datasets = [{label:`Öğrenci ${ls}`,data:dD,backgroundColor:cols[0]+'cc',borderColor:cols[0],borderWidth:1.5}];
+      let datasets =[{label:`Öğrenci ${ls}`,data:dD,backgroundColor:cols[0]+'cc',borderColor:cols[0],borderWidth:1.5}];
       if(!isRank){ datasets.push({label:'Sınıf Ort.',data:clsArr,backgroundColor:cols[2]+'99',borderColor:cols[2],borderWidth:1.5}); datasets.push({label:'Kurum Ort. ('+stGrade+'.Sınıf)',data:instArr,backgroundColor:cols[3]+'99',borderColor:cols[3],borderWidth:1.5}); }
       c.a=mkChart('cA',chartLabels,datasets,isRank);
-      // Kutu grafikleri
       if(!isRank && dDValid.length >= 10) {
         let bpArea = getEl('stuBoxPlotArea');
         if(bpArea) bpArea.innerHTML = buildStuBoxPlots(no, eT, st.class, stGrade, sb);
@@ -1194,7 +1089,6 @@ function rAnl(){
 
   }else if(aT==='class'){
     let l=getEl('aLvl').value, b=getBrVal(), dateFilter = getEl('aDate') ? getEl('aDate').value : '';
-    // Filtrelenmiş sınav verisi: sınav türü + tarih filtresi + level/branch filtresi
     let ex=DB.e.filter(x=>x.examType===eT&&!x.abs),d={};
     ex.forEach(e=>{ 
       let m=e.studentClass.match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/); if(!m)return; 
@@ -1231,16 +1125,10 @@ function rAnl(){
     if(sortedClasses.length > 0 && allVals.length > 0) {
       let topCls = sortedClasses.map(clsName => { let cv = ex.filter(x=>x.studentClass===clsName).map(x=>{ if(sb==='score')return x.score; if(sb==='totalNet'||!sb)return x.totalNet; return x.subs[toTitleCase(sb.replace('s_',''))]?.net||0; }); return {cls: clsName, avg: cv.length?(cv.reduce((a,b)=>a+b,0)/cv.length):0, count: cv.length}; }).sort((a,b)=>b.avg-a.avg);
       let best = topCls[0], worst = topCls[topCls.length-1], genAvgPerf = allVals.reduce((a,b)=>a+b,0)/allVals.length, aboveAvg = topCls.filter(x=>x.avg >= genAvgPerf).length;
-      // Tek şube seçiliyse (topCls.length === 1) karşılaştırma kartları anlamsız — gizle
       let showCompCards = topCls.length > 1;
       
-      // === Sınıf Katılım Oranı ===
-      // Mantık: Seçilen sınıf seviyesi (+ varsa şube) içindeki uygun her öğrenci için,
-      //   o öğrencinin sınıf seviyesinde düzenlenen aynı sınav türündeki HER sınav (date+publisher) bir "potansiyel katılım"dır.
-      // Katılan: Bu öğrencinin o sınava (date+publisher) ait, abs=false olan UNIQUE kaydı varsa 1 sayılır.
       let eligibleStus = DB.s.filter(s => { let m = s.class.match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/); if(!m) return false; if((l&&l!==m[1])||(b&&b!==m[2].toLocaleUpperCase('tr-TR'))) return false; return true; });
-      // Her sınav (date+publisher) hangi sınıf seviyelerini kapsıyor?
-      let examGradeMap = {}; // key -> { grades:Set, date, publisher }
+      let examGradeMap = {};
       Object.values(EXAM_META).forEach(m => {
         if(m.examType !== eT) return;
         if(dateFilter && m.date !== dateFilter) return;
@@ -1249,7 +1137,6 @@ function rAnl(){
         let gs = (m.grades && m.grades.length) ? m.grades : ['*'];
         gs.forEach(g => examGradeMap[key].grades.add(g));
       });
-      // Öğrenci başına katıldığı (date+publisher) setini DB.e'den hazırla
       let attendedSetByStu = {};
       DB.e.forEach(e => {
         if(e.examType !== eT || e.abs) return;
@@ -1283,16 +1170,13 @@ function rAnl(){
       </div>`;
     }
     
-    // === FIX: Öğrenci Top/Bottom 5 sıralaması her zaman PUAN'a göre yapılır ===
-    // (Seçilen veri tipi ne olursa olsun, sıralama puan ortalaması üzerinden — kullanıcı isteği)
     let stuRankMap = {};
     ex.forEach(e => {
       let stu = DB.s.find(x => x.no === e.studentNo);
-      if(!stu) return; // orphan filtrele
+      if(!stu) return; 
       let m = stu.class.match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/);
       if(!m) return;
       if((l && l !== m[1]) || (b && b !== m[2].toLocaleUpperCase('tr-TR'))) return;
-      // Görüntülenen değer (seçili veri için)
       let val;
       if(sb === 'score') val = e.score;
       else if(sb === 'totalNet' || !sb) val = e.totalNet;
@@ -1320,11 +1204,8 @@ function rAnl(){
       <div class="col-lg-6"><div class="card shadow-sm avoid-break"><div class="card-header bg-danger text-white"><h3 class="card-title m-0"><i class="fas fa-exclamation-circle mr-1"></i> En Düşük 5 Öğrenci</h3></div><div class="card-body p-0 table-responsive"><table class="table table-sm table-striped m-0" style="font-size:0.85em;"><thead><tr><th>#</th><th>Ad Soyad</th><th>Sınıf</th><th>Ort. (${ls})</th></tr></thead><tbody>${stuBottom5Html}</tbody></table></div></div></div>
     </div>` : '';
 
-    // === Sınıf Analizi: Kurum ortalaması üzerinden Trend + SS bloğu ===
-    // Her sınav tarihindeki kurum geneli ortalama bir seri oluşturur; bu seri üzerinden lineer regresyon uygulanır.
     let clsTrendHtml = '';
     if(sd.length >= 2) {
-      // Tarih başına kurum ortalaması (seçili veri tipine göre)
       let dateAvgSeries = sd.map(dt => {
         let vals = (d[dt]||[]).map(x => { if(sb==='score') return x.score; if(sb==='totalNet'||!sb) return x.totalNet; return x.subs[toTitleCase(sb.replace('s_',''))]?.net||0; });
         return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
@@ -1341,12 +1222,9 @@ function rAnl(){
         let clsTSign    = clsTTotal > 0 ? '+' : '';
         let clsSSign    = clsTSlope > 0 ? '+' : '';
 
-        // Standart Sapma: d (dateFilter+abs uygulanmış) içindeki tüm bireysel değerler üzerinden.
-        // allVals exForAvg'dan geliyor ve dateFilter içermeyebilir; d üzerinden hesaplamak tutarlıdır.
         let ssRawVals = sd.flatMap(dt => (d[dt]||[]).map(x => { if(sb==='score') return x.score; if(sb==='totalNet'||!sb) return x.totalNet; return x.subs[toTitleCase(sb.replace('s_',''))]?.net||0; }));
         let ssMean = ssRawVals.length ? ssRawVals.reduce((a,b)=>a+b,0)/ssRawVals.length : 0;
         let ssVal  = ssRawVals.length > 1 ? Math.sqrt(ssRawVals.map(v=>(v-ssMean)**2).reduce((a,b)=>a+b,0)/ssRawVals.length) : 0;
-        // Sınıflar Arası Fark: sınıf ortalamaları d üzerinden hesaplanır (dateFilter ile tutarlı)
         let _clsAvgsForMM = sortedClasses.map(clsName => {
           let vals = sd.flatMap(dt => (d[dt]||[]).filter(x=>x.studentClass===clsName).map(x=>{ if(sb==='score')return x.score; if(sb==='totalNet'||!sb)return x.totalNet; return x.subs[toTitleCase(sb.replace('s_',''))]?.net||0; }));
           return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
@@ -1407,20 +1285,17 @@ function rAnl(){
         data:sd.map(dt=>{ let o=(d[dt]||[]).filter(x=>x.studentClass===cl); let n=o.map(x=>{ if(sb === 'score') return x.score; if(sb === 'totalNet' || !sb) return x.totalNet; return x.subs[toTitleCase(sb.replace('s_',''))]?.net || 0; }); return n.length?n.reduce((x,y)=>x+y,0)/n.length:null; })
       })); 
       c.a=mkChart('cA',sdLabels,ds);
-      // Kutu grafikleri — sınıflar arası bireysel dağılım (Tümü dahil: aynı sınıf seviyesindeki tüm öğrenciler)
       let clsBPArea = getEl('clsBoxPlotArea');
       let totalExamsOfType = new Set(Object.values(EXAM_META).filter(m => m.examType === eT).map(m => m.date)).size;
       if(clsBPArea && totalExamsOfType >= 10) {
         let classDataMap = {};
         let lvlForBP = l || (ex.length > 0 ? getGrade(ex[0].studentClass) : '');
-        // Tümü: aynı sınıf seviyesindeki TÜM öğrencilerin bireysel değerleri (şube filtresi uygulanmaz)
         let allGradeEx = DB.e.filter(x => x.examType===eT && !x.abs && (lvlForBP ? getGrade(x.studentClass)===lvlForBP : true));
         let allGradeValsForBP = allGradeEx.map(x => {
           if(sb==='score') return x.score;
           if(sb==='totalNet'||!sb) return x.totalNet;
           return x.subs[toTitleCase(sb.replace('s_',''))]?.net ?? null;
-        }).filter(v => v !== null);
-        [...cs].sort().forEach(clsName => {
+        }).filter(v => v !== null);[...cs].sort().forEach(clsName => {
           let vals = ex.filter(x => x.studentClass === clsName).map(x => {
             if(sb==='score') return x.score;
             if(sb==='totalNet'||!sb) return x.totalNet;
@@ -1451,11 +1326,10 @@ function rAnl(){
       let cls = e.studentClass;
       if(!classStats[cls]) classStats[cls] = { totalNet: 0, count: 0, exams: [] };
       classStats[cls].totalNet += e.subs[toTitleCase(subj)].net; classStats[cls].count++; classStats[cls].exams.push(e);
-      if(!allStudentStats[e.studentNo]) { let stuName = DB.s.find(s=>s.no===e.studentNo)?.name || '—'; allStudentStats[e.studentNo] = { no: e.studentNo, name: stuName, cls: cls, totalNet: 0, count: 0, nets: [] }; }
+      if(!allStudentStats[e.studentNo]) { let stuName = DB.s.find(s=>s.no===e.studentNo)?.name || '—'; allStudentStats[e.studentNo] = { no: e.studentNo, name: stuName, cls: cls, totalNet: 0, count: 0, nets:[] }; }
       allStudentStats[e.studentNo].totalNet += e.subs[toTitleCase(subj)].net; allStudentStats[e.studentNo].count++; allStudentStats[e.studentNo].nets.push(e.subs[toTitleCase(subj)].net);
     });
     
-    // === FIX: Ders sıralamasında öğrencinin puan ortalaması da hesaba katılır (eşitlik bozucu) ===
     let _validNosSubj = new Set(DB.s.map(s=>s.no));
     let stuArr = Object.values(allStudentStats).filter(s=>_validNosSubj.has(s.no)).map(s => ({ ...s, avg: s.totalNet / s.count })).sort((a,b) => {
       let dn = (b.avg||0) - (a.avg||0); if(dn !== 0) return dn;
@@ -1468,7 +1342,6 @@ function rAnl(){
     let worstStudent = stuArr.length > 0 ? stuArr[stuArr.length - 1] : null;
     let genAvg = ex.reduce((a,e) => a + e.subs[toTitleCase(subj)].net, 0) / ex.length, lvlStr = (lvl ? `${lvl}. Sınıflar` : 'Tüm Sınıflar') + (br ? ` / ${br} Şubesi` : '');
     
-    // === Ders Katılım Oranı ===
     let eligibleStusS = DB.s.filter(s => { let m = s.class.match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/); if(!m) return false; if(lvl && m[1] !== lvl) return false; if(br && m[2].toLocaleUpperCase('tr-TR') !== br) return false; return true; });
     let subjLower = subj.toLocaleLowerCase('tr-TR');
     let subjExamGradeMap = {};
@@ -1478,7 +1351,7 @@ function rAnl(){
       if(!m.subjects || !m.subjects.map(s=>s.toLocaleLowerCase('tr-TR')).includes(subjLower)) return;
       let key = m.date + '||' + (m.publisher || '');
       if(!subjExamGradeMap[key]) subjExamGradeMap[key] = { grades:new Set() };
-      let gs = (m.grades && m.grades.length) ? m.grades : ['*'];
+      let gs = (m.grades && m.grades.length) ? m.grades :['*'];
       gs.forEach(g => subjExamGradeMap[key].grades.add(g));
     });
     let subjAttendedSetByStu = {};
@@ -1502,10 +1375,8 @@ function rAnl(){
     });
     let partRateS = baseCountS > 0 ? Math.max(0, Math.min(100, Math.round((attendedCountS / baseCountS) * 100))) : 0;
 
-    // === Ders Analizi: Tarihsel net ortalaması üzerinden Trend + SS bloğu ===
     let subjTrendHtml = '';
     if(dates.length >= 2) {
-      // Her sınav tarihi için o derse ait genel ortalama neti bir seri oluşturur
       let subjDateAvgSeries = dates.map(dt => {
         let vals = dateGroups[dt].map(e => e.subs[toTitleCase(subj)].net);
         return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
@@ -1522,11 +1393,9 @@ function rAnl(){
         let subjTSign   = subjTotal > 0 ? '+' : '';
         let subjSSign   = subjSlope > 0 ? '+' : '';
 
-        // Standart Sapma: tüm bireysel net değerleri üzerinden
         let subjAllNets = ex.map(e => e.subs[toTitleCase(subj)].net);
         let subjMean    = subjAllNets.reduce((a,b)=>a+b,0)/subjAllNets.length;
         let subjSS      = subjAllNets.length > 1 ? Math.sqrt(subjAllNets.map(v=>(v-subjMean)**2).reduce((a,b)=>a+b,0)/subjAllNets.length) : 0;
-        // Max-Min farkı: sınıf net ortalamaları arasında
         let subjClsAvgs = clsArr.map(c=>c.avg);
         let subjMMDiff  = subjClsAvgs.length > 1 ? Math.max(...subjClsAvgs) - Math.min(...subjClsAvgs) : null;
 
@@ -1592,7 +1461,6 @@ function rAnl(){
       let clsList = [...new Set(ex.map(e=>e.studentClass))].sort();
       let datasets = clsList.map((cls, i) => ({ label: cls, backgroundColor: cols[i % cols.length] + 'cc', borderColor: cols[i % cols.length], borderWidth: 1.5, data: dates.map(dt => { let clsExams = dateGroups[dt].filter(e => e.studentClass === cls); if(clsExams.length === 0) return null; return clsExams.reduce((a,e) => a + e.subs[toTitleCase(subj)].net, 0) / clsExams.length; }) }));
       c.a = mkChart('cA', dateLabels, datasets);
-      // Ders kutu grafiği — sınıflar arası bireysel net dağılımı (Tümü: tüm sınıf seviyesi)
       let subjBPArea = getEl('subjBoxPlotArea');
       let totalExamsOfType = new Set(Object.values(EXAM_META).filter(m => m.examType === eT).map(m => m.date)).size;
       if(subjBPArea && totalExamsOfType >= 10) {
@@ -1602,7 +1470,6 @@ function rAnl(){
           if(vals.length >= 3) subjectClassMap[cls] = vals;
         });
         if(Object.keys(subjectClassMap).length >= 1) {
-          // Tümü: aynı sınıf seviyesindeki TÜM öğrencilerin ders netleri (şube filtresi uygulanmaz)
           let lvlForSubjBP = lvl || (ex.length > 0 ? getGrade(ex[0].studentClass) : '');
           let allGradeSubjVals = DB.e.filter(e => e.examType===eT && !e.abs && e.subs[toTitleCase(subj)] && (lvlForSubjBP ? getGrade(e.studentClass)===lvlForSubjBP : true)).map(e => e.subs[toTitleCase(subj)].net);
           let multiSVG = mkMultiClassBoxPlot(subjectClassMap, null, {height:220}, allGradeSubjVals.length >= 3 ? allGradeSubjVals : null);
@@ -1625,12 +1492,10 @@ function rAnl(){
     let getName = (no) => DB.s.find(s=>s.no===no)?.name || 'Bilinmiyor';
 
     if(subSel === 'general_summary') {
-        // === FIX: Orphan öğrencileri filtrele ===
         let _validNosGS = new Set(DB.s.map(s=>s.no));
         let ex = baseExams.filter(x => !x.abs && _validNosGS.has(x.studentNo)); if(ex.length === 0) { r.innerHTML = '<div class="alert alert-default-warning">Bu filtrelere uygun sınav sonucu bulunamadı.</div>'; return; }
         let dates = [...new Set(ex.map(x=>x.date))].sort(srt), stuStats = {}; 
         dates.forEach(d => {
-            // === FIX: Sınav içi sıralama her zaman PUAN'a göre, eşitlikte totalNet ===
             let exDt = ex.filter(x => x.date === d).sort((a,b) => { let dp=(b.score||0)-(a.score||0); if(dp!==0) return dp; return (b.totalNet||0)-(a.totalNet||0); }); if(!exDt.length) return;
             let firstScore = exDt[0].score;
             exDt.forEach((e, idx) => {
@@ -1642,17 +1507,15 @@ function rAnl(){
             });
         });
 
-        let progressArr = [];
+        let progressArr =[];
         Object.values(stuStats).forEach(st => {
             st.exList.sort((a,b) => srt(a.date, b.date));
-            // === FIX: İlerleme/Gerileme Lineer Regresyon eğimi (linRegSlope) ile hesaplanır ===
-            // PUAN (score) esas alınır; trend skoru puan serisi üzerinden hesaplanır
             if(st.exList.length >= 2) {
               let scores = st.exList.map(e => e.score);
               let nets   = st.exList.map(e => e.totalNet);
               let slopeScore = linRegSlope(scores);
               let slopeNet   = linRegSlope(nets);
-              let regChange = slopeScore * (scores.length - 1); // puan üzerinden toplam trend değişimi
+              let regChange = slopeScore * (scores.length - 1); 
               let firstEx = st.exList[0], lastEx = st.exList[st.exList.length - 1];
               progressArr.push({ ...st, diff: regChange, slope: slopeScore, slopeNet, examCount: scores.length, firstNet: firstEx.totalNet, lastNet: lastEx.totalNet, firstScore: firstEx.score, lastScore: lastEx.score });
             }
@@ -1662,7 +1525,7 @@ function rAnl(){
         progressArr.sort((a,b) => b.diff - a.diff);
         let bestP = progressArr.length > 0 && progressArr[0].diff > 0 ? progressArr[0] : null, worstP = progressArr.length > 0 && progressArr[progressArr.length-1].diff < 0 ? progressArr[progressArr.length-1] : null;
 
-        let firstDate = dates[0], lastDate = dates[dates.length - 1], subDiffs = [];
+        let firstDate = dates[0], lastDate = dates[dates.length - 1], subDiffs =[];
         if (dates.length >= 2) {
             let firstExams = ex.filter(x => x.date === firstDate), lastExams = ex.filter(x => x.date === lastDate), allSubs = new Set([...firstExams, ...lastExams].flatMap(e => Object.keys(e.subs)));
             allSubs.forEach(sub => {
@@ -1681,14 +1544,13 @@ function rAnl(){
         let bottom5Html = bottom5List.length ? bottom5List.map((e,i) => buildRow(e, i, 'bottom5', 'kez')).join('') : '<tr><td colspan="7" class="text-center">Veri yok</td></tr>';
         let lvlStr = targetLvl ? `${targetLvl}. Sınıflar ` : '', safeName = `${eT}_Genel_Ozet`;
 
-        // === Genel Katılım Oranı (Sınav Analizi) — unique attendance ===
         let eligibleStusGS = DB.s.filter(s => { let m = s.class.match(/^(\d+)/); if(targetLvl && m && m[1] !== targetLvl) return false; if(brFilterED) { let mm = s.class.match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/); if(mm && mm[2].toLocaleUpperCase('tr-TR') !== brFilterED) return false; } return true; });
         let gsExamGradeMap = {};
         Object.values(EXAM_META).forEach(m => {
           if(m.examType !== eT) return;
           let key = m.date + '||' + (m.publisher || '');
           if(!gsExamGradeMap[key]) gsExamGradeMap[key] = { grades:new Set() };
-          let gs = (m.grades && m.grades.length) ? m.grades : ['*'];
+          let gs = (m.grades && m.grades.length) ? m.grades :['*'];
           gs.forEach(g => gsExamGradeMap[key].grades.add(g));
         });
         let gsAttendedSetByStu = {};
@@ -1735,9 +1597,7 @@ function rAnl(){
               <div id="genSummaryChartArea" class="chart-box avoid-break mt-3" style="display:none; height:280px;"><canvas id="cGenSummaryBar"></canvas></div>
             </div>
         </div>`; r.innerHTML = h;
-        // Genel özet kutu grafiği + sınıf bazlı puan çubuk grafiği
         setTimeout(() => {
-          // --- KUTU GRAFİĞİ (sadece 10+ sınav varsa) ---
           let bpArea = getEl('genSummaryBPArea');
           let totalExamsOfType = new Set(Object.values(EXAM_META).filter(m => m.examType === eT).map(m => m.date)).size;
           if(bpArea && totalExamsOfType >= 10) {
@@ -1752,7 +1612,7 @@ function rAnl(){
             let allGradeStus = DB.e.filter(x => x.examType===eT && !x.abs && (lvlForGenBP ? getGrade(x.studentClass)===lvlForGenBP : true));
             let gradeStudentAvgs = {};
             allGradeStus.forEach(e => {
-              if(!gradeStudentAvgs[e.studentNo]) gradeStudentAvgs[e.studentNo] = [];
+              if(!gradeStudentAvgs[e.studentNo]) gradeStudentAvgs[e.studentNo] =[];
               gradeStudentAvgs[e.studentNo].push(e.totalNet);
             });
             let allGradeStuAvgVals = Object.values(gradeStudentAvgs).map(arr => arr.reduce((a,b)=>a+b,0)/arr.length);
@@ -1764,7 +1624,6 @@ function rAnl(){
             }
           }
 
-          // --- SINIF BAZLI ORTALAMA PUAN ÇUBUK GRAFİĞİ (sınav sayısından bağımsız) ---
           let clsScoreMapGS = {};
           Object.values(stuStats).forEach(s => {
             if(!s.exList || !s.exList.length) return;
@@ -1784,7 +1643,7 @@ function rAnl(){
               type: 'bar',
               data: {
                 labels: gsBarLabels,
-                datasets: [{ label: 'Ortalama Puan', data: gsBarData, backgroundColor: cols.map(c=>c+'cc'), borderColor: cols, borderWidth: 1.5 }]
+                datasets:[{ label: 'Ortalama Puan', data: gsBarData, backgroundColor: cols.map(c=>c+'cc'), borderColor: cols, borderWidth: 1.5 }]
               },
               plugins: [ChartDataLabels],
               options: {
@@ -1813,14 +1672,12 @@ function rAnl(){
       let batch = baseExams.filter(x => x.date === dt), currentExams = batch.filter(x => !x.abs);
       if (!currentExams.length) { r.innerHTML='<div class="alert alert-default-warning">Bu sınavda geçerli sonuç bulunmuyor.</div>'; return; }
 
-      let filteredDates = [...new Set(baseExams.map(x=>x.date))].sort(srt), currentIndex = filteredDates.indexOf(dt), prevDate = currentIndex > 0 ? filteredDates[currentIndex - 1] : null;
+      let filteredDates =[...new Set(baseExams.map(x=>x.date))].sort(srt), currentIndex = filteredDates.indexOf(dt), prevDate = currentIndex > 0 ? filteredDates[currentIndex - 1] : null;
       let isFirstExam = (currentIndex === 0 || prevDate === null);
-      let prevBatch = prevDate ? DB.e.filter(x => x.examType === eT && x.date === prevDate) : [];
+      let prevBatch = prevDate ? DB.e.filter(x => x.examType === eT && x.date === prevDate) :[];
       if(targetLvl) prevBatch = prevBatch.filter(x => getGrade(x.studentClass) === targetLvl);
-      // === FIX: summary sıralama her zaman PUAN'a (score) göre, eşitlikte totalNet ===
-      let prevExams = prevBatch.filter(x => !x.abs), sortedExams = [...currentExams].sort((a,b) => { let dp=(b.score||0)-(a.score||0); if(dp!==0) return dp; return (b.totalNet||0)-(a.totalNet||0); }), winner = sortedExams[0], progress = [];
+      let prevExams = prevBatch.filter(x => !x.abs), sortedExams =[...currentExams].sort((a,b) => { let dp=(b.score||0)-(a.score||0); if(dp!==0) return dp; return (b.totalNet||0)-(a.totalNet||0); }), winner = sortedExams[0], progress =[];
       
-      // === FIX: Orphan öğrencileri çıkar (silinmiş öğrencilerin verisi karışmasın) ===
       let _validNosSum = new Set(DB.s.map(s=>s.no));
       currentExams = currentExams.filter(x => _validNosSum.has(x.studentNo));
       prevExams = prevExams.filter(x => _validNosSum.has(x.studentNo));
@@ -1831,7 +1688,7 @@ function rAnl(){
       let subStats = {};
       let popStats = (exams, key) => { exams.forEach(ex => { Object.keys(ex.subs).forEach(sub => { if (!subStats[sub]) subStats[sub] = { curSum: 0, curCount: 0, prevSum: 0, prevCount: 0 }; subStats[sub][key + 'Sum'] += ex.subs[sub].net; subStats[sub][key + 'Count']++; }); }); };
       popStats(currentExams, 'cur'); popStats(prevExams, 'prev');
-      let subDiffs = [];
+      let subDiffs =[];
       Object.keys(subStats).forEach(sub => { let curAvg = subStats[sub].curCount > 0 ? subStats[sub].curSum / subStats[sub].curCount : 0; let prevAvg = subStats[sub].prevCount > 0 ? subStats[sub].prevSum / subStats[sub].prevCount : 0; if (subStats[sub].prevCount > 0 && subStats[sub].curCount > 0) { subDiffs.push({ sub, diff: curAvg - prevAvg, curAvg, prevAvg }); } });
       subDiffs.sort((a,b) => b.diff - a.diff);
       let bestSub = subDiffs.length > 0 && subDiffs[0].diff > 0 ? subDiffs[0] : null, worstSub = subDiffs.length > 0 && subDiffs[subDiffs.length-1].diff < 0 ? subDiffs[subDiffs.length-1] : null;
@@ -1844,10 +1701,6 @@ function rAnl(){
       let safeName = `${eT}_${dt.replace(/\./g,'-')}_Ozet`, lvlStr = targetLvl ? `${targetLvl}. Sınıflar ` : '';
       let pubName = Object.values(EXAM_META).find(m=>m.date===dt&&m.examType===eT)?.publisher || '';
       
-      // === FIX: Sınav Katılım Oranı — Veri Kaynağı: ana metadata (EXAM_META) baz alınır ===
-      // Bu sınavın kapsadığı sınıf seviyelerindeki uygun öğrenciler bazlı; katılan sayısı
-      // currentExams (filtre uygulanmış GERÇEK katılan) üzerinden alınır, ancak baz
-      // (potansiyel katılım) EXAM_META.grades'ten gelir.
       let thisExamMeta = Object.values(EXAM_META).find(m=>m.date===dt && m.examType===eT);
       let examGrades = (thisExamMeta && thisExamMeta.grades && thisExamMeta.grades.length) ? new Set(thisExamMeta.grades) : null;
       let eligibleStusE = DB.s.filter(s => {
@@ -1892,19 +1745,16 @@ function rAnl(){
       </div>`; 
       r.innerHTML = h;
 
-      // Tek sınav kutu grafiği ve Bar Grafiği
       setTimeout(() => {
         let bpArea = getEl('examSummaryBPArea');
         let totalExamsOfType = new Set(Object.values(EXAM_META).filter(m => m.examType === eT).map(m => m.date)).size;
         
-        // Kutu grafiği (sadece 10 sınavdan fazla ise render edilir)
         if(bpArea && totalExamsOfType >= 10) {
           let examClassMap = {};
           currentExams.forEach(e => {
-            if(!examClassMap[e.studentClass]) examClassMap[e.studentClass] = [];
+            if(!examClassMap[e.studentClass]) examClassMap[e.studentClass] =[];
             examClassMap[e.studentClass].push(e.totalNet);
           });
-          // Tümü: aynı sınıf seviyesindeki TÜM öğrencilerin netleri (şube filtresi uygulanmaz)
           let lvlForExBP = targetLvl || (currentExams.length > 0 ? getGrade(currentExams[0].studentClass) : '');
           let allGradeNets = DB.e.filter(e => e.examType===eT && e.date===dt && !e.abs && (lvlForExBP ? getGrade(e.studentClass)===lvlForExBP : true)).map(e => e.totalNet);
           let validClasses = Object.fromEntries(Object.entries(examClassMap).filter(([c,v])=>v.length>=3));
@@ -1916,7 +1766,6 @@ function rAnl(){
           }
         }
 
-        // Sınıf bazlı puan çubuk grafiği (Sınav sayısından bağımsız çalışır)
         let clsScoreMap = {};
         currentExams.forEach(e => {
           if(!clsScoreMap[e.studentClass]) clsScoreMap[e.studentClass] = [];
@@ -1936,7 +1785,7 @@ function rAnl(){
             type: 'bar',
             data: {
               labels: barLabels,
-              datasets: [{ label: 'Ortalama Puan', data: barData, backgroundColor: cols.map(c=>c+'cc'), borderColor: cols, borderWidth: 1.5 }]
+              datasets:[{ label: 'Ortalama Puan', data: barData, backgroundColor: cols.map(c=>c+'cc'), borderColor: cols, borderWidth: 1.5 }]
             },
             plugins: [ChartDataLabels],
             options: {
@@ -1967,10 +1816,8 @@ function rAnl(){
       if(!batch.length){r.innerHTML='<div class="alert alert-default-info">Bu sınava ait veri yok.</div>';return;}
 
       let subKeys=Array.from(new Set(batch.filter(x=>!x.abs).flatMap(e=>Object.keys(e.subs)))).sort();
-      // === FIX: Orphan öğrenciler — silinmiş öğrenci verilerini listeden çıkar ===
       let _validNos = new Set(DB.s.map(s=>s.no));
       let rows2=batch.filter(e => e && _validNos.has(e.studentNo)).map(e=>{ let st=DB.s.find(x=>x.no===e.studentNo); return {...e,studentName:st?st.name:'—',studentCls:st?st.class:e.studentClass}; });
-      // === FIX: Sıralama her zaman PUAN'a göre (eşitlikte totalNet, sonra ad — Türkçe duyarlı) ===
       let attended=rows2.filter(x=>!x.abs).sort((a,b)=>{
         let dp = (b.score||0) - (a.score||0); if(dp !== 0) return dp;
         let dn = (b.totalNet||0) - (a.totalNet||0); if(dn !== 0) return dn;
@@ -1980,13 +1827,11 @@ function rAnl(){
       let sorted=[...attended,...absent], avgNet=attended.length?(attended.reduce((s,x)=>s+x.totalNet,0)/attended.length).toFixed(2):'0.00', avgScoreMeta=attended.length?(attended.reduce((s,x)=>s+(x.score||0),0)/attended.length).toFixed(2):'0.00', metaStr=`Katılan: ${attended.length} | Ortalama Puan: ${avgScoreMeta} | Sıralama: Puan`;
       
       let headCols=subKeys.map(k=>`<th>${toTitleCase(k)}</th>`).join('');
-      // === FIX: Sıra numarası SADECE katılan (attended) öğrencilere verilir; absent için "—" ===
-      // _rankIdx sadece katılan satırlar için artırılır (absent satırlar atlanır)
       let _rankIdx = 0;
       let bodyRows=sorted.map((e)=>{
         let isSel=aNo&&e.studentNo===aNo, rCls=isSel?'highlight-row':''; let pub = e.publisher || '—';
         if(e.abs) return `<tr class="absent-row ${rCls}"><td>—</td><td>${e.studentName}</td><td>${e.studentCls}</td><td>${e.date}</td><td>${toTitleCase(pub)}</td>${subKeys.map(()=>'<td>—</td>').join('')}<td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>`;
-        _rankIdx++; // sadece katılan için artır
+        _rankIdx++;
         return `<tr class="${rCls}"><td>${_rankIdx}</td><td>${e.studentName}</td><td>${e.studentCls}</td><td>${e.date}</td><td>${toTitleCase(pub)}</td>${subKeys.map(k=>`<td>${e.subs[k]!==undefined?e.subs[k].net.toFixed(2):'—'}</td>`).join('')}<td><strong>${e.totalNet.toFixed(2)}</strong></td><td>${e.score.toFixed(2)}</td><td>${e.cR||'—'}/${e.cP||'—'}</td><td>${e.iR||'—'}/${e.iP||'—'}</td><td>${e.dR||'—'}/${e.dP||'—'}</td><td>${e.pR||'—'}/${e.pP||'—'}</td><td>${e.gR||'—'}/${e.gP||'—'}</td></tr>`;
       }).join('');
 
@@ -2033,20 +1878,18 @@ function rAnl(){
         });
       });
 
-      // === FIX: Orphan'ları çıkar; sıralama PUAN'a göre, eşitlikte totalNet, sonra ad (TR) ===
       let _validNosLA = new Set(DB.s.map(s=>s.no));
       let stuArr = Object.values(stuMap).filter(s => _validNosLA.has(s.no)).map(s => ({
         ...s,
         avgNet: s.totalNetSum / s.examCount,
         avgScore: s.scoreSum / s.examCount,
-        subAvgs: Object.fromEntries(allSubKeys.map(k => [k, s.subCounts[k] ? s.subSums[k] / s.subCounts[k] : null]))
+        subAvgs: Object.fromEntries(allSubKeys.map(k =>[k, s.subCounts[k] ? s.subSums[k] / s.subCounts[k] : null]))
       })).sort((a, b) => {
         let dp = (b.avgScore||0) - (a.avgScore||0); if(dp !== 0) return dp;
         let dn = (b.avgNet||0) - (a.avgNet||0); if(dn !== 0) return dn;
         return String(a.name||'').localeCompare(String(b.name||''),'tr',{sensitivity:'base'});
       });
 
-      // Sınıf sırası: aynı cls içinde avgScore'a göre sıralama
       let clsRankMap = {};
       stuArr.forEach(s => {
         if(!clsRankMap[s.cls]) clsRankMap[s.cls] = [];
@@ -2058,7 +1901,6 @@ function rAnl(){
         sorted.forEach((s, i) => { clsSizeMap[s.no] = { rank: i+1, total: sorted.length }; });
       });
 
-      // Okul sırası: aynı sınıf seviyesi (grade) içinde avgScore'a göre sıralama
       let gradeRankMap = {};
       stuArr.forEach(s => {
         let gr = String(s.cls||'').match(/^(\d+)/)?.[1] || '';
@@ -2067,12 +1909,12 @@ function rAnl(){
       });
       let gradeSizeMap = {};
       Object.keys(gradeRankMap).forEach(gr => {
-        let sorted = [...gradeRankMap[gr]].sort((a,b) => { let dp=(b.avgScore||0)-(a.avgScore||0); return dp!==0?dp:(b.avgNet||0)-(a.avgNet||0); });
+        let sorted =[...gradeRankMap[gr]].sort((a,b) => { let dp=(b.avgScore||0)-(a.avgScore||0); return dp!==0?dp:(b.avgNet||0)-(a.avgNet||0); });
         sorted.forEach((s, i) => { gradeSizeMap[s.no] = { rank: i+1, total: sorted.length }; });
       });
 
       let lvlStr = targetLvl ? `${targetLvl}. Sınıflar ` : '';
-      let examDatesAll = [...new Set(allEx.map(x => x.date))].sort(srt);
+      let examDatesAll =[...new Set(allEx.map(x => x.date))].sort(srt);
       let metaStrAll = `Hesaplanan Sınav: ${examDatesAll.length} | Listelenen Öğrenci: ${stuArr.length} | Sıralama: Ortalama Puan`;
       let headColsAll = allSubKeys.map(k => `<th>${toTitleCase(k)}</th>`).join('');
 
@@ -2118,144 +1960,4 @@ function rAnl(){
       if(aNo) setTimeout(()=>{ let hlRow = getEl('tEDAll')?.querySelector('tr.highlight-row'); if(hlRow) hlRow.scrollIntoView({behavior:'smooth', block:'center'}); }, 300);
     }
   }
-}
-
-// ---- raporInit (orig lines 3494-3500) ----
-function raporInit() {
-  let lvlSel = getEl('rLvl'), levels = new Set(); DB.s.forEach(s => { let m = s.class.match(/^(\d+)/); if(m) levels.add(m[1]); });
-  lvlSel.innerHTML = '<option value="">Seçiniz</option>' + [...levels].sort((a,b)=>parseInt(a)-parseInt(b)).map(x=>`<option value="${x}">${x}. Sınıf</option>`).join('');
-  let etSel = getEl('rExType'), types = new Set(); Object.values(EXAM_META).forEach(m => types.add(m.examType));
-  let _curVal = etSel.value; etSel.innerHTML = '<option value="" disabled' + (_curVal?'':' selected') + '>Sınav Seçiniz</option>' + [...types].sort((a,b)=>a.localeCompare(b,'tr')).map(x=>`<option value="${x}">${x}</option>`).join('') + '<option value="ALL">Tüm Sınav Türleri (Genel Karne)</option>'; if(_curVal) etSel.value = _curVal;
-  raporFillBranches();
-}
-
-// ---- raporFillBranches (orig lines 3502-3506) ----
-function raporFillBranches() {
-  let lvl = getEl('rLvl').value, brSel = getEl('rBr'), branches = new Set();
-  DB.s.forEach(s => { let m = s.class.match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/); if(m && (!lvl || m[1] === lvl)) branches.add(m[2].toLocaleUpperCase('tr-TR')); });
-  brSel.innerHTML = '<option value="">Tümü</option>' + [...branches].sort().map(x=>`<option value="${x}">${x}</option>`).join('');
-}
-
-// ---- generateRapor (orig lines 3508-3627) ----
-async function generateRapor() {
-  let lvl = getEl('rLvl').value, br = getEl('rBr').value, eTypeSel = getEl('rExType').value;
-  if(!eTypeSel) return;
-  if(!lvl) { showToast('Lütfen sınıf seviyesi seçin.','warning'); return; }
-  
-  let students = DB.s.filter(s => { let m = s.class.match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/); if(!m) return false; if(m[1] !== lvl) return false; if(br && m[2].toLocaleUpperCase('tr-TR') !== br) return false; return true; });
-  if(!students.length) { showToast('Bu filtreye uygun öğrenci bulunamadı.','warning'); return; }
-  
-  let neededBatches = [];
-  if (eTypeSel === 'ALL') { neededBatches = Object.keys(EXAM_META).filter(id => { let m = EXAM_META[id]; return (!m.grades || m.grades.length === 0 || m.grades.includes(lvl)); }); } else {
-      neededBatches = Object.keys(EXAM_META).filter(id => { let m = EXAM_META[id]; return m.examType === eTypeSel && (!m.grades || m.grades.length === 0 || m.grades.includes(lvl)); });
-  }
-  await fetchBatches(neededBatches);
-  
-  let r = getEl('raporRes'); if(window._raporCharts){ window._raporCharts.forEach(ch=>{try{ch.destroy();}catch(e){}});} window._raporCharts=[];
-  let lvlStr = br ? `${lvl}${br}` : `${lvl}. Sınıflar`;
-  
-  let examsByStudent = new Map();
-  DB.e.forEach(ex => {
-    if(!examsByStudent.has(ex.studentNo)) examsByStudent.set(ex.studentNo, []);
-    examsByStudent.get(ex.studentNo).push(ex);
-  });
-  
-  let html = `<div class="d-flex justify-content-end mb-2 no-print"><button class="btn-print no-print" onclick="xPR('raporCont','Toplu_Karne_${lvlStr}',this)"><i class='fas fa-print mr-1'></i>Tümünü Yazdır</button></div><div id="raporCont">`;
-  
-  students.forEach((stu, stuIdx) => {
-    let stuExams = examsByStudent.get(stu.no) || [];
-    stuExams = stuExams.sort((a,b) => srt(a.date,b.date)); if(!stuExams.length) return;
-
-    let grp = {};
-    if (eTypeSel === 'ALL') { stuExams.forEach(e => { (grp[e.examType] = grp[e.examType] || []).push(e); }); } else {
-        stuExams.filter(e => e.examType === eTypeSel).forEach(e => { (grp[e.examType] = grp[e.examType] || []).push(e); });
-    }
-
-    let typs = Object.keys(grp).sort(); if(typs.length === 0) return;
-    let isLastStu = stuIdx === students.length - 1;
-    let stGrade = getGrade(stu.class);
-
-    html += `<div class="student-rapor-wrapper">`;
-    html += `<div class="report-header" style="margin-bottom:10px;"><span style="font-size:16px;"><i class="fas fa-user-graduate mr-2"></i><strong>${stu.name}</strong> — Genel Karne Özeti</span><span style="font-size:13px;">Sınıf: ${stu.class} | ${new Date().toLocaleDateString('tr-TR')}</span></div>`;
-
-    typs.forEach(t => {
-      let el = grp[t].sort((a,b)=>srt(a.date,b.date)); let sb = Array.from(new Set(el.filter(e=>!e.abs).flatMap(e=>Object.keys(e.subs)))).sort();
-      let shorten = (sb.length + 5) > 10, abbrev = (name) => shorten ? name.substring(0,3) : toTitleCase(name);
-      
-      let summary = calcKarneSummaryCards(stu.no, t, stGrade, el);
-      let cardsHtml = buildKarneExamCards(summary, t);
-      let riskCardsHtml = buildRiskInfoCards(stu.no, t, stu.class);
-      
-      let karneRows = '', kIdx = 1;
-      el.forEach(e => {
-        if(e.abs) { karneRows += `<tr class="absent-row"><td>—</td><td>${e.date}</td><td>${toTitleCase(e.publisher)||'—'}</td><td colspan="${sb.length+7}" class="text-center font-weight-bold">🔴 Katılmadı</td></tr>`; } else {
-          karneRows += `<tr><td>${kIdx++}</td><td>${e.date}</td><td>${toTitleCase(e.publisher)||'—'}</td>${sb.map(x=>`<td>${e.subs[x]!==undefined?e.subs[x].net.toFixed(2):'—'}</td>`).join('')}<td><strong>${e.totalNet.toFixed(2)}</strong></td><td>${e.score.toFixed(2)}</td><td>${e.cR||'—'}/${e.cP||'—'}</td><td>${e.iR||'—'}/${e.iP||'—'}</td><td>${e.dR||'—'}/${e.dP||'—'}</td><td>${e.pR||'—'}/${e.pP||'—'}</td><td>${e.gR||'—'}/${e.gP||'—'}</td></tr>`;
-        }
-      });
-      
-      let attended = el.filter(e=>!e.abs), avgRow = '';
-      if(attended.length > 0) {
-        let allGradeExamsR = DB.e.filter(x => x.examType === t && !x.abs && getGrade(x.studentClass) === stGrade);
-        let allClassExamsR = DB.e.filter(x => x.examType === t && !x.abs && x.studentClass === stu.class);
-        let genAvgSubsR = sb.map(x => { let v = allGradeExamsR.filter(e => e.subs[x] !== undefined).map(e => e.subs[x].net); return v.length ? (v.reduce((a,b)=>a+b,0)/v.length).toFixed(2) : '—'; });
-        let genAvgNetR = allGradeExamsR.length > 0 ? (allGradeExamsR.reduce((a,e)=>a+e.totalNet,0)/allGradeExamsR.length).toFixed(2) : '—';
-        let genAvgScoreR = allGradeExamsR.length > 0 ? (allGradeExamsR.reduce((a,e)=>a+e.score,0)/allGradeExamsR.length).toFixed(2) : '—';
-        let clsAvgSubsR = sb.map(x => { let v = allClassExamsR.filter(e => e.subs[x] !== undefined).map(e => e.subs[x].net); return v.length ? (v.reduce((a,b)=>a+b,0)/v.length).toFixed(2) : '—'; });
-        let clsAvgNetR = allClassExamsR.length > 0 ? (allClassExamsR.reduce((a,e)=>a+e.totalNet,0)/allClassExamsR.length).toFixed(2) : '—';
-        let clsAvgScoreR = allClassExamsR.length > 0 ? (allClassExamsR.reduce((a,e)=>a+e.score,0)/allClassExamsR.length).toFixed(2) : '—';
-        let avgSubs = sb.map(x => { let v=attended.filter(e=>e.subs[x]!==undefined).map(e=>e.subs[x].net); return v.length?(v.reduce((a,b)=>a+b,0)/v.length).toFixed(2):'—'; });
-        let avgNet = (attended.reduce((a,e)=>a+e.totalNet,0)/attended.length).toFixed(2), avgScore = (attended.reduce((a,e)=>a+e.score,0)/attended.length).toFixed(2);
-        
-        avgRow = `<tr class="avg-row"><td colspan="3" style="text-align:right;padding-right:12px;">Öğrenci Ortalama</td>${avgSubs.map(v=>`<td>${v}</td>`).join('')}<td>${avgNet}</td><td>${avgScore}</td><td colspan="5">—</td></tr>`;
-        avgRow += `<tr class="avg-row"><td colspan="3" style="text-align:right;padding-right:12px;">Sınıf Ortalama (${stu.class})</td>${clsAvgSubsR.map(v=>`<td>${v}</td>`).join('')}<td>${clsAvgNetR}</td><td>${clsAvgScoreR}</td><td colspan="5">—</td></tr>`;
-        avgRow += `<tr class="avg-row"><td colspan="3" style="text-align:right;padding-right:12px;">Kurum Ortalama (${stGrade}. Sınıflar)</td>${genAvgSubsR.map(v=>`<td>${v}</td>`).join('')}<td>${genAvgNetR}</td><td>${genAvgScoreR}</td><td colspan="5">—</td></tr>`;
-      }
-      
-      let chartId = 'rKarneChart_' + stu.no.replace(/[^a-zA-Z0-9]/g,'_') + '_' + t.replace(/[^a-zA-Z0-9]/g,'_');
-      let bpId = 'rBP_' + stu.no.replace(/[^a-zA-Z0-9]/g,'_') + '_' + t.replace(/[^a-zA-Z0-9]/g,'_');
-      let _rExColorIdx = (typeof examColorIdx === 'function') ? examColorIdx(t) : 0;
-      let _rExLabel    = (typeof toExamLabel === 'function') ? toExamLabel(t) : t;
-      html += `<div class="card shadow-sm mb-4 exam-type-block rapor-exam-block exam-color-${_rExColorIdx}${typs.indexOf(t)===0?' exam-type-first':''}" data-stu-name="${stu.name.replace(/"/g,'&quot;')}" data-stu-class="${stu.class}" data-exam-color-idx="${_rExColorIdx}" data-exam-color="${_rExColorIdx}">
-        <div class="card-header bg-light"><h3 class="card-title m-0" style="font-size:15px; font-weight:bold;"><i class="fas fa-book mr-2"></i>${_rExLabel} Sınavları</h3></div>
-        <div class="card-body p-2">
-          ${cardsHtml}
-          ${riskCardsHtml}
-          <div id="${bpId}"></div>
-          <div class="scroll"><table class="table table-sm table-bordered table-striped"><thead><tr><th>#</th><th>Tarih</th><th>Yayınevi</th>${sb.map(x=>`<th title="${toTitleCase(x)}">${abbrev(x)}</th>`).join('')}<th>Top.Net</th><th>Puan</th><th>Snf(S/K)</th><th>Okul(S/K)</th><th>İlçe(S/K)</th><th>İl(S/K)</th><th>Gen(S/K)</th></tr></thead><tbody>${karneRows}${avgRow}</tbody></table></div>
-          <div class="chart-box avoid-break" style="height:190px;margin-top:6px;"><canvas id="${chartId}"></canvas></div>
-        </div></div>`;
-    });
-    html += `</div>`;
-  });
-  
-  html += `</div>`; r.innerHTML = html;
-  
-  setTimeout(() => {
-    students.forEach(stu => {
-      let stuExams = examsByStudent.get(stu.no) || [];
-      stuExams = stuExams.sort((a,b) => srt(a.date, b.date)); if (!stuExams.length) return;
-      let grp = {};
-      if (eTypeSel === 'ALL') { stuExams.forEach(e => { (grp[e.examType] = grp[e.examType] || []).push(e); }); } else {
-          stuExams.filter(e => e.examType === eTypeSel).forEach(e => { (grp[e.examType] = grp[e.examType] || []).push(e); });
-      }
-
-      let stGrade = getGrade(stu.class);
-      Object.keys(grp).forEach(t => {
-        let chartId = 'rKarneChart_' + stu.no.replace(/[^a-zA-Z0-9]/g,'_') + '_' + t.replace(/[^a-zA-Z0-9]/g,'_'); let cv = getEl(chartId); if(!cv) return;
-        let el = grp[t].sort((a,b)=>srt(a.date,b.date)), chartLabels = el.map(e => e.publisher ? `${e.date} (${toTitleCase(e.publisher)})` : e.date);
-        let stuNets = el.map(e=>e.abs?null:e.totalNet);
-        let clsNets = el.map(e => { if(e.abs) return null; let v=DB.e.filter(x=>x.date===e.date&&x.examType===t&&x.studentClass===stu.class&&!x.abs).map(x=>x.totalNet); return v.length?(v.reduce((a,b)=>a+b,0)/v.length):null; });
-        let insNets = el.map(e => { if(e.abs) return null; let v=DB.e.filter(x=>x.date===e.date&&x.examType===t&&!x.abs&&getGrade(x.studentClass)===stGrade).map(x=>x.totalNet); return v.length?(v.reduce((a,b)=>a+b,0)/v.length):null; });
-        let ch = mkChart(chartId, chartLabels, [ {label:'Öğrenci', data:stuNets, backgroundColor:cols[0]+'cc', borderColor:cols[0], borderWidth:1.5}, {label:'Sınıf Ort.', data:clsNets, backgroundColor:cols[2]+'99', borderColor:cols[2], borderWidth:1.5}, {label:'Kurum Ort.', data:insNets, backgroundColor:cols[3]+'99', borderColor:cols[3], borderWidth:1.5} ]);
-        window._raporCharts.push(ch);
-        // Kutu grafikleri — toplu raporda her öğrenci için
-        let bpId = 'rBP_' + stu.no.replace(/[^a-zA-Z0-9]/g,'_') + '_' + t.replace(/[^a-zA-Z0-9]/g,'_');
-        let bpEl = getEl(bpId);
-        if(bpEl) {
-          let bpHtml = buildStuBoxPlots(stu.no, t, stu.class, stGrade, 'totalNet');
-          if(bpHtml) bpEl.innerHTML = bpHtml;
-        }
-      });
-    });
-  }, 200);
 }
