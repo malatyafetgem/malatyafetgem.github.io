@@ -172,354 +172,174 @@ function xXLMul(cId,fn){
   XLSX.writeFile(wb,fn+'.xlsx');
 }
 
-// ---- xPR (orig lines 1569-1888) ----
+// ---- xPR (yeniden yazıldı: mobil+masaüstü, tek-sayfa garantisi, renk/çerçeve garantisi) ----
 function xPR(sourceId, title, btn, orientation) {
-  if(window._karneCharts) window._karneCharts.forEach(ch => { try { ch.tooltip.setActiveElements([]); ch.update('none'); } catch(e){} });
-  if(window._raporCharts) window._raporCharts.forEach(ch => { try { ch.tooltip.setActiveElements([]); ch.update('none'); } catch(e){} });
-  if(c.a) { try { c.a.tooltip.setActiveElements([]); c.a.update('none'); } catch(e){} }
-  if(c.h) { try { c.h.tooltip.setActiveElements([]); c.h.update('none'); } catch(e){} }
+  if (window._karneCharts) window._karneCharts.forEach(ch => { try { ch.tooltip.setActiveElements([]); ch.update('none'); } catch (e) {} });
+  if (window._raporCharts) window._raporCharts.forEach(ch => { try { ch.tooltip.setActiveElements([]); ch.update('none'); } catch (e) {} });
+  if (typeof c !== 'undefined') {
+    if (c.a) { try { c.a.tooltip.setActiveElements([]); c.a.update('none'); } catch (e) {} }
+    if (c.h) { try { c.h.tooltip.setActiveElements([]); c.h.update('none'); } catch (e) {} }
+  }
 
-  let portraitSources = ['pS','pC','pSubj','pSummary','pGenSummary'];
-  let isPortrait = orientation === 'portrait' || portraitSources.includes(sourceId);
-  let orig = btn.innerHTML; btn.innerHTML = "<i class='fas fa-spinner fa-spin mr-1'></i>"; btn.disabled = true;
+  const portraitSources = ['pS', 'pC', 'pSubj', 'pSummary', 'pGenSummary'];
+  const isPortrait = orientation === 'portrait' || portraitSources.includes(sourceId);
+  const orig = btn.innerHTML;
+  btn.innerHTML = "<i class='fas fa-spinner fa-spin mr-1'></i>";
+  btn.disabled = true;
 
-  let sourceEl = getEl(sourceId); if (!sourceEl) { btn.innerHTML = orig; btn.disabled = false; return; }
+  const sourceEl = document.getElementById(sourceId);
+  if (!sourceEl) { btn.innerHTML = orig; btn.disabled = false; return; }
 
-  // Canvas → img dönüşümü
-  let canvasMap = [];
-  sourceEl.querySelectorAll('canvas').forEach(cv => { try { canvasMap.push({ id: cv.id, url: cv.toDataURL('image/png', 1.0) }); } catch(e) {} });
-  let cssLinks = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
-  .filter(l => !l.href.includes('style.css'))
-  .map(l => `<link rel="stylesheet" href="${l.href}">`).join('\n');
+  // Canvas → PNG
+  const canvasMap = [];
+  sourceEl.querySelectorAll('canvas').forEach(cv => {
+    try { canvasMap.push({ id: cv.id || null, url: cv.toDataURL('image/png', 1.0) }); } catch (e) {}
+  });
 
-  let clone = sourceEl.cloneNode(true);
-  clone.querySelectorAll('canvas').forEach((cv, idx) => {
-    let mapEntry = canvasMap.find(m => m.id && m.id === cv.id) || canvasMap[idx];
-    if (!mapEntry) { cv.remove(); return; }
-    let img = document.createElement('img');
-    img.src = mapEntry.url;
+  const clone = sourceEl.cloneNode(true);
+
+  let cIdx = 0;
+  clone.querySelectorAll('canvas').forEach(cv => {
+    let entry = cv.id ? canvasMap.find(m => m.id === cv.id) : null;
+    if (!entry) entry = canvasMap[cIdx];
+    cIdx++;
+    if (!entry) { cv.remove(); return; }
+    const img = document.createElement('img');
+    img.src = entry.url;
     img.className = 'print-chart-img';
+    img.alt = '';
     cv.parentElement.replaceChild(img, cv);
   });
 
-  // Gizlenecek elemanlar
   clone.querySelectorAll('.no-print, .d-flex.justify-content-end, .scroll-hint').forEach(el => el.remove());
   clone.querySelectorAll('.report-header').forEach(el => el.style.display = 'flex');
 
-  // ── SAYFA KIRMA MANTIĞI ──────────────────────────────────────────
-  // Kural: Her .exam-type-block (TYT, AYT vb.) DAIMA kendi sayfasında başlar.
-  // Toplu raporda: her yeni öğrenci de yeni sayfada başlar.
-  // Öğrenci isim başlığı (report-header) her exam-type-block'un önüne eklenir (ilk hariç).
+  // CSS değişkenlerini (--exam-color) okuyup INLINE hex'e çevir (mobil garantisi)
+  const readVar = (el, name) => {
+    try { const v = getComputedStyle(el).getPropertyValue(name).trim(); return v || null; } catch (e) { return null; }
+  };
+  const realBlocks = sourceEl.querySelectorAll('.exam-type-block, .karne-bolum, .sec-card, [data-exam-color]');
+  const cloneBlocks = clone.querySelectorAll('.exam-type-block, .karne-bolum, .sec-card, [data-exam-color]');
+  realBlocks.forEach((real, i) => {
+    const cl = cloneBlocks[i];
+    if (!cl) return;
+    const examColor = readVar(real, '--exam-color') || '#1a5fa8';
+    cl.style.setProperty('--exam-color', examColor);
+    if (cl.classList.contains('exam-type-block') || cl.classList.contains('karne-bolum')) {
+      cl.style.borderTop = '3px solid ' + examColor;
+      cl.style.borderLeft = '2px solid ' + examColor;
+      cl.style.borderRight = '2px solid ' + examColor;
+      cl.style.borderBottom = '1px solid #d0d7e2';
+      cl.style.borderRadius = '6px';
+      cl.style.background = '#ffffff';
+      cl.style.webkitPrintColorAdjust = 'exact';
+      cl.style.printColorAdjust = 'exact';
+    }
+    if (cl.classList.contains('sec-card')) {
+      cl.style.borderLeft = '3px solid ' + examColor;
+      cl.style.borderRight = '3px solid ' + examColor;
+      cl.style.webkitPrintColorAdjust = 'exact';
+      cl.style.printColorAdjust = 'exact';
+    }
+  });
 
-  let examBlocks = clone.querySelectorAll('.exam-type-block');
+  // SAYFA KIRMA — her sınav türü / karne TEK SAYFA
+  const examBlocks = clone.querySelectorAll('.exam-type-block');
   examBlocks.forEach((blk, idx) => {
-    let stuName  = blk.getAttribute('data-stu-name')  || '';
-    let stuClass = blk.getAttribute('data-stu-class') || '';
-
-    // İlk block mı? (wrapper içindeki veya global olarak)
-    let wrapper = blk.closest('.student-rapor-wrapper');
+    const stuName  = blk.getAttribute('data-stu-name')  || '';
+    const stuClass = blk.getAttribute('data-stu-class') || '';
+    const wrapper  = blk.closest('.student-rapor-wrapper');
     let isFirstInScope = false;
-    if(wrapper) {
-      let siblings = wrapper.querySelectorAll('.exam-type-block');
+    if (wrapper) {
+      const siblings = wrapper.querySelectorAll('.exam-type-block');
       isFirstInScope = (siblings[0] === blk);
     } else {
       isFirstInScope = (idx === 0);
     }
 
-    // Her exam-type-block bir sayfa bölümüdür — sayfa kırmayı her bloğa uygula
-    if(isFirstInScope) {
-      // İlk blokta kırma yok, sadece içerik taşmasına izin ver
-      blk.style.cssText += '; page-break-inside: auto; break-inside: auto;';
-      blk.classList.add('exam-type-first');
+    blk.style.pageBreakInside = 'avoid';
+    blk.style.breakInside = 'avoid';
+    blk.style.overflow = 'hidden';
+    blk.classList.add('print-fit-block');
+
+    if (isFirstInScope) {
+      blk.style.pageBreakBefore = 'auto';
+      blk.style.breakBefore = 'auto';
     } else {
-      let isKarne = blk.classList.contains('karne-bolum');
-      // Karne modunda başlık zaten blok içinde var — bloğun kendisi kırar, hdr eklenmez
-      // Toplu rapor modunda başlık ayrı eklenir, sonra blok kırmaz (çifte kırma önlemi)
-      if(stuName && !isKarne) {
-        let hdr = document.createElement('div');
+      const isKarne = blk.classList.contains('karne-bolum');
+      if (stuName && !isKarne) {
+        const hdr = document.createElement('div');
         hdr.className = 'report-header print-page-hdr';
-        hdr.style.cssText = 'margin-bottom:10px; margin-top:0; page-break-before:always; break-before:page;';
-        hdr.innerHTML = `<span style="font-size:15px;"><i class="fas fa-user-graduate mr-2"></i><strong>${stuName}</strong></span><span style="font-size:12px;">Sınıf: ${stuClass} | ${new Date().toLocaleDateString('tr-TR')}</span>`;
+        hdr.style.cssText = 'margin:0 0 8px 0; page-break-before:always; break-before:page;';
+        hdr.innerHTML = '<span style="font-size:14px;color:#fff;"><i class="fas fa-user-graduate mr-2"></i><strong>' + stuName + '</strong></span><span style="font-size:11px;color:#fff;">Sınıf: ' + stuClass + ' | ' + new Date().toLocaleDateString('tr-TR') + '</span>';
         blk.parentNode.insertBefore(hdr, blk);
-        // blk kendisi KIRMIYOR — kırmayı sadece hdr üstlendi
-        blk.style.cssText += '; page-break-before: auto; break-before: auto; page-break-inside: auto; break-inside: auto;';
+        blk.style.pageBreakBefore = 'auto';
+        blk.style.breakBefore = 'auto';
       } else {
-        // Karne modu veya başlık yoksa bloğun kendisi kırar
-        blk.style.cssText += '; page-break-before: always; break-before: page; page-break-inside: auto; break-inside: auto;';
+        blk.style.pageBreakBefore = 'always';
+        blk.style.breakBefore = 'page';
       }
     }
-
-    // Tablo, grafik ve kutu grafiklerini esnek hale getir (shrink-to-fit)
-    blk.querySelectorAll('.chart-box, .boxplot-card, .boxplot-wrap').forEach(el => {
-      el.style.cssText += '; page-break-inside: avoid; break-inside: avoid;';
-    });
   });
 
-  // Toplu rapor: öğrenciler arası zorunlu sayfa kırma (student-rapor-wrapper'lar arası)
-  let wrappers = clone.querySelectorAll('.student-rapor-wrapper');
-  wrappers.forEach((w, i) => {
-    if(i > 0) w.style.cssText += '; page-break-before: always; break-before: page;';
-    w.style.cssText += '; page-break-inside: auto; break-inside: auto;';
+  clone.querySelectorAll('.student-rapor-wrapper').forEach((w, i) => {
+    if (i > 0) { w.style.pageBreakBefore = 'always'; w.style.breakBefore = 'page'; }
+    w.style.pageBreakInside = 'auto';
+    w.style.breakInside = 'auto';
   });
 
-  // karne-bolum (tekil öğrenci karnesi, birden fazla sınav türü varsa)
-  // Not: karne-bolum aynı zamanda exam-type-block ise zaten yukarıda işlendi — atla
   clone.querySelectorAll('.karne-bolum').forEach((blk, idx) => {
-    if(blk.classList.contains('exam-type-block')) return; // zaten işlendi
-    if(idx > 0) {
-      blk.style.cssText += '; page-break-before: always; break-before: page;';
-    }
-    blk.style.cssText += '; page-break-inside: auto; break-inside: auto;';
+    if (blk.classList.contains('exam-type-block')) return;
+    if (idx > 0) { blk.style.pageBreakBefore = 'always'; blk.style.breakBefore = 'page'; }
+    blk.style.pageBreakInside = 'avoid';
+    blk.style.breakInside = 'avoid';
+    blk.classList.add('print-fit-block');
   });
 
-  // Toplu liste tablolarında satır page-break'i JS ile override et
-  if(sourceId === 'pED' || sourceId === 'pEDAll') {
+  if (sourceId === 'pED' || sourceId === 'pEDAll') {
     clone.querySelectorAll('table').forEach(tbl => {
       tbl.style.pageBreakInside = 'auto';
       tbl.style.breakInside = 'auto';
       tbl.style.width = '100%';
+      tbl.style.borderCollapse = 'collapse';
     });
     clone.querySelectorAll('tbody tr').forEach(tr => {
       tr.style.pageBreakInside = 'avoid';
       tr.style.breakInside = 'avoid';
     });
-    clone.querySelectorAll('thead').forEach(h => {
-      h.style.display = 'table-header-group';
-    });
+    clone.querySelectorAll('thead').forEach(h => { h.style.display = 'table-header-group'; });
+    clone.querySelectorAll('tfoot').forEach(f => { f.style.display = 'table-footer-group'; });
   }
 
-  let printHtml = `<!DOCTYPE html>
-<html lang="tr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${title}</title>
-  ${cssLinks}
-  <style>
-    *, *::before, *::after { box-sizing: border-box; }
-    html, body {
-      width: 100% !important;
-      min-width: 0 !important;
-      max-width: 100% !important;
-      margin: 0 !important;
-      padding: 0 !important;
-    }
-    body {
-      background: #fff !important; color: #212529 !important;
-      font-family: 'Source Sans Pro', Arial, sans-serif;
-      font-size: 10px;
-    }
-    @page { margin: 7mm 6mm; size: ${isPortrait ? 'A4 portrait' : 'A4 landscape'}; }
+  const printHtml = '<!DOCTYPE html>\n<html lang="tr">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n<title>' + title + '</title>\n<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">\n<style>\n  *, *::before, *::after { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }\n  html, body { width: 100% !important; min-width: 0 !important; max-width: 100% !important; margin: 0 !important; padding: 0 !important; background: #fff !important; color: #212529 !important; font-family: "Source Sans Pro", Arial, sans-serif; font-size: 10px; -webkit-text-size-adjust: 100%; }\n  @page { margin: 7mm 6mm; size: ' + (isPortrait ? "A4 portrait" : "A4 landscape") + '; }\n  .row { display: flex !important; flex-wrap: wrap !important; width: 100% !important; margin: 0 -5px !important; }\n  .col-6, .col-sm-6, .col-md-6, .col-lg-6 { flex: 0 0 50% !important; max-width: 50% !important; width: 50% !important; padding: 0 5px !important; }\n  .col-md-3, .col-sm-3 { flex: 0 0 25% !important; max-width: 25% !important; width: 25% !important; padding: 0 5px !important; }\n  .col-md-4, .col-lg-4, .col-md-4.col-sm-12 { flex: 0 0 33.333% !important; max-width: 33.333% !important; width: 33.333% !important; padding: 0 5px !important; }\n  .col-12, .col-sm-12, .col-lg-12 { flex: 0 0 100% !important; max-width: 100% !important; padding: 0 5px !important; }\n  .col-md-2 { flex: 0 0 16.666% !important; max-width: 16.666% !important; width: 16.666% !important; padding: 0 5px !important; }\n  .mb-1{margin-bottom:3px!important}.mb-2{margin-bottom:5px!important}.mb-3{margin-bottom:7px!important}.mb-4{margin-bottom:9px!important}\n  .mt-2{margin-top:5px!important}.mt-3{margin-top:7px!important}\n  .p-2{padding:5px!important}.p-0{padding:0!important}\n  .report-header { display: flex !important; align-items: center; justify-content: space-between; background: linear-gradient(135deg, #1a5fa8, #0d47a1) !important; background-color: #1a5fa8 !important; color: #fff !important; padding: 8px 12px; border-radius: 5px; margin-bottom: 8px; }\n  .report-header *, .report-header span, .report-header strong, .report-header i { color: #fff !important; }\n  .table { width: 100% !important; border-collapse: collapse !important; font-size: 7.5px !important; margin-bottom: 4px; }\n  .table th, .table td { border: 1px solid #bbb !important; padding: 1.5px 2.5px !important; color: #212529 !important; vertical-align: middle !important; }\n  .table thead th { background: #1a5fa8 !important; color: #fff !important; font-size: 7px !important; font-weight: 700; }\n  thead { display: table-header-group; }\n  tbody tr { page-break-inside: avoid !important; break-inside: avoid !important; }\n  .scroll, .table-responsive { overflow: visible !important; }\n  tr.highlight-row td { background: #fff3cd !important; font-weight: bold !important; }\n  tr.absent-row td    { background: #f8d7da !important; color: #721c24 !important; }\n  tr.avg-row td       { background: #e8eef7 !important; color: #1a5fa8 !important; font-weight: bold !important; border-top: 2px solid #9cb3d8 !important; }\n  .card { border: 1px solid #ccc !important; border-radius: 4px; margin-bottom: 6px; display: block; box-shadow: none !important; background: #fff !important; }\n  .card-header { background: #f5f5f5 !important; padding: 4px 8px; border-bottom: 1px solid #ccc; font-size: 10px; }\n  .card-body { padding: 5px 8px !important; }\n  .exam-type-block, .karne-bolum { background: #fff !important; border-radius: 6px !important; padding: 8px 10px !important; margin-bottom: 6px !important; page-break-inside: avoid !important; break-inside: avoid !important; overflow: hidden; }\n  .exam-type-block.karne-bolum { padding: 8px 10px !important; margin: 0 0 8px 0 !important; }\n  .exam-type-block > h5, .karne-bolum > h5 { color: #1a5fa8; border-bottom: 1px solid #ccd; padding-bottom: 4px; margin: 0 0 6px 0 !important; font-size: 11px !important; }\n  .info-box { display: flex !important; align-items: stretch; border-radius: 5px; margin-bottom: 3px !important; page-break-inside: avoid !important; break-inside: avoid !important; overflow: hidden; }\n  .info-box-icon { display: flex !important; align-items: center; justify-content: center; width: 44px !important; min-width: 44px; font-size: 1.1em; }\n  .info-box-content { padding: 4px 7px; flex: 1; }\n  .info-box-text { display: block; font-size: 0.72em; font-weight: 700; }\n  .info-box-number { display: block; font-size: 1.05em; font-weight: bold; margin: 1px 0; }\n  .progress-description { display: block; font-size: 0.68em; }\n  .info-box[style*="linear-gradient"] *, .info-box[style*="background:#6c757d"] * { color: #fff !important; }\n  .bg-primary { background: #1a5fa8 !important; color: #fff !important; }\n  .bg-success { background: #198754 !important; color: #fff !important; }\n  .bg-danger  { background: #dc3545 !important; color: #fff !important; }\n  .bg-warning { background: #e6a800 !important; color: #fff !important; }\n  .bg-info    { background: #0dcaf0 !important; color: #055160 !important; }\n  .trend-card { background: #f5f7fa !important; border-radius: 6px; padding: 5px 8px !important; margin-bottom: 5px !important; page-break-inside: avoid !important; break-inside: avoid !important; }\n  .trend-indicator { display: inline-flex; align-items: center; padding: 2px 6px; border-radius: 20px; font-size: 0.78em; font-weight: bold; }\n  .trend-up    { background: #d4edda !important; color: #1e7e34 !important; }\n  .trend-down  { background: #f8d7da !important; color: #b02a37 !important; }\n  .trend-stable{ background: #e2e3e5 !important; color: #495057 !important; }\n  .border-left { border-left: 1px solid #ccc; }\n  .sec-card { background: #fff !important; border: 1px solid #e9ecef !important; border-radius: 8px !important; padding: 6px 8px !important; min-height: 0 !important; display: flex; align-items: center; gap: 8px; box-shadow: none !important; page-break-inside: avoid !important; break-inside: avoid !important; }\n  .sec-card .sec-icon { flex-shrink: 0; width: 32px; height: 32px; border-radius: 7px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.95em; color: #fff !important; background: #1a5fa8 !important; }\n  .sec-card.sec-pos .sec-icon { background: #198754 !important; }\n  .sec-card.sec-neg .sec-icon { background: #dc3545 !important; }\n  .sec-card.sec-neutral .sec-icon { background: #6c757d !important; }\n  .sec-card .sec-label { font-size: 0.68rem; font-weight: 700; color: #6c757d; text-transform: uppercase; letter-spacing: 0.3px; }\n  .sec-card .sec-value { font-size: 0.95rem; font-weight: 700; color: #212529; line-height: 1.15; margin-top: 2px; word-break: break-word; }\n  .sec-card.sec-pos .sec-value { color: #198754 !important; }\n  .sec-card.sec-neg .sec-value { color: #dc3545 !important; }\n  .sec-card .sec-sub { font-size: 0.68rem; color: #6c757d; margin-top: 1px; }\n  .sec-card .sec-chip { display: inline-flex; align-items: center; gap: 3px; padding: 1px 6px; border-radius: 10px; font-size: 0.68rem; font-weight: 700; margin-top: 2px; }\n  .sec-card.sec-pos .sec-chip  { background: #d4edda !important; color: #0f5132 !important; }\n  .sec-card.sec-neg .sec-chip  { background: #f8d7da !important; color: #842029 !important; }\n  .sec-card.sec-neutral .sec-chip { background: #e2e3e5 !important; color: #495057 !important; }\n  .print-chart-img { max-width: 100%; width: 100%; max-height: ' + (isPortrait ? "150px" : "115px") + '; height: auto; object-fit: contain; display: block; margin: 2px auto 4px; }\n  .chart-box { height: auto !important; margin-bottom: 4px; page-break-inside: avoid !important; break-inside: avoid !important; }\n  .boxplot-card { background: #f8f9ff !important; border: 1px solid #c8d4ee !important; border-radius: 6px; padding: 5px 7px; margin-top: 3px; page-break-inside: avoid !important; break-inside: avoid !important; }\n  .boxplot-title { font-size: 9px; font-weight: 700; color: #1a5fa8; margin-bottom: 2px; }\n  .boxplot-wrap { overflow: visible !important; }\n  .boxplot-svg { max-height: ' + (isPortrait ? "110px" : "90px") + ' !important; width: 100% !important; height: auto !important; }\n  .risk-badge { display: inline-flex; align-items: center; gap: 2px; padding: 1px 5px; border-radius: 20px; font-size: 0.68em; font-weight: 600; white-space: nowrap; }\n  .rb-abs    { background: #fff3cd !important; color: #664d03 !important; }\n  .rb-trend  { background: #f8d7da !important; color: #842029 !important; }\n  .rb-rank   { background: #e2e3e5 !important; color: #495057 !important; }\n  .rb-subj   { background: #e6dcf2 !important; color: #4a1d8a !important; }\n  h4 { font-size: 12px !important; margin: 5px 0; }\n  h5 { font-size: 11px !important; margin: 4px 0; }\n  h3.card-title { font-size: 11px !important; }\n  .text-primary { color: #1a5fa8 !important; }\n  .text-success { color: #198754 !important; }\n  .text-danger  { color: #dc3545 !important; }\n  .text-muted   { color: #6c757d !important; }\n  .font-weight-bold { font-weight: bold; }\n  .small, small { font-size: 0.8em; }\n  .badge { display: inline-block; padding: 1px 5px; border-radius: 8px; font-size: 0.72em; }\n  .badge-info { background: #cff4fc !important; color: #055160 !important; }\n  .shadow-sm { box-shadow: none !important; }\n  .no-print, button, .btn, .scroll-hint, .d-flex.justify-content-end, #riskPanel, .main-sidebar, .main-header, .content-wrapper > .overlay { display: none !important; }\n  .wrapper, .content-wrapper, .container-fluid { margin-left: 0 !important; padding-left: 0 !important; width: 100% !important; max-width: 100% !important; }\n  .print-fit-block { transform-origin: top left; }\n</style>\n</head>\n<body>\n<div id="printRoot" style="padding:0 3px;">' + clone.outerHTML + '</div>\n<script>\n(function(){\n  var pageH_mm = ' + (isPortrait ? 297 : 210) + ';\n  var pageW_mm = ' + (isPortrait ? 210 : 297) + ';\n  var marginV_mm = 14, marginH_mm = 12;\n  var mmToPx = function(mm){ return mm * 96 / 25.4; };\n  var pageContentH = mmToPx(pageH_mm - marginV_mm);\n  var pageContentW = mmToPx(pageW_mm - marginH_mm);\n  function waitImgs(cb){\n    var imgs = Array.from(document.images);\n    if(!imgs.length) return cb();\n    var done = 0, total = imgs.length, finished = false;\n    var check = function(){ done++; if(done >= total && !finished){ finished = true; cb(); } };\n    imgs.forEach(function(img){\n      if(img.complete && img.naturalWidth > 0) return check();\n      img.addEventListener("load", check);\n      img.addEventListener("error", check);\n    });\n    setTimeout(function(){ if(!finished){ finished = true; cb(); } }, 4000);\n  }\n  function autoShrink(){\n    var blocks = document.querySelectorAll(".print-fit-block");\n    blocks.forEach(function(blk){\n      blk.style.transform = "none"; blk.style.width = "";\n      var h = blk.scrollHeight, w = blk.scrollWidth;\n      var scaleH = h > pageContentH ? (pageContentH / h) : 1;\n      var scaleW = w > pageContentW ? (pageContentW / w) : 1;\n      var scale = Math.min(scaleH, scaleW, 1);\n      if(scale < 0.55) scale = 0.55;\n      if(scale < 0.999){\n        blk.style.transform = "scale(" + scale + ")";\n        blk.style.transformOrigin = "top left";\n        blk.style.width = (100 / scale) + "%";\n      }\n    });\n  }\n  function waitFonts(cb){ if(document.fonts && document.fonts.ready){ document.fonts.ready.then(cb, cb); } else { cb(); } }\n  function trigger(){\n    waitImgs(function(){\n      waitFonts(function(){\n        requestAnimationFrame(function(){\n          requestAnimationFrame(function(){\n            autoShrink();\n            requestAnimationFrame(function(){ setTimeout(function(){ window.print(); }, 120); });\n          });\n        });\n      });\n    });\n  }\n  if(document.readyState === "complete") trigger();\n  else window.addEventListener("load", trigger);\n})();\n<\/script>\n</body>\n</html>';
 
-    /* ── TEMEL LAYOUT — Yüzde bazlı grid (portrait/landscape her ikisinde çalışır) ── */
-    .row { display: flex !important; flex-wrap: wrap !important; width: 100% !important; margin: 0 -5px !important; }
-    .col-6, .col-sm-6, .col-md-6, .col-lg-6 {
-      flex: 0 0 50% !important;
-      max-width: 50% !important;
-      width: 50% !important;
-      padding: 0 5px !important;
-    }
-    .col-md-3, .col-sm-3 {
-      flex: 0 0 25% !important;
-      max-width: 25% !important;
-      width: 25% !important;
-      padding: 0 5px !important;
-    }
-    .col-md-4, .col-lg-4 {
-      flex: 0 0 33.333% !important;
-      max-width: 33.333% !important;
-      width: 33.333% !important;
-      padding: 0 5px !important;
-    }
-    .col-12, .col-sm-12, .col-lg-12 {
-      flex: 0 0 100% !important;
-      max-width: 100% !important;
-      padding: 0 5px !important;
-    }
-    /* col-md-4 col-sm-12 kombinasyonu (Sınav Analizi kartları) */
-    .col-md-4.col-sm-12 {
-      flex: 0 0 33.333% !important;
-      max-width: 33.333% !important;
-      width: 33.333% !important;
-      padding: 0 5px !important;
-    }
-    .col-md-2 {
-      flex: 0 0 16.666% !important;
-      max-width: 16.666% !important;
-      width: 16.666% !important;
-      padding: 0 5px !important;
-    }
-    .mb-1 { margin-bottom: 3px !important; } .mb-2 { margin-bottom: 6px !important; } .mb-3 { margin-bottom: 10px !important; } .mb-4 { margin-bottom: 14px !important; }
-    .mt-2 { margin-top: 6px !important; } .mt-3 { margin-top: 10px !important; }
-    .p-2 { padding: 6px !important; } .p-0 { padding: 0 !important; }
+  const winFeatures = 'width=' + (isPortrait ? 900 : 1200) + ',height=800,scrollbars=yes';
+  let printWin = null;
+  try { printWin = window.open('', '_blank', winFeatures); } catch (e) {}
 
-    /* ── BAŞLIK ── */
-    .report-header {
-      display: flex !important; align-items: center; justify-content: space-between;
-      background: linear-gradient(135deg, #1a5fa8, #0d47a1) !important;
-      color: #fff !important; padding: 9px 14px; border-radius: 5px;
-      margin-bottom: 10px;
-      -webkit-print-color-adjust: exact; print-color-adjust: exact;
-    }
-    .report-header span, .report-header strong, .report-header i { color: #fff !important; }
+  if (printWin && printWin.document) {
+    printWin.document.open();
+    printWin.document.write(printHtml);
+    printWin.document.close();
+    btn.innerHTML = orig;
+    btn.disabled = false;
+    return;
+  }
 
-    /* ── TABLOLAR ── */
-    .table {
-      width: 100% !important; border-collapse: collapse !important;
-      font-size: 7.5px !important; margin-bottom: 5px;
-    }
-    .table th, .table td {
-      border: 1px solid #bbb !important;
-      padding: 1.5px 2.5px !important; color: #212529 !important;
-      vertical-align: middle !important;
-    }
-    .table thead th {
-      background: #1a5fa8 !important; color: #fff !important;
-      -webkit-print-color-adjust: exact; print-color-adjust: exact;
-      font-size: 7px !important; font-weight: 700;
-    }
-    thead { display: table-header-group; }
-    tbody tr { page-break-inside: avoid !important; break-inside: avoid !important; }
-    .scroll, .table-responsive { overflow: visible !important; }
-
-    tr.highlight-row td { background: #fff3cd !important; font-weight: bold !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-    tr.absent-row td { background: #f8d7da !important; color: #721c24 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-    tr.avg-row td { background: #e8eef7 !important; color: #1a5fa8 !important; font-weight: bold !important; border-top: 2px solid #9cb3d8 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-
-    /* ── KARTLAR ── */
-    .card { border: 1px solid #ccc !important; border-radius: 4px; margin-bottom: 8px; display: block; box-shadow: none !important; }
-    .card-header { background: #f5f5f5 !important; padding: 5px 10px; border-bottom: 1px solid #ccc; font-size: 10px; }
-    .card-body { padding: 8px 10px; }
-    .card[style*="border-top:3px solid #0d6efd"], .card[style*="border-top: 3px solid #0d6efd"] { border-top: 3px solid #1a5fa8 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-
-    /* ── INFO BOX ── */
-    .info-box {
-      display: flex !important; align-items: stretch;
-      border-radius: 5px; margin-bottom: 5px;
-      page-break-inside: avoid !important; break-inside: avoid !important;
-      -webkit-print-color-adjust: exact; print-color-adjust: exact;
-    }
-    .info-box-icon {
-      display: flex !important; align-items: center; justify-content: center;
-      width: 48px !important; min-width: 48px; font-size: 1.2em;
-      -webkit-print-color-adjust: exact; print-color-adjust: exact;
-    }
-    .info-box-content { padding: 5px 8px; flex: 1; }
-    .info-box-text { display: block; font-size: 0.72em; font-weight: 700; }
-    .info-box-number { display: block; font-size: 1.1em; font-weight: bold; margin: 1px 0; }
-    .progress-description { display: block; font-size: 0.68em; }
-    .info-box[style*="background:linear-gradient"] { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-    .info-box[style*="background:linear-gradient"] * { color: #fff !important; }
-    .info-box[style*="background:#6c757d"] { background: #6c757d !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-    .info-box[style*="background:#6c757d"] * { color: #fff !important; }
-    .bg-primary { background: #1a5fa8 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-    .bg-success  { background: #198754 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-    .bg-danger   { background: #dc3545 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-    .bg-warning  { background: #e6a800 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-    .bg-info     { background: #0dcaf0 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-
-    /* ── TREND KARTI ── */
-    .trend-card {
-      background: #f5f7fa !important; border-radius: 6px;
-      padding: 8px 10px; margin-bottom: 8px;
-      page-break-inside: avoid !important; break-inside: avoid !important;
-      -webkit-print-color-adjust: exact; print-color-adjust: exact;
-    }
-    .trend-indicator { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 20px; font-size: 0.78em; font-weight: bold; }
-    .trend-up    { background: rgba(40,167,69,0.15); color: #1e7e34; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-    .trend-down  { background: rgba(220,53,69,0.15);  color: #b02a37; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-    .trend-stable{ background: rgba(108,117,125,0.15); color: #495057; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-    .border-left { border-left: 1px solid #ccc; }
-
-    /* ── GRAFİK IMG ── */
-    .print-chart-img {
-      max-width: 100%; width: 100%;
-      max-height: ${isPortrait ? '170px' : '130px'};
-      height: auto; object-fit: contain;
-      display: block; margin: 2px auto 5px;
-    }
-    .chart-box {
-      height: auto !important; margin-bottom: 5px;
-      page-break-inside: avoid !important; break-inside: avoid !important;
-    }
-
-    /* ── KUTU GRAFİĞİ ── */
-    .boxplot-card {
-      background: #f8f9ff !important; border: 1px solid #c8d4ee !important;
-      border-radius: 6px; padding: 6px 8px; margin-top: 4px;
-      page-break-inside: avoid !important; break-inside: avoid !important;
-      -webkit-print-color-adjust: exact; print-color-adjust: exact;
-    }
-    .boxplot-title { font-size: 9px; font-weight: 700; color: #1a5fa8; margin-bottom: 3px; }
-    .boxplot-wrap { overflow: visible !important; }
-    .boxplot-svg {
-      max-height: ${isPortrait ? '120px' : '100px'} !important;
-      width: 100% !important; height: auto !important;
-    }
-
-    /* ── RİSK KARTLARI ── */
-    [style*="border:1px solid #dc3545"], [style*="border:1px solid #fd7e14"], [style*="border:1px solid #ffc107"] {
-      -webkit-print-color-adjust: exact; print-color-adjust: exact;
-    }
-    .risk-badge {
-      display: inline-flex; align-items: center; gap: 2px;
-      padding: 1px 6px; border-radius: 20px; font-size: 0.68em;
-      font-weight: 600; white-space: nowrap;
-      -webkit-print-color-adjust: exact; print-color-adjust: exact;
-    }
-    .rb-abs    { background: rgba(255,193,7,0.2);   color: #664d03; }
-    .rb-trend  { background: rgba(220,53,69,0.12);  color: #842029; }
-    .rb-rank   { background: rgba(108,117,125,0.12); color: #495057; }
-    .rb-subj   { background: rgba(111,66,193,0.12);  color: #4a1d8a; }
-
-    /* ── SAYFA KIRMA — Tüm kırmalar JS inline style ile yönetilir ── */
-    /* !important kurallar YOK — JS'in inline atamaları ezilmesin diye */
-    .exam-type-block       { page-break-inside: auto; break-inside: auto; }
-    .karne-bolum           { page-break-inside: auto; break-inside: auto; }
-    .student-rapor-wrapper { page-break-inside: auto; break-inside: auto; }
-
-    /* Info-box satırı: sıkıştır */
-    .info-box { margin-bottom: 3px !important; }
-    .trend-card { padding: 5px 8px !important; margin-bottom: 5px !important; }
-    .card-body { padding: 5px 8px !important; }
-    .mb-4 { margin-bottom: 8px !important; }
-    .mb-3 { margin-bottom: 6px !important; }
-    .mb-2 { margin-bottom: 3px !important; }
-    /* ── GİZLE ── */
-    .no-print, button, .btn, .scroll-hint,
-    .d-flex.justify-content-end, #riskPanel,
-    .main-sidebar, .main-header, .content-wrapper > .overlay { display: none !important; }
-
-    /* ── TİPOGRAFİ ── */
-    h4 { font-size: 12px !important; margin: 6px 0; }
-    h5 { font-size: 11px !important; margin: 5px 0; }
-    h3.card-title { font-size: 11px !important; }
-    .text-primary  { color: #1a5fa8 !important; }
-    .text-success  { color: #198754 !important; }
-    .text-danger   { color: #dc3545 !important; }
-    .text-muted    { color: #6c757d !important; }
-    .font-weight-bold { font-weight: bold; }
-    .small, small  { font-size: 0.8em; }
-    .badge { display: inline-block; padding: 1px 5px; border-radius: 8px; font-size: 0.72em; }
-    .badge-info { background: #0dcaf0 !important; color: #055160 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-    .shadow-sm { box-shadow: none !important; }
-    /* ── LANDSCAPE FULL WIDTH ── */
-    .wrapper, .content-wrapper, .container-fluid { 
-      margin-left: 0 !important; padding-left: 0 !important; 
-      width: 100% !important; max-width: 100% !important; 
-    }
-  </style>
-</head>
-<body>
-  <div style="padding:0 3px;">${clone.outerHTML}</div>
-  <script>window.addEventListener('load',function(){setTimeout(function(){window.print();},450);});<\/script>
-</body>
-</html>`;
-
-  let printWin = window.open('', '_blank', `width=${isPortrait ? 900 : 1200},height=800,scrollbars=yes`);
-  if (!printWin) { showToast('Açılır pencere engellendi!', 'warning', 6000); btn.innerHTML = orig; btn.disabled = false; return; }
-  printWin.document.write(printHtml); printWin.document.close();
-  btn.innerHTML = orig; btn.disabled = false;
+  if (typeof showToast === 'function') showToast('Açılır pencere engellendi, dahili yazdırmaya geçiliyor…', 'info', 3500);
+  let iframe = document.getElementById('__xprFrame');
+  if (iframe) iframe.remove();
+  iframe = document.createElement('iframe');
+  iframe.id = '__xprFrame';
+  iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;';
+  document.body.appendChild(iframe);
+  const idoc = iframe.contentDocument || iframe.contentWindow.document;
+  idoc.open();
+  idoc.write(printHtml);
+  idoc.close();
+  setTimeout(() => { try { iframe.remove(); } catch (e) {} }, 60000);
+  btn.innerHTML = orig;
+  btn.disabled = false;
 }
 
 // ---- debounceSearch (orig lines 1890-1890) ----
