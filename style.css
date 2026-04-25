@@ -631,3 +631,17 @@ body.is-admin button.btn-block.admin-only { display:block !important; }
   display: block;
 }
 .trend-card [title]{ cursor: help; }
+
+/* ====== Kart içi mikro açıklama (Türkçe, kullanıcıya yönelik) ====== */
+.sec-card .sec-explain {
+  font-size: 0.70rem;
+  color: #8a94a0;
+  margin-top: 4px;
+  line-height: 1.25;
+  font-style: italic;
+  border-top: 1px dashed #e9ecef;
+  padding-top: 3px;
+}
+.sec-card[title] { cursor: help; }
+
+/* Trend kartı içinde Performans Tutarlılığı sütunu için aynı x-small kuralı zaten var. */
