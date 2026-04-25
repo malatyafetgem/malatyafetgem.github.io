@@ -878,7 +878,6 @@ function buildKarneExamCards(summary, examType) {
           <div class="sec-label">Ortalama Net</div>
           <div class="sec-value">${stuAvg.toFixed(2)}</div>
           <div class="sec-sub">Genel Ort: ${genAvg!==null?genAvg.toFixed(2):'—'}</div>
-          ${_explain('Öğrencinin tüm sınavlarındaki net ortalaması')}
         </div>
       </div>
     </div>
@@ -889,7 +888,6 @@ function buildKarneExamCards(summary, examType) {
           <div class="sec-label">Katılım</div>
           <div class="sec-value">${partRate}%</div>
           <div class="sec-sub">${attendedCount}/${totalExamCount} Sınav</div>
-          ${_explain('Düzenlenen sınavların yüzde kaçına girdi')}
         </div>
       </div>
     </div>
@@ -900,7 +898,6 @@ function buildKarneExamCards(summary, examType) {
           <div class="sec-label">Sınıf Derece</div>
           <div class="sec-value">${classRank>0?classRank:'—'}</div>
           <div class="sec-sub">Toplam: ${classTotalStudents} Öğrenci</div>
-          ${_explain('Kendi sınıfı içindeki ortalama puan sıralaması')}
         </div>
       </div>
     </div>
@@ -911,7 +908,6 @@ function buildKarneExamCards(summary, examType) {
           <div class="sec-label">Kurum Derece</div>
           <div class="sec-value">${rank>0?rank:'—'}</div>
           <div class="sec-sub">Toplam: ${totalStudents} Öğrenci</div>
-          ${_explain('Aynı sınıf seviyesindeki tüm öğrenciler arasındaki sıra')}
         </div>
       </div>
     </div>
@@ -1182,8 +1178,8 @@ function rAnl(){
   if(aT==='examdetail' && !sb) { return; }
 
   if(aT==='student'){
-    let no=aNo;if(!no){r.innerHTML='';return;}
-    let ex=DB.e.filter(x=>x.studentNo===no&&x.examType===eT&&!x.abs).sort((a,b)=>srt(a.date,b.date)), st=getStuMap().get(no); if(!st){r.innerHTML='';return;}
+    let no=aNo;if(!no){r.innerHTML='<div class="alert alert-default-info"><i class="fas fa-hand-point-up mr-2"></i>Lütfen bir öğrenci seçin.</div>';return;}
+    let ex=DB.e.filter(x=>x.studentNo===no&&x.examType===eT&&!x.abs).sort((a,b)=>srt(a.date,b.date)), st=getStuMap().get(no); if(!st){r.innerHTML='<div class="alert alert-default-warning"><i class="fas fa-exclamation-circle mr-2"></i>Öğrenci verisi bulunamadı.</div>';return;}
     let stGrade=getGrade(st.class);
 
     // === TEK SINAV MODU ===
@@ -1226,6 +1222,64 @@ function rAnl(){
 
         let totalNetTrendCard = _buildSingleMetricSparkline(no, eT, curExam, 'totalNet', 'Toplam Net');
 
+        // 1-A: Özet modunda Toplam Net için Z-skoru + yüzdelik dilim + katılım kartı
+        let seExtraCardsHtml = '';
+        {
+          let _tnVal = curExam.totalNet;
+          // Z-skoru ve yüzdelik dilim (sınıf)
+          let _clsTNStd = _statStd(clsTN);
+          let _clsTNMean = clsTN.length ? clsTN.reduce((a,b)=>a+b,0)/clsTN.length : null;
+          let _clsTNZ = (_tnVal!==null && _clsTNMean!==null && _clsTNStd && _clsTNStd>0) ? ((_tnVal-_clsTNMean)/_clsTNStd) : null;
+          let _clsTNPerc = (_tnVal!==null && clsTN.length >= 3) ? Math.round(clsTN.filter(v=>v<=_tnVal).length/clsTN.length*100) : null;
+          // Z-skoru ve yüzdelik dilim (kurum)
+          let _insTNStd = _statStd(insTN);
+          let _insTNMean = insTN.length ? insTN.reduce((a,b)=>a+b,0)/insTN.length : null;
+          let _insTNZ = (_tnVal!==null && _insTNMean!==null && _insTNStd && _insTNStd>0) ? ((_tnVal-_insTNMean)/_insTNStd) : null;
+          let _insTNPerc = (_tnVal!==null && insTN.length >= 3) ? Math.round(insTN.filter(v=>v<=_tnVal).length/insTN.length*100) : null;
+
+          if(clsTN.length >= 3 || insTN.length >= 3) {
+            let _clsZCls = _clsTNZ===null?'sec-neutral':(_clsTNZ>0?'sec-pos':(_clsTNZ<0?'sec-neg':'sec-neutral'));
+            let _insZCls = _insTNZ===null?'sec-neutral':(_insTNZ>0?'sec-pos':(_insTNZ<0?'sec-neg':'sec-neutral'));
+            seExtraCardsHtml += `<div class="row mt-2">`;
+            if(clsTN.length >= 3) {
+              seExtraCardsHtml += `<div class="col-md-3 col-sm-6"><div class="sec-card ${_clsZCls}">
+                <div class="sec-icon"><i class="fas fa-chart-bar"></i></div>
+                <div class="sec-body"><div class="sec-label">Sınıf İçi Konum</div>
+                <div class="sec-value">${_clsTNZ!==null?_clsTNZ.toFixed(2)+'σ':'—'}</div>
+                <div class="sec-sub">${_clsTNPerc!==null?'Top %'+(100-_clsTNPerc)+' · '+clsTN.length+' öğrenci':'Yetersiz veri'}</div>
+                ${_explain('Z-skoru: sınıf ortalamasından kaç standart sapma uzakta?')}
+                </div></div></div>`;
+            }
+            if(insTN.length >= 3) {
+              seExtraCardsHtml += `<div class="col-md-3 col-sm-6"><div class="sec-card ${_insZCls}">
+                <div class="sec-icon"><i class="fas fa-school"></i></div>
+                <div class="sec-body"><div class="sec-label">Kurum İçi Konum</div>
+                <div class="sec-value">${_insTNZ!==null?_insTNZ.toFixed(2)+'σ':'—'}</div>
+                <div class="sec-sub">${_insTNPerc!==null?'Top %'+(100-_insTNPerc)+' · '+insTN.length+' öğrenci':'Yetersiz veri'}</div>
+                ${_explain('Z-skoru: kurum ortalamasından kaç standart sapma uzakta?')}
+                </div></div></div>`;
+            }
+            seExtraCardsHtml += `</div>`;
+          }
+
+          // Katılım oranı (bu sınav türüne genel katılım)
+          let _allTypeDates = new Set();
+          DB.e.forEach(x => { if(x.examType===eT && getGrade(x.studentClass)===stGrade) _allTypeDates.add(x.date+'||'+(x.publisher||'')); });
+          let _attTypeDates = new Set();
+          DB.e.forEach(x => { if(x.studentNo===no && x.examType===eT && !x.abs) _attTypeDates.add(x.date+'||'+(x.publisher||'')); });
+          let _seTot = _allTypeDates.size, _seAtt = _attTypeDates.size;
+          let _seRate = _seTot > 0 ? Math.round(_seAtt/_seTot*100) : 0;
+          let _seRateCls = _seRate >= 80 ? 'sec-pos' : (_seRate >= 50 ? 'sec-neutral' : 'sec-neg');
+          seExtraCardsHtml += `<div class="row mt-2">
+            <div class="col-md-3 col-sm-6"><div class="sec-card ${_seRateCls}">
+              <div class="sec-icon"><i class="fas fa-calendar-check"></i></div>
+              <div class="sec-body"><div class="sec-label">Genel Katılım</div>
+              <div class="sec-value">${_seRate}%</div>
+              <div class="sec-sub">${_seAtt} / ${_seTot} Sınav</div>
+              </div></div></div>
+          </div>`;
+        }
+
         // Detay tablosu
         let rowsSE = subjects.map((s,i) => {
           let sn = curExam.subs[s];
@@ -1254,6 +1308,7 @@ function rAnl(){
           </div>
           <div class="card-body" style="padding-top:8px;">
             <div class="single-exam-cards">${cardsHtml}</div>
+            ${seExtraCardsHtml}
             ${riskHtml}
             <div class="single-exam-chart-title"><i class="fas fa-chart-bar"></i>Ders Bazlı Net Karşılaştırması</div>
             <div class="chart-box avoid-break" style="height:280px;"><canvas id="cA"></canvas></div>
@@ -1650,6 +1705,24 @@ function rAnl(){
         <div class="col-md-3 col-sm-6"><div class="sec-card"><div class="sec-icon"><i class="fas fa-balance-scale"></i></div><div class="sec-body"><div class="sec-label">Ortalama</div><div class="sec-value">${avgVal.toFixed(2)}</div></div></div></div>
         <div class="col-md-3 col-sm-6"><div class="sec-card"><div class="sec-icon"><i class="fas fa-percentage"></i></div><div class="sec-body"><div class="sec-label">Katılım</div><div class="sec-value">${partRate}%</div><div class="sec-sub">${attendedCnt}/${totalGradeExams} Sınav</div></div></div></div>
       </div>`;
+    } else if(isRank && dDValid.length > 0) {
+      // 1-B: Sıralama modunda En İyi / En Kötü / Ortalama Sıra kartları
+      let bestRank = Math.min(...dDValid);   // düşük sıra = iyi
+      let worstRank = Math.max(...dDValid);  // yüksek sıra = kötü
+      let avgRank = Math.round(dDValid.reduce((a,b)=>a+b,0)/dDValid.length);
+      let gradeExamKeys2 = new Set();
+      DB.e.forEach(x => { if(x.examType===eT && getGrade(x.studentClass)===stGrade) gradeExamKeys2.add(x.date+'||'+(x.publisher||'')); });
+      let totalGradeExams2 = gradeExamKeys2.size;
+      let attendedKeys2 = new Set();
+      DB.e.forEach(x => { if(x.studentNo===no && x.examType===eT && !x.abs) attendedKeys2.add(x.date+'||'+(x.publisher||'')); });
+      let attendedCnt2 = attendedKeys2.size;
+      let partRate2 = totalGradeExams2 > 0 ? Math.max(0, Math.min(100, Math.round(attendedCnt2 / totalGradeExams2 * 100))) : 0;
+      perfHtml = `<div class="row mt-3 mb-2">
+        <div class="col-md-3 col-sm-6"><div class="sec-card sec-pos"><div class="sec-icon"><i class="fas fa-trophy"></i></div><div class="sec-body"><div class="sec-label">En İyi Sıra</div><div class="sec-value">${bestRank}</div><div class="sec-sub">Düşük = daha iyi</div></div></div></div>
+        <div class="col-md-3 col-sm-6"><div class="sec-card sec-neg"><div class="sec-icon"><i class="fas fa-arrow-down"></i></div><div class="sec-body"><div class="sec-label">En Kötü Sıra</div><div class="sec-value">${worstRank}</div></div></div></div>
+        <div class="col-md-3 col-sm-6"><div class="sec-card"><div class="sec-icon"><i class="fas fa-balance-scale"></i></div><div class="sec-body"><div class="sec-label">Ortalama Sıra</div><div class="sec-value">${avgRank}</div></div></div></div>
+        <div class="col-md-3 col-sm-6"><div class="sec-card"><div class="sec-icon"><i class="fas fa-percentage"></i></div><div class="sec-body"><div class="sec-label">Katılım</div><div class="sec-value">${partRate2}%</div><div class="sec-sub">${attendedCnt2}/${totalGradeExams2} Sınav</div></div></div></div>
+      </div>`;
     }
 
     let h=`<div class="d-flex justify-content-end mb-2 no-print"><button class="btn-print no-print" onclick="xPR('pS','Ogrenci_Analizi',this)"><i class='fas fa-print mr-1'></i>Yazdır</button></div>
@@ -1780,17 +1853,36 @@ function rAnl(){
         }
       }
 
+      // 1-E: Tek sınav + tek şube — bağlam kartları (şube ort., kurum ort., fark)
+      let singleExamSingleBranchHtml = '';
+      if(dateFilter && !showCompCards && sortedClasses.length === 1) {
+        let _brAvg = topCls[0].avg;
+        let _instValsForDate = (lvlForAvg ? DB.e.filter(x=>x.examType===eT&&!x.abs&&x.date===dateFilter&&getGrade(x.studentClass)===lvlForAvg) : DB.e.filter(x=>x.examType===eT&&!x.abs&&x.date===dateFilter))
+          .map(x=>{ if(sb==='score')return x.score; if(sb==='totalNet'||!sb)return x.totalNet; return x.subs[toTitleCase(sb.replace('s_',''))]?.net||0; });
+        let _instAvg = _instValsForDate.length ? _instValsForDate.reduce((a,b)=>a+b,0)/_instValsForDate.length : null;
+        let _delta = (_instAvg!==null) ? (_brAvg - _instAvg) : null;
+        let _dCls = _delta===null?'sec-neutral':(_delta>0?'sec-pos':(_delta<0?'sec-neg':'sec-neutral'));
+        let _dSign = _delta!==null?(_delta>0?'+':''):'';
+        singleExamSingleBranchHtml = `<div class="row mb-3">
+          <div class="col-md-4 flex-fill mb-2"><div class="sec-card h-100"><div class="sec-icon"><i class="fas fa-school"></i></div><div class="sec-body"><div class="sec-label">Şube Ortalaması</div><div class="sec-value">${_brAvg.toFixed(2)}</div><div class="sec-sub">${sortedClasses[0]} · ${ls}</div></div></div></div>
+          ${_instAvg!==null?`<div class="col-md-4 flex-fill mb-2"><div class="sec-card h-100"><div class="sec-icon"><i class="fas fa-building"></i></div><div class="sec-body"><div class="sec-label">Kurum Ortalaması</div><div class="sec-value">${_instAvg.toFixed(2)}</div><div class="sec-sub">${lvlForAvg?lvlForAvg+'. Sınıflar':''} · ${_instValsForDate.length} kayıt</div></div></div></div>`:''}
+          ${_delta!==null?`<div class="col-md-4 flex-fill mb-2"><div class="sec-card ${_dCls} h-100"><div class="sec-icon"><i class="fas fa-exchange-alt"></i></div><div class="sec-body"><div class="sec-label">Şube − Kurum Farkı</div><div class="sec-value">${_dSign}${_delta.toFixed(2)}</div><div class="sec-sub">${_delta>0?'Kurum üstünde':'Kurum altında'}</div></div></div></div>`:''}
+        </div>`;
+      }
+
       clsPerfHtml = `<div class="row mb-3">
+        ${singleExamSingleBranchHtml ? singleExamSingleBranchHtml : `
         ${showCompCards ? `
-        <div class="col-md-4 col-lg flex-fill mb-2"><div class="sec-card sec-pos h-100"><div class="sec-icon"><i class="fas fa-trophy"></i></div><div class="sec-body"><div class="sec-label">En İyi Sınıf</div><div class="sec-value">${best.cls}</div><div class="sec-sub">Ort: ${best.avg.toFixed(2)}</div>${_explain('Bu sınıf seviyesinde ortalaması en yüksek şube')}</div></div></div>
-        <div class="col-md-4 col-lg flex-fill mb-2"><div class="sec-card sec-neg h-100"><div class="sec-icon"><i class="fas fa-exclamation-circle"></i></div><div class="sec-body"><div class="sec-label">En Düşük Sınıf</div><div class="sec-value">${worst.cls}</div><div class="sec-sub">Ort: ${worst.avg.toFixed(2)}</div>${_explain('Bu sınıf seviyesinde ortalaması en düşük şube')}</div></div></div>
+        <div class="col-md-4 col-lg flex-fill mb-2"><div class="sec-card sec-pos h-100"><div class="sec-icon"><i class="fas fa-trophy"></i></div><div class="sec-body"><div class="sec-label">En İyi Sınıf</div><div class="sec-value">${best.cls}</div><div class="sec-sub">Ort: ${best.avg.toFixed(2)}</div></div></div></div>
+        <div class="col-md-4 col-lg flex-fill mb-2"><div class="sec-card sec-neg h-100"><div class="sec-icon"><i class="fas fa-exclamation-circle"></i></div><div class="sec-body"><div class="sec-label">En Düşük Sınıf</div><div class="sec-value">${worst.cls}</div><div class="sec-sub">Ort: ${worst.avg.toFixed(2)}</div></div></div></div>
         ` : ''}
-        <div class="col-md-4 col-lg flex-fill mb-2"><div class="sec-card h-100"><div class="sec-icon"><i class="fas fa-calculator"></i></div><div class="sec-body"><div class="sec-label">Kurum Ort. (${lvlLabel})</div><div class="sec-value">${genAvgPerf.toFixed(2)}</div>${_explain('Aynı sınıf seviyesindeki tüm öğrencilerin ortalaması')}</div></div></div>
+        <div class="col-md-4 col-lg flex-fill mb-2"><div class="sec-card h-100"><div class="sec-icon"><i class="fas fa-calculator"></i></div><div class="sec-body"><div class="sec-label">Kurum Ort. (${lvlLabel})</div><div class="sec-value">${genAvgPerf.toFixed(2)}</div></div></div></div>
         ${showCompCards ? `
-        <div class="col-md-6 col-lg flex-fill mb-2"><div class="sec-card h-100"><div class="sec-icon"><i class="fas fa-star"></i></div><div class="sec-body"><div class="sec-label">Ort. Üstü Sınıf</div><div class="sec-value">${aboveAvg} / ${topCls.length}</div>${_explain('Kurum ortalamasının üstünde kalan şube sayısı')}</div></div></div>
+        <div class="col-md-6 col-lg flex-fill mb-2"><div class="sec-card h-100"><div class="sec-icon"><i class="fas fa-star"></i></div><div class="sec-body"><div class="sec-label">Ort. Üstü Sınıf</div><div class="sec-value">${aboveAvg} / ${topCls.length}</div></div></div></div>
         ` : ''}
-        <div class="col-md-6 col-lg flex-fill mb-2"><div class="sec-card sec-neutral h-100"><div class="sec-icon"><i class="fas fa-users"></i></div><div class="sec-body"><div class="sec-label">Katılım Oranı</div><div class="sec-value">%${partRate}</div><div class="sec-sub">${attendedCount} / ${baseCount} Katılım</div>${_explain('Düzenlenen sınavların yüzde kaçına girildi')}</div></div></div>
+        <div class="col-md-6 col-lg flex-fill mb-2"><div class="sec-card sec-neutral h-100"><div class="sec-icon"><i class="fas fa-users"></i></div><div class="sec-body"><div class="sec-label">Katılım Oranı</div><div class="sec-value">%${partRate}</div><div class="sec-sub">${attendedCount} / ${baseCount} Katılım</div></div></div></div>
         ${cohenHtml}
+        `}
       </div>`;
     }
     
@@ -1831,6 +1923,36 @@ function rAnl(){
       <div class="col-lg-6"><div class="card shadow-sm avoid-break"><div class="card-header bg-success text-white"><h3 class="card-title m-0"><i class="fas fa-trophy mr-1"></i> En İyi 5 Öğrenci</h3></div><div class="card-body p-0 table-responsive"><table class="table table-sm table-striped m-0" style="font-size:0.85em;"><thead><tr><th>#</th><th>Ad Soyad</th><th>Sınıf</th><th>Ort. (${ls})</th></tr></thead><tbody>${stuTop5Html}</tbody></table></div></div></div>
       <div class="col-lg-6"><div class="card shadow-sm avoid-break"><div class="card-header bg-danger text-white"><h3 class="card-title m-0"><i class="fas fa-exclamation-circle mr-1"></i> En Düşük 5 Öğrenci</h3></div><div class="card-body p-0 table-responsive"><table class="table table-sm table-striped m-0" style="font-size:0.85em;"><thead><tr><th>#</th><th>Ad Soyad</th><th>Sınıf</th><th>Ort. (${ls})</th></tr></thead><tbody>${stuBottom5Html}</tbody></table></div></div></div>
     </div>` : '';
+
+    // 1-D: Tek şube - ilerleme/gerileme kartları (showCompCards=false olsa bile gösterilir)
+    let progressRegressionHtml = '';
+    if(!showCompCards && sd.length >= 2) {
+      // Her öğrencinin sınav serisi üzerinden regresyon eğimi hesapla
+      let _stuSeriesMap = {};
+      sd.forEach(dt => {
+        (d[dt]||[]).forEach(e => {
+          let _stu = getStuMap().get(e.studentNo); if(!_stu) return;
+          if(!_stuSeriesMap[e.studentNo]) _stuSeriesMap[e.studentNo] = { name: _stu.name, cls: _stu.class, scores: [] };
+          let _v;
+          if(sb==='score') _v=e.score;
+          else if(sb==='totalNet'||!sb) _v=e.totalNet;
+          else { let _sk=toTitleCase(sb.replace('s_','')); _v=(e.subs&&e.subs[_sk]!==undefined)?e.subs[_sk].net:null; }
+          if(_v!==null && _v!==undefined) _stuSeriesMap[e.studentNo].scores.push(_v);
+        });
+      });
+      let _slopeArr = Object.entries(_stuSeriesMap)
+        .filter(([,s]) => s.scores.length >= 2)
+        .map(([no2,s]) => ({ no: no2, name: s.name, cls: s.cls, slope: linRegSlope(s.scores), cnt: s.scores.length }));
+      _slopeArr.sort((a,b) => b.slope - a.slope);
+      let _bestProg  = _slopeArr.length > 0 && _slopeArr[0].slope > 0 ? _slopeArr[0] : null;
+      let _worstProg = _slopeArr.length > 0 && _slopeArr[_slopeArr.length-1].slope < 0 ? _slopeArr[_slopeArr.length-1] : null;
+      if(_bestProg || _worstProg) {
+        progressRegressionHtml = `<div class="row mb-3">
+          ${_bestProg ? `<div class="col-md-6 mb-2"><div class="sec-card sec-pos h-100"><div class="sec-icon"><i class="fas fa-rocket"></i></div><div class="sec-body"><div class="sec-label">En Fazla İlerleme</div><div class="sec-value" style="font-size:1.05em;">${_bestProg.name} <small>(${_bestProg.cls})</small></div><div class="sec-sub">Sınav başına +${_bestProg.slope.toFixed(2)} · ${_bestProg.cnt} sınav</div></div></div></div>` : ''}
+          ${_worstProg ? `<div class="col-md-6 mb-2"><div class="sec-card sec-neg h-100"><div class="sec-icon"><i class="fas fa-level-down-alt"></i></div><div class="sec-body"><div class="sec-label">En Fazla Gerileme</div><div class="sec-value" style="font-size:1.05em;">${_worstProg.name} <small>(${_worstProg.cls})</small></div><div class="sec-sub">Sınav başına ${_worstProg.slope.toFixed(2)} · ${_worstProg.cnt} sınav</div></div></div></div>` : ''}
+        </div>`;
+      }
+    }
 
     let clsTrendHtml = '';
     if(sd.length >= 2) {
@@ -1919,6 +2041,7 @@ function rAnl(){
       </div>
       <div class="card-body" style="padding-top:5px;">
         ${clsPerfHtml}
+        ${progressRegressionHtml}
         ${clsTrendHtml}
         <div id="clsBoxPlotArea"></div>
         ${top5Bottom5Html}
@@ -2147,8 +2270,8 @@ function rAnl(){
       </div>
       <div class="card-body" style="padding-top:5px;">
         <div class="row mb-3">
-          <div class="col-md-4 col-lg flex-fill mb-2"><div class="sec-card h-100"><div class="sec-icon"><i class="fas fa-calculator"></i></div><div class="sec-body"><div class="sec-label">Genel Ortalama</div><div class="sec-value">${genAvg.toFixed(2)} Net</div>${_explain('Bu derste tüm öğrencilerin tüm sınavlardaki net ortalaması')}</div></div></div>
-          <div class="col-md-4 col-lg flex-fill mb-2"><div class="sec-card h-100"><div class="sec-icon"><i class="fas fa-users"></i></div><div class="sec-body"><div class="sec-label">Toplam Kayıt</div><div class="sec-value">${ex.length} Sonuç</div>${_explain('Hesaba dahil edilen sınav sonucu sayısı')}</div></div></div>
+          <div class="col-md-4 col-lg flex-fill mb-2"><div class="sec-card h-100"><div class="sec-icon"><i class="fas fa-calculator"></i></div><div class="sec-body"><div class="sec-label">Genel Ortalama</div><div class="sec-value">${genAvg.toFixed(2)} Net</div></div></div></div>
+          <div class="col-md-4 col-lg flex-fill mb-2"><div class="sec-card h-100"><div class="sec-icon"><i class="fas fa-users"></i></div><div class="sec-body"><div class="sec-label">Toplam Kayıt</div><div class="sec-value">${ex.length} Sonuç</div></div></div></div>
           <div class="col-md-4 col-lg flex-fill mb-2"><div class="sec-card sec-pos h-100"><div class="sec-icon"><i class="fas fa-trophy"></i></div><div class="sec-body"><div class="sec-label">En İyi Öğrenci</div><div class="sec-value" style="font-size:0.95em;">${bestStudent ? bestStudent.name : 'Veri Yok'}</div><div class="sec-sub">${bestStudent ? `${bestStudent.avg.toFixed(2)} Net (Ort)` : ''}</div>${_explain('Bu dersteki tüm sınav net ortalaması en yüksek öğrenci')}</div></div></div>
           <div class="col-md-6 col-lg flex-fill mb-2"><div class="sec-card sec-neg h-100"><div class="sec-icon"><i class="fas fa-exclamation-triangle"></i></div><div class="sec-body"><div class="sec-label">En Zayıf Öğrenci</div><div class="sec-value" style="font-size:0.95em;">${worstStudent ? worstStudent.name : 'Veri Yok'}</div><div class="sec-sub">${worstStudent ? `${worstStudent.avg.toFixed(2)} Net (Ort)` : ''}</div>${_explain('Bu dersteki tüm sınav net ortalaması en düşük öğrenci')}</div></div></div>
           <div class="col-md-6 col-lg flex-fill mb-2"><div class="sec-card sec-neutral h-100"><div class="sec-icon"><i class="fas fa-chart-pie"></i></div><div class="sec-body"><div class="sec-label">Katılım Oranı</div><div class="sec-value">%${partRateS}</div><div class="sec-sub">${attendedCountS} / ${baseCountS} Katılım</div>${_explain('Bu dersi içeren sınavların yüzde kaçına girilmiş')}</div></div></div>
@@ -2422,7 +2545,9 @@ function rAnl(){
         if(examGrades && !examGrades.has(m[1])) return false;
         return true;
       });
-      let partRateE = eligibleStusE.length > 0 ? Math.max(0, Math.min(100, Math.round((currentExams.length / eligibleStusE.length) * 100))) : 0;
+      // attendedNos öne alındı: hem partRateE hem absentStus hesabında kullanılır
+      let attendedNos = new Set(currentExams.map(e => e.studentNo));
+      let partRateE = eligibleStusE.length > 0 ? Math.max(0, Math.min(100, Math.round((attendedNos.size / eligibleStusE.length) * 100))) : 0;
 
       // Tek sınav istatistik kartı: Std + Medyan + IQR (yalnızca n>=5 öğrenci varsa anlamlı)
       let examStatsHtml = '';
@@ -2443,7 +2568,6 @@ function rAnl(){
 
       // Katılmayan öğrenci listesi: "Katılım %82" kartı hangi %18'in kim olduğunu söylemiyor.
       // Ders öğretmeni sınav sonucunu incelerken katılmayanları doğrudan bu sayfadan görebilmeli.
-      let attendedNos = new Set(currentExams.map(e => e.studentNo));
       let absentStus  = eligibleStusE.filter(s => !attendedNos.has(s.no));
       let absentListHtml = '';
       if(absentStus.length > 0) {
@@ -2480,7 +2604,7 @@ function rAnl(){
                 <div class="col-md-4 col-sm-12"><div class="sec-card sec-pos"><div class="sec-icon"><i class="fas fa-arrow-up"></i></div><div class="sec-body"><div class="sec-label">Ortalaması En Çok Artan Ders</div><div class="sec-value" style="font-size:1.05em;">${bestSub ? toTitleCase(bestSub.sub) : 'Veri Yok'}</div><div class="sec-sub">${bestSub ? `+${bestSub.diff.toFixed(2)} Net (${bestSub.prevAvg.toFixed(2)} ➔ ${bestSub.curAvg.toFixed(2)})` : 'Önceki sınav bulunamadı'}</div>${_explain('Önceki sınava göre sınıf ortalaması en çok yükselen ders')}</div></div></div>
                 <div class="col-md-4 col-sm-12"><div class="sec-card sec-neg"><div class="sec-icon"><i class="fas fa-arrow-down"></i></div><div class="sec-body"><div class="sec-label">Ortalaması En Çok Düşen Ders</div><div class="sec-value" style="font-size:1.05em;">${worstSub ? toTitleCase(worstSub.sub) : 'Veri Yok'}</div><div class="sec-sub">${worstSub ? `${worstSub.diff.toFixed(2)} Net (${worstSub.prevAvg.toFixed(2)} ➔ ${worstSub.curAvg.toFixed(2)})` : 'Önceki sınav bulunamadı'}</div>${_explain('Önceki sınava göre sınıf ortalaması en çok gerileyen ders')}</div></div></div>
                 ` : ''}
-                <div class="col-md-4 col-sm-12"><div class="sec-card sec-neutral"><div class="sec-icon"><i class="fas fa-users"></i></div><div class="sec-body"><div class="sec-label">Sınav Katılım Oranı</div><div class="sec-value" style="font-size:1.05em;">%${partRateE}</div><div class="sec-sub">${currentExams.length} katıldı · ${absentStus.length} katılmadı</div>${_explain('Sınava girmesi beklenen öğrencilerin yüzde kaçı katıldı')}</div></div></div>
+                <div class="col-md-4 col-sm-12"><div class="sec-card sec-neutral"><div class="sec-icon"><i class="fas fa-users"></i></div><div class="sec-body"><div class="sec-label">Sınav Katılım Oranı</div><div class="sec-value" style="font-size:1.05em;">%${partRateE}</div><div class="sec-sub">${attendedNos.size} katıldı · ${absentStus.length} katılmadı</div>${_explain('Sınava girmesi beklenen öğrencilerin yüzde kaçı katıldı')}</div></div></div>
             </div>
             ${examStatsHtml}
             
@@ -2577,7 +2701,7 @@ function rAnl(){
         return String(a.studentName||'').localeCompare(String(b.studentName||''),'tr',{sensitivity:'base'});
       });
       let absent=rows2.filter(x=>x.abs).sort((a,b)=>String(a.studentName||'').localeCompare(String(b.studentName||''),'tr',{sensitivity:'base'}));
-      let sorted=[...attended,...absent], avgNet=attended.length?(attended.reduce((s,x)=>s+x.totalNet,0)/attended.length).toFixed(2):'0.00', avgScoreMeta=attended.length?(attended.reduce((s,x)=>s+(x.score||0),0)/attended.length).toFixed(2):'0.00', metaStr=`Katılan: ${attended.length} | Ortalama Puan: ${avgScoreMeta} | Sıralama: Puan`;
+      let sorted=[...attended,...absent], avgNet=attended.length?(attended.reduce((s,x)=>s+x.totalNet,0)/attended.length).toFixed(2):'0.00', avgScoreMeta=attended.length?(attended.reduce((s,x)=>s+(x.score||0),0)/attended.length).toFixed(2):'0.00', metaStr=`Katılan: ${attended.length} | Devamsız: ${absent.length} | Ortalama Puan: ${avgScoreMeta} | Sıralama: Puan`;
       
       let headCols=subKeys.map(k=>`<th>${toTitleCase(k)}</th>`).join('');
       let _rankIdx = 0;
@@ -2587,6 +2711,20 @@ function rAnl(){
         _rankIdx++;
         return `<tr class="${rCls}"><td>${_rankIdx}</td><td>${e.studentName}</td><td>${e.studentCls}</td><td>${e.date}</td><td>${toTitleCase(pub)}</td>${subKeys.map(k=>`<td>${e.subs[k]!==undefined?e.subs[k].net.toFixed(2):'—'}</td>`).join('')}<td><strong>${e.totalNet.toFixed(2)}</strong></td><td>${e.score.toFixed(2)}</td><td>${e.cR||'—'}/${e.cP||'—'}</td><td>${e.iR||'—'}/${e.iP||'—'}</td></tr>`;
       }).join('');
+
+      // 1-F: Sınıf bazlı ara ortalama satırları (tablo sonuna eklenir)
+      let classSubtotalRows = '';
+      {
+        let _clsGroups = {};
+        attended.forEach(e => { if(!_clsGroups[e.studentCls]) _clsGroups[e.studentCls] = []; _clsGroups[e.studentCls].push(e); });
+        Object.keys(_clsGroups).sort().forEach(cls => {
+          let _cg = _clsGroups[cls];
+          let _cgSubCols = subKeys.map(k => { let v = _cg.filter(e=>e.subs[k]!==undefined).map(e=>e.subs[k].net); return `<td>${v.length?(v.reduce((a,b)=>a+b,0)/v.length).toFixed(2):'—'}</td>`; }).join('');
+          let _cgNet = (_cg.reduce((s,x)=>s+x.totalNet,0)/_cg.length).toFixed(2);
+          let _cgScore = (_cg.reduce((s,x)=>s+(x.score||0),0)/_cg.length).toFixed(2);
+          classSubtotalRows += `<tr class="avg-row" style="background:#e8f5e9;"><td colspan="5" style="text-align:right;padding-right:15px;font-weight:bold;">${cls} Ortalaması (${_cg.length} kişi)</td>${_cgSubCols}<td>${_cgNet}</td><td>${_cgScore}</td><td colspan="2">—</td></tr>`;
+        });
+      }
 
       let listAvgRow = '';
       if (attended.length > 0) {
