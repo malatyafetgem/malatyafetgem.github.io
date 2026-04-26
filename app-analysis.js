@@ -105,6 +105,16 @@ function _consistencyLabel(cv){
   if(cv < 35)  return 'Dalgalı';
   return 'Çok dalgalı';
 }
+// Sürpriz Payı etiketi — RMSE (regresyon kalıntılarının standart hatası) bazlı.
+// RMSE düşükse trend tahmini güvenilir → sürpriz az; RMSE yüksekse sınavlar trendden
+// büyük sapma gösteriyor → sürpriz yüksek. Eşikler net cinsinden tipik dağılıma göredir.
+function _surpriseLabel(rmse){
+  if(rmse === null || rmse === undefined || isNaN(rmse)) return '—';
+  if(rmse < 4)   return 'Çok Düşük';
+  if(rmse < 8)   return 'Düşük';
+  if(rmse < 14)  return 'Orta';
+  return 'Yüksek';
+}
 function _homogeneityLabel(cv){
   if(cv === null) return '—';
   if(cv < 10)  return 'Çok homojen';
@@ -743,11 +753,13 @@ function calcKarneSummaryCards(stuNo, examType, grade, examsData) {
     }
     trend = { totalChange, slope, r2, ewmaVal, count: nets.length, trendClass, trendIcon, trendText };
 
-    // Kişisel Tutarlılık — öğrencinin kendi netlerinin std sapması (grup içi std DEĞİL).
-    let personalSD = _statStd(nets);
-    let personalCV = _statCV(nets);
-    if(personalSD !== null){
-      consistency = { sd: personalSD, cv: personalCV, label: _consistencyLabel(personalCV), n: nets.length };
+    // Sürpriz Payı — regresyon doğrusundan kalıntıların RMSE'si (standart hata).
+    // Bu, "Performans Tutarlılığı"nın trendi de hesaba katan, istatistiksel olarak
+    // doğru karşılığıdır: trend doğrusu öğrencinin sınavlarını ortalama ne kadar
+    // sapma ile tahmin ediyor? Düşük = öngörülebilir, yüksek = sürprizli.
+    let surpriseRMSE = linRegRMSE(nets);
+    if(surpriseRMSE !== null){
+      consistency = { sd: surpriseRMSE, label: _surpriseLabel(surpriseRMSE), n: nets.length };
     }
   }
 
@@ -829,38 +841,39 @@ function buildKarneExamCards(summary, examType) {
     // EWMA: Son sınavlara daha fazla ağırlık verilen ortalama (kısa-vadeli momentum)
     let ewmaVal = trend.ewmaVal !== null && trend.ewmaVal !== undefined ? trend.ewmaVal.toFixed(1) : null;
 
-    // Performans Tutarlılığı (kişisel σ) — ÖĞRENCİNİN KENDİ netlerinin std sapması.
-    // Bu "grup içi std" DEĞİLDİR; bireyin ne kadar istikrarlı olduğunu gösterir.
+    // Sürpriz Payı — regresyon doğrusundan kalıntıların RMSE'si (Standart Hata).
+    // Trendin tahmininden ortalama sapma. Düşük = öngörülebilir performans.
     let consHtml = '';
     if(consistency){
-      consHtml = `<div class="col-6 col-md border-left mb-1" title="Öğrencinin sınavları arasındaki dalgalanma (kişisel standart sapma). Düşük değer = istikrarlı performans.">
-        <div style="font-size:1.1em;font-weight:bold;color:#6f42c1;">±${consistency.sd.toFixed(2)}</div>
-        <div class="small text-muted" style="font-size:0.75em;">Performans Tutarlılığı</div>
+      consHtml = `<div class="col-6 col-md border-left mb-1" title="Sınav sonuçlarının trend doğrusundan ortalama sapması (Standart Hata / RMSE). Düşük değer = trend güvenilir, sürpriz az.">
+        <div style="font-size:1.1em;font-weight:bold;color:#6f42c1;">±${consistency.sd.toFixed(2)} Net</div>
+        <div class="small text-muted" style="font-size:0.75em;">Sürpriz Payı</div>
         <div class="x-small text-muted">${consistency.label}</div>
+        <div class="x-small text-muted">(Standart Hata / RMSE)</div>
       </div>`;
     }
 
     trendHtml = `<div class="trend-card mt-2 mb-1"><div class="row align-items-center text-center">
       <div class="col-6 col-md mb-1" title="${r2Tooltip}">
         <span class="trend-indicator ${trend.trendClass}" style="font-size:0.8em;"><i class="fas ${trend.trendIcon} mr-1"></i>${trend.trendText}</span>
-        <div class="small text-muted mt-1" style="font-size:0.75em;"><strong>Genel Yön</strong></div>
-        ${r2Chip}
+        <div class="small text-muted mt-1" style="font-size:0.75em;"><strong>Genel Yön (Trend)</strong></div>
+        ${r2Pct !== null ? `<div class="x-small mt-1" style="color:${tColor};"><strong>%${r2Pct}</strong> doğruluk payıyla (R²: ${(r2Pct/100).toFixed(2)})</div>` : ''}
       </div>
       <div class="col-6 col-md border-left mb-1" title="İlk sınavdan son sınava kadar regresyon doğrusunun toplam değişimi (net cinsinden)">
         <div style="font-size:1.1em;font-weight:bold;color:${tColor};">${tSign}${trend.totalChange.toFixed(1)} net</div>
-        <div class="small text-muted" style="font-size:0.75em;"><strong>Toplam İlerleme</strong></div>
-        <div class="x-small text-muted">İlk → Son sınav</div>
+        <div class="small text-muted" style="font-size:0.75em;"><strong>Toplam Net Değişimi</strong></div>
+        <div class="x-small text-muted">Süreç Boyunca</div>
       </div>
       <div class="col-6 col-md border-left mb-1" title="Her yeni sınavda beklenen ortalama net değişim (regresyon eğimi)">
         <div style="font-size:1.1em;font-weight:bold;color:${tColor};">${sSign}${trend.slope.toFixed(2)} net</div>
         <div class="small text-muted" style="font-size:0.75em;"><strong>Sınav Başı Değişim</strong></div>
-        <div class="x-small text-muted">Eğim (slope)</div>
+        <div class="x-small text-muted">(Regresyon Analizi)</div>
       </div>
       ${consHtml}
       <div class="col-6 col-md border-left mb-1" title="Son sınavlara daha fazla ağırlık verilerek hesaplanan ortalama (EWMA, α=0.5)">
         <div style="font-size:1.1em;font-weight:bold;color:#0d6efd;">${ewmaVal !== null ? ewmaVal : '—'} net</div>
-        <div class="small text-muted" style="font-size:0.75em;"><strong>Son Dönem Ortalaması</strong></div>
-        <div class="x-small text-muted">Ağırlıklı (EWMA)</div>
+        <div class="small text-muted" style="font-size:0.75em;"><strong>Güncel Performans</strong></div>
+        <div class="x-small text-muted">(Ağırlıklı / EWMA)</div>
       </div>
       <div class="col-6 col-md border-left mb-1" title="Bu sınav türünde katıldığı sınav sayısı">
         <div style="font-size:1.1em;font-weight:bold;">${trend.count}</div>
@@ -1611,30 +1624,29 @@ function rAnl(){
       let avgDisplay   = avgChange.toFixed(2);
       let totalSign = totalChange > 0 ? '+' : '';
       let avgSign   = avgChange > 0 ? '+' : '';
-      let totalLabel    = isRank ? 'Sıralamadaki Toplam Değişim' : 'Toplam İlerleme';
-      let totalSubLabel = isRank ? 'İlk sınavdan son sınava (regresyon)' : 'İlk sınavdan son sınava net farkı';
-      let avgLabel      = isRank ? 'Sınav Başına Sıra Değişimi' : 'Sınav Başına Ortalama Değişim';
-      let avgSubLabel   = 'Her yeni sınavda beklenen artış/azalış';
+      let totalLabel    = isRank ? 'Sıralamadaki Toplam Değişim' : 'Toplam Net Değişimi';
+      let totalSubLabel = isRank ? 'İlk sınavdan son sınava (regresyon)' : 'Süreç Boyunca';
+      let avgLabel      = isRank ? 'Sınav Başına Sıra Değişimi' : 'Sınav Başı Değişim';
+      let avgSubLabel   = '(Regresyon Analizi)';
 
-      // Kişisel Tutarlılık (Standart Sapma) — öğrencinin sınavlar arası dalgalanması.
-      // Örneklem σ (n-1 paydası): az sınav sayısında (n=3-4) popülasyon σ, dalgalanmayı
-      // sistematik olarak küçümser ve öğrenciyi yanıltıcı biçimde "Çok tutarlı" etiketler.
-      let _stuMean = _statMean(_trendNets);
-      let _stuSD   = _statStd(_trendNets) || 0; // n-1 paydası
-      let _stuCV   = _stuMean !== 0 ? Math.abs(_stuSD/_stuMean)*100 : 0;
-      let _consistencyLabel = _stuCV < 10 ? 'Çok tutarlı' : (_stuCV < 20 ? 'Tutarlı' : (_stuCV < 35 ? 'Dalgalı' : 'Çok dalgalı'));
+      // Sürpriz Payı — regresyon doğrusundan kalıntıların RMSE'si (Standart Hata).
+      // Trendin tahmininden ortalama sapma; düşük = öngörülebilir, yüksek = sürprizli.
+      let _stuRMSE = linRegRMSE(_trendNets);
+      let _stuSD   = _stuRMSE !== null ? _stuRMSE : 0;
+      let _surpriseLab = _surpriseLabel(_stuRMSE);
       // R² — trend güvenilirliği: düşük R² = gürültülü trend, "Yükseliş" etiketi yanıltıcı olabilir.
       // Adaptif eşik: az veriyle (n=3-4) sabit 0.30 çok kısıtlayıcı; _adaptiveR2 bunu dengeler.
       let _stuR2     = linRegR2(_trendNets);
       let _stuR2Thr  = _adaptiveR2(_trendNets.length);
       let _stuR2Lab  = _stuR2 >= 0.65 ? 'Güçlü trend' : (_stuR2 >= _stuR2Thr ? 'Orta trend' : 'Zayıf trend');
       let _stuR2Col  = _stuR2 >= 0.65 ? '#28a745'     : (_stuR2 >= _stuR2Thr ? '#fd7e14'   : '#dc3545');
+      let _stuR2Pct  = Math.round(_stuR2 * 100);
 
       trendHtml = `<div class="trend-card mb-3"><div class="row align-items-center">
         <div class="col-6 col-md-2 text-center mb-2 mb-md-0" title="Tüm sınavların regresyon doğrusunun yönü">
           <span class="trend-indicator ${trendClass}"><i class="fas ${trendIcon} mr-1"></i>${trendText}</span>
-          <div class="mt-2 small text-muted"><strong>Genel Eğilim</strong></div>
-          <div class="x-small text-muted">Sınavlar boyunca genel yön</div>
+          <div class="mt-2 small text-muted"><strong>Genel Yön (Trend)</strong></div>
+          <div class="x-small" style="color:${totalColor};"><strong>%${_stuR2Pct}</strong> doğruluk payıyla (R²: ${_stuR2.toFixed(2)})</div>
         </div>
         <div class="col-6 col-md-2 text-center border-left mb-2 mb-md-0" title="${totalSubLabel}">
           <div style="font-size:1.4em; font-weight:bold; color:${totalColor};">${totalSign}${totalDisplay}</div>
@@ -1646,10 +1658,11 @@ function rAnl(){
           <div class="small text-muted"><strong>${avgLabel}</strong></div>
           <div class="x-small text-muted">${avgSubLabel}</div>
         </div>
-        <div class="col-6 col-md-2 text-center border-left mb-2 mb-md-0" title="Sınavlar arasındaki dalgalanma (örneklem standart sapması, n-1). Düşük değer = istikrarlı performans.">
-          <div style="font-size:1.4em; font-weight:bold; color:#6f42c1;">±${_stuSD.toFixed(2)}</div>
-          <div class="small text-muted"><strong>Performans Tutarlılığı</strong></div>
-          <div class="x-small text-muted">${_consistencyLabel} • ${_trendNets.length} sınav</div>
+        <div class="col-6 col-md-2 text-center border-left mb-2 mb-md-0" title="Sınav sonuçlarının trend doğrusundan ortalama sapması (Standart Hata / RMSE). Düşük değer = trend güvenilir, sürpriz az.">
+          <div style="font-size:1.4em; font-weight:bold; color:#6f42c1;">±${_stuSD.toFixed(2)} Net</div>
+          <div class="small text-muted"><strong>Sürpriz Payı</strong></div>
+          <div class="x-small text-muted">${_surpriseLab}</div>
+          <div class="x-small text-muted">(Standart Hata / RMSE)</div>
         </div>
         <div class="col-6 col-md-2 text-center border-left mb-2 mb-md-0" title="Trend Güvenilirliği (R²): 1'e yakınsa regresyon doğrusu veriyi iyi açıklıyor, 0'a yakınsa gürültülü. Adaptif eşik (n=${_trendNets.length} sınav): ${_stuR2Thr.toFixed(2)}">
           <div style="font-size:1.4em; font-weight:bold; color:${_stuR2Col};">${_stuR2.toFixed(2)}</div>
@@ -2005,13 +2018,13 @@ function rAnl(){
           </div>
           <div class="col-6 col-md-2 text-center border-left mb-2 mb-md-0" title="İlk sınavdan son sınava ortalamadaki net değişim (regresyon)">
             <div style="font-size:1.4em;font-weight:bold;color:${clsTColor};">${clsTSign}${clsTTotal.toFixed(2)}</div>
-            <div class="small text-muted"><strong>Toplam İlerleme</strong></div>
-            <div class="x-small text-muted">Dönem başı → dönem sonu</div>
+            <div class="small text-muted"><strong>Toplam Net Değişimi</strong></div>
+            <div class="x-small text-muted">Süreç Boyunca</div>
           </div>
           <div class="col-6 col-md-2 text-center border-left mb-2 mb-md-0" title="Her yeni sınavda beklenen ortalama değişim">
             <div style="font-size:1.4em;font-weight:bold;color:${clsTColor};">${clsSSign}${clsTSlope.toFixed(2)}</div>
             <div class="small text-muted"><strong>Sınav Başına Değişim</strong></div>
-            <div class="x-small text-muted">Ortalama eğim</div>
+            <div class="x-small text-muted">(Regresyon Analizi)</div>
           </div>
           <div class="col-6 col-md-2 text-center border-left mb-2 mb-md-0" title="Analize dahil edilen toplam sınav sayısı">
             <div style="font-size:1.4em;font-weight:bold;">${dateAvgSeries.length}</div>
@@ -2197,13 +2210,13 @@ function rAnl(){
           </div>
           <div class="col-6 col-md-2 text-center border-left mb-2 mb-md-0" title="İlk sınavdan son sınava ders ortalamasındaki değişim (regresyon)">
             <div style="font-size:1.4em;font-weight:bold;color:${subjTColor};">${subjTSign}${subjTotal.toFixed(2)}</div>
-            <div class="small text-muted"><strong>Toplam İlerleme</strong></div>
-            <div class="x-small text-muted">Dönem başı → dönem sonu</div>
+            <div class="small text-muted"><strong>Toplam Net Değişimi</strong></div>
+            <div class="x-small text-muted">Süreç Boyunca</div>
           </div>
           <div class="col-6 col-md-2 text-center border-left mb-2 mb-md-0" title="Her yeni sınavda derste beklenen değişim">
             <div style="font-size:1.4em;font-weight:bold;color:${subjTColor};">${subjSSign}${subjSlope.toFixed(2)}</div>
             <div class="small text-muted"><strong>Sınav Başına Değişim</strong></div>
-            <div class="x-small text-muted">Ortalama eğim</div>
+            <div class="x-small text-muted">(Regresyon Analizi)</div>
           </div>
           <div class="col-6 col-md-2 text-center border-left mb-2 mb-md-0" title="Trend hesabına dahil edilen toplam sınav sayısı">
             <div style="font-size:1.4em;font-weight:bold;">${subjDateAvgSeries.length}</div>

@@ -365,6 +365,22 @@ function linRegR2(values){
   return Math.max(0, Math.min(1, 1 - ssRes/ssTot));
 }
 
+// ---- linRegRMSE: Regresyon doğrusundan kalıntıların RMSE'si (Standart Hata) ----
+// "Sürpriz Payı": öğrencinin sınav sonucu, trend doğrusunun tahmininden ortalama
+// olarak ne kadar sapıyor? Düşük = trend güvenilir, yüksek = sürpriz dolu.
+// İstatistiksel olarak: sqrt(SSres / (n-2)). En az 3 veri gerekir.
+function linRegRMSE(values){
+  let arr = (values||[]).filter(v => v !== null && v !== undefined && !isNaN(v)).map(Number);
+  let n = arr.length; if(n < 3) return null;
+  let meanY = arr.reduce((a,b)=>a+b,0)/n;
+  let slope = linRegSlope(arr);
+  let sumX = (n*(n-1))/2;
+  let intercept = meanY - slope*(sumX/n);
+  let ssRes = arr.reduce((a,v,i)=>a+Math.pow(v-(intercept+slope*i),2),0);
+  // n-2: regresyon iki parametre (slope + intercept) tahmin ettiği için serbestlik derecesi
+  return Math.sqrt(ssRes / (n - 2));
+}
+
 // ---- ewma: Üstel Ağırlıklı Hareketli Ortalama (son windowSize sınav baz alınır) ----
 // alpha: düzeltme faktörü (varsayılan 0.5 — son sınavın ağırlığı daha yüksek)
 function ewma(values, windowSize, alpha){
