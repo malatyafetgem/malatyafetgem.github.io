@@ -1761,7 +1761,7 @@ function rAnl(){
       //   (SE büyür, d kolayca ±∞ alır). 10 öğrenci APA'nın önerdiği alt sınırdır.
       let cohenHtml = '';
       if(showCompCards && sd.length >= 2) {
-        // En iyi şubede her öğrencinin ortalamasını hesapla
+        // En iyi ve en düşük şubede her öğrencinin ortalamasını hesapla
         let _stuAvgsForCls = (cls) => {
           let map = {};
           ex.filter(x=>x.studentClass===cls).forEach(x=>{
@@ -1771,21 +1771,16 @@ function rAnl(){
           });
           return Object.values(map).map(arr=>arr.reduce((a,b)=>a+b,0)/arr.length);
         };
-        let bestVals = _stuAvgsForCls(best.cls);
-        // En iyi şubeyi diğer tüm şubelerle karşılaştır
-        let cohenTooltip = "Cohen's d: iki şube arasındaki başarı farkının pratik büyüklüğü. 0.2 küçük, 0.5 orta, 0.8+ büyük.";
-        let cohenComparisons = topCls.filter(c => c.cls !== best.cls).map(other => {
-          let otherVals = _stuAvgsForCls(other.cls);
-          if(bestVals.length < 10 || otherVals.length < 10) return null;
-          let d = _statCohenD(bestVals, otherVals);
-          if(d === null || !isFinite(d)) return null;
-          let lab = _cohenLabel(d);
-          let dColor = Math.abs(d) >= 0.8 ? '#dc3545' : (Math.abs(d) >= 0.5 ? '#fd7e14' : (Math.abs(d) >= 0.2 ? '#ffc107' : '#6c757d'));
-          return `<div style="font-size:0.82em;margin-top:3px;"><span style="color:${dColor};font-weight:600;">d = ${d.toFixed(2)}</span> <span style="color:#6c757d;">${lab} fark</span> <span style="color:#495057;">(${best.cls} vs ${other.cls})</span></div>`;
-        }).filter(x => x !== null);
-
-        if(cohenComparisons.length > 0) {
-          cohenHtml = `<div class="col-md-6 col-lg flex-fill mb-2"><div class="sec-card h-100" title="${cohenTooltip}" style="cursor:help;"><div class="sec-icon"><i class="fas fa-balance-scale"></i></div><div class="sec-body"><div class="sec-label">Şubeler Arası Etki Büyüklüğü</div>${cohenComparisons.join('')}</div></div></div>`;
+        let bestVals  = _stuAvgsForCls(best.cls);
+        let worstVals = _stuAvgsForCls(worst.cls);
+        // n≥10 koşulu: az öğrencili şubede Cohen's d güvenilir değil
+        if(bestVals.length >= 10 && worstVals.length >= 10) {
+          let d = _statCohenD(bestVals, worstVals);
+          if(d !== null && isFinite(d)) {
+            let lab = _cohenLabel(d);
+            let dColor = Math.abs(d) >= 0.8 ? '#dc3545' : (Math.abs(d) >= 0.5 ? '#fd7e14' : (Math.abs(d) >= 0.2 ? '#ffc107' : '#6c757d'));
+            cohenHtml = `<div class="col-md-6 col-lg flex-fill mb-2"><div class="sec-card h-100"><div class="sec-icon"><i class="fas fa-balance-scale"></i></div><div class="sec-body"><div class="sec-label">Şubeler Arası Etki Büyüklüğü</div><div class="sec-value" style="color:${dColor};">d = ${d.toFixed(2)}</div><div class="sec-sub">${lab} fark (${best.cls} vs ${worst.cls})</div>${_explain("Cohen's d: iki şube arasındaki başarı farkının pratik büyüklüğü. 0.2 küçük, 0.5 orta, 0.8+ büyük.")}</div></div></div>`;
+          }
         }
       }
 
@@ -1926,16 +1921,15 @@ function rAnl(){
         let clsTR2Lab = clsTR2 >= 0.65 ? 'Güçlü trend' : (clsTR2 >= clsTR2Thr ? 'Orta trend' : 'Zayıf trend');
         let clsTR2Col = clsTR2 >= 0.65 ? '#28a745'     : (clsTR2 >= clsTR2Thr ? '#fd7e14'   : '#dc3545');
 
-        let _clsTrendMetricLabel = (sb === 'score') ? 'Puan' : (sb.startsWith('s_') ? toTitleCase(sb.replace('s_','')) + ' Neti' : 'Net');
         clsTrendHtml = `<div class="trend-card mb-3"><div class="row align-items-center">
           <div class="col-6 col-md-2 text-center mb-2 mb-md-0" title="Sınıf ortalamasının zaman içindeki yönü">
             <span class="trend-indicator ${clsTClass}"><i class="fas ${clsTIcon} mr-1"></i>${clsTText}</span>
             <div class="mt-2 small text-muted"><strong>Genel Eğilim</strong></div>
             <div class="x-small text-muted">Sınıf ortalamasının yönü</div>
           </div>
-          <div class="col-6 col-md-2 text-center border-left mb-2 mb-md-0" title="İlk sınavdan son sınava ortalamadaki değişim (regresyon)">
+          <div class="col-6 col-md-2 text-center border-left mb-2 mb-md-0" title="İlk sınavdan son sınava ortalamadaki net değişim (regresyon)">
             <div style="font-size:1.4em;font-weight:bold;color:${clsTColor};">${clsTSign}${clsTTotal.toFixed(2)}</div>
-            <div class="small text-muted"><strong>Toplam ${_clsTrendMetricLabel} Değişimi</strong></div>
+            <div class="small text-muted"><strong>Toplam Net Değişimi</strong></div>
             <div class="x-small text-muted">Süreç Boyunca</div>
           </div>
           <div class="col-6 col-md-2 text-center border-left mb-2 mb-md-0" title="Her yeni sınavda beklenen ortalama değişim">
@@ -2127,7 +2121,7 @@ function rAnl(){
           </div>
           <div class="col-6 col-md-2 text-center border-left mb-2 mb-md-0" title="İlk sınavdan son sınava ders ortalamasındaki değişim (regresyon)">
             <div style="font-size:1.4em;font-weight:bold;color:${subjTColor};">${subjTSign}${subjTotal.toFixed(2)}</div>
-            <div class="small text-muted"><strong>Toplam ${toTitleCase(subj)} Neti Değişimi</strong></div>
+            <div class="small text-muted"><strong>Toplam Net Değişimi</strong></div>
             <div class="x-small text-muted">Süreç Boyunca</div>
           </div>
           <div class="col-6 col-md-2 text-center border-left mb-2 mb-md-0" title="Her yeni sınavda derste beklenen değişim">
@@ -2162,10 +2156,13 @@ function rAnl(){
       }
     }
 
-    // Ders Analizi Cohen's d — en iyi şube vs diğer tüm şubeler (n≥10 öğrenci koşulu).
+    // Ders Analizi Cohen's d — en iyi şube vs en düşük şube (n≥10 öğrenci koşulu).
+    // Pedagojik gerekçe: tek bir derste iki şubenin performans farkının "pratik büyüklüğünü"
+    // gösterir. Sadece ortalama farkı değil, varyansla normalize edilmiş etki büyüklüğü.
     let subjCohenHtml = '';
     if(clsArr.length >= 2) {
       let subjBestCls  = clsArr[0].cls;
+      let subjWorstCls = clsArr[clsArr.length - 1].cls;
       let _subjStuAvgs = (cls) => {
         let map = {};
         ex.filter(e => e.studentClass === cls).forEach(e => {
@@ -2174,27 +2171,24 @@ function rAnl(){
         });
         return Object.values(map).map(arr => arr.reduce((a,b)=>a+b,0)/arr.length);
       };
-      let subjBestVals = _subjStuAvgs(subjBestCls);
-      let subjCohenTooltip = "Cohen's d: iki şubenin bu dersteki başarı farkının pratik büyüklüğü. 0.2 küçük, 0.5 orta, 0.8+ büyük.";
-      let subjCohenComparisons = clsArr.filter(c => c.cls !== subjBestCls).map(other => {
-        let otherVals = _subjStuAvgs(other.cls);
-        if(subjBestVals.length < 10 || otherVals.length < 10) return null;
-        let subjD = _statCohenD(subjBestVals, otherVals);
-        if(subjD === null || !isFinite(subjD)) return null;
-        let subjDLab = _cohenLabel(subjD);
-        let subjDCol = Math.abs(subjD) >= 0.8 ? '#dc3545' : (Math.abs(subjD) >= 0.5 ? '#fd7e14' : (Math.abs(subjD) >= 0.2 ? '#ffc107' : '#6c757d'));
-        return `<div style="font-size:0.82em;margin-top:3px;"><span style="color:${subjDCol};font-weight:600;">d = ${subjD.toFixed(2)}</span> <span style="color:#6c757d;">${subjDLab} fark</span> <span style="color:#495057;">(${subjBestCls} vs ${other.cls})</span></div>`;
-      }).filter(x => x !== null);
-
-      if(subjCohenComparisons.length > 0) {
-        subjCohenHtml = `<div class="row mb-2">
-          <div class="col-12">
-            <div class="sec-card" title="${subjCohenTooltip}" style="cursor:help;"><div class="sec-icon"><i class="fas fa-balance-scale"></i></div><div class="sec-body">
-              <div class="sec-label">Şubeler Arası Etki Büyüklüğü (Cohen's d) — ${toTitleCase(subj)}</div>
-              ${subjCohenComparisons.join('')}
-            </div></div>
-          </div>
-        </div>`;
+      let subjBestVals  = _subjStuAvgs(subjBestCls);
+      let subjWorstVals = _subjStuAvgs(subjWorstCls);
+      if(subjBestVals.length >= 10 && subjWorstVals.length >= 10) {
+        let subjD = _statCohenD(subjBestVals, subjWorstVals);
+        if(subjD !== null && isFinite(subjD)) {
+          let subjDLab = _cohenLabel(subjD);
+          let subjDCol = Math.abs(subjD) >= 0.8 ? '#dc3545' : (Math.abs(subjD) >= 0.5 ? '#fd7e14' : (Math.abs(subjD) >= 0.2 ? '#ffc107' : '#6c757d'));
+          subjCohenHtml = `<div class="row mb-2">
+            <div class="col-12">
+              <div class="sec-card"><div class="sec-icon"><i class="fas fa-balance-scale"></i></div><div class="sec-body">
+                <div class="sec-label">Şubeler Arası Etki Büyüklüğü (Cohen's d)</div>
+                <div class="sec-value" style="color:${subjDCol};">d = ${subjD.toFixed(2)}</div>
+                <div class="sec-sub">${subjDLab} fark — ${subjBestCls} vs ${subjWorstCls} (bu derste)</div>
+                ${_explain("Cohen's d: iki şubenin bu dersteki başarı farkının pratik büyüklüğü. 0.2 küçük, 0.5 orta, 0.8+ büyük.")}
+              </div></div>
+            </div>
+          </div>`;
+        }
       }
     }
 
@@ -2346,7 +2340,7 @@ function rAnl(){
         let h = `<div class="d-flex justify-content-end mb-2 no-print"><button class="btn-print no-print" onclick="xPR('pGenSummary','${safeName}',this)"><i class='fas fa-print mr-1'></i>Yazdır</button></div>
         <div id="pGenSummary" class="card shadow-sm" style="border-top:3px solid #0d6efd; background:#f4f6f9;">
             <div class="report-header">
-              <span style="font-size:16px;"><i class="fas fa-globe mr-2"></i><strong>${eT}</strong> — Genel Değerlendirme</span>
+              <span style="font-size:16px;"><i class="fas fa-globe mr-2"></i><strong>${eT}</strong> — Sınav Özeti (Tüm Sınavlar)</span>
               <span style="font-size:13px;">${lvlStr} | Toplam ${dates.length} Sınav</span>
             </div>
             <div class="card-body" style="padding-top:5px;">
@@ -2400,12 +2394,12 @@ function rAnl(){
           Object.values(stuStats).forEach(s => {
             if(!s.exList || !s.exList.length) return;
             let cls = s.cls;
-            if(!clsScoreMapGS[cls]) clsScoreMapGS[cls] = { scoreSum: 0, cnt: 0 };
-            clsScoreMapGS[cls].scoreSum += s.avgScore;
+            if(!clsScoreMapGS[cls]) clsScoreMapGS[cls] = { netSum: 0, cnt: 0 };
+            clsScoreMapGS[cls].netSum += s.avgNet;
             clsScoreMapGS[cls].cnt++;
           });
           let gsBarLabels = Object.keys(clsScoreMapGS).sort();
-          let gsBarData = gsBarLabels.map(cls => clsScoreMapGS[cls].cnt ? clsScoreMapGS[cls].scoreSum / clsScoreMapGS[cls].cnt : 0);
+          let gsBarData = gsBarLabels.map(cls => clsScoreMapGS[cls].cnt ? clsScoreMapGS[cls].netSum / clsScoreMapGS[cls].cnt : 0);
           let gsCv = getEl('cGenSummaryBar');
           if(gsCv && gsBarLabels.length > 0) {
             let gsChartArea = getEl('genSummaryChartArea');
@@ -2415,7 +2409,7 @@ function rAnl(){
               type: 'bar',
               data: {
                 labels: gsBarLabels,
-                datasets:[{ label: 'Ortalama Puan', data: gsBarData, backgroundColor: cols.map(c=>c+'cc'), borderColor: cols, borderWidth: 1.5 }]
+                datasets:[{ label: 'Ortalama Net', data: gsBarData, backgroundColor: cols.map(c=>c+'cc'), borderColor: cols, borderWidth: 1.5 }]
               },
               plugins:[ChartDataLabels],
               options: {
@@ -2426,14 +2420,14 @@ function rAnl(){
                 },
                 scales: {
                   x: { grid: { color: '#e2e8f0' }, ticks: { font: { size: 10 } } },
-                  y: { grid: { color: '#e2e8f0' }, ticks: { font: { size: 10 } }, title: { display: true, text: 'Ortalama Puan', font: { size: 10 } } }
+                  y: { grid: { color: '#e2e8f0' }, ticks: { font: { size: 10 } }, title: { display: true, text: 'Ortalama Net', font: { size: 10 } } }
                 }
               }
             });
             if(gsChartArea && !gsChartArea.dataset.titleAdded) {
               let title = document.createElement('div');
               title.style.cssText = 'font-size:11px;font-weight:bold;color:#4a6fa5;margin-bottom:4px;text-align:left;';
-              title.textContent = `${eT} — Sınıf Bazlı Ortalama Puan (Tüm Sınavlar)`;
+              title.textContent = `${eT} — Sınıf Bazlı Ortalama Net (Tüm Sınavlar)`;
               gsChartArea.parentNode.insertBefore(title, gsChartArea);
               gsChartArea.dataset.titleAdded = 'true';
             }
@@ -2497,10 +2491,18 @@ function rAnl(){
         let _eQ    = _statQuartiles(examNets);
         let _eCV   = _statCV(examNets);
         let _eHomLab = _homogeneityLabel(_eCV);
+        let _iqrRatio = (_eMed && _eMed !== 0) ? _eQ.iqr / Math.abs(_eMed) : null;
+        let _iqrColor = '#6c757d', _iqrLabel = '—';
+        if(_iqrRatio !== null) {
+          if(_iqrRatio < 0.20)      { _iqrColor = '#28a745'; _iqrLabel = 'Homojen / Dengeli'; }
+          else if(_iqrRatio < 0.30) { _iqrColor = '#ffc107'; _iqrLabel = 'Normal Dağılım'; }
+          else if(_iqrRatio < 0.40) { _iqrColor = '#fd7e14'; _iqrLabel = 'Seviye Farkı Var (Dikkat!)'; }
+          else                      { _iqrColor = '#dc3545'; _iqrLabel = 'Kritik Kopukluk (Uçurum!)'; }
+        }
         examStatsHtml = `<div class="row mt-2">
-          <div class="col-md-4 col-sm-12"><div class="sec-card"><div class="sec-icon"><i class="fas fa-arrows-alt-h"></i></div><div class="sec-body"><div class="sec-label">Sınıf İçi Dağılım</div><div class="sec-value">±${_eStd.toFixed(2)}</div><div class="sec-sub">Standart sapma · ${_eHomLab}</div>${_explain('Öğrenci netlerinin ortalama etrafındaki yayılımı. Düşükse grup homojen.')}</div></div></div>
+          <div class="col-md-4 col-sm-12"><div class="sec-card"><div class="sec-icon"><i class="fas fa-arrows-alt-h"></i></div><div class="sec-body"><div class="sec-label">Ortalamadan Uzaklık</div><div class="sec-value">±${_eStd.toFixed(2)}</div><div class="sec-sub">Standart sapma · ${_eHomLab}</div>${_explain('Öğrenci netlerinin ortalama etrafındaki yayılımı. Düşükse grup homojen.')}</div></div></div>
           <div class="col-md-4 col-sm-12"><div class="sec-card"><div class="sec-icon"><i class="fas fa-equals"></i></div><div class="sec-body"><div class="sec-label">Medyan Net</div><div class="sec-value">${_eMed.toFixed(2)}</div><div class="sec-sub">Ortalama: ${_eMean.toFixed(2)}</div>${_explain('Sıralandığında ortadaki öğrencinin neti. Aşırı uçlardan etkilenmez; ortalamadan farklıysa dağılım çarpıktır.')}</div></div></div>
-          <div class="col-md-4 col-sm-12"><div class="sec-card"><div class="sec-icon"><i class="fas fa-grip-lines-vertical"></i></div><div class="sec-body"><div class="sec-label">Çeyrekler Arası Aralık (IQR)</div><div class="sec-value">${_eQ.iqr.toFixed(2)}</div><div class="sec-sub">Q1: ${_eQ.q1.toFixed(2)} · Q3: ${_eQ.q3.toFixed(2)}</div>${_explain('Orta %50 öğrencinin yayıldığı aralık. Standart sapmaya göre uç değerlere daha dirençli ölçüm.')}</div></div></div>
+          <div class="col-md-4 col-sm-12"><div class="sec-card"><div class="sec-icon"><i class="fas fa-grip-lines-vertical"></i></div><div class="sec-body"><div class="sec-label">Çeyrekler Arası Aralık (IQR)</div><div class="sec-value" style="color:${_iqrColor};">${_eQ.iqr.toFixed(2)}</div><div class="sec-sub" style="color:${_iqrColor};font-weight:600;">${_iqrLabel}</div><div class="sec-sub">Q1: ${_eQ.q1.toFixed(2)} · Q3: ${_eQ.q3.toFixed(2)}</div></div></div></div>
         </div>`;
       }
 
@@ -2544,6 +2546,9 @@ function rAnl(){
                 ` : ''}
                 <div class="col-md-4 col-sm-12"><div class="sec-card sec-neutral"><div class="sec-icon"><i class="fas fa-users"></i></div><div class="sec-body"><div class="sec-label">Sınav Katılım Oranı</div><div class="sec-value" style="font-size:1.05em;">%${partRateE}</div><div class="sec-sub">${attendedNos.size} katıldı · ${absentStus.length} katılmadı</div></div></div></div>
             </div>
+            <div class="row mt-2">
+                <div class="col-12"><div class="sec-card"><div class="sec-icon"><i class="fas fa-chart-bar"></i></div><div class="sec-body"><div class="sec-label">Ortalama Net</div><div class="sec-value">${(currentExams.reduce((s,e)=>s+e.totalNet,0)/currentExams.length).toFixed(2)}</div><div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:6px;">${(() => { let _cm={}; currentExams.forEach(e=>{if(!_cm[e.studentClass])_cm[e.studentClass]=[];_cm[e.studentClass].push(e.totalNet);}); return Object.keys(_cm).sort().map(cls=>`<span style="font-size:0.78em;background:#f1f3f5;border-radius:6px;padding:2px 8px;color:#495057;"><strong>${cls}:</strong> ${(_cm[cls].reduce((a,b)=>a+b,0)/_cm[cls].length).toFixed(2)}</span>`).join(''); })()}</div></div></div></div>
+            </div>
             ${examStatsHtml}
             
             <div class="row mt-3">
@@ -2582,7 +2587,7 @@ function rAnl(){
         let clsScoreMap = {};
         currentExams.forEach(e => {
           if(!clsScoreMap[e.studentClass]) clsScoreMap[e.studentClass] = [];
-          clsScoreMap[e.studentClass].push(e.score || 0);
+          clsScoreMap[e.studentClass].push(e.totalNet || 0);
         });
         let sortedClsKeys = Object.keys(clsScoreMap).sort();
         let barLabels = sortedClsKeys;
@@ -2598,7 +2603,7 @@ function rAnl(){
             type: 'bar',
             data: {
               labels: barLabels,
-              datasets:[{ label: 'Ortalama Puan', data: barData, backgroundColor: cols.map(c=>c+'cc'), borderColor: cols, borderWidth: 1.5 }]
+              datasets:[{ label: 'Ortalama Net', data: barData, backgroundColor: cols.map(c=>c+'cc'), borderColor: cols, borderWidth: 1.5 }]
             },
             plugins: [ChartDataLabels],
             options: {
@@ -2609,7 +2614,7 @@ function rAnl(){
               },
               scales: {
                 x: { grid: { color: '#e2e8f0' }, ticks: { font: { size: 10 } } },
-                y: { grid: { color: '#e2e8f0' }, ticks: { font: { size: 10 } }, title: { display: true, text: 'Ortalama Puan', font: { size: 10 } } }
+                y: { grid: { color: '#e2e8f0' }, ticks: { font: { size: 10 } }, title: { display: true, text: 'Ortalama Net', font: { size: 10 } } }
               }
             }
           });
@@ -2617,7 +2622,7 @@ function rAnl(){
           if(chartArea && !chartArea.dataset.titleAdded) { 
             let title = document.createElement('div'); 
             title.style.cssText='font-size:11px;font-weight:bold;color:#4a6fa5;margin-bottom:4px;text-align:left;'; 
-            title.textContent = `${eT} ${dt} — Sınıf Bazlı Ortalama Puan`; 
+            title.textContent = `${eT} ${dt} — Sınıf Bazlı Ortalama Net`; 
             chartArea.parentNode.insertBefore(title, chartArea); 
             chartArea.dataset.titleAdded = 'true';
           }
