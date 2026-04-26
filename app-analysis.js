@@ -683,41 +683,51 @@ function mkMultiClassBoxPlot(classDataMap, highlightClass, options, allVals) {
 }
 
 // ---- calcKarneSummaryCards (orig lines 2232-2294) ----
-function calcKarneSummaryCards(stuNo, examType, grade, examsData) {
+// sb parametresi opsiyoneldir; belirtilmezse veya 'totalNet' ise net bazlı hesap yapılır.
+// 'score' → puan, 's_matematik' gibi → o dersin neti kullanılır.
+function calcKarneSummaryCards(stuNo, examType, grade, examsData, sb) {
+  sb = sb || 'totalNet';
   let attended = examsData.filter(e => !e.abs);
   if(!attended.length) return null;
-  let stuAvg = attended.reduce((a,e)=>a+e.totalNet,0) / attended.length;
+
+  // sb'ye göre değer çekici
+  let _subjKey = sb.startsWith('s_') ? toTitleCase(sb.replace('s_','')) : null;
+  let _getVal = (e) => {
+    if(sb === 'score') return (e.score !== undefined && e.score !== null) ? e.score : null;
+    if(_subjKey) { let sn = e.subs ? (e.subs[_subjKey] || e.subs[sb.replace('s_','')]) : null; return sn ? sn.net : null; }
+    return e.totalNet; // totalNet (varsayılan)
+  };
+
+  let stuVals = attended.map(_getVal).filter(v => v !== null);
+  if(!stuVals.length) return null;
+  let stuAvg = stuVals.reduce((a,b)=>a+b,0) / stuVals.length;
 
   let allSameGrade = DB.e.filter(x => x.examType===examType && !x.abs && getGrade(x.studentClass)===grade);
-  let genAvg = allSameGrade.length ? allSameGrade.reduce((a,e)=>a+e.totalNet,0)/allSameGrade.length : null;
+  let genVals = allSameGrade.map(_getVal).filter(v => v !== null);
+  let genAvg = genVals.length ? genVals.reduce((a,b)=>a+b,0)/genVals.length : null;
 
   let stuMap_local = {};
   allSameGrade.forEach(e => {
-    if(!stuMap_local[e.studentNo]) stuMap_local[e.studentNo] = {scoreSum:0,netSum:0,cnt:0};
-    stuMap_local[e.studentNo].scoreSum += (e.score||0);
-    stuMap_local[e.studentNo].netSum  += (e.totalNet||0);
+    let v = _getVal(e); if(v === null) return;
+    if(!stuMap_local[e.studentNo]) stuMap_local[e.studentNo] = {sum:0,cnt:0};
+    stuMap_local[e.studentNo].sum += v;
     stuMap_local[e.studentNo].cnt++;
   });
-  // Sıralama her zaman PUAN'a (score) göre; eşitlikte totalNet
-  let rankings = Object.entries(stuMap_local).map(([no,v])=>({no,avgScore:v.scoreSum/v.cnt,avgNet:v.netSum/v.cnt})).sort((a,b)=>{
-    let dp=(b.avgScore||0)-(a.avgScore||0); if(dp!==0) return dp; return (b.avgNet||0)-(a.avgNet||0);
-  });
+  let rankings = Object.entries(stuMap_local).map(([no,v])=>({no,avg:v.sum/v.cnt})).sort((a,b)=>b.avg-a.avg);
   let rank = rankings.findIndex(x=>x.no===stuNo)+1;
   let totalStudents = rankings.length;
 
-  // Sınıf Derecesi hesapla — O(1) Map araması
+  // Sınıf Derecesi
   let stuClass = (getStuMap().get(stuNo)||{}).class || '';
   let allSameClass = DB.e.filter(x => x.examType===examType && !x.abs && x.studentClass===stuClass);
   let clsMap_local = {};
   allSameClass.forEach(e => {
-    if(!clsMap_local[e.studentNo]) clsMap_local[e.studentNo] = {scoreSum:0,netSum:0,cnt:0};
-    clsMap_local[e.studentNo].scoreSum += (e.score||0);
-    clsMap_local[e.studentNo].netSum  += (e.totalNet||0);
+    let v = _getVal(e); if(v === null) return;
+    if(!clsMap_local[e.studentNo]) clsMap_local[e.studentNo] = {sum:0,cnt:0};
+    clsMap_local[e.studentNo].sum += v;
     clsMap_local[e.studentNo].cnt++;
   });
-  let clsRankings = Object.entries(clsMap_local).map(([no,v])=>({no,avgScore:v.scoreSum/v.cnt,avgNet:v.netSum/v.cnt})).sort((a,b)=>{
-    let dp=(b.avgScore||0)-(a.avgScore||0); if(dp!==0) return dp; return (b.avgNet||0)-(a.avgNet||0);
-  });
+  let clsRankings = Object.entries(clsMap_local).map(([no,v])=>({no,avg:v.sum/v.cnt})).sort((a,b)=>b.avg-a.avg);
   let classRank = clsRankings.findIndex(x=>x.no===stuNo)+1;
   let classTotalStudents = clsRankings.length;
 
@@ -730,17 +740,15 @@ function calcKarneSummaryCards(stuNo, examType, grade, examsData) {
   let attendedCount  = attendedKeys.size;
   let partRate = totalExamCount > 0 ? Math.max(0, Math.min(100, Math.round(attendedCount / totalExamCount * 100))) : 0;
 
-  // Trend + Kişisel Tutarlılık
-  // BİLİMSEL KURAL: Regresyon/eğim için en az 3 sınav (n≥3) gerekir; n<3'te kart gösterilmez.
-  // Tutarlılık (kişisel σ) için de en az 3 değer gerekir (n=2'de std anlamsız bir bilgi verir).
-  let nets = attended.map(e=>e.totalNet);
+  // Trend + Kişisel Tutarlılık — sb'ye göre seçilen metrik üzerinden
+  let metricVals = attended.map(_getVal).filter(v => v !== null);
   let trend = null;
   let consistency = null;
-  if(nets.length >= _TREND_MIN_N){
-    let slope = linRegSlope(nets);
-    let r2    = linRegR2(nets);
-    let ewmaVal = ewma(nets, 3, 0.5);
-    let totalChange = slope * (nets.length - 1);
+  if(metricVals.length >= _TREND_MIN_N){
+    let slope = linRegSlope(metricVals);
+    let r2    = linRegR2(metricVals);
+    let ewmaVal = ewma(metricVals, 3, 0.5);
+    let totalChange = slope * (metricVals.length - 1);
     let trendClass, trendIcon, trendText;
     if(r2 < 0.20) {
       trendClass = 'trend-stable'; trendIcon = 'fa-question-circle'; trendText = 'Dalgalı';
@@ -751,15 +759,11 @@ function calcKarneSummaryCards(stuNo, examType, grade, examsData) {
     } else {
       trendClass = 'trend-stable'; trendIcon = 'fa-minus'; trendText = 'Sabit';
     }
-    trend = { totalChange, slope, r2, ewmaVal, count: nets.length, trendClass, trendIcon, trendText };
+    trend = { totalChange, slope, r2, ewmaVal, count: metricVals.length, trendClass, trendIcon, trendText };
 
-    // Sürpriz Payı — regresyon doğrusundan kalıntıların RMSE'si (standart hata).
-    // Bu, "Performans Tutarlılığı"nın trendi de hesaba katan, istatistiksel olarak
-    // doğru karşılığıdır: trend doğrusu öğrencinin sınavlarını ortalama ne kadar
-    // sapma ile tahmin ediyor? Düşük = öngörülebilir, yüksek = sürprizli.
-    let surpriseRMSE = linRegRMSE(nets);
+    let surpriseRMSE = linRegRMSE(metricVals);
     if(surpriseRMSE !== null){
-      consistency = { sd: surpriseRMSE, label: _surpriseLabel(surpriseRMSE), n: nets.length };
+      consistency = { sd: surpriseRMSE, label: _surpriseLabel(surpriseRMSE), n: metricVals.length };
     }
   }
 
@@ -818,8 +822,11 @@ function buildRiskInfoCards(stuNo, examType, stuClass) {
 // ---- buildKarneExamCards (orig lines 2344-2417) ----
 // 4 üst kart (Ortalama Net, Katılım, Sınıf Derece, Kurum Derece) + (n≥3 ise) trend bloğu.
 // Trend bloğu: Genel Yön (R² chip), Toplam İlerleme, Sınav Başı Değişim, Performans Tutarlılığı (σ), Son Dönem Ortalaması.
-function buildKarneExamCards(summary, examType) {
+// metricLabel: görünen etiket (ör. 'Net', 'Puan', 'Matematik Neti') — belirtilmezse 'Net'
+function buildKarneExamCards(summary, examType, metricLabel) {
   if(!summary) return '';
+  metricLabel = metricLabel || 'Net';
+  let isScore = (metricLabel === 'Puan');
   let {stuAvg, genAvg, rank, totalStudents, classRank, classTotalStudents, partRate, attendedCount, totalExamCount, trend, consistency} = summary;
 
   // Katılım kartı + trend bloğu oluştur
@@ -836,17 +843,15 @@ function buildKarneExamCards(summary, examType) {
     let r2Tooltip = r2Pct !== null
       ? (r2Pct >= 60 ? 'R²: Trend tutarlı ve güvenilir' : (r2Pct >= 30 ? 'R²: Trend kısmen tutarlı' : 'R²: Sonuçlar çok dalgalı, net bir trend yok'))
       : '';
-    let r2Chip = r2Pct !== null ? `<div class="x-small mt-1">R² uyumu: <strong>%${r2Pct}</strong></div>` : '';
 
     // EWMA: Son sınavlara daha fazla ağırlık verilen ortalama (kısa-vadeli momentum)
     let ewmaVal = trend.ewmaVal !== null && trend.ewmaVal !== undefined ? trend.ewmaVal.toFixed(1) : null;
 
     // Sürpriz Payı — regresyon doğrusundan kalıntıların RMSE'si (Standart Hata).
-    // Trendin tahmininden ortalama sapma. Düşük = öngörülebilir performans.
     let consHtml = '';
     if(consistency){
       consHtml = `<div class="col-6 col-md border-left mb-1" title="Sınav sonuçlarının trend doğrusundan ortalama sapması (Standart Hata / RMSE). Düşük değer = trend güvenilir, sürpriz az.">
-        <div style="font-size:1.1em;font-weight:bold;color:#6f42c1;">±${consistency.sd.toFixed(2)} Net</div>
+        <div style="font-size:1.1em;font-weight:bold;color:#6f42c1;">±${consistency.sd.toFixed(2)}</div>
         <div class="small text-muted" style="font-size:0.75em;">Sürpriz Payı</div>
         <div class="x-small text-muted">${consistency.label}</div>
         <div class="x-small text-muted">(Standart Hata / RMSE)</div>
@@ -859,19 +864,19 @@ function buildKarneExamCards(summary, examType) {
         <div class="small text-muted mt-1" style="font-size:0.75em;"><strong>Genel Yön (Trend)</strong></div>
         ${r2Pct !== null ? `<div class="x-small mt-1" style="color:${tColor};"><strong>%${r2Pct}</strong> doğruluk payıyla (R²: ${(r2Pct/100).toFixed(2)})</div>` : ''}
       </div>
-      <div class="col-6 col-md border-left mb-1" title="İlk sınavdan son sınava kadar regresyon doğrusunun toplam değişimi (net cinsinden)">
-        <div style="font-size:1.1em;font-weight:bold;color:${tColor};">${tSign}${trend.totalChange.toFixed(1)} net</div>
-        <div class="small text-muted" style="font-size:0.75em;"><strong>Toplam Net Değişimi</strong></div>
+      <div class="col-6 col-md border-left mb-1" title="İlk sınavdan son sınava kadar regresyon doğrusunun toplam değişimi">
+        <div style="font-size:1.1em;font-weight:bold;color:${tColor};">${tSign}${trend.totalChange.toFixed(1)}</div>
+        <div class="small text-muted" style="font-size:0.75em;"><strong>Toplam ${metricLabel} Değişimi</strong></div>
         <div class="x-small text-muted">Süreç Boyunca</div>
       </div>
-      <div class="col-6 col-md border-left mb-1" title="Her yeni sınavda beklenen ortalama net değişim (regresyon eğimi)">
-        <div style="font-size:1.1em;font-weight:bold;color:${tColor};">${sSign}${trend.slope.toFixed(2)} net</div>
+      <div class="col-6 col-md border-left mb-1" title="Her yeni sınavda beklenen ortalama değişim (regresyon eğimi)">
+        <div style="font-size:1.1em;font-weight:bold;color:${tColor};">${sSign}${trend.slope.toFixed(2)}</div>
         <div class="small text-muted" style="font-size:0.75em;"><strong>Sınav Başı Değişim</strong></div>
         <div class="x-small text-muted">(Regresyon Analizi)</div>
       </div>
       ${consHtml}
       <div class="col-6 col-md border-left mb-1" title="Son sınavlara daha fazla ağırlık verilerek hesaplanan ortalama (EWMA, α=0.5)">
-        <div style="font-size:1.1em;font-weight:bold;color:#0d6efd;">${ewmaVal !== null ? ewmaVal : '—'} net</div>
+        <div style="font-size:1.1em;font-weight:bold;color:#0d6efd;">${ewmaVal !== null ? ewmaVal : '—'}</div>
         <div class="small text-muted" style="font-size:0.75em;"><strong>Güncel Performans</strong></div>
         <div class="x-small text-muted">(Ağırlıklı / EWMA)</div>
       </div>
@@ -883,14 +888,17 @@ function buildKarneExamCards(summary, examType) {
     </div></div>`;
   }
 
+  let avgLabel = isScore ? 'Ortalama Puan' : `Ortalama ${metricLabel}`;
+  let genOrtLabel = isScore ? 'Genel Puan Ort' : 'Genel Ort';
+
   let cardsHtml = `<div class="row mb-2">
     <div class="col-md-3 col-sm-6">
       <div class="sec-card">
         <div class="sec-icon"><i class="fas fa-chart-bar"></i></div>
         <div class="sec-body">
-          <div class="sec-label">Ortalama Net</div>
+          <div class="sec-label">${avgLabel}</div>
           <div class="sec-value">${stuAvg.toFixed(2)}</div>
-          <div class="sec-sub">Genel Ort: ${genAvg!==null?genAvg.toFixed(2):'—'}</div>
+          <div class="sec-sub">${genOrtLabel}: ${genAvg!==null?genAvg.toFixed(2):'—'}</div>
         </div>
       </div>
     </div>
@@ -1605,38 +1613,29 @@ function rAnl(){
       avgRowHtml = `<tr class="avg-row"><td colspan="3" style="text-align:right; padding-right:15px;">Öğrenci Ortalama</td><td>${displayStu}</td><td>—</td></tr><tr class="avg-row"><td colspan="3" style="text-align:right; padding-right:15px;">Sınıf Ortalama (${st.class})</td><td>${displayCls}</td><td>—</td></tr><tr class="avg-row"><td colspan="3" style="text-align:right; padding-right:15px;">Kurum Ortalama (${stGrade}. Sınıflar)</td><td>${displayGen}</td><td>—</td></tr>`;
     }
 
+    // sb'ye göre görünen metrik etiketi — istatistik kartlarında ve trend bloğunda kullanılır
+    let _metricLabel = sb === 'score' ? 'Puan'
+                     : sb.startsWith('s_') ? toTitleCase(sb.replace('s_','')) + ' Neti'
+                     : 'Net'; // totalNet ve boş için
+
     let karneCardsHtml = '';
     let stuRiskHtml = '';
-    if(!isRank && (sb === '' || sb === 'totalNet' || sb === 'score')) {
+    if(!isRank) {
       try {
-        let _summary = calcKarneSummaryCards(no, eT, stGrade, ex);
+        // calcKarneSummaryCards artık sb parametresi alıyor; seçilen metriği kullanır
+        let _summary = calcKarneSummaryCards(no, eT, stGrade, ex, sb);
         if(_summary) {
-          karneCardsHtml = buildKarneExamCards(_summary, eT);
+          karneCardsHtml = buildKarneExamCards(_summary, eT, _metricLabel);
         }
-      } catch(e){}
+      } catch(e){ console.error('[rAnl karneCards]', e); }
       try { stuRiskHtml = buildRiskInfoCards(no, eT, st.class) || ''; } catch(e){ stuRiskHtml = ''; }
     }
 
     let perfHtml = '';
-    if(!isRank && dDValid.length > 0) {
-      let maxVal = Math.max(...dDValid), minVal = Math.min(...dDValid), avgVal = dDValid.reduce((a,b)=>a+b,0)/dDValid.length;
-      let gradeExamKeys = new Set();
-      DB.e.forEach(x => { if(x.examType===eT && getGrade(x.studentClass)===stGrade) gradeExamKeys.add(x.date+'||'+(x.publisher||'')); });
-      let totalGradeExams = gradeExamKeys.size;
-      let attendedKeys = new Set();
-      DB.e.forEach(x => { if(x.studentNo===no && x.examType===eT && !x.abs) attendedKeys.add(x.date+'||'+(x.publisher||'')); });
-      let attendedCnt = attendedKeys.size;
-      let partRate = totalGradeExams > 0 ? Math.max(0, Math.min(100, Math.round(attendedCnt / totalGradeExams * 100))) : 0;
-      perfHtml = `<div class="row mt-3 mb-2">
-        <div class="col-md-3 col-sm-6"><div class="sec-card sec-pos"><div class="sec-icon"><i class="fas fa-chart-line"></i></div><div class="sec-body"><div class="sec-label">En Yüksek</div><div class="sec-value">${maxVal.toFixed(2)}</div></div></div></div>
-        <div class="col-md-3 col-sm-6"><div class="sec-card sec-neg"><div class="sec-icon"><i class="fas fa-arrow-down"></i></div><div class="sec-body"><div class="sec-label">En Düşük</div><div class="sec-value">${minVal.toFixed(2)}</div></div></div></div>
-        <div class="col-md-3 col-sm-6"><div class="sec-card"><div class="sec-icon"><i class="fas fa-balance-scale"></i></div><div class="sec-body"><div class="sec-label">Ortalama</div><div class="sec-value">${avgVal.toFixed(2)}</div></div></div></div>
-        <div class="col-md-3 col-sm-6"><div class="sec-card"><div class="sec-icon"><i class="fas fa-percentage"></i></div><div class="sec-body"><div class="sec-label">Katılım</div><div class="sec-value">${partRate}%</div><div class="sec-sub">${attendedCnt}/${totalGradeExams} Sınav</div></div></div></div>
-      </div>`;
-    } else if(isRank && dDValid.length > 0) {
-      // 1-B: Sıralama modunda En İyi / En Kötü / Ortalama Sıra kartları
-      let bestRank = Math.min(...dDValid);   // düşük sıra = iyi
-      let worstRank = Math.max(...dDValid);  // yüksek sıra = kötü
+    if(isRank && dDValid.length > 0) {
+      // Sıralama modunda En İyi / En Kötü / Ortalama Sıra kartları (karneCardsHtml boş olduğu için bunlar gösterilir)
+      let bestRank = Math.min(...dDValid);
+      let worstRank = Math.max(...dDValid);
       let avgRank = Math.round(dDValid.reduce((a,b)=>a+b,0)/dDValid.length);
       let gradeExamKeys2 = new Set();
       DB.e.forEach(x => { if(x.examType===eT && getGrade(x.studentClass)===stGrade) gradeExamKeys2.add(x.date+'||'+(x.publisher||'')); });
