@@ -850,7 +850,7 @@ function buildKarneExamCards(summary, examType, metricLabel) {
     // Sürpriz Payı — regresyon doğrusundan kalıntıların RMSE'si (Standart Hata).
     let consHtml = '';
     if(consistency){
-      consHtml = `<div class="col-6 col-md border-left mb-1" title="Sınav sonuçlarının trend doğrusundan ortalama sapması (Standart Hata / RMSE). Düşük değer = trend güvenilir, sürpriz az.">
+      consHtml = `<div class="col border-right mb-1" title="Sınav sonuçlarının trend doğrusundan ortalama sapması (Standart Hata / RMSE). Düşük değer = trend güvenilir, sürpriz az." style="min-width:90px;">
         <div style="font-size:1.1em;font-weight:bold;color:#6f42c1;">±${consistency.sd.toFixed(2)}</div>
         <div class="small text-muted" style="font-size:0.75em;">Sürpriz Payı</div>
         <div class="x-small text-muted">${consistency.label}</div>
@@ -858,29 +858,29 @@ function buildKarneExamCards(summary, examType, metricLabel) {
       </div>`;
     }
 
-    trendHtml = `<div class="trend-card mt-2 mb-1"><div class="row align-items-center text-center">
-      <div class="col-6 col-md mb-1" title="${r2Tooltip}">
+    trendHtml = `<div class="trend-card mt-2 mb-1"><div class="row flex-nowrap align-items-center text-center" style="overflow-x:auto;">
+      <div class="col border-right mb-1" title="${r2Tooltip}" style="min-width:90px;">
         <span class="trend-indicator ${trend.trendClass}" style="font-size:0.8em;"><i class="fas ${trend.trendIcon} mr-1"></i>${trend.trendText}</span>
         <div class="small text-muted mt-1" style="font-size:0.75em;"><strong>Genel Yön (Trend)</strong></div>
         ${r2Pct !== null ? `<div class="x-small mt-1" style="color:${tColor};"><strong>%${r2Pct}</strong> doğruluk payıyla (R²: ${(r2Pct/100).toFixed(2)})</div>` : ''}
       </div>
-      <div class="col-6 col-md border-left mb-1" title="İlk sınavdan son sınava kadar regresyon doğrusunun toplam değişimi">
+      <div class="col border-right mb-1" title="İlk sınavdan son sınava kadar regresyon doğrusunun toplam değişimi" style="min-width:90px;">
         <div style="font-size:1.1em;font-weight:bold;color:${tColor};">${tSign}${trend.totalChange.toFixed(1)}</div>
         <div class="small text-muted" style="font-size:0.75em;"><strong>Toplam ${metricLabel} Değişimi</strong></div>
         <div class="x-small text-muted">Süreç Boyunca</div>
       </div>
-      <div class="col-6 col-md border-left mb-1" title="Her yeni sınavda beklenen ortalama değişim (regresyon eğimi)">
+      <div class="col border-right mb-1" title="Her yeni sınavda beklenen ortalama değişim (regresyon eğimi)" style="min-width:90px;">
         <div style="font-size:1.1em;font-weight:bold;color:${tColor};">${sSign}${trend.slope.toFixed(2)}</div>
         <div class="small text-muted" style="font-size:0.75em;"><strong>Sınav Başı Değişim</strong></div>
         <div class="x-small text-muted">(Regresyon Analizi)</div>
       </div>
       ${consHtml}
-      <div class="col-6 col-md border-left mb-1" title="Son sınavlara daha fazla ağırlık verilerek hesaplanan ortalama (EWMA, α=0.5)">
+      <div class="col border-right mb-1" title="Son sınavlara daha fazla ağırlık verilerek hesaplanan ortalama (EWMA, α=0.5)" style="min-width:90px;">
         <div style="font-size:1.1em;font-weight:bold;color:#0d6efd;">${ewmaVal !== null ? ewmaVal : '—'}</div>
         <div class="small text-muted" style="font-size:0.75em;"><strong>Güncel Performans</strong></div>
         <div class="x-small text-muted">(Ağırlıklı / EWMA)</div>
       </div>
-      <div class="col-6 col-md border-left mb-1" title="Bu sınav türünde katıldığı sınav sayısı">
+      <div class="col mb-1" title="Bu sınav türünde katıldığı sınav sayısı" style="min-width:90px;">
         <div style="font-size:1.1em;font-weight:bold;">${trend.count}</div>
         <div class="small text-muted" style="font-size:0.75em;"><strong>Katıldığı Sınav</strong></div>
         <div class="x-small text-muted">Trend hesabına dahil</div>
@@ -2192,6 +2192,14 @@ function rAnl(){
       }
     }
 
+    // Ders Analizi — Şube "Tümü" iken En İyi / En Zayıf Sınıf kartları
+    let subjBestCls  = clsArr.length > 0 ? clsArr[0] : null;
+    let subjWorstCls2 = clsArr.length > 1 ? clsArr[clsArr.length - 1] : null;
+    let subjClassCardsHtml = (!br && clsArr.length > 1) ? `
+      <div class="col-md-4 col-lg flex-fill mb-2"><div class="sec-card sec-pos h-100"><div class="sec-icon"><i class="fas fa-school"></i></div><div class="sec-body"><div class="sec-label">En İyi Sınıf</div><div class="sec-value">${subjBestCls.cls}</div><div class="sec-sub">Ort: ${subjBestCls.avg.toFixed(2)} Net</div></div></div></div>
+      <div class="col-md-4 col-lg flex-fill mb-2"><div class="sec-card sec-neg h-100"><div class="sec-icon"><i class="fas fa-exclamation-circle"></i></div><div class="sec-body"><div class="sec-label">En Zayıf Sınıf</div><div class="sec-value">${subjWorstCls2.cls}</div><div class="sec-sub">Ort: ${subjWorstCls2.avg.toFixed(2)} Net</div></div></div></div>
+    ` : '';
+
     let h = `
     <div class="d-flex justify-content-end mb-2 no-print"><button class="btn-print no-print" onclick="xPR('pSubj','${toTitleCase(subj)}_Analizi',this)"><i class='fas fa-print mr-1'></i>Yazdır</button></div>
     <div id="pSubj" class="card shadow-sm" style="border-top:3px solid #007bff; background:#f4f6f9;">
@@ -2203,9 +2211,10 @@ function rAnl(){
         <div class="row mb-3">
           <div class="col-md-4 col-lg flex-fill mb-2"><div class="sec-card h-100"><div class="sec-icon"><i class="fas fa-calculator"></i></div><div class="sec-body"><div class="sec-label">Genel Ortalama</div><div class="sec-value">${genAvg.toFixed(2)} Net</div></div></div></div>
           <div class="col-md-4 col-lg flex-fill mb-2"><div class="sec-card h-100"><div class="sec-icon"><i class="fas fa-users"></i></div><div class="sec-body"><div class="sec-label">Toplam Kayıt</div><div class="sec-value">${ex.length} Sonuç</div></div></div></div>
-          <div class="col-md-4 col-lg flex-fill mb-2"><div class="sec-card sec-pos h-100"><div class="sec-icon"><i class="fas fa-trophy"></i></div><div class="sec-body"><div class="sec-label">En İyi Öğrenci</div><div class="sec-value" style="font-size:0.95em;">${bestStudent ? bestStudent.name : 'Veri Yok'}</div><div class="sec-sub">${bestStudent ? `${bestStudent.avg.toFixed(2)} Net (Ort)` : ''}</div></div></div></div>
-          <div class="col-md-6 col-lg flex-fill mb-2"><div class="sec-card sec-neg h-100"><div class="sec-icon"><i class="fas fa-exclamation-triangle"></i></div><div class="sec-body"><div class="sec-label">En Zayıf Öğrenci</div><div class="sec-value" style="font-size:0.95em;">${worstStudent ? worstStudent.name : 'Veri Yok'}</div><div class="sec-sub">${worstStudent ? `${worstStudent.avg.toFixed(2)} Net (Ort)` : ''}</div></div></div></div>
+          <div class="col-md-4 col-lg flex-fill mb-2"><div class="sec-card sec-pos h-100"><div class="sec-icon"><i class="fas fa-trophy"></i></div><div class="sec-body"><div class="sec-label">En İyi Öğrenci</div><div class="sec-value" style="font-size:0.95em;">${bestStudent ? `${bestStudent.name} (${bestStudent.cls})` : 'Veri Yok'}</div><div class="sec-sub">${bestStudent ? `${bestStudent.avg.toFixed(2)} Net (Ort)` : ''}</div></div></div></div>
+          <div class="col-md-6 col-lg flex-fill mb-2"><div class="sec-card sec-neg h-100"><div class="sec-icon"><i class="fas fa-exclamation-triangle"></i></div><div class="sec-body"><div class="sec-label">En Zayıf Öğrenci</div><div class="sec-value" style="font-size:0.95em;">${worstStudent ? `${worstStudent.name} (${worstStudent.cls})` : 'Veri Yok'}</div><div class="sec-sub">${worstStudent ? `${worstStudent.avg.toFixed(2)} Net (Ort)` : ''}</div></div></div></div>
           <div class="col-md-6 col-lg flex-fill mb-2"><div class="sec-card sec-neutral h-100"><div class="sec-icon"><i class="fas fa-chart-pie"></i></div><div class="sec-body"><div class="sec-label">Katılım Oranı</div><div class="sec-value">%${partRateS}</div><div class="sec-sub">${attendedCountS} / ${baseCountS} Katılım</div></div></div></div>
+          ${subjClassCardsHtml}
         </div>
         ${subjCohenHtml}
         ${subjTrendHtml}
@@ -2504,7 +2513,10 @@ function rAnl(){
       let pubName = Object.values(EXAM_META).find(m=>m.date===dt&&m.examType===eT)?.publisher || '';
       
       let thisExamMeta = Object.values(EXAM_META).find(m=>m.date===dt && m.examType===eT);
-      let examGrades = (thisExamMeta && thisExamMeta.grades && thisExamMeta.grades.length) ? new Set(thisExamMeta.grades) : null;
+      // examGrades: sınav metasında belirli sınıf seviyeleri varsa filtrele.
+      // Ancak targetLvl zaten seçilmişse (kullanıcı seviye seçti) examGrades filtresini atla;
+      // çünkü metadata 9. sınıf olarak kayıtlı bir sınavı 10/11. sınıf öğrencisi de girebilir.
+      let examGrades = (!targetLvl && thisExamMeta && thisExamMeta.grades && thisExamMeta.grades.length) ? new Set(thisExamMeta.grades) : null;
       let eligibleStusE = DB.s.filter(s => {
         let m = s.class.match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/); if(!m) return false;
         if(targetLvl && m[1] !== targetLvl) return false;
