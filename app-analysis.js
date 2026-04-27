@@ -1761,7 +1761,7 @@ function rAnl(){
       //   (SE büyür, d kolayca ±∞ alır). 10 öğrenci APA'nın önerdiği alt sınırdır.
       let cohenHtml = '';
       if(showCompCards && sd.length >= 2) {
-        // En iyi ve en düşük şubede her öğrencinin ortalamasını hesapla
+        // Her şube için öğrenci başına ortalama
         let _stuAvgsForCls = (cls) => {
           let map = {};
           ex.filter(x=>x.studentClass===cls).forEach(x=>{
@@ -1771,15 +1771,31 @@ function rAnl(){
           });
           return Object.values(map).map(arr=>arr.reduce((a,b)=>a+b,0)/arr.length);
         };
-        let bestVals  = _stuAvgsForCls(best.cls);
-        let worstVals = _stuAvgsForCls(worst.cls);
+        let bestVals = _stuAvgsForCls(best.cls);
         // n≥10 koşulu: az öğrencili şubede Cohen's d güvenilir değil
-        if(bestVals.length >= 10 && worstVals.length >= 10) {
-          let d = _statCohenD(bestVals, worstVals);
-          if(d !== null && isFinite(d)) {
-            let lab = _cohenLabel(d);
-            let dColor = Math.abs(d) >= 0.8 ? '#dc3545' : (Math.abs(d) >= 0.5 ? '#fd7e14' : (Math.abs(d) >= 0.2 ? '#ffc107' : '#6c757d'));
-            cohenHtml = `<div class="col-md-6 col-lg flex-fill mb-2"><div class="sec-card h-100"><div class="sec-icon"><i class="fas fa-balance-scale"></i></div><div class="sec-body"><div class="sec-label">Şubeler Arası Etki Büyüklüğü</div><div class="sec-value" style="color:${dColor};">d = ${d.toFixed(2)}</div><div class="sec-sub">${lab} fark (${best.cls} vs ${worst.cls})</div>${_explain("Cohen's d: iki şube arasındaki başarı farkının pratik büyüklüğü. 0.2 küçük, 0.5 orta, 0.8+ büyük.")}</div></div></div>`;
+        if(bestVals.length >= 10) {
+          // En iyi şube ile diğer tüm şubelerin karşılaştırması
+          let otherCls = topCls.filter(c => c.cls !== best.cls);
+          let compLines = otherCls.map(c => {
+            let cVals = _stuAvgsForCls(c.cls);
+            if(cVals.length < 10) return null;
+            let dC = _statCohenD(bestVals, cVals);
+            if(dC === null || !isFinite(dC)) return null;
+            let lC = _cohenLabel(dC);
+            let colC = Math.abs(dC) >= 0.8 ? '#dc3545' : (Math.abs(dC) >= 0.5 ? '#fd7e14' : (Math.abs(dC) >= 0.2 ? '#ffc107' : '#28a745'));
+            return `<div class="sec-sub" style="color:${colC};font-weight:600;">${lC} fark — ${best.cls} vs ${c.cls}</div>`;
+          }).filter(Boolean);
+
+          // Ana değer: en iyi vs en düşük
+          let worstVals = _stuAvgsForCls(worst.cls);
+          let dMain = worstVals.length >= 10 ? _statCohenD(bestVals, worstVals) : null;
+          if(dMain !== null && isFinite(dMain)) {
+            let labMain = _cohenLabel(dMain);
+            let dColorMain = Math.abs(dMain) >= 0.8 ? '#dc3545' : (Math.abs(dMain) >= 0.5 ? '#fd7e14' : (Math.abs(dMain) >= 0.2 ? '#ffc107' : '#28a745'));
+            let compHtml = compLines.length > 0
+              ? `<div style="margin-top:4px;max-height:80px;overflow-y:auto;">${compLines.join('')}</div>`
+              : `<div class="sec-sub">${labMain} fark — ${best.cls} vs ${worst.cls}</div>`;
+            cohenHtml = `<div class="col-md-4 col-lg flex-fill mb-2"><div class="sec-card h-100"><div class="sec-icon"><i class="fas fa-balance-scale"></i></div><div class="sec-body"><div class="sec-label">Şubeler Arası Etki Büyüklüğü (Cohen's d)</div><div class="sec-value" style="color:${dColorMain};">d = ${dMain.toFixed(2)}</div>${compHtml}</div></div></div>`;
           }
         }
       }
@@ -2177,7 +2193,6 @@ function rAnl(){
     let subjCohenColHtml = '';
     if(!br && clsArr.length >= 2) {
       let subjBestClsN  = clsArr[0].cls;
-      let subjWorstClsN = clsArr[clsArr.length - 1].cls;
       let _subjStuAvgs2 = (cls) => {
         let map = {};
         ex.filter(e => e.studentClass === cls).forEach(e => {
@@ -2186,14 +2201,31 @@ function rAnl(){
         });
         return Object.values(map).map(arr => arr.reduce((a,b)=>a+b,0)/arr.length);
       };
-      let subjBVals2  = _subjStuAvgs2(subjBestClsN);
-      let subjWVals2  = _subjStuAvgs2(subjWorstClsN);
-      if(subjBVals2.length >= 10 && subjWVals2.length >= 10) {
-        let subjD2 = _statCohenD(subjBVals2, subjWVals2);
+      let subjBVals2 = _subjStuAvgs2(subjBestClsN);
+      if(subjBVals2.length >= 10) {
+        // En iyi şube vs diğer tüm şubeler
+        let subjOtherCls = clsArr.filter(c => c.cls !== subjBestClsN);
+        let subjCompLines = subjOtherCls.map(c => {
+          let cVals = _subjStuAvgs2(c.cls);
+          if(cVals.length < 10) return null;
+          let dC = _statCohenD(subjBVals2, cVals);
+          if(dC === null || !isFinite(dC)) return null;
+          let lC = _cohenLabel(dC);
+          let colC = Math.abs(dC) >= 0.8 ? '#dc3545' : (Math.abs(dC) >= 0.5 ? '#fd7e14' : (Math.abs(dC) >= 0.2 ? '#ffc107' : '#28a745'));
+          return `<div class="sec-sub" style="color:${colC};font-weight:600;">${lC} fark — ${subjBestClsN} vs ${c.cls}</div>`;
+        }).filter(Boolean);
+
+        // Ana değer: en iyi vs en zayıf
+        let subjWorstClsN2 = clsArr[clsArr.length - 1].cls;
+        let subjWVals2 = _subjStuAvgs2(subjWorstClsN2);
+        let subjD2 = subjWVals2.length >= 10 ? _statCohenD(subjBVals2, subjWVals2) : null;
         if(subjD2 !== null && isFinite(subjD2)) {
           let subjDLab2 = _cohenLabel(subjD2);
-          let subjDCol2 = Math.abs(subjD2) >= 0.8 ? '#dc3545' : (Math.abs(subjD2) >= 0.5 ? '#fd7e14' : (Math.abs(subjD2) >= 0.2 ? '#ffc107' : '#6c757d'));
-          subjCohenColHtml = `<div class="col-md-4 col-lg flex-fill mb-2"><div class="sec-card h-100"><div class="sec-icon"><i class="fas fa-balance-scale"></i></div><div class="sec-body"><div class="sec-label">Şubeler Arası Etki Büyüklüğü (Cohen's d)</div><div class="sec-value" style="color:${subjDCol2};">d = ${subjD2.toFixed(2)}</div><div class="sec-sub">${subjDLab2} fark — ${subjBestClsN} vs ${subjWorstClsN}</div>${_explain("Cohen's d: iki şubenin bu dersteki başarı farkının pratik büyüklüğü. 0.2 küçük, 0.5 orta, 0.8+ büyük.")}</div></div></div>`;
+          let subjDCol2 = Math.abs(subjD2) >= 0.8 ? '#dc3545' : (Math.abs(subjD2) >= 0.5 ? '#fd7e14' : (Math.abs(subjD2) >= 0.2 ? '#ffc107' : '#28a745'));
+          let subjCompHtml = subjCompLines.length > 0
+            ? `<div style="margin-top:4px;max-height:80px;overflow-y:auto;">${subjCompLines.join('')}</div>`
+            : `<div class="sec-sub">${subjDLab2} fark — ${subjBestClsN} vs ${subjWorstClsN2}</div>`;
+          subjCohenColHtml = `<div class="col-md-4 col-lg flex-fill mb-2"><div class="sec-card h-100"><div class="sec-icon"><i class="fas fa-balance-scale"></i></div><div class="sec-body"><div class="sec-label">Şubeler Arası Etki Büyüklüğü (Cohen's d)</div><div class="sec-value" style="color:${subjDCol2};">d = ${subjD2.toFixed(2)}</div>${subjCompHtml}</div></div></div>`;
         }
       }
     }
