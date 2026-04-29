@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sinav-analizi-adminlte4-r22';
+﻿const CACHE_NAME = 'sinav-analizi-adminlte4-r25';
 const ASSETS = [
   './',
   './index.html',
@@ -25,7 +25,15 @@ function isNavigationRequest(request, url) {
     url.pathname.endsWith('/index.html');
 }
 
+function requestUrl(request) {
+  return new URL(typeof request === 'string' ? request : request.url, self.location.href);
+}
+
 function safeCachePut(cache, request, response) {
+  const url = requestUrl(request);
+  if (url.origin !== self.location.origin || !response || !response.ok || response.type === 'opaque') {
+    return Promise.resolve();
+  }
   return cache.put(request, response).catch(err => {
     console.warn('cache put hatası:', err);
   });
@@ -56,12 +64,17 @@ self.addEventListener('fetch', event => {
     return;
   }
 
+  if (url.origin !== self.location.origin) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
   if (isNavigationRequest(event.request, url)) {
     event.respondWith(
       fetch(event.request)
         .then(response => {
           const copy = response.clone();
-          caches.open(CACHE_NAME).then(cache => safeCachePut(cache, event.request, copy));
+          caches.open(CACHE_NAME).then(cache => safeCachePut(cache, './index.html', copy));
           return response;
         })
         .catch(() => caches.match(event.request, { ignoreSearch: true })
@@ -79,3 +92,5 @@ self.addEventListener('fetch', event => {
       }))
   );
 });
+
+

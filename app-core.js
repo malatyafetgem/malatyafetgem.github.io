@@ -36,11 +36,55 @@ database.ref('.info/connected').on('value',snap=>uConn(snap.val()===true));
 // ---- top-level (orig lines 696-696) ----
 const ADMIN_UID="YLozrXC5w4OmD4HRzjlgF80qPCp1";
 
+function showStartup(message){
+  document.body.classList.add('auth-pending');
+  const loader = getEl('loader'), txt = getEl('l-txt');
+  if(txt) txt.textContent = message || 'Oturum kontrol ediliyor...';
+  if(loader) loader.style.display = 'flex';
+}
+
+function clearStartup(){
+  document.body.classList.remove('auth-pending');
+  const loader = getEl('loader');
+  if(loader) loader.style.display = 'none';
+}
+
+function metaGrades(meta){
+  if(!meta || !Array.isArray(meta.grades)) return [];
+  return meta.grades.map(g => String(g).trim()).filter(Boolean);
+}
+
+function metaHasGrade(meta, grade){
+  if(!grade) return true;
+  const grades = metaGrades(meta);
+  return !grades.length || grades.includes(String(grade).trim());
+}
+
+function metaIntersectsGrades(meta, grades){
+  const wanted = [...(grades || [])].map(g => String(g).trim()).filter(Boolean);
+  if(!wanted.length) return true;
+  const existing = metaGrades(meta);
+  return !existing.length || wanted.some(g => existing.includes(g));
+}
+
 // ---- checkAuth (orig lines 698-721) ----
 function checkAuth(){
-  const authTimeout = setTimeout(() => { if(getEl('mainApp').style.display==='none') getEl('loginScreen').style.display='flex'; }, 500);
+  showStartup('Oturum kontrol ediliyor...');
+  let settled = false;
+  const authTimeout = setTimeout(() => {
+    if(settled) return;
+    const login = getEl('loginScreen'), app = getEl('mainApp');
+    const loginHidden = !login || getComputedStyle(login).display === 'none';
+    const appHidden = !app || getComputedStyle(app).display === 'none';
+    if(login && app && loginHidden && appHidden){
+      clearStartup();
+      login.style.display = 'flex';
+    }
+  }, 7000);
   auth.onAuthStateChanged(user=>{
+    settled = true;
     clearTimeout(authTimeout);
+    clearStartup();
     if(user){
       getEl('loginScreen').style.display='none';
       getEl('mainApp').style.display='';
@@ -203,7 +247,7 @@ let CACHED_RESULTS = {};
 let aNo=null, c={h:null,a:null};
 
 // ---- top-level (orig lines 780-780) ----
-const cols=['#0d6efd','#e6194b','#1a7f4b','#d97706','#7c3aed','#f58231','#0ea5e9','#db2777'];
+const cols=['#2563eb','#059669','#d97706','#dc2626','#7c3aed','#0891b2','#be185d','#4b5563'];
 
 // ---- top-level (orig lines 781-781) ----
 let dInf={},searchDebounceTimer=null,anlDebounceTimer=null,chartTimer=null;
@@ -304,7 +348,7 @@ async function fetchBatches(batchIds) {
 async function reqProfile() {
   if(!aNo) return;
   let st = getStuMap().get(aNo), stGrade = st ? getGrade(st.class) : null, neededBatches = [];
-  Object.keys(EXAM_META).forEach(bId => { let meta = EXAM_META[bId]; if(!meta.grades || (stGrade && meta.grades.includes(stGrade))) neededBatches.push(bId); });
+  Object.keys(EXAM_META).forEach(bId => { let meta = EXAM_META[bId]; if(metaHasGrade(meta, stGrade)) neededBatches.push(bId); });
   await fetchBatches(neededBatches); rH();
 }
 
@@ -334,7 +378,7 @@ async function reqAnl() {
     Object.keys(EXAM_META).forEach(bId => {
       let m = EXAM_META[bId];
       if(m.examType !== eT) return;
-      if(stuGrade && m.grades && m.grades.length > 0 && !m.grades.includes(stuGrade)) return;
+      if(!metaHasGrade(m, stuGrade)) return;
       needed.push(bId);
     });
   } else if(aT === 'class' || aT === 'subject'){
@@ -342,7 +386,7 @@ async function reqAnl() {
     Object.keys(EXAM_META).forEach(bId => {
       let m = EXAM_META[bId];
       if(m.examType !== eT) return;
-      if(lvlF && m.grades && m.grades.length > 0 && !m.grades.includes(lvlF)) return;
+      if(!metaHasGrade(m, lvlF)) return;
       if(dt && m.date !== dt) return;
       needed.push(bId);
     });
@@ -353,7 +397,7 @@ async function reqAnl() {
       Object.keys(EXAM_META).forEach(bId => {
         let m = EXAM_META[bId];
         if(m.examType !== eT) return;
-        if(lvlF && m.grades && m.grades.length > 0 && !m.grades.includes(lvlF)) return;
+        if(!metaHasGrade(m, lvlF)) return;
         needed.push(bId);
       });
     } else {
@@ -362,14 +406,14 @@ async function reqAnl() {
       Object.keys(EXAM_META).forEach(bId => {
         let m = EXAM_META[bId];
         if(m.examType !== eT) return;
-        if(lvlF && m.grades && m.grades.length > 0 && !m.grades.includes(lvlF)) return;
+        if(!metaHasGrade(m, lvlF)) return;
         allMatchingDates.push(m.date);
       });
       allMatchingDates = [...new Set(allMatchingDates)].sort(srt);
       Object.keys(EXAM_META).forEach(bId => {
         let m = EXAM_META[bId];
         if(m.examType !== eT) return;
-        if(lvlF && m.grades && m.grades.length > 0 && !m.grades.includes(lvlF)) return;
+        if(!metaHasGrade(m, lvlF)) return;
         if(m.date === dt){ needed.push(bId); }
         else if(sub === 'summary'){
           let ci = allMatchingDates.indexOf(dt);

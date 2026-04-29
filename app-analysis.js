@@ -1743,7 +1743,7 @@ function rAnl(){
         if(dateFilter && m.date !== dateFilter) return;
         let key = m.date + '||' + (m.publisher || '');
         if(!examGradeMap[key]) examGradeMap[key] = { grades:new Set(), date:m.date, publisher:m.publisher||'' };
-        let gs = (m.grades && m.grades.length) ? m.grades : ['*'];
+        let gs = metaGrades(m).length ? metaGrades(m) : ['*'];
         gs.forEach(g => examGradeMap[key].grades.add(g));
       });
       let attendedSetByStu = {};
@@ -2097,7 +2097,7 @@ function rAnl(){
       if(!m.subjects || !m.subjects.map(s=>s.toLocaleLowerCase('tr-TR')).includes(subjLower)) return;
       let key = m.date + '||' + (m.publisher || '');
       if(!subjExamGradeMap[key]) subjExamGradeMap[key] = { grades:new Set() };
-      let gs = (m.grades && m.grades.length) ? m.grades :['*'];
+      let gs = metaGrades(m).length ? metaGrades(m) : ['*'];
       gs.forEach(g => subjExamGradeMap[key].grades.add(g));
     });
     let subjAttendedSetByStu = {};
@@ -2390,7 +2390,7 @@ function rAnl(){
           if(m.examType !== eT) return;
           let key = m.date + '||' + (m.publisher || '');
           if(!gsExamGradeMap[key]) gsExamGradeMap[key] = { grades:new Set() };
-          let gs = (m.grades && m.grades.length) ? m.grades : ['*'];
+          let gs = metaGrades(m).length ? metaGrades(m) : ['*'];
           gs.forEach(g => gsExamGradeMap[key].grades.add(g));
         });
         let gsAttendedSetByStu = {};
@@ -2582,7 +2582,7 @@ function rAnl(){
       // examGrades: sınav metasında belirli sınıf seviyeleri varsa filtrele.
       // Ancak targetLvl zaten seçilmişse (kullanıcı seviye seçti) examGrades filtresini atla;
       // çünkü metadata 9. sınıf olarak kayıtlı bir sınavı 10/11. sınıf öğrencisi de girebilir.
-      let examGrades = (!targetLvl && thisExamMeta && thisExamMeta.grades && thisExamMeta.grades.length) ? new Set(thisExamMeta.grades) : null;
+      let examGrades = (!targetLvl && metaGrades(thisExamMeta).length) ? new Set(metaGrades(thisExamMeta)) : null;
       let eligibleStusE = DB.s.filter(s => {
         let m = s.class.match(/^(\d+)([a-zA-ZğüşıöçĞÜŞİÖÇ]+)$/); if(!m) return false;
         if(targetLvl && m[1] !== targetLvl) return false;
@@ -2796,7 +2796,7 @@ function rAnl(){
         </div>
         <div class="card-body report-card-body">
           <div class="scroll-hint"><i class="fas fa-arrows-alt-h me-1"></i>Tabloyu kaydırın</div>
-          <div class="scroll"><table class="table table-sm table-hover table-bordered" id="tED"><thead><tr><th>#</th><th>Ad Soyad</th><th>Sınıf</th><th>Tarih</th><th>Yayınevi</th>${headCols}<th>Top.Net</th><th>Puan</th><th>Snf(S/K)</th><th>Okul(S/K)</th></tr></thead><tbody>${bodyRows}${classSubtotalRows}${listAvgRow}</tbody></table></div>
+          <div class="scroll list-scroll"><table class="table table-sm table-hover table-bordered" id="tED"><thead><tr><th>#</th><th>Ad Soyad</th><th>Sınıf</th><th>Tarih</th><th>Yayınevi</th>${headCols}<th>Top.Net</th><th>Puan</th><th>Snf(S/K)</th><th>Okul(S/K)</th></tr></thead><tbody>${bodyRows}${classSubtotalRows}${listAvgRow}</tbody></table></div>
         </div>
       </div>`;
       r.innerHTML=h; if(aNo) setTimeout(()=>{ let hlRow=getEl('tED')?.querySelector('tr.highlight-row'); if(hlRow)hlRow.scrollIntoView({behavior:'smooth',block:'center'}); },300);
@@ -2903,7 +2903,7 @@ function rAnl(){
         </div>
         <div class="card-body report-card-body">
           <div class="scroll-hint"><i class="fas fa-arrows-alt-h me-1"></i>Tabloyu kaydırın</div>
-          <div class="scroll">
+          <div class="scroll list-scroll">
             <table class="table table-sm table-hover table-bordered" id="tEDAll">
               <thead><tr><th>#</th><th>Ad Soyad</th><th>Sınıf</th>${headColsAll}<th>Top.Net Ort.</th><th>Puan Ort.</th><th>Sıra/Sınıf</th><th>Sıra/Okul</th><th>Sınav Say.</th></tr></thead>
               <tbody>${bodyRowsAll}${allAvgRow}</tbody>
@@ -2951,8 +2951,8 @@ async function generateRapor() {
   if(!students.length) { showToast('Bu filtreye uygun öğrenci bulunamadı.','warning'); return; }
   
   let neededBatches =[];
-  if (eTypeSel === 'ALL') { neededBatches = Object.keys(EXAM_META).filter(id => { let m = EXAM_META[id]; return (!m.grades || m.grades.length === 0 || m.grades.includes(lvl)); }); } else {
-      neededBatches = Object.keys(EXAM_META).filter(id => { let m = EXAM_META[id]; return m.examType === eTypeSel && (!m.grades || m.grades.length === 0 || m.grades.includes(lvl)); });
+  if (eTypeSel === 'ALL') { neededBatches = Object.keys(EXAM_META).filter(id => { let m = EXAM_META[id]; return metaHasGrade(m, lvl); }); } else {
+      neededBatches = Object.keys(EXAM_META).filter(id => { let m = EXAM_META[id]; return m.examType === eTypeSel && metaHasGrade(m, lvl); });
   }
   await fetchBatches(neededBatches);
   
@@ -3060,7 +3060,7 @@ async function generateRapor() {
         </div>
         <div class="card-body p-2">
           <div class="scroll-hint"><i class="fas fa-arrows-alt-h me-1"></i>Tabloyu kaydırın</div>
-          <div class="scroll">
+          <div class="scroll list-scroll">
             <table class="table table-sm table-bordered table-striped table-hover" data-sh="${escapeHtml(t)}">
               <thead><tr><th>#</th><th>Ad Soyad</th><th>Sınıf</th>${headColsAll}<th>Top.Net Ort.</th><th>Puan Ort.</th><th>Sıra/Sınıf</th><th>Sıra/Okul</th><th>Sınav Say.</th></tr></thead>
               <tbody>${bodyRowsAll}${allAvgRow}</tbody>

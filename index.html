@@ -1,15 +1,34 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#0d6efd">
+<meta name="theme-color" content="#2563eb">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Sınav Analizi">
 <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3135/3135810.png">
 <link rel="manifest" href="./manifest.json">
 <title>Sınav Analiz Sistemi</title>
+<script>
+window.SA_APP_VERSION = 'adminlte4-r25';
+window.SA_CACHE_NAME = 'sinav-analizi-adminlte4-r25';
+window.SA_CACHE_READY = (async function(){
+  try {
+    if (!('caches' in window)) return;
+    const keys = await caches.keys();
+    await Promise.all(keys
+      .filter(key => key.startsWith('sinav-analizi-') && key !== window.SA_CACHE_NAME)
+      .map(key => caches.delete(key)));
+    if ('serviceWorker' in navigator) {
+      const reg = await navigator.serviceWorker.getRegistration('./');
+      if (reg) reg.update();
+    }
+  } catch (err) {
+    console.warn('Başlangıç önbelleği temizlenemedi:', err);
+  }
+})();
+</script>
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@4.0.0-rc7/dist/css/adminlte.min.css">
@@ -23,13 +42,13 @@
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
 
-<link rel="stylesheet" href="./style.css?v=adminlte4-r22">
+<link rel="stylesheet" href="./style.css?v=adminlte4-r25">
 </head>
-<body class="layout-fixed sidebar-expand-lg sidebar-mini" data-active-pane="anasayfa_genel">
+<body class="layout-fixed sidebar-expand-lg sidebar-mini auth-pending" data-active-pane="anasayfa_genel">
 
 <div id="loader">
   <div class="spinner-border text-light mb-3 loader-spinner"></div>
-  <div id="l-txt">İşlem yapılıyor...</div>
+  <div id="l-txt">Oturum kontrol ediliyor...</div>
 </div>
 
 <div id="loginScreen">
@@ -67,14 +86,14 @@
 </div>
 
 <div id="pwaInstallPopup">
-  <div class="pwa-icon">📲</div>
+  <div class="pwa-icon"><i class="fas fa-mobile-screen-button"></i></div>
   <div class="pwa-text">
     <strong>Uygulamayı Yükle</strong>
     <span>Ana ekrana ekleyerek daha hızlı erişin</span>
   </div>
   <div class="pwa-actions">
     <button class="btn-pwa-install" onclick="triggerInstall(event)"><i class="fas fa-download me-1"></i>Yükle</button>
-    <button class="btn-pwa-close" onclick="closePwaPopup()" title="Kapat">✕</button>
+    <button class="btn-pwa-close" onclick="closePwaPopup()" title="Kapat"><i class="fas fa-times"></i></button>
   </div>
   <div class="pwa-progress"></div>
 </div>
@@ -140,7 +159,7 @@
             <div class="col-md-3 col-sm-6 col-12"><div class="info-box bg-primary home-nav-card" role="button" tabindex="0" onclick="sTab('anasayfa', document.getElementById('nav-anasayfa'))" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();sTab('anasayfa', document.getElementById('nav-anasayfa'));}"><span class="info-box-icon"><i class="fas fa-user-graduate"></i></span><div class="info-box-content"><span class="info-box-text">Öğrenci Profili</span><span class="progress-description">Kişisel karneler</span></div></div></div>
             <div class="col-md-3 col-sm-6 col-12"><div class="info-box bg-success home-nav-card" role="button" tabindex="0" onclick="sTab('sonuclar', document.getElementById('nav-sonuclar'))" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();sTab('sonuclar', document.getElementById('nav-sonuclar'));}"><span class="info-box-icon"><i class="fas fa-chart-line"></i></span><div class="info-box-content"><span class="info-box-text">Sonuçlar & Analizler</span><span class="progress-description">Sınıf/Ders analizleri</span></div></div></div>
             <div class="col-md-3 col-sm-6 col-12"><div class="info-box bg-info home-nav-card" role="button" tabindex="0" onclick="sTab('rapor', document.getElementById('nav-rapor'))" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();sTab('rapor', document.getElementById('nav-rapor'));}"><span class="info-box-icon"><i class="fas fa-file-alt"></i></span><div class="info-box-content"><span class="info-box-text">Toplu Rapor</span><span class="progress-description">Sınıf karneleri yazdır</span></div></div></div>
-            <div class="col-md-3 col-sm-6 col-12 admin-only"><div class="info-box bg-warning home-nav-card" role="button" tabindex="0" onclick="sTab('ayarlar', document.getElementById('nav-ayarlar'))" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();sTab('ayarlar', document.getElementById('nav-ayarlar'));}"><span class="info-box-icon"><i class="fas fa-cog text-white"></i></span><div class="info-box-content text-white"><span class="info-box-text">Ayarlar & Yükleme</span><span class="progress-description">Excel ile veri aktarımı</span></div></div></div>
+            <div class="col-md-3 col-sm-6 col-12 admin-only"><div class="info-box bg-warning home-nav-card" role="button" tabindex="0" onclick="sTab('ayarlar', document.getElementById('nav-ayarlar'))" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();sTab('ayarlar', document.getElementById('nav-ayarlar'));}"><span class="info-box-icon"><i class="fas fa-cog"></i></span><div class="info-box-content"><span class="info-box-text">Ayarlar & Yükleme</span><span class="progress-description">Excel ile veri aktarımı</span></div></div></div>
           </div>
           <div class="card card-outline card-info"><div class="card-header"><h3 class="card-title"><i class="fas fa-tachometer-alt me-2"></i>Sistem Özeti</h3></div><div class="card-body"><div class="row" id="dynamicStatsGrid"></div></div></div>
         </div>
@@ -154,7 +173,10 @@
           <div class="card card-primary card-outline analysis-filter-card" id="anlFilterCard">
             <div class="card-header d-flex align-items-center gap-2">
               <h3 class="card-title mb-0"><i class="fas fa-filter me-2"></i>Analiz Filtreleri</h3>
-              <button type="button" class="btn btn-sm btn-outline-primary d-md-none ms-auto filter-collapse-toggle" data-bs-toggle="collapse" data-bs-target="#anlFilterBody" aria-expanded="true" aria-controls="anlFilterBody" title="Filtreleri aç/kapat">
+              <button type="button" class="btn btn-sm btn-outline-secondary ms-auto filter-reset-header" onclick="resetAnalysisFilters()" title="Filtreleri sıfırla" aria-label="Filtreleri sıfırla">
+                <i class="fas fa-rotate-left"></i><span class="d-none d-md-inline ms-1">Sıfırla</span>
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-primary d-md-none filter-collapse-toggle" data-bs-toggle="collapse" data-bs-target="#anlFilterBody" aria-expanded="true" aria-controls="anlFilterBody" title="Filtreleri aç/kapat">
                 <i class="fas fa-sliders-h"></i>
               </button>
             </div>
@@ -388,13 +410,44 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/admin-lte@4.0.0-rc7/dist/js/adminlte.min.js"></script>
 
-<script src="./app-core.js?v=adminlte4-r22"></script>
-<script src="./app-ui.js?v=adminlte4-r22"></script>
-<script src="./app-analysis.js?v=adminlte4-r22"></script>
-<script src="./app-settings.js?v=adminlte4-r22"></script>
+<script>
+(async function loadAppScripts(){
+  const version = window.SA_APP_VERSION || 'adminlte4-r25';
+  const scripts = ['app-core.js','app-ui.js','app-analysis.js','app-settings.js'];
+  const refreshLocalStyle = () => {
+    const current = document.querySelector('link[href*="style.css"]');
+    if (!current) return;
+    const fresh = current.cloneNode();
+    fresh.href = `./style.css?v=${version}&t=${Date.now()}`;
+    fresh.onload = () => current.remove();
+    document.head.appendChild(fresh);
+  };
+  const loadScript = src => new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = `./${src}?v=${version}`;
+    s.onload = resolve;
+    s.onerror = () => reject(new Error(src + ' yüklenemedi'));
+    document.body.appendChild(s);
+  });
+  try {
+    if (window.SA_CACHE_READY) await window.SA_CACHE_READY;
+    refreshLocalStyle();
+    for (const src of scripts) await loadScript(src);
+  } catch (err) {
+    console.error('Uygulama başlatılamadı:', err);
+    const loader = document.getElementById('loader');
+    const text = document.getElementById('l-txt');
+    document.body.classList.add('auth-pending');
+    if (text) text.textContent = 'Uygulama dosyaları yüklenemedi. Lütfen sayfayı yenileyin.';
+    if (loader) loader.style.display = 'flex';
+  }
+})();
+</script>
 
 </body>
 </html>
+
+
 
 
 

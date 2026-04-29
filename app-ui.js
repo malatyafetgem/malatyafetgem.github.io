@@ -295,7 +295,7 @@ function _xprIsLandscape(sourceId, title, orientation){
 
 // Sınav türü paleti — style.css'teki .exam-color-N ile birebir aynı (yeni pencerede style.css yok, inline yazıyoruz)
 // Yeni palet: birbirinden net ayırt edilebilen, şık 8 renk.
-const _XPR_EXAM_PALETTE = ['#1e3a8a','#059669','#ea580c','#be185d','#7c3aed','#9f1239','#0891b2','#a16207'];
+const _XPR_EXAM_PALETTE = ['#2563eb','#059669','#d97706','#dc2626','#7c3aed','#0891b2','#be185d','#4b5563'];
 
 function _xprExamColorFor(el){
   // 1) Önce element veya en yakın atadan data-exam-color="0..7" oku
@@ -407,15 +407,16 @@ function xPR(sourceId, title, btn, orientation) {
     }
     // Bloğun içindeki tüm "kimlik" öğelerini sınav türü rengiyle boya
     // (varsayılan lacivert gradient/mavi başlıklar yerine).
-    let darker = color; // başlık gradient için ikincil ton: %60 koyu
-    let mkGrad = (c) => `linear-gradient(135deg, ${c}, ${c}cc)`;
     el.querySelectorAll('.report-header, .print-page-hdr').forEach(h => {
-      h.style.background = mkGrad(color);
-      h.style.color = '#fff';
+      h.style.background = '#f3f6fb';
+      h.style.color = '#111827';
+      h.style.borderLeft = `4px solid ${color}`;
+      h.style.borderBottom = '1px solid #cbd5e1';
+      h.querySelectorAll('*').forEach(child => child.style.color = '#111827');
     });
     el.querySelectorAll('.table thead th, table thead th').forEach(th => {
-      th.style.background = color;
-      th.style.color = '#fff';
+      th.style.background = '#f1f5f9';
+      th.style.color = '#111827';
       th.style.borderBottom = `2px solid ${color}`;
     });
     el.querySelectorAll('tr.avg-row td').forEach(td => {
@@ -575,18 +576,18 @@ ${cssLinks}
   .p-2{padding:5px !important;} .p-0{padding:0 !important;}
 
   /* Rapor başlığı (varsayılan; sınav türü blokları içindeki başlıklar inline ile sınav rengine boyanır) */
-  .report-header{display:flex !important;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#334155,#1e293b) !important;color:#fff !important;padding:8px 14px;border-radius:5px;margin-bottom:8px;}
-  .report-header *{color:#fff !important;}
+  .report-header{display:flex !important;align-items:center;justify-content:space-between;background:#f3f6fb !important;color:#111827 !important;padding:8px 14px;border-radius:5px;margin-bottom:8px;border-left:4px solid #64748b;border-bottom:1px solid #cbd5e1;}
+  .report-header *{color:#111827 !important;}
 
   /* Tablolar — başlık her sayfada, satır içi kırma yok */
   .table{width:100% !important;border-collapse:collapse !important;font-size:${isLandscape?'8px':'9px'} !important;margin-bottom:5px;}
   .table th,.table td{border:1px solid #bbb !important;padding:2px 4px !important;color:#212529 !important;vertical-align:middle !important;}
-  .table thead th{background:#475569 !important;color:#fff !important;font-size:${isLandscape?'7.5px':'8.5px'} !important;font-weight:700;}
+  .table thead th{background:#f1f5f9 !important;color:#111827 !important;font-size:${isLandscape?'7.5px':'8.5px'} !important;font-weight:700;border-bottom:2px solid #cbd5e1 !important;}
   .scroll table thead th,.table-responsive table thead th{position:static !important;top:auto !important;z-index:auto !important;}
   thead{display:table-header-group !important;}
   tfoot{display:table-footer-group !important;}
   tbody tr{page-break-inside:avoid !important;break-inside:avoid !important;}
-  .scroll,.table-responsive{overflow:visible !important;}
+  .scroll,.list-scroll,.table-responsive{overflow:visible !important;max-height:none !important;}
   tr.highlight-row td{background:#fff3cd !important;font-weight:bold !important;}
   tr.absent-row td{background:#f8d7da !important;color:#721c24 !important;}
   tr.avg-row td{background:#e8eef7 !important;color:#1a5fa8 !important;font-weight:bold !important;border-top:2px solid #9cb3d8 !important;}
@@ -915,15 +916,14 @@ function uExamTypes(){
     }
     Object.values(EXAM_META).forEach(m => {
       if(!m.examType) return;
-      let gs = (m.grades && m.grades.length) ? m.grades : null;
       if(lvlF){
         // sınav bu seviyeyi kapsıyor mu?
-        if(gs && !gs.includes(lvlF)) return;
+        if(!metaHasGrade(m, lvlF)) return;
       }
       if(brF){
         // bu şubede öğrenci olan sınıf seviyelerinden en az biri sınavın kapsamında mı?
         if(lvlsInBranch.size === 0) return; // o şubede hiç öğrenci yok
-        if(gs && ![...lvlsInBranch].some(g=>gs.includes(g))) return;
+        if(!metaIntersectsGrades(m, lvlsInBranch)) return;
       }
       types.add(m.examType);
     });
@@ -1011,35 +1011,8 @@ function _selectedOptionText(id){
 
 function updateFilterSummary(){
   let box = getEl('filterSummary'); if(!box) return;
-  let aTEl = getEl('aType');
-  let aT = aTEl ? aTEl.value : '';
-  let chips = [];
-  let add = (label, value, tone) => {
-    if(!value) return;
-    chips.push(`<span class="filter-chip ${tone || ''}"><small>${escapeHtml(label)}</small>${escapeHtml(value)}</span>`);
-  };
-
-  add('Analiz', _selectedOptionText('aType'), 'chip-primary');
-  if(aT === 'student') {
-    let st = aNo ? getStuMap().get(aNo) : null;
-    add('Öğrenci', st ? `${st.name} (${st.class})` : 'Öğrenci seçilmedi', st ? 'chip-success' : 'chip-muted');
-    add('Sınav', _selectedOptionText('aEx'));
-    add('Tarih', _selectedOptionText('aExDate'));
-    add('Veri', _selectedOptionText('aSub'));
-  } else if(aT === 'risk') {
-    add('Sınıf', _selectedOptionText('riskGradeFilter'));
-    add('Şube', _selectedOptionText('riskBranchFilter'));
-    add('Sınav', _selectedOptionText('riskExTypeFilter'));
-    add('Risk', _selectedOptionText('riskLevelFilter'));
-  } else {
-    add('Sınıf', _selectedOptionText('aLvl'));
-    add('Şube', _selectedOptionText('aBr'));
-    add('Sınav', _selectedOptionText('aEx'));
-    add('Tarih', _selectedOptionText('aDate'));
-    add(aT === 'subject' ? 'Ders' : 'Veri', _selectedOptionText('aSub'));
-  }
-
-  box.innerHTML = `<div class="filter-summary-inner">${chips.join('')}<button type="button" class="btn btn-sm btn-outline-secondary filter-reset-btn" onclick="resetAnalysisFilters()"><i class="fas fa-rotate-left me-1"></i>Sıfırla</button></div>`;
+  box.hidden = true;
+  box.innerHTML = '';
 }
 
 function resetAnalysisFilters(){
@@ -1077,10 +1050,7 @@ function uSub(){
   Object.values(EXAM_META).forEach(m => {
     if(m.examType !== t || !m.subjects) return;
     if(dtF && m.date !== dtF) return;
-    if(lvlF){
-      let gs = (m.grades && m.grades.length) ? m.grades : null;
-      if(gs && !gs.includes(lvlF)) return;
-    }
+    if(!metaHasGrade(m, lvlF)) return;
     m.subjects.forEach(subj => s.add(subj.toLocaleLowerCase('tr-TR')));
   });
   // Eğer DB.e yüklüyse ve şube filtresi varsa, şube kısıtını da uygula
@@ -1229,7 +1199,7 @@ function uStudentExamDates(){
   let entries = [];
   Object.values(EXAM_META).forEach(m => {
     if(m.examType !== eT) return;
-    if(stuGrade && m.grades && m.grades.length > 0 && !m.grades.includes(stuGrade)) return;
+    if(!metaHasGrade(m, stuGrade)) return;
     entries.push({ date: m.date, publisher: m.publisher || '' });
   });
   // Unique (date+publisher), sonra tarih DESC sırala (en yeni en üstte)
@@ -1313,8 +1283,8 @@ function uExamDates(){
 
   Object.values(EXAM_META).forEach(m => {
     if(m.examType !== t) return;
-    if(stuGrade && m.grades && m.grades.length > 0 && !m.grades.includes(stuGrade)) return;
-    if(lvlGrade && m.grades && m.grades.length > 0 && !m.grades.includes(lvlGrade)) return;
+    if(!metaHasGrade(m, stuGrade)) return;
+    if(!metaHasGrade(m, lvlGrade)) return;
     dates.push(m.date); if(m.publisher) datePublisherMap[m.date] = m.publisher;
   });
   
@@ -1326,6 +1296,7 @@ function uExamDates(){
   if(dates.includes(prev)) getEl('aDate').value=prev;
   else if(aT === 'class' || aT === 'subject') getEl('aDate').value='';
   else if(aT === 'examdetail' && dates.length > 0) getEl('aDate').value = dates[0]; // en yeni sınavı varsayılan seç
+  else getEl('aDate').value = '';
 }
 
 // ---- uUI (orig lines 2111-2172) ----
@@ -1442,7 +1413,7 @@ function _populateRiskFilterDropdowns() {
       let typesFromMeta = new Set();
       Object.values(EXAM_META).forEach(m => {
         if(!m.examType) return;
-        if(gradeF && m.grades && m.grades.length && !m.grades.includes(gradeF)) return;
+        if(!metaHasGrade(m, gradeF)) return;
         typesFromMeta.add(m.examType);
       });
       allTypes = [...typesFromMeta].sort();

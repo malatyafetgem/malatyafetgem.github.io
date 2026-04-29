@@ -1,4 +1,4 @@
-// app-settings.js — Settings CRUD, Excel upload wizard, DB exp/imp, PWA install
+﻿// app-settings.js — Settings CRUD, Excel upload wizard, DB exp/imp, PWA install
 
 // ---- rTabS (orig lines 3629-3632) ----
 function rTabS(){
@@ -50,8 +50,7 @@ async function svExam(){
   let m = EXAM_META[bId]; if(!m) return;
   let dupId = Object.keys(EXAM_META).find(id => {
     if(id === bId) return false; let em = EXAM_META[id]; if(em.examType !== newType || em.date !== newDate) return false;
-    let myGrades = m.grades || [], otherGrades = em.grades || []; if(myGrades.length === 0 || otherGrades.length === 0) return true;
-    return myGrades.some(g => otherGrades.includes(g));
+    return metaIntersectsGrades(em, m.grades || []);
   });
   if(dupId){ showToast('Bu tarih ve tür kombinasyonu aynı sınıf seviyesi için zaten mevcut!','error'); return; }
   
@@ -371,7 +370,7 @@ function processMappings() {
 
     let gradesFound = new Set();
     d.forEach(r => { let no = String(r[cNo]||'').trim(); if(no) { let st = getStuMap().get(no); if(st) { let gr = getGrade(st.class); if(gr) gradesFound.add(gr); } } });
-    let existsId = Object.keys(EXAM_META).find(id => { let em = EXAM_META[id]; if(em.examType !== eType || em.date !== eDate) return false; if(!gradesFound.size) return true; let existGrades = em.grades || []; if(existGrades.length === 0) return true; return [...gradesFound].some(g => existGrades.includes(g)); });
+    let existsId = Object.keys(EXAM_META).find(id => { let em = EXAM_META[id]; if(em.examType !== eType || em.date !== eDate) return false; return metaIntersectsGrades(em, gradesFound); });
     let bId = existsId || Date.now().toString();
     let cl=new Set(), sn=new Set(), validResults = [], missingStus = [], invalidRows = [], subjectsFound = new Set(), seenStudentNos = new Set();
 
@@ -432,9 +431,12 @@ async function confirmUpload() {
 }
 
 // ---- top-level (orig lines 4003-4007) ----
-const APP_CACHE_NAME = 'sinav-analizi-adminlte4-r22';
+const APP_CACHE_NAME = 'sinav-analizi-adminlte4-r25';
 
-window.addEventListener('load', function(){
+let APP_BOOTED = false;
+function bootApp(){
+  if(APP_BOOTED) return;
+  APP_BOOTED = true;
   checkAuth();
   document.body.addEventListener('click', function(e){
     if(!document.body.classList.contains('sidebar-open')) return;
@@ -450,7 +452,7 @@ window.addEventListener('load', function(){
     }
   });
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-    navigator.serviceWorker.register('./sw.js?v=adminlte4-r22', { scope: './' })
+    navigator.serviceWorker.register('./sw.js?v=adminlte4-r25', { scope: './' })
       .then(reg => { console.log('SW kayıtlı:', reg.scope); reg.update(); })
       .catch(err => console.error('SW hatası:', err));
   }
@@ -459,7 +461,10 @@ window.addEventListener('load', function(){
       .then(keys => Promise.all(keys.filter(key => key.startsWith('sinav-analizi-') && key !== APP_CACHE_NAME).map(key => caches.delete(key))))
       .catch(err => console.warn('Eski önbellek temizlenemedi:', err));
   }
-});
+}
+
+if(document.readyState === 'complete') bootApp();
+else window.addEventListener('load', bootApp);
 
 // ---- top-level (orig lines 4009-4009) ----
 let deferredInstallPrompt = null, pwaPopupTimer = null, userLoggedIn = false;
@@ -481,5 +486,7 @@ function closePwaPopup() { const popup = document.getElementById('pwaInstallPopu
 
 // ---- triggerInstall (orig lines 4018-4018) ----
 function triggerInstall(e) { e.preventDefault(); closePwaPopup(); if (!deferredInstallPrompt) return; deferredInstallPrompt.prompt(); deferredInstallPrompt.userChoice.then(choice => { if (choice.outcome === 'accepted') showToast('Uygulama yükleniyor...', 'info'); deferredInstallPrompt = null; document.getElementById('installBtnWrapper').style.display = 'none'; }); }
+
+
 
 
