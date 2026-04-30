@@ -872,9 +872,9 @@ body.is-admin button.w-100.admin-only { display:block !important; }
 
 /* --- Sınav Türü Dropdown Renk Bandı (Badge) --- */
 .aex-wrap { position: relative; display: block; }
-.aex-wrap > select { padding-right: 28px; }
+.aex-wrap > select { padding-right: 48px; }
 .aex-badge {
-  position: absolute; top: 50%; right: 10px; transform: translateY(-50%);
+  position: absolute; top: 50%; right: 34px; transform: translateY(-50%);
   width: 10px; height: 10px; border-radius: 50%;
   background: var(--exam-color, transparent);
   box-shadow: 0 0 0 2px #fff, 0 0 0 3px rgba(0,0,0,0.08);
@@ -897,9 +897,9 @@ body.is-admin button.w-100.admin-only { display:block !important; }
 #anlFilterCard[data-exam-color] #aExDate,
 #anlFilterCard[data-exam-color] #aDate {
   border-color: var(--exam-color, #0d6efd) !important;
-  border-color: color-mix(in srgb, var(--exam-color, #0d6efd) 55%, #ced4da) !important;
-  box-shadow: 0 0 0 2px rgba(var(--exam-color-rgb, 13,110,253),0.08) inset;
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--exam-color, #0d6efd) 8%, transparent) inset;
+  border-color: color-mix(in srgb, var(--exam-color, #0d6efd) 34%, #ced4da) !important;
+  box-shadow: 0 0 0 2px rgba(var(--exam-color-rgb, 13,110,253),0.05) inset;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--exam-color, #0d6efd) 5%, transparent) inset;
 }
 
 /* --- Analiz Sonuç Container'ı (anlRes) — üst şerit + rapor başlığı sınav rengi --- */
