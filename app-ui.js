@@ -1031,7 +1031,327 @@ function _selectedOptionText(id){
   return (opt.textContent || '').trim();
 }
 
+function _methodologyEsc(v){
+  return (typeof escapeHtml === 'function') ? escapeHtml(v) : String(v ?? '');
+}
+
+function _methodologyItem(item){
+  let rows = [
+    ['Kartta görünen ad', item.display],
+    ['Orijinal adı', item.original],
+    ['Ne zaman görünür?', item.when],
+    ['Ne anlama gelir?', item.meaning],
+    ['Nasıl hesaplanır?', item.calc],
+    ['Yorum sınırı', item.limit]
+  ].filter(([,value]) => value);
+  return `<div class="methodology-item">
+    <h6>${_methodologyEsc(item.display)}</h6>
+    ${rows.map(([label, value]) => `<p><strong>${_methodologyEsc(label)}:</strong> ${_methodologyEsc(value)}</p>`).join('')}
+  </div>`;
+}
+
+function _methodologySection(title, intro, items){
+  return `<section class="methodology-section">
+    <h5>${_methodologyEsc(title)}</h5>
+    ${intro ? `<p class="methodology-section-intro">${_methodologyEsc(intro)}</p>` : ''}
+    <div class="methodology-items">${items.map(_methodologyItem).join('')}</div>
+  </section>`;
+}
+
+function _methodologyContext(aT){
+  let subText = _selectedOptionText('aSub');
+  let dateText = _selectedOptionText('aDate');
+  let stuDateText = _selectedOptionText('aExDate');
+  let brText = _selectedOptionText('aBr');
+  let riskGrade = _selectedOptionText('riskGradeFilter');
+  let riskBranch = _selectedOptionText('riskBranchFilter');
+  let riskType = _selectedOptionText('riskExTypeFilter');
+  let riskLevel = _selectedOptionText('riskLevelFilter');
+
+  if(aT === 'student') {
+    return `Öğrenci Analizi seçili. ${stuDateText ? `Sınav seçimi: ${stuDateText}.` : 'Tek sınav veya tüm sınav seçimine göre farklı kartlar görünür.'} ${subText ? `Veri türü: ${subText}.` : ''}`;
+  }
+  if(aT === 'class') {
+    return `Sınıf Analizi seçili. ${brText ? `Şube filtresi: ${brText}.` : 'Şube filtresi Tümü ise şubeler arası karşılaştırma kartları da gelebilir.'} ${dateText ? `Sınav seçimi: ${dateText}.` : 'Tüm sınavlar seçilirse trend kartları oluşabilir.'}`;
+  }
+  if(aT === 'subject') {
+    return `Ders Analizi seçili. ${brText ? `Şube filtresi: ${brText}.` : 'Şube filtresi Tümü ise sınıflar/şubeler arası karşılaştırma kartları da gelebilir.'} ${subText ? `Ders: ${subText}.` : ''}`;
+  }
+  if(aT === 'examdetail') {
+    return `Sınav Analizi seçili. ${subText ? `Alt görünüm: ${subText}.` : 'Tek sınav özeti, tüm sınavlar özeti veya liste görünümü seçilebilir.'} ${dateText ? `Sınav seçimi: ${dateText}.` : ''}`;
+  }
+  if(aT === 'risk') {
+    let bits = [riskGrade, riskBranch, riskType, riskLevel].filter(Boolean);
+    return `Risk Analizi seçili. ${bits.length ? `Aktif filtreler: ${bits.join(' · ')}.` : 'Risk kartları seçilen sınıf, şube, sınav türü ve risk düzeyi filtrelerine göre sayılır.'}`;
+  }
+  return 'Bu bölüm, seçili analiz türüne göre istatistiksel kartların hesaplanma mantığını açıklar.';
+}
+
+function _methodologyData(aT){
+  const studentItems = [
+    {
+      display: 'Genel Yön (Trend)',
+      original: 'Doğrusal regresyon eğimi + determinasyon katsayısı (R²)',
+      when: 'Tüm sınavlar seçiliyken; Toplam Net, Puan veya Ders Neti için en az 3 geçerli sınav varsa görünür.',
+      meaning: 'Öğrencinin seçili veride yükseliş, düşüş, sabitlik veya dalgalı gidiş gösterip göstermediğini anlatır.',
+      calc: 'Sınav sırası x ekseni, seçili net/puan y ekseni alınır. En iyi uyum doğrusu kurulur; eğim yönü belirler, R² bu doğrunun sonuçları ne kadar iyi açıkladığını gösterir.',
+      limit: 'R² düşükse yön etiketi temkinli okunur. Az sınavda trend, kesin yargı değil izleme sinyalidir.'
+    },
+    {
+      display: 'Toplam Değişim / Sınav Başı Değişim',
+      original: 'Regresyon doğrusuna dayalı toplam değişim ve regresyon eğimi',
+      when: 'Trend kartıyla birlikte görünür.',
+      meaning: 'Süreç boyunca beklenen toplam artış/azalışı ve her yeni sınav için ortalama değişim hızını gösterir.',
+      calc: 'Sınav başı değişim regresyon eğimidir. Toplam değişim = eğim x (geçerli sınav sayısı - 1).',
+      limit: 'Sonuçlar zikzaklıysa eğim gerçek öğrenme yönünü abartabilir; R² ile birlikte okunmalıdır.'
+    },
+    {
+      display: 'Güncel Performans',
+      original: 'Üstel Ağırlıklı Hareketli Ortalama (EWMA)',
+      when: 'Tüm sınavlar seçiliyken ve en az 3 geçerli sınav varsa görünür.',
+      meaning: 'Öğrencinin son dönem durumunu klasik ortalamadan daha duyarlı biçimde gösterir.',
+      calc: 'Son 3 sınav ağırlıklı alınır; en yeni sınavın ağırlığı daha yüksektir (alfa = 0.5).',
+      limit: 'Tek bir son sınavı mutlak gerçek kabul etmez; yine de kısa dönem değişimlere daha duyarlıdır.'
+    },
+    {
+      display: 'Sürpriz Payı',
+      original: 'Regresyon kalıntılarının standart hatası / RMSE',
+      when: 'Trend hesabı yapılabiliyorsa görünür.',
+      meaning: 'Öğrenci sonuçlarının trend çizgisinden ortalama ne kadar saptığını gösterir.',
+      calc: 'Gerçek değerler ile regresyonun beklediği değerler arasındaki farkların kareleri alınır; karekök ortalaması RMSE olarak verilir.',
+      limit: 'Düşük değer daha öngörülebilir ilerleme, yüksek değer dalgalanma demektir; trend yorumunu zayıflatır.'
+    },
+    {
+      display: 'Sınıf İçi Konum / Kurum İçi Konum',
+      original: 'Z-skoru + yüzdelik dilim',
+      when: 'Tek sınav modunda; Toplam Net, Puan veya Ders Neti karşılaştırmasında grup içinde en az 3 geçerli değer varsa görünür. Sıralama verisinde Z-skoru hesaplanmaz.',
+      meaning: 'Öğrencinin sınıf veya kurum grubuna göre ortalamanın ne kadar üstünde/altında olduğunu gösterir.',
+      calc: 'Z = (öğrenci değeri - grup ortalaması) / standart sapma. Yüzdelik dilim, öğrencinin grupta kaç kişinin üstünde kaldığına göre hesaplanır.',
+      limit: 'Grup küçükse veya standart sapma çok düşükse Z-skoru oynaklaşır; tek başına öğrenci etiketi değildir.'
+    },
+    {
+      display: 'Önceki Sınava Fark',
+      original: 'Ardışık sınav farkı / delta',
+      when: 'Tek sınav modunda önceki sınav verisi varsa görünür.',
+      meaning: 'Seçili sınavın hemen önceki sınava göre artışını veya düşüşünü gösterir.',
+      calc: 'Net/puan için mevcut değer - önceki değer alınır. Sıralamada yön ters okunur: önceki sıra - mevcut sıra pozitifse iyileşme vardır.',
+      limit: 'İki sınav arasındaki fark trend değildir; sınav zorluğu ve konu kapsamı etkileyebilir.'
+    },
+    {
+      display: 'Kutu Grafiği / Öğrencinin Konumu',
+      original: 'Box plot, medyan, çeyrekler ve çeyrekler arası aralık (IQR)',
+      when: 'Tüm sınavlar modunda, seçili sınav türünde en az 10 sınav ve karşılaştırma grubunda en az 3 geçerli öğrenci değeri varsa görünür.',
+      meaning: 'Öğrencinin sınıf ve kurum dağılımındaki yerini, ortadaki ana kitleye göre gösterir.',
+      calc: 'Değerler sıralanır; medyan, Q1, Q3 ve IQR = Q3 - Q1 hesaplanır. Kırmızı işaret öğrencinin kendi ortalamasını gösterir.',
+      limit: 'Az sınav veya küçük grup varsa dağılım grafiği yanıltıcı olabileceği için gösterilmez.'
+    },
+    {
+      display: 'Risk Analizi Kartı',
+      original: 'Ağırlıklı risk puanlama rubriği',
+      when: 'Öğrenci için seçili sınav türünde risk sinyali oluşmuşsa Öğrenci Analizi içinde de görünür.',
+      meaning: 'Öğrencide devamsızlık, sıra gerilemesi, düşüş trendi veya ders bazlı düşüş sinyali olduğunu bildirir.',
+      calc: 'Risk Analizi sayfasındaki aynı rubrik kullanılır; ayrıntılı eşikler Risk Analizi açıklamalarında verilmiştir.',
+      limit: 'Tanı veya kesin hüküm değildir; öğretmenin öğrenciyi daha yakından incelemesi için erken uyarıdır.'
+    }
+  ];
+
+  const classItems = [
+    {
+      display: 'Genel Eğilim / Sınav Başına Değişim',
+      original: 'Sınıf ortalaması üzerinden doğrusal regresyon eğimi + R²',
+      when: 'Seçilen sınıf/şube/veri için en az 2 sınav ortalaması oluştuğunda görünür; 3 ve üzeri sınavda yorum daha sağlıklıdır.',
+      meaning: 'Sınıf ortalamasının zaman içinde yükselme, düşme veya sabit kalma yönünü gösterir.',
+      calc: 'Her sınav için sınıf ortalaması hesaplanır; bu seri üzerinden regresyon eğimi ve R² bulunur.',
+      limit: 'İki sınavlık değişim gerçek trend sayılmaz; R² düşükse sonuç dalgalı kabul edilmelidir.'
+    },
+    {
+      display: 'Sınıf İçi Dağılım',
+      original: 'Örneklem standart sapması + Değişim Katsayısı (CV)',
+      when: 'Trend kartı içinde, yeterli öğrenci sonucu olduğunda görünür.',
+      meaning: 'Öğrencilerin sınıf ortalaması etrafında ne kadar toplandığını veya ayrıştığını anlatır.',
+      calc: 'Standart sapma n-1 paydasıyla hesaplanır. CV = standart sapma / ortalama x 100. CV etiketleri: <10 çok homojen, <20 homojen, <35 heterojen, 35+ çok heterojen.',
+      limit: 'Ortalama çok düşükse CV büyüyebilir; dağılım yorumu öğrenci sayısıyla birlikte okunmalıdır.'
+    },
+    {
+      display: 'Şubeler Arası Fark',
+      original: 'Ortalama aralığı / range',
+      when: 'Birden fazla sınıf/şube aynı ekranda karşılaştırılabiliyorsa görünür.',
+      meaning: 'En yüksek ortalamalı sınıf ile en düşük ortalamalı sınıf arasındaki ham farkı gösterir.',
+      calc: 'Fark = en yüksek sınıf ortalaması - en düşük sınıf ortalaması.',
+      limit: 'Bu değer dağılımı dikkate almaz; farkın pedagojik büyüklüğü için Cohen d kartı daha güçlüdür.'
+    },
+    {
+      display: "Şubeler Arası Etki Büyüklüğü (Cohen's d)",
+      original: "Cohen's d, havuzlanmış standart sapma ile etki büyüklüğü",
+      when: 'Şube filtresi Tümü iken, en az 2 şube varsa ve karşılaştırılan şubelerde yaklaşık 10 veya daha fazla öğrenci ortalaması oluşuyorsa görünür.',
+      meaning: 'Şube ortalamaları arasındaki farkın küçük mü, orta mı, büyük mü olduğunu dağılımı hesaba katarak söyler.',
+      calc: 'Her öğrenci için ortalama değer alınır. En iyi şube diğer şubelerle karşılaştırılır; d = (ortalama1 - ortalama2) / havuzlanmış standart sapma.',
+      limit: '0.20 küçük, 0.50 orta, 0.80 ve üzeri büyük etki kabul edilir. Küçük örneklemde gösterilmez veya temkinli okunur.'
+    },
+    {
+      display: 'Sınıflar Arası Kutu Grafiği',
+      original: 'Çok gruplu box plot, medyan, çeyrekler ve IQR',
+      when: 'Seçili sınav türünde en az 10 sınav ve karşılaştırılan gruplarda en az 3 geçerli değer varsa görünür.',
+      meaning: 'Sınıfların yalnız ortalamasını değil, öğrenci dağılımlarını da karşılaştırır.',
+      calc: 'Her sınıf için değerler sıralanır; medyan, Q1, Q3 ve IQR hesaplanır. Tümü grubu genel dağılımı gösterir.',
+      limit: 'Sınav sayısı veya grup büyüklüğü azsa kutu grafiği geçici dalgalanmayı büyütebilir.'
+    }
+  ];
+
+  const subjectItems = [
+    {
+      display: 'Genel Eğilim / Sınav Başına Değişim',
+      original: 'Ders ortalaması üzerinden doğrusal regresyon eğimi + R²',
+      when: 'Seçili derste en az 3 sınavlık karşılaştırılabilir veri varsa görünür.',
+      meaning: 'Dersin kurum/sınıf genelinde zamanla güçlenip güçlenmediğini gösterir.',
+      calc: 'Her sınav için ders ortalaması hesaplanır; bu seri üzerinden regresyon eğimi, toplam değişim ve R² hesaplanır.',
+      limit: 'Ders kapsamı sınavdan sınava değişebilir; R² düşükse eğilim zayıf kabul edilir.'
+    },
+    {
+      display: 'Öğrenciler Arası Dağılım',
+      original: 'Örneklem standart sapması + Değişim Katsayısı (CV)',
+      when: 'Seçili derste yeterli öğrenci sonucu olduğunda trend kartı içinde görünür.',
+      meaning: 'Aynı derste öğrenciler arasındaki seviye farkının büyüklüğünü gösterir.',
+      calc: 'Ders netlerinin standart sapması n-1 paydasıyla hesaplanır; CV = standart sapma / ders ortalaması x 100.',
+      limit: 'Ortalama düşük veya soru sayısı azsa CV daha hassas hale gelir; konu kapsamıyla birlikte yorumlanmalıdır.'
+    },
+    {
+      display: 'Sınıflar Arası Fark',
+      original: 'Ortalama aralığı / range',
+      when: 'Birden fazla sınıfın ders ortalaması karşılaştırılabildiğinde görünür.',
+      meaning: 'Seçili derste en güçlü sınıf ile en zayıf sınıf arasındaki ham net farkını gösterir.',
+      calc: 'Fark = en yüksek ders ortalaması - en düşük ders ortalaması.',
+      limit: 'Ham fark dağılımı hesaba katmaz; Cohen d varsa onunla birlikte okunmalıdır.'
+    },
+    {
+      display: "Şubeler Arası Etki Büyüklüğü (Cohen's d)",
+      original: "Cohen's d, ders bazlı etki büyüklüğü",
+      when: 'Şube filtresi Tümü iken, en az 2 şube ve yeterli öğrenci verisi varsa görünür.',
+      meaning: 'Seçili derste şubeler arasındaki farkın eğitimsel olarak ne kadar güçlü olduğunu gösterir.',
+      calc: 'Her öğrencinin seçili dersteki ortalaması alınır; en iyi şube diğer şubelerle havuzlanmış standart sapma üzerinden karşılaştırılır.',
+      limit: '0.20 küçük, 0.50 orta, 0.80 ve üzeri büyük farktır. Az öğrenciyle hesap güvenilir değildir.'
+    },
+    {
+      display: 'Ders Kutu Grafiği',
+      original: 'Box plot, medyan, çeyrekler ve IQR',
+      when: 'Seçili sınav türünde en az 10 sınav ve grup başına en az 3 değer varsa görünür.',
+      meaning: 'Ders performansının sınıflar arasında nasıl dağıldığını gösterir.',
+      calc: 'Sınıf bazlı ders netleri sıralanır; medyan, Q1, Q3 ve IQR hesaplanır.',
+      limit: 'Ders dağılımı konu kapsamından çok etkilenir; az sınavla kesin seviye yorumu yapılmaz.'
+    }
+  ];
+
+  const examItems = [
+    {
+      display: 'Ortalamadan Uzaklık',
+      original: 'Örneklem standart sapması + CV etiketi',
+      when: 'Tek sınav özetinde en az 5 öğrenci sonucu varsa görünür. Tüm sınavlar özetinde ise öğrenci ortalamaları üzerinden en az 5 değer gerekir.',
+      meaning: 'Grubun ortalama etrafında ne kadar dağıldığını gösterir.',
+      calc: 'Standart sapma n-1 paydasıyla hesaplanır. CV etiketi dağılımın homojen mi heterojen mi olduğunu belirtir.',
+      limit: 'Çok küçük gruplarda bir uç sonuç dağılımı kolayca bozabilir.'
+    },
+    {
+      display: 'Medyan Net',
+      original: 'Ortanca / median',
+      when: 'Tek sınav veya tüm sınavlar özetinde yeterli sonuç varsa görünür.',
+      meaning: 'Sonuçlar küçükten büyüğe dizildiğinde ortadaki öğrencinin netini gösterir; tipik öğrenciyi anlatır.',
+      calc: 'Tek sayıda değer varsa ortadaki değer, çift sayıda değer varsa ortadaki iki değerin ortalaması alınır.',
+      limit: 'Medyan ortalamadan belirgin farklıysa uç öğrenciler ortalamayı yukarı veya aşağı çekiyor olabilir.'
+    },
+    {
+      display: 'Çeyrekler Arası Aralık (IQR)',
+      original: 'Interquartile Range; Q3 - Q1',
+      when: 'Tek sınav veya tüm sınavlar özetinde yeterli sonuç varsa görünür.',
+      meaning: 'Ortadaki yüzde 50 öğrencinin ne kadar geniş bir aralığa yayıldığını gösterir.',
+      calc: 'Q1 yüzde 25, Q3 yüzde 75 noktasıdır; IQR = Q3 - Q1. IQR / medyan oranı etikete çevrilir: <0.20 homojen, <0.30 normal, <0.40 seviye farkı, 0.40+ kritik kopukluk.',
+      limit: 'IQR uç değerleri dışarıda bırakır; bu yüzden en yüksek ve en düşük öğrencileri tek başına anlatmaz.'
+    },
+    {
+      display: 'Sınav Kutu Grafiği / Sınıflar Arası Net Dağılımı',
+      original: 'Çok gruplu box plot',
+      when: 'Seçili sınav türünde en az 10 sınav ve karşılaştırma grubunda en az 3 değer varsa görünür.',
+      meaning: 'Sınıfların sınavdaki ana öğrenci kitlesini ve dağılım genişliğini karşılaştırır.',
+      calc: 'Her sınıf için medyan, Q1, Q3 ve IQR hesaplanarak kutu grafiğine dönüştürülür.',
+      limit: 'Az sınavlık geçmişte dağılım grafiği sınav zorluğuna aşırı duyarlı olur.'
+    }
+  ];
+
+  const riskItems = [
+    {
+      display: 'Risk Puanı',
+      original: 'Ağırlıklı risk puanlama rubriği',
+      when: 'Öğrencide en az bir risk sinyali oluştuğunda görünür.',
+      meaning: 'Tek bir veriye değil; devamsızlık, sıra gerilemesi, normalize net düşüşü ve ders bazlı düşüşe birlikte bakan karar destek puanıdır.',
+      calc: 'Devamsızlık en fazla 30 puan, sıra gerilemesi en fazla 40 puan, net/ders düşüşü en fazla 30 puan katkı verir. 70+ yüksek, 40-69 orta, 1-39 düşük risk kabul edilir.',
+      limit: 'Risk puanı tanı değildir; rehberlik ve öğretmen incelemesi için önceliklendirme sinyalidir.'
+    },
+    {
+      display: 'Devamsızlık',
+      original: 'Katılım oranı ve son iki sınav kontrolü',
+      when: 'Aynı sınav türünde sınıf seviyesinde en az 2 sınav yapılmışsa değerlendirilir.',
+      meaning: 'Öğrencinin sınavlara düzenli katılıp katılmadığını risk açısından izler.',
+      calc: 'Katılım oranı = katıldığı sınav / yapılmış sınav. Oran %50 altıysa veya son iki sınava hiç girmediyse yüksek; %75 ve altıysa orta risk sinyali üretilir.',
+      limit: 'Sisteme geç eklenen öğrenci için kayıt öncesi sınavlar devamsızlık sayılmaz; mazeretli devamsızlıklar dışarıda tutulur.'
+    },
+    {
+      display: 'Sıra Gerileme',
+      original: 'Yüzdelik sıra değişimi',
+      when: 'Öğrencinin son iki geçerli sınavında kurum sırası ve toplam kişi bilgisi varsa değerlendirilir.',
+      meaning: 'Sınav zorluğundan bağımsız olarak öğrencinin grup içindeki göreli konum kaybını gösterir.',
+      calc: 'Son sınav yüzdesi = sıra / toplam kişi. Önceki sınav yüzdesinden fark alınır. Yaklaşık %8 ve üzeri gerileme izlenir, %15 ve üzeri belirgin gerilemedir.',
+      limit: 'Trend güvenilirliği düşükse küçük gerilemeler düşük şiddete indirilir.'
+    },
+    {
+      display: 'Düşüş Trendi',
+      original: 'EWMA + Z-skoru',
+      when: 'Öğrencinin en az 2 sınavı ve son sınavın karşılaştırma grubunda en az 3 geçerli değer varsa değerlendirilir.',
+      meaning: 'Öğrencinin son dönem net ortalamasının sınıf seviyesindeki dağılıma göre ne kadar aşağıda kaldığını gösterir.',
+      calc: 'Son 3 sınav için EWMA hesaplanır; bu değer son sınav grubunun Z-skoruna yerleştirilir. Z <= -2.0 yüksek, Z <= -1.2 orta, Z <= -0.7 ve trend güvenilirse düşük sinyaldir.',
+      limit: 'Ham net düşüşü tek başına kullanılmaz; sınav zorluğu grup dağılımıyla dengelenir.'
+    },
+    {
+      display: 'Ders Düşüşü',
+      original: 'Ders bazlı Z-skoru',
+      when: 'Toplam net düşüşü sınırlı olsa bile, son sınavda bir dersin karşılaştırma grubunda en az 3 değer varsa kontrol edilir.',
+      meaning: 'Toplam sonuç normal görünse bile belirli bir derste kopma olup olmadığını gösterir.',
+      calc: 'Öğrencinin ders neti, aynı sınav ve sınıf seviyesindeki ders dağılımına göre Z-skoruna çevrilir. Z <= -2.0 ciddi, Z <= -1.2 belirgin düşüştür.',
+      limit: 'Ders bazlı sinyal konu kapsamı ve soru sayısıyla birlikte değerlendirilmelidir.'
+    },
+    {
+      display: 'Risk Güvenilirliği',
+      original: 'Adaptif R² filtresi',
+      when: 'Risk sinyallerinin dalgalanmadan mı yoksa tutarlı düşüşten mi geldiğini ayırmak için kullanılır.',
+      meaning: 'Öğrencinin sonuçları çok zikzaklıysa ani düşüşe verilen uyarı şiddetini düşürür.',
+      calc: 'Sınav sayısına göre R² eşiği kullanılır: 3-4 sınavda 0.15, 5-6 sınavda 0.20, 7-9 sınavda 0.25, 10+ sınavda 0.30.',
+      limit: 'Az veriyle kesin risk yorumu yapılmaz; sistem düşük güvenli sinyalleri daha temkinli gösterir.'
+    }
+  ];
+
+  if(aT === 'class') return { title: 'Sınıf Analizi', intro: 'Bu sayfada ortalama, katılım, en iyi/en düşük sınıf gibi doğrudan okunan kartlar ayrıca açıklanmaz.', items: classItems };
+  if(aT === 'subject') return { title: 'Ders Analizi', intro: 'Bu sayfada ders bazlı dağılım, trend ve şubeler arası farkların istatistiksel karşılıkları açıklanır.', items: subjectItems };
+  if(aT === 'examdetail') return { title: 'Sınav Analizi', intro: 'Tek sınav özeti ham sınav sonuçlarını; tüm sınavlar özeti ise her öğrencinin sınav ortalamasını temel alır.', items: examItems };
+  if(aT === 'risk') return { title: 'Risk Analizi', intro: 'Risk sayfası kesin hüküm üretmez; farklı sinyalleri birleştirerek öğretmen için öncelik listesi oluşturur.', items: riskItems };
+  return { title: 'Öğrenci Analizi', intro: 'Bu sayfada tek sınav ve tüm sınavlar seçimleri farklı kartlar üretir. Doğrudan okunan ortalama, derece ve katılım kartları ayrıca açıklanmaz.', items: studentItems };
+}
+
+function updateMethodologyContent(){
+  let body = document.querySelector('#methodologyBody .methodology-body');
+  if(!body) return;
+  let aT = getEl('aType') ? getEl('aType').value : 'student';
+  let data = _methodologyData(aT);
+  body.innerHTML = `
+    <div class="methodology-intro">
+      <strong>${_methodologyEsc(data.title)} için açıklamalar.</strong>
+      Kart başlıkları ekranda kısa ve anlaşılır tutulur; aşağıda aynı göstergelerin gerçek istatistiksel adları ve hesaplanma biçimleri yer alır.
+      En iyi öğrenci, en düşük sınıf, katılım sayısı gibi doğrudan okunan bilgiler burada ayrıca listelenmez.
+    </div>
+    <div class="methodology-context"><i class="fas fa-filter me-1"></i>${_methodologyEsc(_methodologyContext(aT))}</div>
+    ${_methodologySection(data.title, data.intro, data.items)}
+  `;
+}
+
 function updateFilterSummary(){
+  if(typeof updateMethodologyContent === 'function') updateMethodologyContent();
   let box = getEl('filterSummary'); if(!box) return;
   box.hidden = true;
   box.innerHTML = '';
