@@ -3111,9 +3111,10 @@ async function generateRapor() {
 
       displayStuArr.sort((a,b) => { let dp = (b.avgScore||0) - (a.avgScore||0); if(dp !== 0) return dp; return (b.avgNet||0) - (a.avgNet||0); });
 
+      // Başlık: tam adı title'da, görünen kısmı kısaltılmış ama hizası rl-sub ile aynı
       let headColsAll = allSubKeys.map(k => {
         let title = toTitleCase(k);
-        return `<th title="${escapeHtml(title)}">${escapeHtml(title.length > 6 ? title.substring(0,3) : title)}</th>`;
+        return `<th class="rl-sub" title="${escapeHtml(title)}">${escapeHtml(title.length > 6 ? title.substring(0,3) : title)}</th>`;
       }).join('');
 
       let bodyRowsAll = displayStuArr.map((s, idx) => {
@@ -3125,21 +3126,26 @@ async function generateRapor() {
       }).join('');
 
       let allAvgRow = '';
+      // Ortalama satırı: ders sütunları da rl-sub sınıfıyla ortaya hizalanır
       let avgSubCols = allSubKeys.map(k => {
         let vals = displayStuArr.filter(s => s.subAvgs[k] !== null).map(s => s.subAvgs[k]);
-        return `<td>${vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(2) : '—'}</td>`;
+        return `<td class="rl-sub">${vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(2) : '—'}</td>`;
       }).join('');
       let genAvgNet = (displayStuArr.reduce((a,s)=>a+s.avgNet,0)/displayStuArr.length).toFixed(2);
       let genAvgScore = (displayStuArr.reduce((a,s)=>a+s.avgScore,0)/displayStuArr.length).toFixed(2);
       let genAvgExam = (displayStuArr.reduce((a,s)=>a+s.examCount,0)/displayStuArr.length).toFixed(1);
-      allAvgRow = `<tr class="avg-row"><td colspan="3" class="avg-label">ORTALAMA (${displayStuArr.length} Öğrenci)</td>${avgSubCols}<td>${genAvgNet}</td><td>${genAvgScore}</td><td colspan="2">—</td><td>${genAvgExam}</td></tr>`;
+      // avg-label: colspan 3 → sağa yasla (avg-label zaten text-align:right'tır)
+      allAvgRow = `<tr class="avg-row"><td colspan="3" class="avg-label">ORTALAMA (${displayStuArr.length} Öğrenci)</td>${avgSubCols}<td class="rl-net">${genAvgNet}</td><td class="rl-score">${genAvgScore}</td><td class="rl-rank" colspan="2">—</td><td class="rl-count">${genAvgExam}</td></tr>`;
 
       let _rExColorIdx = (typeof examColorIdx === 'function') ? examColorIdx(t) : 0;
       let _rExLabel    = (typeof toExamLabel === 'function') ? toExamLabel(t) : t;
       let isFirst = renderedTypeCount === 0;
       renderedTypeCount++;
+      // colGroup: sabit % genişlikler yerine sadece min-width veren dinamik yapı
+      // table-layout:auto ile tarayıcı içeriğe göre dağıtır; print'te A4'e sığdırır
       let colGroupAll = `<colgroup><col class="rl-col-idx"><col class="rl-col-name"><col class="rl-col-class">${allSubKeys.map(()=>'<col class="rl-col-sub">').join('')}<col class="rl-col-net"><col class="rl-col-score"><col class="rl-col-rank"><col class="rl-col-rank"><col class="rl-col-count"></colgroup>`;
 
+      let _colCount = 3 + allSubKeys.length + 5; /* #, Ad Soyad, Sınıf + dersler + Top.Net, Puan, Sıra/Sınıf, Sıra/Okul, Sınav Say. */
       html += `<div class="card shadow-sm mb-4 exam-type-block rapor-list-block exam-color-${_rExColorIdx}${isFirst?' exam-type-first':''}" data-exam-color-idx="${_rExColorIdx}" data-exam-color="${_rExColorIdx}">
         <div class="card-header bg-light">
           <h3 class="card-title card-title-md m-0"><i class="fas fa-list-alt me-2"></i>${escapeHtml(_rExLabel)} — Toplu Liste | <span class="card-title-subtle">${escapeHtml(lvlStr)}</span></h3>
@@ -3149,7 +3155,10 @@ async function generateRapor() {
           <div class="scroll list-scroll">
             <table class="table table-sm table-bordered table-striped table-hover rapor-list-table" data-sh="${escapeHtml(t)}">
               ${colGroupAll}
-              <thead><tr><th>#</th><th>Ad Soyad</th><th>Sınıf</th>${headColsAll}<th>Top.Net Ort.</th><th>Puan Ort.</th><th>Sıra/Sınıf</th><th>Sıra/Okul</th><th>Sınav Say.</th></tr></thead>
+              <thead>
+                <tr class="print-title-row"><th colspan="${_colCount}">${escapeHtml(_rExLabel)} — Toplu Liste | ${escapeHtml(lvlStr)}</th></tr>
+                <tr><th class="rl-idx">#</th><th class="rl-name">Ad Soyad</th><th class="rl-class">Sınıf</th>${headColsAll}<th class="rl-net">Top.Net Ort.</th><th class="rl-score">Puan Ort.</th><th class="rl-rank">Sıra/Sınıf</th><th class="rl-rank">Sıra/Okul</th><th class="rl-count">Sınav Say.</th></tr>
+              </thead>
               <tbody>${bodyRowsAll}${allAvgRow}</tbody>
             </table>
           </div>

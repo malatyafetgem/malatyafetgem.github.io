@@ -342,6 +342,8 @@ function xPR(sourceId, title, btn, orientation) {
   let sourceEl = getEl(sourceId);
   if(!sourceEl){ return; }
   let isCompactListPrint = sourceId === 'raporCont' && sourceEl.classList.contains('print-compact-list');
+  // Kompakt liste her zaman yatay — sütun sayısı portrait'a sığmaz
+  if(isCompactListPrint) isLandscape = true;
   let orig = btn ? btn.innerHTML : '';
   if(btn){ btn.innerHTML = "<i class='fas fa-spinner fa-spin me-1'></i>"; btn.disabled = true; }
   let winW = isLandscape ? 1200 : 900;
@@ -510,10 +512,13 @@ function xPR(sourceId, title, btn, orientation) {
     }
     // Bloğun kendisi taşabilir; içerik tek sayfaya zaten sığacak şekilde tasarlandı
     blk.style.cssText += ';page-break-inside:auto;break-inside:auto;';
-    // Blok içindeki kart/grafik/tablo birimleri parçalanmasın
-    blk.querySelectorAll('.card, .chart-box, .boxplot-card, .trend-card, .info-box, .sec-card').forEach(el => {
-      el.style.cssText += ';page-break-inside:avoid;break-inside:avoid;';
-    });
+    // Blok içindeki kart/grafik/tablo birimleri: compact liste modunda avoid yazma,
+    // CSS kuralları yönetir. Diğer modlarda inline avoid yaz.
+    if(!isCompactListPrint){
+      blk.querySelectorAll('.card, .chart-box, .boxplot-card, .trend-card, .info-box, .sec-card').forEach(el => {
+        el.style.cssText += ';page-break-inside:avoid;break-inside:avoid;';
+      });
+    }
     // Stu name (varsa) bloğun başına başlık olarak ekle
     let stuName  = blk.getAttribute('data-stu-name')  || '';
     let stuClass = blk.getAttribute('data-stu-class') || '';
@@ -603,6 +608,23 @@ ${cssLinks}
   tr.highlight-row td{background:#fff3cd !important;font-weight:bold !important;}
   tr.absent-row td{background:#f8d7da !important;color:#721c24 !important;}
   tr.avg-row td{background:#e8eef7 !important;color:#1a5fa8 !important;font-weight:bold !important;border-top:2px solid #9cb3d8 !important;}
+  /* Tekrarlanan başlık satırı — ekranda gizli, yazdırmada her sayfada göster */
+  tr.print-title-row{display:none;}
+  @media print{
+    /* rapor-list-block card-header print'te gizli — yerine print-title-row her sayfada tekrar eder */
+    .rapor-list-block>.card-header{display:none !important;}
+    tr.print-title-row{display:table-row !important;}
+    tr.print-title-row th{
+      display:table-cell !important;
+      background:var(--exam-color,#1a5fa8) !important;
+      color:#fff !important;
+      font-size:9px !important;
+      font-weight:700 !important;
+      padding:3px 6px !important;
+      border:none !important;
+      letter-spacing:0.2px;
+    }
+  }
 
   /* Kartlar — inline border'ları KORU; sadece varsayılanları ver */
   .card{background:#fff;border:1px solid #dee2e6;border-radius:4px;margin-bottom:6px;display:block;box-shadow:none !important;background-clip:padding-box !important;}
@@ -698,27 +720,22 @@ ${cssLinks}
   body.print-compact-list-mode .card-body{padding:5px 6px;}
   body.print-compact-list-mode .card-title{font-size:9.4px !important;line-height:1.25;}
   body.print-compact-list-mode .rapor-list-block{page-break-before:auto !important;break-before:auto !important;page-break-inside:auto !important;break-inside:auto !important;}
-  body.print-compact-list-mode .rapor-list-table{table-layout:fixed !important;font-size:${printTableFont} !important;line-height:1.3 !important;margin:0 !important;page-break-inside:auto !important;break-inside:auto !important;}
+  body.print-compact-list-mode .rapor-list-table{table-layout:auto !important;width:100% !important;max-width:100% !important;font-size:${printTableFont} !important;line-height:1.3 !important;margin:0 !important;page-break-inside:auto !important;break-inside:auto !important;}
   body.print-compact-list-mode .rapor-list-table th,
-  body.print-compact-list-mode .rapor-list-table td{padding:${printTablePadding} !important;line-height:1.3 !important;white-space:nowrap !important;overflow:hidden !important;text-overflow:clip !important;border-color:#cfd6df !important;}
-  body.print-compact-list-mode .rapor-list-table thead th{font-size:${printTableHeadFont} !important;line-height:1.25 !important;font-weight:800 !important;}
+  body.print-compact-list-mode .rapor-list-table td{padding:${printTablePadding} !important;line-height:1.3 !important;overflow:hidden !important;border-color:#cfd6df !important;}
+  body.print-compact-list-mode .rapor-list-table thead th{font-size:${printTableHeadFont} !important;line-height:1.25 !important;font-weight:800 !important;white-space:nowrap !important;}
   body.print-compact-list-mode .rapor-list-table tbody,
   body.print-compact-list-mode .rapor-list-table tr{page-break-inside:auto !important;break-inside:auto !important;}
-  body.print-compact-list-mode .rapor-list-table .rl-name{text-align:left !important;font-weight:600;}
-  body.print-compact-list-mode .rapor-list-table .rl-idx,
-  body.print-compact-list-mode .rapor-list-table .rl-class,
-  body.print-compact-list-mode .rapor-list-table .rl-sub,
-  body.print-compact-list-mode .rapor-list-table .rl-net,
-  body.print-compact-list-mode .rapor-list-table .rl-score,
-  body.print-compact-list-mode .rapor-list-table .rl-rank,
-  body.print-compact-list-mode .rapor-list-table .rl-count{text-align:center !important;}
-  body.print-compact-list-mode .rapor-list-table col.rl-col-idx{width:3.2%;}
-  body.print-compact-list-mode .rapor-list-table col.rl-col-name{width:18%;}
-  body.print-compact-list-mode .rapor-list-table col.rl-col-class{width:4.3%;}
-  body.print-compact-list-mode .rapor-list-table col.rl-col-net{width:6.2%;}
-  body.print-compact-list-mode .rapor-list-table col.rl-col-score{width:5.9%;}
-  body.print-compact-list-mode .rapor-list-table col.rl-col-rank{width:5.2%;}
-  body.print-compact-list-mode .rapor-list-table col.rl-col-count{width:4.4%;}
+  body.print-compact-list-mode .rapor-list-table .rl-name{text-align:left !important;font-weight:600;white-space:normal !important;word-break:break-word !important;min-width:5rem;}
+  body.print-compact-list-mode .rapor-list-table th:not(.rl-name),
+  body.print-compact-list-mode .rapor-list-table td:not(.rl-name){white-space:nowrap !important;text-overflow:clip !important;}
+  body.print-compact-list-mode .rapor-list-table th.rl-sub,body.print-compact-list-mode .rapor-list-table .rl-sub,
+  body.print-compact-list-mode .rapor-list-table th.rl-idx,body.print-compact-list-mode .rapor-list-table .rl-idx,
+  body.print-compact-list-mode .rapor-list-table th.rl-class,body.print-compact-list-mode .rapor-list-table .rl-class,
+  body.print-compact-list-mode .rapor-list-table th.rl-net,body.print-compact-list-mode .rapor-list-table .rl-net,
+  body.print-compact-list-mode .rapor-list-table th.rl-score,body.print-compact-list-mode .rapor-list-table .rl-score,
+  body.print-compact-list-mode .rapor-list-table th.rl-rank,body.print-compact-list-mode .rapor-list-table .rl-rank,
+  body.print-compact-list-mode .rapor-list-table th.rl-count,body.print-compact-list-mode .rapor-list-table .rl-count{text-align:center !important;}
   body.print-compact-list-mode .avg-row td{font-size:8.6px !important;line-height:1.3 !important;}
   body.print-compact-list-mode .mb-4{margin-bottom:8px !important;}
   body.print-compact-list-mode .mb-3{margin-bottom:6px !important;}
