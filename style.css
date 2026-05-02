@@ -722,7 +722,10 @@ body.is-admin button.w-100.admin-only { display:block !important; }
   .wizard-section { padding: 10px; }
   .wizard-section .row .col-md-4, .wizard-section .row .col-md-6 { margin-bottom: 6px; }
 }
+/* scroll-hint: sadece tablo kaydırma ipucu için, mobilde görünür */
 .scroll-hint { display: none; }
+/* sec-cards-row-hint artık kullanılmıyor */
+.sec-cards-row-hint { display: none !important; }
 @media (max-width: 768px) { .scroll-hint { display: block; font-size: 0.75em; color: #6c757d; text-align: right; margin-bottom: 4px; } }
 
 .info-box-text { display: block; font-size: 0.78em; font-weight: 600; }
@@ -768,9 +771,13 @@ body.is-admin button.w-100.admin-only { display:block !important; }
 .boxplot-note { font-weight:400; color:#6c757d; font-size:0.85em; }
 
 /* ===== TREND ANALİZİ ===== */
-.trend-card { background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 12px; padding: 20px; margin-bottom: 15px; }
-.trend-card .trend-row { overflow-x:auto; }
-.trend-card .trend-metric { min-width:90px; }
+.trend-card { background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 12px; padding: 16px; margin-bottom: 15px; }
+.trend-card .trend-row { overflow-x: visible; flex-wrap: wrap !important; }
+.trend-card .trend-metric { min-width: 90px; flex: 1 1 120px; margin-bottom: 8px; }
+@media (max-width: 575px) {
+  .trend-card .trend-metric { flex: 0 0 50%; min-width: 0; }
+  .trend-card { padding: 12px; }
+}
 .trend-card .trend-value { font-size:1.1em; font-weight:700; }
 .trend-metric-value { font-size:1.4em; font-weight:700; color:var(--metric-color, #212529); }
 .trend-r2-value { font-size:0.9em; color:var(--metric-color, #212529); }
@@ -1202,6 +1209,23 @@ body.is-admin button.w-100.admin-only { display:block !important; }
   transition: box-shadow 0.2s ease, transform 0.15s ease;
   height: 100%;
 }
+@media (max-width: 575px) {
+  .sec-card {
+    padding: 8px 9px;
+    min-height: 64px;
+    gap: 8px;
+    border-radius: 8px;
+  }
+  .sec-card .sec-icon {
+    width: 34px !important;
+    height: 34px !important;
+    font-size: 0.9em !important;
+    border-radius: 7px !important;
+  }
+  .sec-card .sec-label { font-size: 0.66rem !important; }
+  .sec-card .sec-value { font-size: 1rem !important; }
+  .sec-card .sec-sub { font-size: 0.68rem !important; }
+}
 .sec-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.08); transform: translateY(-1px); }
 .sec-card .sec-icon {
   flex-shrink: 0; width: 42px; height: 42px; border-radius: 9px;
@@ -1237,43 +1261,34 @@ body.is-admin button.w-100.admin-only { display:block !important; }
 .single-exam-cards .col-md-4,
 .single-exam-cards .col-md-6 { margin-bottom: 10px; }
 
-/* Sec-card satır scroll: mobilde yatay kaydırılır, üstte ipucu gösterilir */
+/* Sec-card satır: tüm ekranlarda normal grid — scroll davranışı kaldırıldı */
+.sec-cards-row {
+  display: flex !important;
+  flex-wrap: wrap !important;
+}
+.sec-cards-row > [class*="col-"] {
+  margin-bottom: 10px;
+}
 @media (max-width: 767.98px) {
-  .sec-cards-row {
-    display: flex !important;
-    flex-wrap: nowrap !important;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    gap: 0;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    padding-bottom: 4px;
-    scroll-snap-type: x mandatory;
-  }
+  /* Mobilde 2'li grid: bilgi kartları yan yana */
   .sec-cards-row > [class*="col-"] {
-    flex: 0 0 auto !important;
-    width: 72vw !important;
-    max-width: 280px !important;
-    scroll-snap-align: start;
-    padding-left: 4px !important;
-    padding-right: 4px !important;
-    margin-bottom: 0 !important;
+    flex: 0 0 50% !important;
+    max-width: 50% !important;
+    padding-left: 5px !important;
+    padding-right: 5px !important;
+    margin-bottom: 8px !important;
   }
-  .sec-cards-row::after {
-    content: "";
-    flex: 0 0 8px;
+  /* Tek kart varsa tam genişlik */
+  .sec-cards-row > [class*="col-"]:only-child {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
   }
-  /* scroll-hint mevcut stilini korur, sadece sec-cards-row için de göster */
-  .sec-cards-row + .scroll-hint,
-  .sec-cards-row-hint { display: block; font-size: 0.75em; color: #6c757d; text-align: right; margin-bottom: 4px; margin-top: 2px; }
-  /* single-exam-cards içindeki row da aynı davranışı alır */
+  /* single-exam-cards içindeki row */
   .single-exam-cards .sec-cards-row { margin-bottom: 8px !important; }
 }
 /* Trend scroll hint stili */
-.trend-scroll-hint { display: none; }
-@media (max-width: 767.98px) {
-  .trend-scroll-hint { display: block !important; font-size: 0.73em; color: #6c757d; text-align: right; margin-bottom: 3px; padding-right: 2px; }
-}
+/* trend-scroll-hint: artık kullanılmıyor, her zaman gizli */
+.trend-scroll-hint { display: none !important; }
 
 /* Tek sınav modunda ders bazlı çubuk grafik başlığı */
 .single-exam-chart-title {
