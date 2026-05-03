@@ -2047,7 +2047,7 @@ body.sidebar-collapse .app-sidebar.sa-sidebar:hover .sidebar-brand .brand-text {
 /* Trend kartı içinde Performans Tutarlılığı sütunu için aynı x-small kuralı zaten var. */
 
 /* ===================================================================
-   BOTTOM NAVIGATION BAR — Mobil navigasyon (≤767px)
+   BOTTOM NAVIGATION BAR — Mobil navigasyon (≤991px)
    Her sekme ana sayfadaki info-box kartlarıyla aynı gradient renkleri
    taşır. Aktif: dolu gradient + beyaz ikon/etiket. Pasif: soluk ton.
    =================================================================== */
@@ -2082,7 +2082,7 @@ body.sidebar-collapse .app-sidebar.sa-sidebar:hover .sidebar-brand .brand-text {
   display: none; /* Masaüstünde gizli */
 }
 
-@media (max-width: 767px) {
+@media (max-width: 991px) and (hover: none) {
     display: flex;
     position: fixed;
     bottom: 0;
