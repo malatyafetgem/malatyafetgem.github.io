@@ -467,13 +467,22 @@ if(document.readyState === 'complete') bootApp();
 else window.addEventListener('load', bootApp);
 
 // ---- top-level (orig lines 4009-4009) ----
-let deferredInstallPrompt = null, pwaPopupTimer = null, userLoggedIn = false;
+let deferredInstallPrompt = null, pwaPopupTimer = null, userLoggedIn = false, appInstallToastShown = false;
 
 // ---- top-level (orig lines 4010-4010) ----
 window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredInstallPrompt = e; if (userLoggedIn) showPwaPopupIfReady(); });
 
 // ---- top-level (orig lines 4011-4011) ----
-window.addEventListener('appinstalled', () => { deferredInstallPrompt = null; document.getElementById('installBtnWrapper').style.display = 'none'; closePwaPopup(); showToast('Uygulama başarıyla yüklendi!', 'success'); });
+// "appinstalled" tek ve yetkili kaynak — çift tetiklenmeye karşı flag korundu
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  document.getElementById('installBtnWrapper').style.display = 'none';
+  closePwaPopup();
+  if (!appInstallToastShown) {
+    appInstallToastShown = true;
+    showToast('Uygulama başarıyla yüklendi!', 'success');
+  }
+});
 
 // ---- showPwaPopupIfReady (orig lines 4013-4016) ----
 function showPwaPopupIfReady() {
@@ -485,7 +494,21 @@ function showPwaPopupIfReady() {
 function closePwaPopup() { const popup = document.getElementById('pwaInstallPopup'); if (!popup || popup.style.display === 'none') return; clearTimeout(pwaPopupTimer); popup.style.animation = 'popupSlideUp 0.3s ease-in forwards'; setTimeout(() => { popup.style.display = 'none'; popup.style.animation = ''; }, 300); }
 
 // ---- triggerInstall (orig lines 4018-4018) ----
-function triggerInstall(e) { e.preventDefault(); closePwaPopup(); if (!deferredInstallPrompt) return; deferredInstallPrompt.prompt(); deferredInstallPrompt.userChoice.then(choice => { if (choice.outcome === 'accepted') { showToast('Uygulama yükleniyor...', 'info'); } else { deferredInstallPrompt = null; } }); }
+// userChoice sadece kullanıcının diyalogu kabul/reddettiğini bildirir, yükleme tamamlandığını değil.
+// Toast'lar appinstalled üzerinden yönetilir; burada sadece "yükleniyor" bilgisi verilir.
+function triggerInstall(e) {
+  e.preventDefault();
+  closePwaPopup();
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  deferredInstallPrompt.userChoice.then(choice => {
+    if (choice.outcome === 'accepted') {
+      showToast('Uygulama yükleniyor...', 'info');
+    } else {
+      deferredInstallPrompt = null;
+    }
+  });
+}
 
 
 
