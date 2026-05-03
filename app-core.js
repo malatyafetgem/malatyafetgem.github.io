@@ -347,7 +347,7 @@ async function init(){
   }
 
   database.ref('db_v2/students').on('value', snap => { 
-    let sData = snap.val(); DB.s = sData ? (Array.isArray(sData) ? sData.filter(x => x) : Object.values(sData).filter(x => x)) : [];
+    let sData = snap.val(); DB.s = (sData ? (Array.isArray(sData) ? sData.filter(x => x) : Object.values(sData).filter(x => x)) : []).map(s => s ? {...s, name: toTitleCase(s.name)} : s);
     _stuMapCache = null; // Map index'i yenile
     rTabS(); 
     if(getEl('rapor') && getEl('rapor').classList.contains('active-pane') && typeof raporInit === 'function') raporInit();

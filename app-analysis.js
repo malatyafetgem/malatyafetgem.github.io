@@ -861,7 +861,7 @@ function buildKarneExamCards(summary, examType, metricLabel) {
       </div>`;
     }
 
-    trendHtml = `<div class="trend-card mt-2 mb-1"><div class="row flex-nowrap align-items-center text-center trend-row">
+    trendHtml = `<div class="trend-card mt-2 mb-1"><div class="row align-items-center text-center trend-row">
       <div class="col border-right mb-1 trend-metric" title="${r2Tooltip}">
         <span class="trend-indicator trend-indicator-sm ${trend.trendClass}"><i class="fas ${trend.trendIcon} me-1"></i>${trend.trendText}</span>
         <div class="small text-muted mt-1 trend-label"><strong>Genel Yön (Trend)</strong></div>
@@ -895,7 +895,7 @@ function buildKarneExamCards(summary, examType, metricLabel) {
   let genOrtLabel = isScore ? 'Genel Puan Ort' : 'Genel Ort';
 
   let cardsHtml = `<div class="row mb-2">
-    <div class="col-md-3 col-sm-6">
+    <div class="col-12 col-md-3 mb-2">
       <div class="sec-card">
         <div class="sec-icon"><i class="fas fa-chart-bar"></i></div>
         <div class="sec-body">
@@ -905,7 +905,7 @@ function buildKarneExamCards(summary, examType, metricLabel) {
         </div>
       </div>
     </div>
-    <div class="col-md-3 col-sm-6">
+    <div class="col-12 col-md-3 mb-2">
       <div class="sec-card">
         <div class="sec-icon"><i class="fas fa-percentage"></i></div>
         <div class="sec-body">
@@ -915,7 +915,7 @@ function buildKarneExamCards(summary, examType, metricLabel) {
         </div>
       </div>
     </div>
-    <div class="col-md-3 col-sm-6">
+    <div class="col-12 col-md-3 mb-2">
       <div class="sec-card">
         <div class="sec-icon"><i class="fas fa-users"></i></div>
         <div class="sec-body">
@@ -925,7 +925,7 @@ function buildKarneExamCards(summary, examType, metricLabel) {
         </div>
       </div>
     </div>
-    <div class="col-md-3 col-sm-6">
+    <div class="col-12 col-md-3 mb-2">
       <div class="sec-card">
         <div class="sec-icon"><i class="fas fa-trophy"></i></div>
         <div class="sec-body">
@@ -1055,7 +1055,7 @@ function buildSingleExamCards(stu, examType, curExam, prevExam, stGrade){
   let rankBits =[];
   if(curExam.cR) rankBits.push(`Sınıf ${curExam.cR}/${curExam.cP||'—'}`);
   if(curExam.iR) rankBits.push(`Okul ${curExam.iR}/${curExam.iP||'—'}`);
-  let card1 = `<div class="col-md-3 col-sm-6"><div class="sec-card">
+  let card1 = `<div class="col-12 col-md-3"><div class="sec-card">
     <div class="sec-icon"><i class="fas fa-star"></i></div>
     <div class="sec-body">
       <div class="sec-label">Puan &amp; Sıra</div>
@@ -1073,7 +1073,7 @@ function buildSingleExamCards(stu, examType, curExam, prevExam, stGrade){
     let sign = dN > 0 ? '+' : '';
     let signS = dS > 0 ? '+' : '';
     let _pubP = prevExam.publisher ? ` (${toTitleCase(prevExam.publisher)})` : '';
-    card2 = `<div class="col-md-3 col-sm-6"><div class="sec-card ${cls}">
+    card2 = `<div class="col-12 col-md-3"><div class="sec-card ${cls}">
       <div class="sec-icon"><i class="fas ${icon}"></i></div>
       <div class="sec-body">
         <div class="sec-label">Önceki Sınava Fark</div>
@@ -1081,7 +1081,7 @@ function buildSingleExamCards(stu, examType, curExam, prevExam, stGrade){
         <div class="sec-sub">Puan: ${signS}${dS.toFixed(2)} · ${prevExam.date}${_pubP}</div>
       </div></div></div>`;
   } else {
-    card2 = `<div class="col-md-3 col-sm-6"><div class="sec-card sec-neutral">
+    card2 = `<div class="col-12 col-md-3"><div class="sec-card sec-neutral">
       <div class="sec-icon"><i class="fas fa-minus"></i></div>
       <div class="sec-body">
         <div class="sec-label">Önceki Sınava Fark</div>
@@ -1116,7 +1116,7 @@ function buildSingleExamCards(stu, examType, curExam, prevExam, stGrade){
       let label = isBest ? 'En Başarılı Ders' : 'En Zayıf Ders';
       let dCstr = it.dC===null ? '—' : (it.dC>0?'+':'')+it.dC.toFixed(2);
       let dIstr = it.dI===null ? '—' : (it.dI>0?'+':'')+it.dI.toFixed(2);
-      return `<div class="col-md-3 col-sm-6"><div class="sec-card ${cls}">
+      return `<div class="col-12 col-md-3"><div class="sec-card ${cls}">
         <div class="sec-icon"><i class="fas ${icon}"></i></div>
         <div class="sec-body">
           <div class="sec-label">${label}</div>
@@ -1127,7 +1127,7 @@ function buildSingleExamCards(stu, examType, curExam, prevExam, stGrade){
     card3 = mkSubCard(best, true);
     card4 = (worst === best) ? '' : mkSubCard(worst, false);
   } else {
-    let neutral = (lbl,icon) => `<div class="col-md-3 col-sm-6"><div class="sec-card sec-neutral">
+    let neutral = (lbl,icon) => `<div class="col-12 col-md-3"><div class="sec-card sec-neutral">
       <div class="sec-icon"><i class="fas ${icon}"></i></div>
       <div class="sec-body">
         <div class="sec-label">${lbl}</div>
@@ -1284,7 +1284,7 @@ function rAnl(){
             let _insZCls = _insTNZ===null?'sec-neutral':(_insTNZ>0?'sec-pos':(_insTNZ<0?'sec-neg':'sec-neutral'));
             seExtraCardsHtml += `<div class="row mt-2">`;
             if(clsTN.length >= 3) {
-              seExtraCardsHtml += `<div class="col-md-3 col-sm-6"><div class="sec-card ${_clsZCls}">
+              seExtraCardsHtml += `<div class="col-12 col-md-3"><div class="sec-card ${_clsZCls}">
                 <div class="sec-icon"><i class="fas fa-chart-bar"></i></div>
                 <div class="sec-body"><div class="sec-label">Sınıf İçi Konum</div>
                 <div class="sec-value">${_clsTNZ!==null?_clsTNZ.toFixed(2)+'σ':'—'}</div>
@@ -1293,7 +1293,7 @@ function rAnl(){
                 </div></div></div>`;
             }
             if(insTN.length >= 3) {
-              seExtraCardsHtml += `<div class="col-md-3 col-sm-6"><div class="sec-card ${_insZCls}">
+              seExtraCardsHtml += `<div class="col-12 col-md-3"><div class="sec-card ${_insZCls}">
                 <div class="sec-icon"><i class="fas fa-school"></i></div>
                 <div class="sec-body"><div class="sec-label">Kurum İçi Konum</div>
                 <div class="sec-value">${_insTNZ!==null?_insTNZ.toFixed(2)+'σ':'—'}</div>
@@ -1313,7 +1313,7 @@ function rAnl(){
           let _seRate = _seTot > 0 ? Math.round(_seAtt/_seTot*100) : 0;
           let _seRateCls = _seRate >= 80 ? 'sec-pos' : (_seRate >= 50 ? 'sec-neutral' : 'sec-neg');
           seExtraCardsHtml += `<div class="row mt-2">
-            <div class="col-md-3 col-sm-6"><div class="sec-card ${_seRateCls}">
+            <div class="col-12 col-md-3"><div class="sec-card ${_seRateCls}">
               <div class="sec-icon"><i class="fas fa-calendar-check"></i></div>
               <div class="sec-body"><div class="sec-label">Genel Katılım</div>
               <div class="sec-value">${_seRate}%</div>
@@ -1409,14 +1409,14 @@ function rAnl(){
         let dIcon = delta===null?'fa-minus':(delta>0?'fa-arrow-up':(delta<0?'fa-arrow-down':'fa-minus'));
 
         // Kartlar
-        let card1 = `<div class="col-md-3 col-sm-6"><div class="sec-card">
+        let card1 = `<div class="col-12 col-md-3"><div class="sec-card">
           <div class="sec-icon"><i class="fas fa-book"></i></div>
           <div class="sec-body"><div class="sec-label">${subjKey} Neti</div>
           <div class="sec-value">${net!==null?net.toFixed(2):'—'}</div>
           <div class="sec-sub">${dog!==null?'D:'+dog+' Y:'+yan+(bos!==null?' B:'+bos:''):'Detay yok'}</div>
           </div></div></div>`;
 
-        let card2 = `<div class="col-md-3 col-sm-6"><div class="sec-card ${dCls}">
+        let card2 = `<div class="col-12 col-md-3"><div class="sec-card ${dCls}">
           <div class="sec-icon"><i class="fas ${dIcon}"></i></div>
           <div class="sec-body"><div class="sec-label">Önceki Sınava Fark</div>
           <div class="sec-value">${delta!==null?dSign+delta.toFixed(2):'—'} <small class="sec-unit">net</small></div>
@@ -1427,14 +1427,14 @@ function rAnl(){
         let _fI = (net!==null&&insA!==null)?(net-insA):null;
         let _fCs = _fC===null?'sec-neutral':(_fC>0?'sec-pos':(_fC<0?'sec-neg':'sec-neutral'));
         let _fIs = _fI===null?'sec-neutral':(_fI>0?'sec-pos':(_fI<0?'sec-neg':'sec-neutral'));
-        let card3 = `<div class="col-md-3 col-sm-6"><div class="sec-card ${_fCs}">
+        let card3 = `<div class="col-12 col-md-3"><div class="sec-card ${_fCs}">
           <div class="sec-icon"><i class="fas fa-users"></i></div>
           <div class="sec-body"><div class="sec-label">Sınıf Karşılaştırma</div>
           <div class="sec-value">${clsA!==null?clsA.toFixed(2):'—'} <small class="sec-unit-muted">ort</small></div>
           <div class="sec-sub">Fark: ${_fC!==null?(_fC>0?'+':'')+_fC.toFixed(2):'—'}${clsZ!==null?' · Z: '+clsZ.toFixed(2):''}${clsPerc!==null?' · Top %'+(100-clsPerc):''}</div>
           </div></div></div>`;
 
-        let card4 = `<div class="col-md-3 col-sm-6"><div class="sec-card ${_fIs}">
+        let card4 = `<div class="col-12 col-md-3"><div class="sec-card ${_fIs}">
           <div class="sec-icon"><i class="fas fa-school"></i></div>
           <div class="sec-body"><div class="sec-label">Kurum Karşılaştırma</div>
           <div class="sec-value">${insA!==null?insA.toFixed(2):'—'} <small class="sec-unit-muted">ort</small></div>
@@ -1526,14 +1526,14 @@ function rAnl(){
 
         let fmtV = v => v===null?'—':(isRank?v:v.toFixed(2));
 
-        let card1 = `<div class="col-md-3 col-sm-6"><div class="sec-card">
+        let card1 = `<div class="col-12 col-md-3"><div class="sec-card">
           <div class="sec-icon"><i class="fas fa-star"></i></div>
           <div class="sec-body"><div class="sec-label">${escapeHtml(ls)}</div>
           <div class="sec-value">${fmtV(curVal)}</div>
           <div class="sec-sub">${curExam.date}${_pubLbl}</div>
           </div></div></div>`;
 
-        let card2 = `<div class="col-md-3 col-sm-6"><div class="sec-card ${dCls}">
+        let card2 = `<div class="col-12 col-md-3"><div class="sec-card ${dCls}">
           <div class="sec-icon"><i class="fas ${dIcon}"></i></div>
           <div class="sec-body"><div class="sec-label">Önceki Sınava Fark</div>
           <div class="sec-value">${delta!==null?dSign+(isRank?delta:delta.toFixed(2)):'—'}</div>
@@ -1545,14 +1545,14 @@ function rAnl(){
         let _fCs2 = _fC===null?'sec-neutral':(_fC>0?'sec-pos':(_fC<0?'sec-neg':'sec-neutral'));
         let _fIs2 = _fI===null?'sec-neutral':(_fI>0?'sec-pos':(_fI<0?'sec-neg':'sec-neutral'));
 
-        let card3 = `<div class="col-md-3 col-sm-6"><div class="sec-card ${_fCs2}">
+        let card3 = `<div class="col-12 col-md-3"><div class="sec-card ${_fCs2}">
           <div class="sec-icon"><i class="fas fa-users"></i></div>
           <div class="sec-body"><div class="sec-label">Sınıf ${isRank?'Sıra':'Karşılaştırma'}</div>
           <div class="sec-value">${clsA!==null?fmtV(clsA):'—'} <small class="sec-unit-muted">ort</small></div>
           <div class="sec-sub">${!isRank&&_fC!==null?'Fark: '+(_fC>0?'+':'')+_fC.toFixed(2):''}${clsZ!==null?' · Z: '+clsZ.toFixed(2):''}${clsPerc!==null?' · Top %'+(100-clsPerc):''}</div>
           </div></div></div>`;
 
-        let card4 = `<div class="col-md-3 col-sm-6"><div class="sec-card ${_fIs2}">
+        let card4 = `<div class="col-12 col-md-3"><div class="sec-card ${_fIs2}">
           <div class="sec-icon"><i class="fas fa-school"></i></div>
           <div class="sec-body"><div class="sec-label">Kurum ${isRank?'Sıra':'Karşılaştırma'}</div>
           <div class="sec-value">${insA!==null?fmtV(insA):'—'} <small class="sec-unit-muted">ort</small></div>
@@ -1662,10 +1662,10 @@ function rAnl(){
       let attendedCnt2 = attendedKeys2.size;
       let partRate2 = totalGradeExams2 > 0 ? Math.max(0, Math.min(100, Math.round(attendedCnt2 / totalGradeExams2 * 100))) : 0;
       perfHtml = `<div class="row mt-3 mb-2">
-        <div class="col-md-3 col-sm-6"><div class="sec-card sec-pos"><div class="sec-icon"><i class="fas fa-trophy"></i></div><div class="sec-body"><div class="sec-label">En İyi Sıra</div><div class="sec-value">${bestRank}</div><div class="sec-sub">Düşük = daha iyi</div></div></div></div>
-        <div class="col-md-3 col-sm-6"><div class="sec-card sec-neg"><div class="sec-icon"><i class="fas fa-arrow-down"></i></div><div class="sec-body"><div class="sec-label">En Kötü Sıra</div><div class="sec-value">${worstRank}</div></div></div></div>
-        <div class="col-md-3 col-sm-6"><div class="sec-card"><div class="sec-icon"><i class="fas fa-balance-scale"></i></div><div class="sec-body"><div class="sec-label">Ortalama Sıra</div><div class="sec-value">${avgRank}</div></div></div></div>
-        <div class="col-md-3 col-sm-6"><div class="sec-card"><div class="sec-icon"><i class="fas fa-percentage"></i></div><div class="sec-body"><div class="sec-label">Katılım</div><div class="sec-value">${partRate2}%</div><div class="sec-sub">${attendedCnt2}/${totalGradeExams2} Sınav</div></div></div></div>
+        <div class="col-12 col-md-3"><div class="sec-card sec-pos"><div class="sec-icon"><i class="fas fa-trophy"></i></div><div class="sec-body"><div class="sec-label">En İyi Sıra</div><div class="sec-value">${bestRank}</div><div class="sec-sub">Düşük = daha iyi</div></div></div></div>
+        <div class="col-12 col-md-3"><div class="sec-card sec-neg"><div class="sec-icon"><i class="fas fa-arrow-down"></i></div><div class="sec-body"><div class="sec-label">En Kötü Sıra</div><div class="sec-value">${worstRank}</div></div></div></div>
+        <div class="col-12 col-md-3"><div class="sec-card"><div class="sec-icon"><i class="fas fa-balance-scale"></i></div><div class="sec-body"><div class="sec-label">Ortalama Sıra</div><div class="sec-value">${avgRank}</div></div></div></div>
+        <div class="col-12 col-md-3"><div class="sec-card"><div class="sec-icon"><i class="fas fa-percentage"></i></div><div class="sec-body"><div class="sec-label">Katılım</div><div class="sec-value">${partRate2}%</div><div class="sec-sub">${attendedCnt2}/${totalGradeExams2} Sınav</div></div></div></div>
       </div>`;
     }
 
@@ -1812,7 +1812,7 @@ function rAnl(){
             let compHtml = compLines.length > 0
               ? `<div class="comparison-list">${compLines.join('')}</div>`
               : `<div class="sec-sub">${labMain} fark — ${best.cls} vs ${worst.cls}</div>`;
-            cohenHtml = `<div class="col-md-4 col-lg flex-fill mb-2"><div class="sec-card h-100"><div class="sec-icon"><i class="fas fa-balance-scale"></i></div><div class="sec-body"><div class="sec-label">Şubeler Arası Etki Büyüklüğü (Cohen's d)</div><div class="sec-value" style="--metric-color:${dColorMain}; color:var(--metric-color);">d = ${dMain.toFixed(2)}</div>${compHtml}</div></div></div>`;
+            cohenHtml = `<div class="col-12 col-md-4 col-lg flex-fill mb-2"><div class="sec-card h-100"><div class="sec-icon"><i class="fas fa-balance-scale"></i></div><div class="sec-body"><div class="sec-label">Şubeler Arası Etki Büyüklüğü (Cohen's d)</div><div class="sec-value" style="--metric-color:${dColorMain}; color:var(--metric-color);">d = ${dMain.toFixed(2)}</div>${compHtml}</div></div></div>`;
           }
         }
       }
@@ -1828,9 +1828,9 @@ function rAnl(){
         let _dCls = _delta===null?'sec-neutral':(_delta>0?'sec-pos':(_delta<0?'sec-neg':'sec-neutral'));
         let _dSign = _delta!==null?(_delta>0?'+':''):'';
         singleExamSingleBranchHtml = `<div class="row mb-3">
-          <div class="col-md-4 flex-fill mb-2"><div class="sec-card h-100"><div class="sec-icon"><i class="fas fa-school"></i></div><div class="sec-body"><div class="sec-label">Şube Ortalaması</div><div class="sec-value">${_brAvg.toFixed(2)}</div><div class="sec-sub">${escapeHtml(sortedClasses[0])} · ${escapeHtml(ls)}</div></div></div></div>
-          ${_instAvg!==null?`<div class="col-md-4 flex-fill mb-2"><div class="sec-card h-100"><div class="sec-icon"><i class="fas fa-building"></i></div><div class="sec-body"><div class="sec-label">Kurum Ortalaması</div><div class="sec-value">${_instAvg.toFixed(2)}</div><div class="sec-sub">${lvlForAvg?lvlForAvg+'. Sınıflar':''} · ${_instValsForDate.length} kayıt</div></div></div></div>`:''}
-          ${_delta!==null?`<div class="col-md-4 flex-fill mb-2"><div class="sec-card ${_dCls} h-100"><div class="sec-icon"><i class="fas fa-exchange-alt"></i></div><div class="sec-body"><div class="sec-label">Şube − Kurum Farkı</div><div class="sec-value">${_dSign}${_delta.toFixed(2)}</div><div class="sec-sub">${_delta>0?'Kurum üstünde':'Kurum altında'}</div></div></div></div>`:''}
+          <div class="col-12 col-md-4 flex-fill mb-2"><div class="sec-card h-100"><div class="sec-icon"><i class="fas fa-school"></i></div><div class="sec-body"><div class="sec-label">Şube Ortalaması</div><div class="sec-value">${_brAvg.toFixed(2)}</div><div class="sec-sub">${escapeHtml(sortedClasses[0])} · ${escapeHtml(ls)}</div></div></div></div>
+          ${_instAvg!==null?`<div class="col-12 col-md-4 flex-fill mb-2"><div class="sec-card h-100"><div class="sec-icon"><i class="fas fa-building"></i></div><div class="sec-body"><div class="sec-label">Kurum Ortalaması</div><div class="sec-value">${_instAvg.toFixed(2)}</div><div class="sec-sub">${lvlForAvg?lvlForAvg+'. Sınıflar':''} · ${_instValsForDate.length} kayıt</div></div></div></div>`:''}
+          ${_delta!==null?`<div class="col-12 col-md-4 flex-fill mb-2"><div class="sec-card ${_dCls} h-100"><div class="sec-icon"><i class="fas fa-exchange-alt"></i></div><div class="sec-body"><div class="sec-label">Şube − Kurum Farkı</div><div class="sec-value">${_dSign}${_delta.toFixed(2)}</div><div class="sec-sub">${_delta>0?'Kurum üstünde':'Kurum altında'}</div></div></div></div>`:''}
         </div>`;
       }
 
@@ -1842,20 +1842,20 @@ function rAnl(){
         // Satır 2: En İyi Sınıf | En Düşük Sınıf | Şubeler Arası Etki Büyüklüğü
         clsPerfHtml = `
           <div class="row mb-2">
-            <div class="col-md-4 col-lg flex-fill mb-2"><div class="sec-card sec-neutral h-100"><div class="sec-icon"><i class="fas fa-users"></i></div><div class="sec-body"><div class="sec-label">Katılım Oranı</div><div class="sec-value">%${partRate}</div><div class="sec-sub">${attendedCount} / ${baseCount} Katılım</div></div></div></div>
-            <div class="col-md-4 col-lg flex-fill mb-2"><div class="sec-card h-100"><div class="sec-icon"><i class="fas fa-calculator"></i></div><div class="sec-body"><div class="sec-label">Kurum Ort. (${lvlLabel})</div><div class="sec-value">${genAvgPerf.toFixed(2)}</div></div></div></div>
-            <div class="col-md-4 col-lg flex-fill mb-2"><div class="sec-card h-100"><div class="sec-icon"><i class="fas fa-star"></i></div><div class="sec-body"><div class="sec-label">Ort. Üstü Sınıf</div><div class="sec-value">${aboveAvg} / ${topCls.length}</div></div></div></div>
+            <div class="col-12 col-md-4 col-lg flex-fill mb-2"><div class="sec-card sec-neutral h-100"><div class="sec-icon"><i class="fas fa-users"></i></div><div class="sec-body"><div class="sec-label">Katılım Oranı</div><div class="sec-value">%${partRate}</div><div class="sec-sub">${attendedCount} / ${baseCount} Katılım</div></div></div></div>
+            <div class="col-12 col-md-4 col-lg flex-fill mb-2"><div class="sec-card h-100"><div class="sec-icon"><i class="fas fa-calculator"></i></div><div class="sec-body"><div class="sec-label">Kurum Ort. (${lvlLabel})</div><div class="sec-value">${genAvgPerf.toFixed(2)}</div></div></div></div>
+            <div class="col-12 col-md-4 col-lg flex-fill mb-2"><div class="sec-card h-100"><div class="sec-icon"><i class="fas fa-star"></i></div><div class="sec-body"><div class="sec-label">Ort. Üstü Sınıf</div><div class="sec-value">${aboveAvg} / ${topCls.length}</div></div></div></div>
           </div>
           <div class="row mb-3">
-            <div class="col-md-4 col-lg flex-fill mb-2"><div class="sec-card sec-pos h-100"><div class="sec-icon"><i class="fas fa-trophy"></i></div><div class="sec-body"><div class="sec-label">En İyi Sınıf</div><div class="sec-value">${best.cls}</div><div class="sec-sub">Ort: ${best.avg.toFixed(2)}</div></div></div></div>
-            <div class="col-md-4 col-lg flex-fill mb-2"><div class="sec-card sec-neg h-100"><div class="sec-icon"><i class="fas fa-exclamation-circle"></i></div><div class="sec-body"><div class="sec-label">En Düşük Sınıf</div><div class="sec-value">${worst.cls}</div><div class="sec-sub">Ort: ${worst.avg.toFixed(2)}</div></div></div></div>
+            <div class="col-12 col-md-4 col-lg flex-fill mb-2"><div class="sec-card sec-pos h-100"><div class="sec-icon"><i class="fas fa-trophy"></i></div><div class="sec-body"><div class="sec-label">En İyi Sınıf</div><div class="sec-value">${best.cls}</div><div class="sec-sub">Ort: ${best.avg.toFixed(2)}</div></div></div></div>
+            <div class="col-12 col-md-4 col-lg flex-fill mb-2"><div class="sec-card sec-neg h-100"><div class="sec-icon"><i class="fas fa-exclamation-circle"></i></div><div class="sec-body"><div class="sec-label">En Düşük Sınıf</div><div class="sec-value">${worst.cls}</div><div class="sec-sub">Ort: ${worst.avg.toFixed(2)}</div></div></div></div>
             ${cohenHtml}
           </div>`;
       } else {
         // Tek şube seçili ama singleExam değil
         clsPerfHtml = `<div class="row mb-3">
-          <div class="col-md-4 col-lg flex-fill mb-2"><div class="sec-card h-100"><div class="sec-icon"><i class="fas fa-calculator"></i></div><div class="sec-body"><div class="sec-label">Kurum Ort. (${lvlLabel})</div><div class="sec-value">${genAvgPerf.toFixed(2)}</div></div></div></div>
-          <div class="col-md-4 col-lg flex-fill mb-2"><div class="sec-card sec-neutral h-100"><div class="sec-icon"><i class="fas fa-users"></i></div><div class="sec-body"><div class="sec-label">Katılım Oranı</div><div class="sec-value">%${partRate}</div><div class="sec-sub">${attendedCount} / ${baseCount} Katılım</div></div></div></div>
+          <div class="col-12 col-md-4 col-lg flex-fill mb-2"><div class="sec-card h-100"><div class="sec-icon"><i class="fas fa-calculator"></i></div><div class="sec-body"><div class="sec-label">Kurum Ort. (${lvlLabel})</div><div class="sec-value">${genAvgPerf.toFixed(2)}</div></div></div></div>
+          <div class="col-12 col-md-4 col-lg flex-fill mb-2"><div class="sec-card sec-neutral h-100"><div class="sec-icon"><i class="fas fa-users"></i></div><div class="sec-body"><div class="sec-label">Katılım Oranı</div><div class="sec-value">%${partRate}</div><div class="sec-sub">${attendedCount} / ${baseCount} Katılım</div></div></div></div>
         </div>`;
       }
     }
@@ -1922,8 +1922,8 @@ function rAnl(){
       let _worstProg = _slopeArr.length > 0 && _slopeArr[_slopeArr.length-1].slope < 0 ? _slopeArr[_slopeArr.length-1] : null;
       if(_bestProg || _worstProg) {
         progressRegressionHtml = `<div class="row mb-3">
-          ${_bestProg ? `<div class="col-md-6 mb-2"><div class="sec-card sec-pos h-100"><div class="sec-icon"><i class="fas fa-rocket"></i></div><div class="sec-body"><div class="sec-label">En Fazla İlerleme</div><div class="sec-value sec-value-compact">${_bestProg.name} <small>(${_bestProg.cls})</small></div><div class="sec-sub">Sınav başına +${_bestProg.slope.toFixed(2)} · ${_bestProg.cnt} sınav</div></div></div></div>` : ''}
-          ${_worstProg ? `<div class="col-md-6 mb-2"><div class="sec-card sec-neg h-100"><div class="sec-icon"><i class="fas fa-level-down-alt"></i></div><div class="sec-body"><div class="sec-label">En Fazla Gerileme</div><div class="sec-value sec-value-compact">${_worstProg.name} <small>(${_worstProg.cls})</small></div><div class="sec-sub">Sınav başına ${_worstProg.slope.toFixed(2)} · ${_worstProg.cnt} sınav</div></div></div></div>` : ''}
+          ${_bestProg ? `<div class="col-12 col-md-6 mb-2"><div class="sec-card sec-pos h-100"><div class="sec-icon"><i class="fas fa-rocket"></i></div><div class="sec-body"><div class="sec-label">En Fazla İlerleme</div><div class="sec-value sec-value-compact">${_bestProg.name} <small>(${_bestProg.cls})</small></div><div class="sec-sub">Sınav başına +${_bestProg.slope.toFixed(2)} · ${_bestProg.cnt} sınav</div></div></div></div>` : ''}
+          ${_worstProg ? `<div class="col-12 col-md-6 mb-2"><div class="sec-card sec-neg h-100"><div class="sec-icon"><i class="fas fa-level-down-alt"></i></div><div class="sec-body"><div class="sec-label">En Fazla Gerileme</div><div class="sec-value sec-value-compact">${_worstProg.name} <small>(${_worstProg.cls})</small></div><div class="sec-sub">Sınav başına ${_worstProg.slope.toFixed(2)} · ${_worstProg.cnt} sınav</div></div></div></div>` : ''}
         </div>`;
       }
     }
@@ -1965,32 +1965,32 @@ function rAnl(){
         let clsTR2Col = clsTR2 >= 0.65 ? '#28a745'     : (clsTR2 >= clsTR2Thr ? '#fd7e14'   : '#dc3545');
 
         clsTrendHtml = `<div class="trend-card mb-3"><div class="row align-items-center">
-          <div class="col-6 col-md-2 text-center mb-2 mb-md-0" title="Sınıf ortalamasının zaman içindeki yönü">
+          <div class="col-12 col-md-2 text-center mb-2 mb-md-0" title="Sınıf ortalamasının zaman içindeki yönü">
             <span class="trend-indicator ${clsTClass}"><i class="fas ${clsTIcon} me-1"></i>${clsTText}</span>
             <div class="mt-2 small text-muted"><strong>Genel Eğilim</strong></div>
             <div class="x-small text-muted">Sınıf ortalamasının yönü</div>
           </div>
-          <div class="col-6 col-md-2 text-center border-left mb-2 mb-md-0" title="İlk sınavdan son sınava ortalamadaki net değişim (regresyon)">
+          <div class="col-12 col-md-2 text-center border-left mb-2 mb-md-0" title="İlk sınavdan son sınava ortalamadaki net değişim (regresyon)">
             <div class="trend-metric-value" style="--metric-color:${clsTColor};">${clsTSign}${clsTTotal.toFixed(2)}</div>
             <div class="small text-muted"><strong>Toplam Net Değişimi</strong></div>
             <div class="x-small text-muted">Süreç Boyunca</div>
           </div>
-          <div class="col-6 col-md-2 text-center border-left mb-2 mb-md-0" title="Her yeni sınavda beklenen ortalama değişim">
+          <div class="col-12 col-md-2 text-center border-left mb-2 mb-md-0" title="Her yeni sınavda beklenen ortalama değişim">
             <div class="trend-metric-value" style="--metric-color:${clsTColor};">${clsSSign}${clsTSlope.toFixed(2)}</div>
             <div class="small text-muted"><strong>Sınav Başına Değişim</strong></div>
             <div class="x-small text-muted">(Regresyon Analizi)</div>
           </div>
-          <div class="col-6 col-md-2 text-center border-left mb-2 mb-md-0" title="Analize dahil edilen toplam sınav sayısı">
+          <div class="col-12 col-md-2 text-center border-left mb-2 mb-md-0" title="Analize dahil edilen toplam sınav sayısı">
             <div class="trend-metric-value">${dateAvgSeries.length}</div>
             <div class="small text-muted"><strong>Sınav Sayısı</strong></div>
             <div class="x-small text-muted">Trend hesabına dahil</div>
           </div>
-          <div class="col-6 col-md-2 text-center border-left mb-2 mb-md-0" title="Öğrencilerin ortalama etrafındaki dağılımı (örneklem standart sapması, n-1). Düşük = homojen sınıf.">
+          <div class="col-12 col-md-2 text-center border-left mb-2 mb-md-0" title="Öğrencilerin ortalama etrafındaki dağılımı (örneklem standart sapması, n-1). Düşük = homojen sınıf.">
             <div class="trend-metric-value trend-tone-purple">±${ssVal.toFixed(2)}</div>
             <div class="small text-muted"><strong>Sınıf İçi Dağılım</strong></div>
             <div class="x-small text-muted">${_consistencyLabelC}</div>
           </div>
-          <div class="col-6 col-md-2 text-center border-left mb-2 mb-md-0" title="En yüksek ortalamalı sınıf ile en düşük arasındaki fark">
+          <div class="col-12 col-md-2 text-center border-left mb-2 mb-md-0" title="En yüksek ortalamalı sınıf ile en düşük arasındaki fark">
             <div class="trend-metric-value text-warning">${mmDiff !== null ? mmDiff.toFixed(2) : '—'}</div>
             <div class="small text-muted"><strong>Şubeler Arası Fark</strong></div>
             <div class="x-small text-muted">En iyi − en düşük şube</div>
@@ -2157,32 +2157,32 @@ function rAnl(){
         let subjR2Col = subjR2 >= 0.65 ? '#28a745'     : (subjR2 >= subjR2Thr ? '#fd7e14'   : '#dc3545');
 
         subjTrendHtml = `<div class="trend-card mb-3"><div class="row align-items-center">
-          <div class="col-6 col-md-2 text-center mb-2 mb-md-0" title="Bu dersin ortalamasının zaman içindeki yönü">
+          <div class="col-12 col-md-2 text-center mb-2 mb-md-0" title="Bu dersin ortalamasının zaman içindeki yönü">
             <span class="trend-indicator ${subjTClass}"><i class="fas ${subjTIcon} me-1"></i>${subjTText}</span>
             <div class="mt-2 small text-muted"><strong>Genel Eğilim</strong></div>
             <div class="x-small text-muted">Ders ortalamasının yönü</div>
           </div>
-          <div class="col-6 col-md-2 text-center border-left mb-2 mb-md-0" title="İlk sınavdan son sınava ders ortalamasındaki değişim (regresyon)">
+          <div class="col-12 col-md-2 text-center border-left mb-2 mb-md-0" title="İlk sınavdan son sınava ders ortalamasındaki değişim (regresyon)">
             <div class="trend-metric-value" style="--metric-color:${subjTColor};">${subjTSign}${subjTotal.toFixed(2)}</div>
             <div class="small text-muted"><strong>Toplam Net Değişimi</strong></div>
             <div class="x-small text-muted">Süreç Boyunca</div>
           </div>
-          <div class="col-6 col-md-2 text-center border-left mb-2 mb-md-0" title="Her yeni sınavda derste beklenen değişim">
+          <div class="col-12 col-md-2 text-center border-left mb-2 mb-md-0" title="Her yeni sınavda derste beklenen değişim">
             <div class="trend-metric-value" style="--metric-color:${subjTColor};">${subjSSign}${subjSlope.toFixed(2)}</div>
             <div class="small text-muted"><strong>Sınav Başına Değişim</strong></div>
             <div class="x-small text-muted">(Regresyon Analizi)</div>
           </div>
-          <div class="col-6 col-md-2 text-center border-left mb-2 mb-md-0" title="Trend hesabına dahil edilen toplam sınav sayısı">
+          <div class="col-12 col-md-2 text-center border-left mb-2 mb-md-0" title="Trend hesabına dahil edilen toplam sınav sayısı">
             <div class="trend-metric-value">${subjDateAvgSeries.length}</div>
             <div class="small text-muted"><strong>Sınav Sayısı</strong></div>
             <div class="x-small text-muted">Bu dersi içeren sınavlar</div>
           </div>
-          <div class="col-6 col-md-2 text-center border-left mb-2 mb-md-0" title="Öğrenci netlerinin ortalama etrafındaki dağılımı (örneklem standart sapması, n-1)">
+          <div class="col-12 col-md-2 text-center border-left mb-2 mb-md-0" title="Öğrenci netlerinin ortalama etrafındaki dağılımı (örneklem standart sapması, n-1)">
             <div class="trend-metric-value trend-tone-purple">±${subjSS.toFixed(2)}</div>
             <div class="small text-muted"><strong>Öğrenciler Arası Dağılım</strong></div>
             <div class="x-small text-muted">${_consistencyLabelS}</div>
           </div>
-          <div class="col-6 col-md-2 text-center border-left mb-2 mb-md-0" title="Bu derste en yüksek ve en düşük sınıf ortalaması arasındaki fark">
+          <div class="col-12 col-md-2 text-center border-left mb-2 mb-md-0" title="Bu derste en yüksek ve en düşük sınıf ortalaması arasındaki fark">
             <div class="trend-metric-value text-warning">${subjMMDiff !== null ? subjMMDiff.toFixed(2) : '—'}</div>
             <div class="small text-muted"><strong>Sınıflar Arası Fark</strong></div>
             <div class="x-small text-muted">En iyi − en düşük sınıf</div>
@@ -2242,16 +2242,16 @@ function rAnl(){
           let subjCompHtml = subjCompLines.length > 0
             ? `<div class="comparison-list">${subjCompLines.join('')}</div>`
             : `<div class="sec-sub">${subjDLab2} fark — ${subjBestClsN} vs ${subjWorstClsN2}</div>`;
-          subjCohenColHtml = `<div class="col-md-4 col-lg flex-fill mb-2"><div class="sec-card h-100"><div class="sec-icon"><i class="fas fa-balance-scale"></i></div><div class="sec-body"><div class="sec-label">Şubeler Arası Etki Büyüklüğü (Cohen's d)</div><div class="sec-value" style="--metric-color:${subjDCol2}; color:var(--metric-color);">d = ${subjD2.toFixed(2)}</div>${subjCompHtml}</div></div></div>`;
+          subjCohenColHtml = `<div class="col-12 col-md-4 col-lg flex-fill mb-2"><div class="sec-card h-100"><div class="sec-icon"><i class="fas fa-balance-scale"></i></div><div class="sec-body"><div class="sec-label">Şubeler Arası Etki Büyüklüğü (Cohen's d)</div><div class="sec-value" style="--metric-color:${subjDCol2}; color:var(--metric-color);">d = ${subjD2.toFixed(2)}</div>${subjCompHtml}</div></div></div>`;
         }
       }
     }
 
     // Satır 1: Toplam Kayıt | Katılım Oranı | Genel Ortalama
     let subjRow1Html = `<div class="row mb-2">
-      <div class="col-md-4 col-lg flex-fill mb-2"><div class="sec-card h-100"><div class="sec-icon"><i class="fas fa-users"></i></div><div class="sec-body"><div class="sec-label">Toplam Kayıt</div><div class="sec-value">${ex.length} Sonuç</div></div></div></div>
-      <div class="col-md-4 col-lg flex-fill mb-2"><div class="sec-card sec-neutral h-100"><div class="sec-icon"><i class="fas fa-chart-pie"></i></div><div class="sec-body"><div class="sec-label">Katılım Oranı</div><div class="sec-value">%${partRateS}</div><div class="sec-sub">${attendedCountS} / ${baseCountS} Katılım</div></div></div></div>
-      <div class="col-md-4 col-lg flex-fill mb-2"><div class="sec-card h-100"><div class="sec-icon"><i class="fas fa-calculator"></i></div><div class="sec-body"><div class="sec-label">Genel Ortalama</div><div class="sec-value">${genAvg.toFixed(2)} Net</div></div></div></div>
+      <div class="col-12 col-md-4 col-lg flex-fill mb-2"><div class="sec-card h-100"><div class="sec-icon"><i class="fas fa-users"></i></div><div class="sec-body"><div class="sec-label">Toplam Kayıt</div><div class="sec-value">${ex.length} Sonuç</div></div></div></div>
+      <div class="col-12 col-md-4 col-lg flex-fill mb-2"><div class="sec-card sec-neutral h-100"><div class="sec-icon"><i class="fas fa-chart-pie"></i></div><div class="sec-body"><div class="sec-label">Katılım Oranı</div><div class="sec-value">%${partRateS}</div><div class="sec-sub">${attendedCountS} / ${baseCountS} Katılım</div></div></div></div>
+      <div class="col-12 col-md-4 col-lg flex-fill mb-2"><div class="sec-card h-100"><div class="sec-icon"><i class="fas fa-calculator"></i></div><div class="sec-body"><div class="sec-label">Genel Ortalama</div><div class="sec-value">${genAvg.toFixed(2)} Net</div></div></div></div>
     </div>`;
 
     // Satır 2 (yalnızca Şube=Tümü ve birden fazla sınıf varsa):
@@ -2259,16 +2259,16 @@ function rAnl(){
     let subjRow2Html = '';
     if(!br && clsArr.length > 1) {
       subjRow2Html = `<div class="row mb-2">
-        <div class="col-md-4 col-lg flex-fill mb-2"><div class="sec-card sec-pos h-100"><div class="sec-icon"><i class="fas fa-school"></i></div><div class="sec-body"><div class="sec-label">En İyi Sınıf</div><div class="sec-value">${subjBestClsObj.cls}</div><div class="sec-sub">Ort: ${subjBestClsObj.avg.toFixed(2)} Net</div></div></div></div>
-        <div class="col-md-4 col-lg flex-fill mb-2"><div class="sec-card sec-neg h-100"><div class="sec-icon"><i class="fas fa-exclamation-circle"></i></div><div class="sec-body"><div class="sec-label">En Zayıf Sınıf</div><div class="sec-value">${subjWorstClsObj.cls}</div><div class="sec-sub">Ort: ${subjWorstClsObj.avg.toFixed(2)} Net</div></div></div></div>
+        <div class="col-12 col-md-4 col-lg flex-fill mb-2"><div class="sec-card sec-pos h-100"><div class="sec-icon"><i class="fas fa-school"></i></div><div class="sec-body"><div class="sec-label">En İyi Sınıf</div><div class="sec-value">${subjBestClsObj.cls}</div><div class="sec-sub">Ort: ${subjBestClsObj.avg.toFixed(2)} Net</div></div></div></div>
+        <div class="col-12 col-md-4 col-lg flex-fill mb-2"><div class="sec-card sec-neg h-100"><div class="sec-icon"><i class="fas fa-exclamation-circle"></i></div><div class="sec-body"><div class="sec-label">En Zayıf Sınıf</div><div class="sec-value">${subjWorstClsObj.cls}</div><div class="sec-sub">Ort: ${subjWorstClsObj.avg.toFixed(2)} Net</div></div></div></div>
         ${subjCohenColHtml}
       </div>`;
     }
 
     // Satır 3: En İyi Öğrenci | En Zayıf Öğrenci
     let subjRow3Html = `<div class="row mb-2">
-      <div class="col-md-6 col-lg flex-fill mb-2"><div class="sec-card sec-pos h-100"><div class="sec-icon"><i class="fas fa-trophy"></i></div><div class="sec-body"><div class="sec-label">En İyi Öğrenci</div><div class="sec-value sec-value-small">${bestStudent ? `${escapeHtml(bestStudent.name)} (${escapeHtml(bestStudent.cls)})` : 'Veri Yok'}</div><div class="sec-sub">${bestStudent ? `${bestStudent.avg.toFixed(2)} Net (Ort)` : ''}</div></div></div></div>
-      <div class="col-md-6 col-lg flex-fill mb-2"><div class="sec-card sec-neg h-100"><div class="sec-icon"><i class="fas fa-exclamation-triangle"></i></div><div class="sec-body"><div class="sec-label">En Zayıf Öğrenci</div><div class="sec-value sec-value-small">${worstStudent ? `${escapeHtml(worstStudent.name)} (${escapeHtml(worstStudent.cls)})` : 'Veri Yok'}</div><div class="sec-sub">${worstStudent ? `${worstStudent.avg.toFixed(2)} Net (Ort)` : ''}</div></div></div></div>
+      <div class="col-12 col-md-6 col-lg flex-fill mb-2"><div class="sec-card sec-pos h-100"><div class="sec-icon"><i class="fas fa-trophy"></i></div><div class="sec-body"><div class="sec-label">En İyi Öğrenci</div><div class="sec-value sec-value-small">${bestStudent ? `${escapeHtml(bestStudent.name)} (${escapeHtml(bestStudent.cls)})` : 'Veri Yok'}</div><div class="sec-sub">${bestStudent ? `${bestStudent.avg.toFixed(2)} Net (Ort)` : ''}</div></div></div></div>
+      <div class="col-12 col-md-6 col-lg flex-fill mb-2"><div class="sec-card sec-neg h-100"><div class="sec-icon"><i class="fas fa-exclamation-triangle"></i></div><div class="sec-body"><div class="sec-label">En Zayıf Öğrenci</div><div class="sec-value sec-value-small">${worstStudent ? `${escapeHtml(worstStudent.name)} (${escapeHtml(worstStudent.cls)})` : 'Veri Yok'}</div><div class="sec-sub">${worstStudent ? `${worstStudent.avg.toFixed(2)} Net (Ort)` : ''}</div></div></div></div>
     </div>`;
 
     let subjTitle = toTitleCase(subj);
@@ -2442,9 +2442,9 @@ function rAnl(){
                 <div class="col-12"><div class="sec-card"><div class="sec-icon"><i class="fas fa-chart-bar"></i></div><div class="sec-body"><div class="sec-label">Ortalama Net <small class="sec-label-note">(Tüm Sınavlar)</small></div><div class="sec-value">${_gsMean.toFixed(2)} <span class="sec-inline-summary">(${Object.keys(_gsClsAvg).sort().map(cls=>`${escapeHtml(cls)}: ${(_gsClsAvg[cls].reduce((a,b)=>a+b,0)/_gsClsAvg[cls].length).toFixed(2)}`).join('  ')})</span></div></div></div></div>
               </div>
               <div class="row mt-2">
-                <div class="col-md-4 col-sm-12"><div class="sec-card"><div class="sec-icon"><i class="fas fa-arrows-alt-h"></i></div><div class="sec-body"><div class="sec-label">Ortalamadan Uzaklık</div><div class="sec-value">±${_gsStd.toFixed(2)}</div><div class="sec-sub">Standart sapma · ${_gsHomLab}</div>${_explain('Öğrencilerin tüm sınav ortalamalarının genel ortalama etrafındaki yayılımı. Düşükse grup homojen.')}</div></div></div>
-                <div class="col-md-4 col-sm-12"><div class="sec-card"><div class="sec-icon"><i class="fas fa-equals"></i></div><div class="sec-body"><div class="sec-label">Medyan Net</div><div class="sec-value">${_gsMed.toFixed(2)}</div><div class="sec-sub">Ortalama: ${_gsMean.toFixed(2)}</div>${_explain('Öğrenciler kendi sınav ortalamalarına göre sıralandığında ortadaki değer. Ortalamadan belirgin farklıysa dağılım çarpıktır.')}</div></div></div>
-                <div class="col-md-4 col-sm-12"><div class="sec-card"><div class="sec-icon"><i class="fas fa-grip-lines-vertical"></i></div><div class="sec-body"><div class="sec-label">Çeyrekler Arası Aralık (IQR)</div><div class="sec-value" style="color:${_gsIqrColor};">${_gsQ.iqr.toFixed(2)}</div><div class="sec-sub" style="color:${_gsIqrColor};font-weight:600;">${_gsIqrLabel}</div><div class="sec-sub">Q1: ${_gsQ.q1.toFixed(2)} · Q3: ${_gsQ.q3.toFixed(2)}</div></div></div></div>
+                <div class="col-12 col-md-4"><div class="sec-card"><div class="sec-icon"><i class="fas fa-arrows-alt-h"></i></div><div class="sec-body"><div class="sec-label">Ortalamadan Uzaklık</div><div class="sec-value">±${_gsStd.toFixed(2)}</div><div class="sec-sub">Standart sapma · ${_gsHomLab}</div>${_explain('Öğrencilerin tüm sınav ortalamalarının genel ortalama etrafındaki yayılımı. Düşükse grup homojen.')}</div></div></div>
+                <div class="col-12 col-md-4"><div class="sec-card"><div class="sec-icon"><i class="fas fa-equals"></i></div><div class="sec-body"><div class="sec-label">Medyan Net</div><div class="sec-value">${_gsMed.toFixed(2)}</div><div class="sec-sub">Ortalama: ${_gsMean.toFixed(2)}</div>${_explain('Öğrenciler kendi sınav ortalamalarına göre sıralandığında ortadaki değer. Ortalamadan belirgin farklıysa dağılım çarpıktır.')}</div></div></div>
+                <div class="col-12 col-md-4"><div class="sec-card"><div class="sec-icon"><i class="fas fa-grip-lines-vertical"></i></div><div class="sec-body"><div class="sec-label">Çeyrekler Arası Aralık (IQR)</div><div class="sec-value" style="color:${_gsIqrColor};">${_gsQ.iqr.toFixed(2)}</div><div class="sec-sub" style="color:${_gsIqrColor};font-weight:600;">${_gsIqrLabel}</div><div class="sec-sub">Q1: ${_gsQ.q1.toFixed(2)} · Q3: ${_gsQ.q3.toFixed(2)}</div></div></div></div>
               </div>`;
         }
 
@@ -2456,14 +2456,14 @@ function rAnl(){
             </div>
             <div class="card-body report-card-body">
               <div class="row">
-                  <div class="col-md-4 col-sm-12"><div class="sec-card"><div class="sec-icon"><i class="fas fa-trophy"></i></div><div class="sec-body"><div class="sec-label">En Çok Birinci Olan</div><div class="sec-value sec-value-compact">${mostFirst ? `${escapeHtml(mostFirst.name)} <small>(${escapeHtml(mostFirst.cls)})</small>` : 'Veri Yok'}</div><div class="sec-sub">${mostFirst ? `Toplam ${mostFirst.first} kez birinci oldu${mostFirstTie ? ' (Puan Üstünlüğü)' : ''}` : ''}</div></div></div></div>
-                  <div class="col-md-4 col-sm-12"><div class="sec-card sec-pos"><div class="sec-icon"><i class="fas fa-chart-line"></i></div><div class="sec-body"><div class="sec-label">En Fazla İlerleme Kaydeden</div><div class="sec-value sec-value-compact">${bestP ? `${escapeHtml(bestP.name)} <small>(${escapeHtml(bestP.cls)})</small>` : 'Veri Yok'}</div><div class="sec-sub">${bestP ? `+${bestP.diff.toFixed(2)} Puan Eğim (${bestP.firstScore.toFixed(2)} -> ${bestP.lastScore.toFixed(2)})` : 'En az 2 sınava giren yok'}</div></div></div></div>
-                  <div class="col-md-4 col-sm-12"><div class="sec-card sec-neg"><div class="sec-icon"><i class="fas fa-level-down-alt"></i></div><div class="sec-body"><div class="sec-label">En Fazla Gerileme Kaydeden</div><div class="sec-value sec-value-compact">${worstP ? `${escapeHtml(worstP.name)} <small>(${escapeHtml(worstP.cls)})</small>` : 'Veri Yok'}</div><div class="sec-sub">${worstP ? `${worstP.diff.toFixed(2)} Puan Eğim (${worstP.firstScore.toFixed(2)} -> ${worstP.lastScore.toFixed(2)})` : 'En az 2 sınava giren yok'}</div></div></div></div>
+                  <div class="col-12 col-md-4"><div class="sec-card"><div class="sec-icon"><i class="fas fa-trophy"></i></div><div class="sec-body"><div class="sec-label">En Çok Birinci Olan</div><div class="sec-value sec-value-compact">${mostFirst ? `${escapeHtml(mostFirst.name)} <small>(${escapeHtml(mostFirst.cls)})</small>` : 'Veri Yok'}</div><div class="sec-sub">${mostFirst ? `Toplam ${mostFirst.first} kez birinci oldu${mostFirstTie ? ' (Puan Üstünlüğü)' : ''}` : ''}</div></div></div></div>
+                  <div class="col-12 col-md-4"><div class="sec-card sec-pos"><div class="sec-icon"><i class="fas fa-chart-line"></i></div><div class="sec-body"><div class="sec-label">En Fazla İlerleme Kaydeden</div><div class="sec-value sec-value-compact">${bestP ? `${escapeHtml(bestP.name)} <small>(${escapeHtml(bestP.cls)})</small>` : 'Veri Yok'}</div><div class="sec-sub">${bestP ? `+${bestP.diff.toFixed(2)} Puan Eğim (${bestP.firstScore.toFixed(2)} -> ${bestP.lastScore.toFixed(2)})` : 'En az 2 sınava giren yok'}</div></div></div></div>
+                  <div class="col-12 col-md-4"><div class="sec-card sec-neg"><div class="sec-icon"><i class="fas fa-level-down-alt"></i></div><div class="sec-body"><div class="sec-label">En Fazla Gerileme Kaydeden</div><div class="sec-value sec-value-compact">${worstP ? `${escapeHtml(worstP.name)} <small>(${escapeHtml(worstP.cls)})</small>` : 'Veri Yok'}</div><div class="sec-sub">${worstP ? `${worstP.diff.toFixed(2)} Puan Eğim (${worstP.firstScore.toFixed(2)} -> ${worstP.lastScore.toFixed(2)})` : 'En az 2 sınava giren yok'}</div></div></div></div>
               </div>
               <div class="row mt-2">
-                  <div class="col-md-4 col-sm-12"><div class="sec-card sec-pos"><div class="sec-icon"><i class="fas fa-arrow-up"></i></div><div class="sec-body"><div class="sec-label">Genel Ort. En Çok Artan Ders</div><div class="sec-value sec-value-compact">${bestSub ? escapeHtml(toTitleCase(bestSub.sub)) : 'Veri Yok'}</div><div class="sec-sub">${bestSub ? `+${bestSub.diff.toFixed(2)} Net (${bestSub.fAvg.toFixed(2)} -> ${bestSub.lAvg.toFixed(2)})` : 'Karşılaştırma için veri yetersiz'}</div></div></div></div>
-                  <div class="col-md-4 col-sm-12"><div class="sec-card sec-neg"><div class="sec-icon"><i class="fas fa-arrow-down"></i></div><div class="sec-body"><div class="sec-label">Ortalaması En Çok Düşen Ders</div><div class="sec-value sec-value-compact">${worstSub ? escapeHtml(toTitleCase(worstSub.sub)) : 'Veri Yok'}</div><div class="sec-sub">${worstSub ? `${worstSub.diff.toFixed(2)} Net (${worstSub.fAvg.toFixed(2)} -> ${worstSub.lAvg.toFixed(2)})` : 'Karşılaştırma için veri yetersiz'}</div></div></div></div>
-                  <div class="col-md-4 col-sm-12"><div class="sec-card sec-neutral"><div class="sec-icon"><i class="fas fa-users"></i></div><div class="sec-body"><div class="sec-label">Genel Katılım Oranı</div><div class="sec-value sec-value-compact">%${partRateGS}</div><div class="sec-sub">${attendedCountGS} / ${baseCountGS} Katılım</div></div></div></div>
+                  <div class="col-12 col-md-4"><div class="sec-card sec-pos"><div class="sec-icon"><i class="fas fa-arrow-up"></i></div><div class="sec-body"><div class="sec-label">Genel Ort. En Çok Artan Ders</div><div class="sec-value sec-value-compact">${bestSub ? escapeHtml(toTitleCase(bestSub.sub)) : 'Veri Yok'}</div><div class="sec-sub">${bestSub ? `+${bestSub.diff.toFixed(2)} Net (${bestSub.fAvg.toFixed(2)} -> ${bestSub.lAvg.toFixed(2)})` : 'Karşılaştırma için veri yetersiz'}</div></div></div></div>
+                  <div class="col-12 col-md-4"><div class="sec-card sec-neg"><div class="sec-icon"><i class="fas fa-arrow-down"></i></div><div class="sec-body"><div class="sec-label">Ortalaması En Çok Düşen Ders</div><div class="sec-value sec-value-compact">${worstSub ? escapeHtml(toTitleCase(worstSub.sub)) : 'Veri Yok'}</div><div class="sec-sub">${worstSub ? `${worstSub.diff.toFixed(2)} Net (${worstSub.fAvg.toFixed(2)} -> ${worstSub.lAvg.toFixed(2)})` : 'Karşılaştırma için veri yetersiz'}</div></div></div></div>
+                  <div class="col-12 col-md-4"><div class="sec-card sec-neutral"><div class="sec-icon"><i class="fas fa-users"></i></div><div class="sec-body"><div class="sec-label">Genel Katılım Oranı</div><div class="sec-value sec-value-compact">%${partRateGS}</div><div class="sec-sub">${attendedCountGS} / ${baseCountGS} Katılım</div></div></div></div>
               </div>
 
               ${gsStatsHtml}
@@ -2616,9 +2616,9 @@ function rAnl(){
           else                      { _iqrColor = '#dc3545'; _iqrLabel = 'Kritik Kopukluk (Uçurum!)'; }
         }
         examStatsHtml = `<div class="row mt-2">
-          <div class="col-md-4 col-sm-12"><div class="sec-card"><div class="sec-icon"><i class="fas fa-arrows-alt-h"></i></div><div class="sec-body"><div class="sec-label">Ortalamadan Uzaklık</div><div class="sec-value">±${_eStd.toFixed(2)}</div><div class="sec-sub">Standart sapma · ${_eHomLab}</div>${_explain('Öğrenci netlerinin ortalama etrafındaki yayılımı. Düşükse grup homojen.')}</div></div></div>
-          <div class="col-md-4 col-sm-12"><div class="sec-card"><div class="sec-icon"><i class="fas fa-equals"></i></div><div class="sec-body"><div class="sec-label">Medyan Net</div><div class="sec-value">${_eMed.toFixed(2)}</div><div class="sec-sub">Ortalama: ${_eMean.toFixed(2)}</div>${_explain('Sıralandığında ortadaki öğrencinin neti. Aşırı uçlardan etkilenmez; ortalamadan farklıysa dağılım çarpıktır.')}</div></div></div>
-          <div class="col-md-4 col-sm-12"><div class="sec-card"><div class="sec-icon"><i class="fas fa-grip-lines-vertical"></i></div><div class="sec-body"><div class="sec-label">Çeyrekler Arası Aralık (IQR)</div><div class="sec-value" style="color:${_iqrColor};">${_eQ.iqr.toFixed(2)}</div><div class="sec-sub" style="color:${_iqrColor};font-weight:600;">${_iqrLabel}</div><div class="sec-sub">Q1: ${_eQ.q1.toFixed(2)} · Q3: ${_eQ.q3.toFixed(2)}</div></div></div></div>
+          <div class="col-12 col-md-4"><div class="sec-card"><div class="sec-icon"><i class="fas fa-arrows-alt-h"></i></div><div class="sec-body"><div class="sec-label">Ortalamadan Uzaklık</div><div class="sec-value">±${_eStd.toFixed(2)}</div><div class="sec-sub">Standart sapma · ${_eHomLab}</div>${_explain('Öğrenci netlerinin ortalama etrafındaki yayılımı. Düşükse grup homojen.')}</div></div></div>
+          <div class="col-12 col-md-4"><div class="sec-card"><div class="sec-icon"><i class="fas fa-equals"></i></div><div class="sec-body"><div class="sec-label">Medyan Net</div><div class="sec-value">${_eMed.toFixed(2)}</div><div class="sec-sub">Ortalama: ${_eMean.toFixed(2)}</div>${_explain('Sıralandığında ortadaki öğrencinin neti. Aşırı uçlardan etkilenmez; ortalamadan farklıysa dağılım çarpıktır.')}</div></div></div>
+          <div class="col-12 col-md-4"><div class="sec-card"><div class="sec-icon"><i class="fas fa-grip-lines-vertical"></i></div><div class="sec-body"><div class="sec-label">Çeyrekler Arası Aralık (IQR)</div><div class="sec-value" style="color:${_iqrColor};">${_eQ.iqr.toFixed(2)}</div><div class="sec-sub" style="color:${_iqrColor};font-weight:600;">${_iqrLabel}</div><div class="sec-sub">Q1: ${_eQ.q1.toFixed(2)} · Q3: ${_eQ.q3.toFixed(2)}</div></div></div></div>
         </div>`;
       }
 
@@ -2650,19 +2650,19 @@ function rAnl(){
           </div>
           <div class="card-body report-card-body">
             <div class="row">
-                <div class="col-md-4 col-sm-12"><div class="sec-card"><div class="sec-icon"><i class="fas fa-trophy"></i></div><div class="sec-body"><div class="sec-label">Sınav Birincisi</div><div class="sec-value sec-value-compact">${escapeHtml(getName(winner.studentNo))} <small>(${escapeHtml(winner.studentClass)})</small></div><div class="sec-sub">Net: ${winner.totalNet.toFixed(2)} | Puan: ${winner.score.toFixed(2)}</div></div></div></div>
+                <div class="col-12 col-md-4"><div class="sec-card"><div class="sec-icon"><i class="fas fa-trophy"></i></div><div class="sec-body"><div class="sec-label">Sınav Birincisi</div><div class="sec-value sec-value-compact">${escapeHtml(getName(winner.studentNo))} <small>(${escapeHtml(winner.studentClass)})</small></div><div class="sec-sub">Net: ${winner.totalNet.toFixed(2)} | Puan: ${winner.score.toFixed(2)}</div></div></div></div>
                 ${!isFirstExam ? `
-                <div class="col-md-4 col-sm-12"><div class="sec-card sec-pos"><div class="sec-icon"><i class="fas fa-chart-line"></i></div><div class="sec-body"><div class="sec-label">Önceki Sınava Göre En Büyük Çıkış</div><div class="sec-value sec-value-compact">${bestP ? `${escapeHtml(bestP.name)} <small>(${escapeHtml(bestP.cls)})</small>` : 'Veri Yok'}</div><div class="sec-sub">${bestP ? `+${bestP.diff.toFixed(2)} Net (${bestP.prev.toFixed(2)} -> ${bestP.cur.toFixed(2)})` : 'Önceki sınav bulunamadı'}</div></div></div></div>
-                <div class="col-md-4 col-sm-12"><div class="sec-card sec-neg"><div class="sec-icon"><i class="fas fa-level-down-alt"></i></div><div class="sec-body"><div class="sec-label">Önceki Sınava Göre En Büyük Düşüş</div><div class="sec-value sec-value-compact">${worstP ? `${escapeHtml(worstP.name)} <small>(${escapeHtml(worstP.cls)})</small>` : 'Veri Yok'}</div><div class="sec-sub">${worstP ? `${worstP.diff.toFixed(2)} Net (${worstP.prev.toFixed(2)} -> ${worstP.cur.toFixed(2)})` : 'Önceki sınav bulunamadı'}</div></div></div></div>
+                <div class="col-12 col-md-4"><div class="sec-card sec-pos"><div class="sec-icon"><i class="fas fa-chart-line"></i></div><div class="sec-body"><div class="sec-label">Önceki Sınava Göre En Büyük Çıkış</div><div class="sec-value sec-value-compact">${bestP ? `${escapeHtml(bestP.name)} <small>(${escapeHtml(bestP.cls)})</small>` : 'Veri Yok'}</div><div class="sec-sub">${bestP ? `+${bestP.diff.toFixed(2)} Net (${bestP.prev.toFixed(2)} -> ${bestP.cur.toFixed(2)})` : 'Önceki sınav bulunamadı'}</div></div></div></div>
+                <div class="col-12 col-md-4"><div class="sec-card sec-neg"><div class="sec-icon"><i class="fas fa-level-down-alt"></i></div><div class="sec-body"><div class="sec-label">Önceki Sınava Göre En Büyük Düşüş</div><div class="sec-value sec-value-compact">${worstP ? `${escapeHtml(worstP.name)} <small>(${escapeHtml(worstP.cls)})</small>` : 'Veri Yok'}</div><div class="sec-sub">${worstP ? `${worstP.diff.toFixed(2)} Net (${worstP.prev.toFixed(2)} -> ${worstP.cur.toFixed(2)})` : 'Önceki sınav bulunamadı'}</div></div></div></div>
                 ` : ''}
             </div>
             <div class="row mt-2">
                 ${!isFirstExam ? `
-                <div class="col-md-4 col-sm-12"><div class="sec-card sec-pos"><div class="sec-icon"><i class="fas fa-arrow-up"></i></div><div class="sec-body"><div class="sec-label">Ortalaması En Çok Artan Ders</div><div class="sec-value sec-value-compact">${bestSub ? escapeHtml(toTitleCase(bestSub.sub)) : 'Veri Yok'}</div><div class="sec-sub">${bestSub ? `+${bestSub.diff.toFixed(2)} Net (${bestSub.prevAvg.toFixed(2)} -> ${bestSub.curAvg.toFixed(2)})` : 'Önceki sınav bulunamadı'}</div></div></div></div>
-                <div class="col-md-4 col-sm-12"><div class="sec-card sec-neg"><div class="sec-icon"><i class="fas fa-arrow-down"></i></div><div class="sec-body"><div class="sec-label">Ortalaması En Çok Düşen Ders</div><div class="sec-value sec-value-compact">${worstSub ? escapeHtml(toTitleCase(worstSub.sub)) : 'Veri Yok'}</div><div class="sec-sub">${worstSub ? `${worstSub.diff.toFixed(2)} Net (${worstSub.prevAvg.toFixed(2)} -> ${worstSub.curAvg.toFixed(2)})` : 'Önceki sınav bulunamadı'}</div></div></div></div>
+                <div class="col-12 col-md-4"><div class="sec-card sec-pos"><div class="sec-icon"><i class="fas fa-arrow-up"></i></div><div class="sec-body"><div class="sec-label">Ortalaması En Çok Artan Ders</div><div class="sec-value sec-value-compact">${bestSub ? escapeHtml(toTitleCase(bestSub.sub)) : 'Veri Yok'}</div><div class="sec-sub">${bestSub ? `+${bestSub.diff.toFixed(2)} Net (${bestSub.prevAvg.toFixed(2)} -> ${bestSub.curAvg.toFixed(2)})` : 'Önceki sınav bulunamadı'}</div></div></div></div>
+                <div class="col-12 col-md-4"><div class="sec-card sec-neg"><div class="sec-icon"><i class="fas fa-arrow-down"></i></div><div class="sec-body"><div class="sec-label">Ortalaması En Çok Düşen Ders</div><div class="sec-value sec-value-compact">${worstSub ? escapeHtml(toTitleCase(worstSub.sub)) : 'Veri Yok'}</div><div class="sec-sub">${worstSub ? `${worstSub.diff.toFixed(2)} Net (${worstSub.prevAvg.toFixed(2)} -> ${worstSub.curAvg.toFixed(2)})` : 'Önceki sınav bulunamadı'}</div></div></div></div>
                 ` : ''}
-                <div class="col-md-4 col-sm-12"><div class="sec-card sec-neutral"><div class="sec-icon"><i class="fas fa-users"></i></div><div class="sec-body"><div class="sec-label">Sınav Katılım Oranı</div><div class="sec-value sec-value-compact">%${partRateE}</div><div class="sec-sub">${attendedNos.size} katıldı · ${absentStus.length} katılmadı</div></div></div></div>
-                <div class="col-md-4 col-sm-12"><div class="sec-card"><div class="sec-icon"><i class="fas fa-chart-bar"></i></div><div class="sec-body"><div class="sec-label">Ortalama Net</div><div class="sec-value">${(currentExams.reduce((s,e)=>s+e.totalNet,0)/currentExams.length).toFixed(2)} <span class="sec-inline-summary">(${(() => { let _cm={}; currentExams.forEach(e=>{if(!_cm[e.studentClass])_cm[e.studentClass]=[];_cm[e.studentClass].push(e.totalNet);}); return Object.keys(_cm).sort().map(cls=>`${escapeHtml(cls)}: ${(_cm[cls].reduce((a,b)=>a+b,0)/_cm[cls].length).toFixed(2)}`).join('  '); })()})</span></div></div></div></div>
+                <div class="col-12 col-md-4"><div class="sec-card sec-neutral"><div class="sec-icon"><i class="fas fa-users"></i></div><div class="sec-body"><div class="sec-label">Sınav Katılım Oranı</div><div class="sec-value sec-value-compact">%${partRateE}</div><div class="sec-sub">${attendedNos.size} katıldı · ${absentStus.length} katılmadı</div></div></div></div>
+                <div class="col-12 col-md-4"><div class="sec-card"><div class="sec-icon"><i class="fas fa-chart-bar"></i></div><div class="sec-body"><div class="sec-label">Ortalama Net</div><div class="sec-value">${(currentExams.reduce((s,e)=>s+e.totalNet,0)/currentExams.length).toFixed(2)} <span class="sec-inline-summary">(${(() => { let _cm={}; currentExams.forEach(e=>{if(!_cm[e.studentClass])_cm[e.studentClass]=[];_cm[e.studentClass].push(e.totalNet);}); return Object.keys(_cm).sort().map(cls=>`${escapeHtml(cls)}: ${(_cm[cls].reduce((a,b)=>a+b,0)/_cm[cls].length).toFixed(2)}`).join('  '); })()})</span></div></div></div></div>
             </div>
             ${examStatsHtml}
             
@@ -2933,6 +2933,17 @@ function raporInit() {
   raporFillBranches();
 }
 
+// ---- resetRapor ----
+function resetRapor() {
+  let lvlSel = getEl('rLvl'), brSel = getEl('rBr'), etSel = getEl('rExType'), rtSel = getEl('rReportType');
+  if(lvlSel) lvlSel.value = '';
+  if(brSel) { brSel.innerHTML = '<option value="">Tümü</option>'; brSel.value = ''; }
+  if(etSel) { etSel.innerHTML = '<option value="" disabled selected>Sınav Seçiniz</option>'; etSel.value = ''; }
+  if(rtSel) { rtSel.innerHTML = '<option value="" disabled selected>Rapor Türü Seçiniz</option><option value="Karne">Karne (Öğrenci Bazlı)</option><option value="Liste">Liste (Toplu Netler)</option>'; rtSel.value = ''; }
+  let res = getEl('raporRes'); if(res) res.innerHTML = '';
+  raporInit();
+}
+
 // ---- raporFillBranches (orig lines 3502-3506) ----
 function raporFillBranches() {
   let lvl = getEl('rLvl').value, brSel = getEl('rBr'), prevBr = brSel.value;
@@ -3111,9 +3122,10 @@ async function generateRapor() {
 
       displayStuArr.sort((a,b) => { let dp = (b.avgScore||0) - (a.avgScore||0); if(dp !== 0) return dp; return (b.avgNet||0) - (a.avgNet||0); });
 
+      // Başlık: tam adı title'da, görünen kısmı kısaltılmış ama hizası rl-sub ile aynı
       let headColsAll = allSubKeys.map(k => {
         let title = toTitleCase(k);
-        return `<th title="${escapeHtml(title)}">${escapeHtml(title.length > 6 ? title.substring(0,3) : title)}</th>`;
+        return `<th class="rl-sub" title="${escapeHtml(title)}">${escapeHtml(title.length > 6 ? title.substring(0,3) : title)}</th>`;
       }).join('');
 
       let bodyRowsAll = displayStuArr.map((s, idx) => {
@@ -3125,21 +3137,26 @@ async function generateRapor() {
       }).join('');
 
       let allAvgRow = '';
+      // Ortalama satırı: ders sütunları da rl-sub sınıfıyla ortaya hizalanır
       let avgSubCols = allSubKeys.map(k => {
         let vals = displayStuArr.filter(s => s.subAvgs[k] !== null).map(s => s.subAvgs[k]);
-        return `<td>${vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(2) : '—'}</td>`;
+        return `<td class="rl-sub">${vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(2) : '—'}</td>`;
       }).join('');
       let genAvgNet = (displayStuArr.reduce((a,s)=>a+s.avgNet,0)/displayStuArr.length).toFixed(2);
       let genAvgScore = (displayStuArr.reduce((a,s)=>a+s.avgScore,0)/displayStuArr.length).toFixed(2);
       let genAvgExam = (displayStuArr.reduce((a,s)=>a+s.examCount,0)/displayStuArr.length).toFixed(1);
-      allAvgRow = `<tr class="avg-row"><td colspan="3" class="avg-label">ORTALAMA (${displayStuArr.length} Öğrenci)</td>${avgSubCols}<td>${genAvgNet}</td><td>${genAvgScore}</td><td colspan="2">—</td><td>${genAvgExam}</td></tr>`;
+      // avg-label: colspan 3 → sağa yasla (avg-label zaten text-align:right'tır)
+      allAvgRow = `<tr class="avg-row"><td colspan="3" class="avg-label">ORTALAMA (${displayStuArr.length} Öğrenci)</td>${avgSubCols}<td class="rl-net">${genAvgNet}</td><td class="rl-score">${genAvgScore}</td><td class="rl-rank" colspan="2">—</td><td class="rl-count">${genAvgExam}</td></tr>`;
 
       let _rExColorIdx = (typeof examColorIdx === 'function') ? examColorIdx(t) : 0;
       let _rExLabel    = (typeof toExamLabel === 'function') ? toExamLabel(t) : t;
       let isFirst = renderedTypeCount === 0;
       renderedTypeCount++;
+      // colGroup: sabit % genişlikler yerine sadece min-width veren dinamik yapı
+      // table-layout:auto ile tarayıcı içeriğe göre dağıtır; print'te A4'e sığdırır
       let colGroupAll = `<colgroup><col class="rl-col-idx"><col class="rl-col-name"><col class="rl-col-class">${allSubKeys.map(()=>'<col class="rl-col-sub">').join('')}<col class="rl-col-net"><col class="rl-col-score"><col class="rl-col-rank"><col class="rl-col-rank"><col class="rl-col-count"></colgroup>`;
 
+      let _colCount = 3 + allSubKeys.length + 5; /* #, Ad Soyad, Sınıf + dersler + Top.Net, Puan, Sıra/Sınıf, Sıra/Okul, Sınav Say. */
       html += `<div class="card shadow-sm mb-4 exam-type-block rapor-list-block exam-color-${_rExColorIdx}${isFirst?' exam-type-first':''}" data-exam-color-idx="${_rExColorIdx}" data-exam-color="${_rExColorIdx}">
         <div class="card-header bg-light">
           <h3 class="card-title card-title-md m-0"><i class="fas fa-list-alt me-2"></i>${escapeHtml(_rExLabel)} — Toplu Liste | <span class="card-title-subtle">${escapeHtml(lvlStr)}</span></h3>
@@ -3149,7 +3166,10 @@ async function generateRapor() {
           <div class="scroll list-scroll">
             <table class="table table-sm table-bordered table-striped table-hover rapor-list-table" data-sh="${escapeHtml(t)}">
               ${colGroupAll}
-              <thead><tr><th>#</th><th>Ad Soyad</th><th>Sınıf</th>${headColsAll}<th>Top.Net Ort.</th><th>Puan Ort.</th><th>Sıra/Sınıf</th><th>Sıra/Okul</th><th>Sınav Say.</th></tr></thead>
+              <thead>
+                <tr class="print-title-row"><th colspan="${_colCount}">${escapeHtml(_rExLabel)} — Toplu Liste | ${escapeHtml(lvlStr)}</th></tr>
+                <tr><th class="rl-idx">#</th><th class="rl-name">Ad Soyad</th><th class="rl-class">Sınıf</th>${headColsAll}<th class="rl-net">Top.Net Ort.</th><th class="rl-score">Puan Ort.</th><th class="rl-rank">Sıra/Sınıf</th><th class="rl-rank">Sıra/Okul</th><th class="rl-count">Sınav Say.</th></tr>
+              </thead>
               <tbody>${bodyRowsAll}${allAvgRow}</tbody>
             </table>
           </div>
