@@ -179,9 +179,6 @@ function executeTabSwitch(id, isPopState) {
   let bnavItem = document.getElementById('bnav-' + id);
   if(bnavItem) bnavItem.classList.add('active');
 
-  const titles={anasayfa_genel:'Ana Sayfa',anasayfa:'Öğrenci',sonuclar:'Sonuçlar & Analizler',rapor:'Toplu Rapor',ayarlar:'Ayarlar'};
-  if(getEl('breadcrumb')) getEl('breadcrumb').textContent = titles[id] || id;
-
   if(id==='anasayfa_genel' && typeof uStat === 'function') runPaneTask(id, () => uStat());
   if(id==='anasayfa' && aNo && typeof reqProfile === 'function') runPaneTask(id, () => reqProfile());
   if(id==='sonuclar' && typeof reqUI === 'function') runPaneTask(id, () => reqUI());

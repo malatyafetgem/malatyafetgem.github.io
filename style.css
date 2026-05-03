@@ -49,6 +49,31 @@ body.auth-pending .loader-spinner { color:var(--sa-primary) !important; border-w
   background: var(--sa-primary-soft);
   color: var(--sa-primary) !important;
 }
+/* Mobil üst bar logosu — sadece ≤991px'de görünür */
+.top-mobile-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  text-decoration: none;
+  color: var(--sa-primary) !important;
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: -0.01em;
+  padding: 4px 6px;
+  border-radius: 8px;
+  transition: background 0.15s ease, opacity 0.15s ease;
+  white-space: nowrap;
+}
+.top-mobile-brand i {
+  font-size: 1.05rem;
+  color: var(--sa-primary);
+}
+.top-mobile-brand:hover,
+.top-mobile-brand:focus {
+  background: var(--sa-primary-soft);
+  opacity: 0.9;
+  outline: none;
+}
 .top-user-email {
   max-width: min(34vw, 360px);
   min-height: 34px;
@@ -204,6 +229,14 @@ select.form-control {
   background: rgba(255,255,255,0.88);
   box-shadow: 0 1px 0 rgba(15,23,42,0.03);
   margin-bottom: 14px;
+}
+@media (max-width: 991px) {
+  .sa-content-header {
+    display: none !important;
+  }
+  .app-content {
+    padding-top: 14px !important;
+  }
 }
 .sa-breadcrumb {
   background: transparent;
