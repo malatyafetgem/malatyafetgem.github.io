@@ -1962,18 +1962,18 @@ body.sidebar-collapse .app-sidebar.sa-sidebar:hover .sidebar-brand .brand-text {
     page-break-inside: auto !important;
     break-inside: auto !important;
   }
-  /* İstatistik kartı (trend-card) yazı boyutları: ekrandaki sıra korunsun */
+  /* İstatistik kartı (trend-card) yazı boyutları: px ile sabitlendi, print'te sıra bozulmasın */
   .trend-card .small,
   .trend-card .small.text-muted {
-    font-size: 0.875em !important;
-    font-weight: inherit;
+    font-size: 13px !important;
   }
   .trend-card .small strong {
-    font-size: 1em !important;
+    font-size: 13px !important;
     font-weight: 700 !important;
   }
-  .trend-card .x-small {
-    font-size: 10.5px !important;
+  .trend-card .x-small,
+  .trend-card span.x-small {
+    font-size: 10px !important;
     line-height: 1.25 !important;
   }
 }
