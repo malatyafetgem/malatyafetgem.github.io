@@ -198,32 +198,12 @@ select.form-control {
 .pane { display:none; }
 .pane.active-pane,
 .pane[aria-hidden="false"] { display:block; }
-/* Mobil üst bar sayfa başlığı */
-.mobile-page-title {
-  display: inline-block;
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--sa-text, #1e293b);
-  line-height: 1.2;
-  padding: 0 4px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 42vw;
-  vertical-align: middle;
-}
-
 .sa-content-header {
   padding: 10px 0.5rem;
   border-bottom: 1px solid var(--sa-border);
   background: rgba(255,255,255,0.88);
   box-shadow: 0 1px 0 rgba(15,23,42,0.03);
   margin-bottom: 14px;
-}
-
-/* Mobilde breadcrumb alanını gizle */
-@media (max-width: 767px) {
-  .sa-content-header { display: none !important; }
 }
 .sa-breadcrumb {
   background: transparent;
@@ -1289,7 +1269,18 @@ body.is-admin button.w-100.admin-only { display:block !important; }
 .sec-cards-row > [class*="col-"] {
   margin-bottom: 10px;
 }
-/* Bilgi kartları (sec-card) mobilde col-12 col-md-* olarak üretilir — Bootstrap grid yeterli */
+@media (max-width: 767.98px) {
+  /* Mobilde bilgi kartları tek sütun (tam genişlik) */
+  .sec-cards-row > [class*="col-"] {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+    padding-left: 5px !important;
+    padding-right: 5px !important;
+    margin-bottom: 8px !important;
+  }
+  /* single-exam-cards içindeki row */
+  .single-exam-cards .sec-cards-row { margin-bottom: 8px !important; }
+}
 /* Trend scroll hint stili */
 /* trend-scroll-hint: artık kullanılmıyor, her zaman gizli */
 .trend-scroll-hint { display: none !important; }
@@ -1982,31 +1973,20 @@ body.sidebar-collapse .app-sidebar.sa-sidebar:hover .sidebar-brand .brand-text {
     page-break-inside: auto !important;
     break-inside: auto !important;
   }
-  /* İstatistik kartı (trend-card) yazı boyutları: px ile sabitlendi, print'te sıra bozulmasın */
-  .trend-card .trend-metric-value {
-    font-size: 20px !important;
-    font-weight: 700 !important;
-    line-height: 1.2 !important;
-  }
+  /* İstatistik kartı (trend-card) yazı boyutları: ekrandaki sıra korunsun */
   .trend-card .small,
   .trend-card .small.text-muted {
-    font-size: 13px !important;
-    font-weight: 400 !important;
+    font-size: 0.875em !important;
+    font-weight: inherit;
   }
   .trend-card .small strong {
-    font-size: 13px !important;
+    font-size: 1em !important;
     font-weight: 700 !important;
   }
-  .trend-card .x-small,
-  .trend-card span.x-small {
-    font-size: 10px !important;
+  .trend-card .x-small {
+    font-size: 10.5px !important;
     line-height: 1.25 !important;
   }
-  /* sec-card font hiyerarşisi: px sabitlendi, Bootstrap ezmesi engellendi */
-  .sec-card .sec-value { font-size: 15px !important; font-weight: 700 !important; }
-  .sec-card .sec-label { font-size: 9px !important; font-weight: 700 !important; }
-  .sec-card .sec-sub   { font-size: 9px !important; font-weight: 400 !important; }
-  .sec-card .sec-explain { font-size: 8px !important; font-weight: 400 !important; }
 }
 
 /* ====== Trend kartı açıklama satırı (Türkçeleştirme + ipucu) ====== */
@@ -2082,7 +2062,7 @@ body.sidebar-collapse .app-sidebar.sa-sidebar:hover .sidebar-brand .brand-text {
   display: none; /* Masaüstünde gizli */
 }
 
-@media (max-width: 991px) and (hover: none) {
+@media (max-width: 991px) {
   /* Barın kendisi */
   .bottom-nav {
     display: flex;
