@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
@@ -11,8 +11,8 @@
 <link rel="manifest" href="./manifest.json">
 <title>Sınav Analiz Sistemi</title>
 <script>
-window.SA_APP_VERSION = 'adminlte4-r55';
-window.SA_CACHE_NAME = 'sinav-analizi-adminlte4-r55';
+window.SA_APP_VERSION = 'adminlte4-r47';
+window.SA_CACHE_NAME = 'sinav-analizi-adminlte4-r47';
 window.SA_CACHE_READY = (async function(){
   try {
     const markerKey = 'sinavAnalizi.cacheReadyVersion';
@@ -52,7 +52,7 @@ window.SA_CACHE_READY = (async function(){
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
 
-<link rel="stylesheet" href="./style.css?v=adminlte4-r55">
+<link rel="stylesheet" href="./style.css?v=adminlte4-r47">
 </head>
 <body class="layout-fixed sidebar-expand-lg sidebar-mini" data-active-pane="anasayfa_genel">
 
@@ -71,14 +71,14 @@ window.SA_CACHE_READY = (async function(){
       <div class="mb-3">
         <label>E-posta</label>
         <div class="input-group">
-          <input type="email" id="loginEmail" class="form-control" placeholder="ornek@okul.com" autocomplete="email" onkeydown="if(event.key==='Enter') document.getElementById('loginPass').focus();">
+          <input type="email" id="loginEmail" class="form-control" placeholder="ornek@okul.com" autocomplete="email" onkeypress="if(event.key==='Enter') document.getElementById('loginPass').focus();">
           <span class="input-group-text"><i class="fas fa-envelope"></i></span>
         </div>
       </div>
       <div class="mb-3">
         <label>Şifre</label>
         <div class="input-group">
-          <input type="password" id="loginPass" class="form-control password-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()">
+          <input type="password" id="loginPass" class="form-control password-input" placeholder="••••••••" onkeypress="if(event.key==='Enter')login()">
           <span class="input-group-text password-toggle" role="button" tabindex="0" aria-label="Şifreyi göster/gizle" onclick="togglePassword()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();togglePassword();}">
             <i class="fas fa-eye" id="togglePassIcon"></i>
           </span>
@@ -136,7 +136,7 @@ window.SA_CACHE_READY = (async function(){
     </div>
     <div class="sidebar-wrapper">
       <nav class="mt-2">
-        <ul class="nav sidebar-menu flex-column" role="menu">
+        <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="menu" data-accordion="false">
           <li class="nav-item"><a id="nav-anasayfa_genel" href="#anasayfa_genel" class="nav-link active" onclick="return sTab('anasayfa_genel',this)"><i class="nav-icon fas fa-home"></i><p>Ana Sayfa</p></a></li>
           <li class="nav-item"><a id="nav-anasayfa" href="#anasayfa" class="nav-link" onclick="return sTab('anasayfa',this)"><i class="nav-icon fas fa-user-graduate"></i><p>Öğrenci</p></a></li>
           <li class="nav-item"><a id="nav-sonuclar" href="#sonuclar" class="nav-link" onclick="return sTab('sonuclar',this)"><i class="nav-icon fas fa-chart-line"></i><p>Sonuçlar &amp; Analizler</p></a></li>
@@ -240,7 +240,7 @@ window.SA_CACHE_READY = (async function(){
         </div>
 
         <div id="rapor" class="pane">
-          <div class="card card-primary card-outline"><div class="card-header d-flex align-items-center justify-content-between"><h3 class="card-title"><i class="fas fa-file-alt me-2"></i>Toplu Rapor & Liste</h3><button type="button" class="btn btn-sm btn-outline-secondary ms-auto filter-reset-header" onclick="resetRapor()" title="Filtreleri sıfırla" aria-label="Filtreleri sıfırla"><i class="fas fa-rotate-left"></i><span class="d-none d-md-inline ms-1">Sıfırla</span></button></div>
+          <div class="card card-primary card-outline"><div class="card-header"><h3 class="card-title"><i class="fas fa-file-alt me-2"></i>Toplu Rapor & Liste</h3></div>
             <div class="card-body">
               <div class="row">
                 <div class="col-sm-6 col-md-3"><div class="mb-3"><label>Sınıf Seviyesi</label><select id="rLvl" class="form-select" onchange="raporFillBranches()"><option value="">Seçiniz</option></select></div></div>
@@ -282,30 +282,6 @@ window.SA_CACHE_READY = (async function(){
 </div>
 
 <div id="toastContainer"></div>
-
-<!-- BOTTOM NAV BAR (mobil navigasyon) -->
-<nav id="bottomNav" class="bottom-nav" aria-label="Alt navigasyon">
-  <a href="#anasayfa_genel" class="bnav-item" id="bnav-anasayfa_genel" onclick="return sTab('anasayfa_genel',this)" aria-label="Ana Sayfa">
-    <i class="fas fa-home bnav-icon"></i>
-    <span class="bnav-label">Ana Sayfa</span>
-  </a>
-  <a href="#anasayfa" class="bnav-item" id="bnav-anasayfa" onclick="return sTab('anasayfa',this)" aria-label="Öğrenci">
-    <i class="fas fa-user-graduate bnav-icon"></i>
-    <span class="bnav-label">Öğrenci</span>
-  </a>
-  <a href="#sonuclar" class="bnav-item" id="bnav-sonuclar" onclick="return sTab('sonuclar',this)" aria-label="Analizler">
-    <i class="fas fa-chart-line bnav-icon"></i>
-    <span class="bnav-label">Analizler</span>
-  </a>
-  <a href="#rapor" class="bnav-item" id="bnav-rapor" onclick="return sTab('rapor',this)" aria-label="Rapor">
-    <i class="fas fa-file-alt bnav-icon"></i>
-    <span class="bnav-label">Rapor</span>
-  </a>
-  <a href="#ayarlar" class="bnav-item admin-only" id="bnav-ayarlar" onclick="return sTab('ayarlar',this)" aria-label="Ayarlar">
-    <i class="fas fa-cog bnav-icon"></i>
-    <span class="bnav-label">Ayarlar</span>
-  </a>
-</nav>
 
 <!-- MODALLAR (Bootstrap 5 native) -->
 <div class="modal fade" id="mForgot" tabindex="-1" aria-labelledby="mForgotTitle" aria-hidden="true">
@@ -439,7 +415,7 @@ window.SA_CACHE_READY = (async function(){
 
 <script>
 (async function loadAppScripts(){
-  const version = window.SA_APP_VERSION || 'adminlte4-r55';
+  const version = window.SA_APP_VERSION || 'adminlte4-r47';
   const scripts = ['app-core.js','app-ui.js','app-analysis.js','app-settings.js'];
   const refreshLocalStyle = () => {
     const current = document.querySelector('link[href*="style.css"]');

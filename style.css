@@ -522,52 +522,19 @@ body.is-admin button.w-100.admin-only { display:block !important; }
 .rapor-list-report .rapor-list-table {
   font-size: 0.88rem;
   line-height: 1.34;
-  /* Dinamik: tarayıcı içeriğe göre sütun genişliği belirler */
-  table-layout: auto;
-  width: 100%;
 }
 .rapor-list-report .rapor-list-table > thead > tr > th,
 .rapor-list-report .rapor-list-table > thead th {
   font-size: 0.82rem;
   line-height: 1.3;
   padding: 0.46rem 0.5rem !important;
-  white-space: nowrap;
 }
 .rapor-list-report .rapor-list-table > tbody > tr > td {
   line-height: 1.34;
   padding: 0.44rem 0.5rem !important;
 }
-/* Ad sütunu: uzun isimlerde satır kırabilir, minimum alan garantili */
 .rapor-list-report .rapor-list-table .rl-name {
   font-weight: 600;
-  min-width: 7rem;
-  word-break: break-word;
-  white-space: normal;
-  text-align: left !important;
-}
-/* Ders sütunları: başlık (th) ve veri (td) birlikte ortaya hizalanır */
-.rapor-list-report .rapor-list-table th.rl-sub,
-.rapor-list-report .rapor-list-table .rl-sub {
-  text-align: center !important;
-  white-space: nowrap;
-  min-width: 3rem;
-}
-/* Sayısal/sıra sütunları: th dahil tümü ortaya — th.rl-* açıkça belirtilmesi gerekir
-   çünkü AdminLTE/Bootstrap thead th'lere text-align:left uygulayabilir */
-.rapor-list-report .rapor-list-table th.rl-idx,
-.rapor-list-report .rapor-list-table .rl-idx,
-.rapor-list-report .rapor-list-table th.rl-class,
-.rapor-list-report .rapor-list-table .rl-class,
-.rapor-list-report .rapor-list-table th.rl-net,
-.rapor-list-report .rapor-list-table .rl-net,
-.rapor-list-report .rapor-list-table th.rl-score,
-.rapor-list-report .rapor-list-table .rl-score,
-.rapor-list-report .rapor-list-table th.rl-rank,
-.rapor-list-report .rapor-list-table .rl-rank,
-.rapor-list-report .rapor-list-table th.rl-count,
-.rapor-list-report .rapor-list-table .rl-count {
-  text-align: center !important;
-  white-space: nowrap;
 }
 
 /* ===== YAZDIR BUTONU ===== */
@@ -672,7 +639,7 @@ body.is-admin button.w-100.admin-only { display:block !important; }
   .breadcrumb { font-size: 0.92rem !important; line-height: 1.25; }
   .navbar .nav-link { padding-left: 0.5rem; padding-right: 0.5rem; }
   .top-icon-link { width: 38px; height: 38px; }
-  #connBadge { min-width: 30px; justify-content: center; padding-left: 8px !important; padding-right: 8px !important; border: none !important; background: transparent !important; box-shadow: none !important; }
+  #connBadge { min-width: 30px; justify-content: center; padding-left: 8px !important; padding-right: 8px !important; }
   #connTxt { display: none; }
   .logout-link span { display: none; }
   .logout-link { min-width: 34px; justify-content: center; padding-left: 8px !important; padding-right: 8px !important; }
@@ -722,10 +689,7 @@ body.is-admin button.w-100.admin-only { display:block !important; }
   .wizard-section { padding: 10px; }
   .wizard-section .row .col-md-4, .wizard-section .row .col-md-6 { margin-bottom: 6px; }
 }
-/* scroll-hint: sadece tablo kaydırma ipucu için, mobilde görünür */
 .scroll-hint { display: none; }
-/* sec-cards-row-hint artık kullanılmıyor */
-.sec-cards-row-hint { display: none !important; }
 @media (max-width: 768px) { .scroll-hint { display: block; font-size: 0.75em; color: #6c757d; text-align: right; margin-bottom: 4px; } }
 
 .info-box-text { display: block; font-size: 0.78em; font-weight: 600; }
@@ -771,13 +735,9 @@ body.is-admin button.w-100.admin-only { display:block !important; }
 .boxplot-note { font-weight:400; color:#6c757d; font-size:0.85em; }
 
 /* ===== TREND ANALİZİ ===== */
-.trend-card { background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 12px; padding: 16px; margin-bottom: 15px; }
-.trend-card .trend-row { overflow-x: visible; flex-wrap: wrap !important; }
-.trend-card .trend-metric { min-width: 90px; flex: 1 1 120px; margin-bottom: 8px; }
-@media (max-width: 575px) {
-  .trend-card .trend-metric { flex: 0 0 50%; min-width: 0; }
-  .trend-card { padding: 12px; }
-}
+.trend-card { background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 12px; padding: 20px; margin-bottom: 15px; }
+.trend-card .trend-row { overflow-x:auto; }
+.trend-card .trend-metric { min-width:90px; }
 .trend-card .trend-value { font-size:1.1em; font-weight:700; }
 .trend-metric-value { font-size:1.4em; font-weight:700; color:var(--metric-color, #212529); }
 .trend-r2-value { font-size:0.9em; color:var(--metric-color, #212529); }
@@ -1209,23 +1169,6 @@ body.is-admin button.w-100.admin-only { display:block !important; }
   transition: box-shadow 0.2s ease, transform 0.15s ease;
   height: 100%;
 }
-@media (max-width: 575px) {
-  .sec-card {
-    padding: 8px 9px;
-    min-height: 64px;
-    gap: 8px;
-    border-radius: 8px;
-  }
-  .sec-card .sec-icon {
-    width: 34px !important;
-    height: 34px !important;
-    font-size: 0.9em !important;
-    border-radius: 7px !important;
-  }
-  .sec-card .sec-label { font-size: 0.66rem !important; }
-  .sec-card .sec-value { font-size: 1rem !important; }
-  .sec-card .sec-sub { font-size: 0.68rem !important; }
-}
 .sec-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.08); transform: translateY(-1px); }
 .sec-card .sec-icon {
   flex-shrink: 0; width: 42px; height: 42px; border-radius: 9px;
@@ -1260,30 +1203,6 @@ body.is-admin button.w-100.admin-only { display:block !important; }
 .single-exam-cards .col-md-3,
 .single-exam-cards .col-md-4,
 .single-exam-cards .col-md-6 { margin-bottom: 10px; }
-
-/* Sec-card satır: tüm ekranlarda normal grid — scroll davranışı kaldırıldı */
-.sec-cards-row {
-  display: flex !important;
-  flex-wrap: wrap !important;
-}
-.sec-cards-row > [class*="col-"] {
-  margin-bottom: 10px;
-}
-@media (max-width: 767.98px) {
-  /* Mobilde bilgi kartları tek sütun (tam genişlik) */
-  .sec-cards-row > [class*="col-"] {
-    flex: 0 0 100% !important;
-    max-width: 100% !important;
-    padding-left: 5px !important;
-    padding-right: 5px !important;
-    margin-bottom: 8px !important;
-  }
-  /* single-exam-cards içindeki row */
-  .single-exam-cards .sec-cards-row { margin-bottom: 8px !important; }
-}
-/* Trend scroll hint stili */
-/* trend-scroll-hint: artık kullanılmıyor, her zaman gizli */
-.trend-scroll-hint { display: none !important; }
 
 /* Tek sınav modunda ders bazlı çubuk grafik başlığı */
 .single-exam-chart-title {
@@ -1925,9 +1844,7 @@ body.sidebar-collapse .app-sidebar.sa-sidebar:hover .sidebar-brand .brand-text {
   .print-compact-list .card-header { padding: 5px 8px !important; }
   .print-compact-list .card-body { padding: 5px 6px !important; }
   .print-compact-list .rapor-list-table {
-    /* table-layout:auto → tarayıcı içeriğe göre sütun genişliği belirler */
-    table-layout: auto !important;
-    width: 100% !important;
+    table-layout: fixed !important;
     font-size: 9px !important;
     line-height: 1.3 !important;
     margin: 0 !important;
@@ -1938,55 +1855,22 @@ body.sidebar-collapse .app-sidebar.sa-sidebar:hover .sidebar-brand .brand-text {
   .print-compact-list .rapor-list-table td {
     padding: 3px 4px !important;
     line-height: 1.3 !important;
-    overflow: hidden !important;
-  }
-  /* Ad sütunu: print'te de uzun isim için sarma izni */
-  .print-compact-list .rapor-list-table .rl-name {
-    white-space: normal !important;
-    word-break: break-word !important;
-    min-width: 5rem !important;
-    text-align: left !important;
-  }
-  /* Tüm diğer sütunlar: taşmayı kes, beyaz boşluk yok */
-  .print-compact-list .rapor-list-table th:not(.rl-name),
-  .print-compact-list .rapor-list-table td:not(.rl-name) {
     white-space: nowrap !important;
+    overflow: hidden !important;
     text-overflow: clip !important;
   }
-  /* Hizalama: th dahil tüm sütun türleri açıkça orta */
-  .print-compact-list .rapor-list-table th.rl-sub,
-  .print-compact-list .rapor-list-table .rl-sub,
-  .print-compact-list .rapor-list-table th.rl-idx,
-  .print-compact-list .rapor-list-table .rl-idx,
-  .print-compact-list .rapor-list-table th.rl-class,
-  .print-compact-list .rapor-list-table .rl-class,
-  .print-compact-list .rapor-list-table th.rl-net,
-  .print-compact-list .rapor-list-table .rl-net,
-  .print-compact-list .rapor-list-table th.rl-score,
-  .print-compact-list .rapor-list-table .rl-score,
-  .print-compact-list .rapor-list-table th.rl-rank,
-  .print-compact-list .rapor-list-table .rl-rank,
-  .print-compact-list .rapor-list-table th.rl-count,
-  .print-compact-list .rapor-list-table .rl-count { text-align: center !important; }
   .print-compact-list .rapor-list-table tbody,
   .print-compact-list .rapor-list-table tr {
     page-break-inside: auto !important;
     break-inside: auto !important;
   }
-  /* İstatistik kartı (trend-card) yazı boyutları: ekrandaki sıra korunsun */
-  .trend-card .small,
-  .trend-card .small.text-muted {
-    font-size: 0.875em !important;
-    font-weight: inherit;
-  }
-  .trend-card .small strong {
-    font-size: 1em !important;
-    font-weight: 700 !important;
-  }
-  .trend-card .x-small {
-    font-size: 10.5px !important;
-    line-height: 1.25 !important;
-  }
+  .print-compact-list .rapor-list-table col.rl-col-idx { width: 3.2%; }
+  .print-compact-list .rapor-list-table col.rl-col-name { width: 18%; }
+  .print-compact-list .rapor-list-table col.rl-col-class { width: 4.3%; }
+  .print-compact-list .rapor-list-table col.rl-col-net { width: 6.2%; }
+  .print-compact-list .rapor-list-table col.rl-col-score { width: 5.9%; }
+  .print-compact-list .rapor-list-table col.rl-col-rank { width: 5.2%; }
+  .print-compact-list .rapor-list-table col.rl-col-count { width: 4.4%; }
 }
 
 /* ====== Trend kartı açıklama satırı (Türkçeleştirme + ipucu) ====== */
@@ -2025,198 +1909,3 @@ body.sidebar-collapse .app-sidebar.sa-sidebar:hover .sidebar-brand .brand-text {
 .sec-card[title] { cursor: help; }
 
 /* Trend kartı içinde Performans Tutarlılığı sütunu için aynı x-small kuralı zaten var. */
-
-/* ===================================================================
-   BOTTOM NAVIGATION BAR — Mobil navigasyon (≤991px)
-   Her sekme ana sayfadaki info-box kartlarıyla aynı gradient renkleri
-   taşır. Aktif: dolu gradient + beyaz ikon/etiket. Pasif: soluk ton.
-   =================================================================== */
-
-/* ===================================================================
-   BOTTOM NAVIGATION BAR — Renk değişkenleri
-   Ana sayfadaki home-nav-card renkleriyle birebir eşleşir.
-   --bnav-color: ikon ve metin rengi; --bnav-soft: pasif hover arka planı
-   =================================================================== */
-#bnav-anasayfa_genel {
-  --bnav-color: #0d6efd;
-  --bnav-soft:  rgba(13, 110, 253, 0.08);
-}
-#bnav-anasayfa {
-  --bnav-color: #198754;
-  --bnav-soft:  rgba(25, 135, 84, 0.08);
-}
-#bnav-sonuclar {
-  --bnav-color: #0891b2;
-  --bnav-soft:  rgba(8, 145, 178, 0.08);
-}
-#bnav-rapor {
-  --bnav-color: #d97706;
-  --bnav-soft:  rgba(217, 119, 6, 0.08);
-}
-#bnav-ayarlar {
-  --bnav-color: #d97706;
-  --bnav-soft:  rgba(217, 119, 6, 0.08);
-}
-
-.bottom-nav {
-  display: none; /* Masaüstünde gizli */
-}
-
-@media (max-width: 991px) {
-  /* Barın kendisi */
-  .bottom-nav {
-    display: flex;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 1040;
-    height: 64px;
-    background: #ffffff;
-    border-top: 1px solid var(--sa-border);
-    box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.10);
-    align-items: stretch;
-    padding: 0;
-    padding-bottom: env(safe-area-inset-bottom, 0);
-  }
-
-  /* İçeriğin barın altına kaymaması için */
-  .app-main,
-  .app-content,
-  body {
-    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
-  }
-
-  /* Hamburger butonu ve sidebar toggle — mobilde gizle */
-  .app-header .nav-link[data-lte-toggle="sidebar"],
-  .app-header [data-lte-toggle="sidebar"] {
-    display: none !important;
-  }
-
-  /* Her sekme öğesi — pasif durum
-     Ana sayfadaki home-nav-card gibi: beyaz zemin, kare köşe,
-     üst kenarda ince şeffaf çizgi hazır ama görünmez */
-  .bnav-item {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 3px;
-    padding: 8px 4px 6px;
-    text-decoration: none;
-    color: var(--sa-muted);
-    position: relative;
-    border-radius: 0;
-    min-width: 0;
-    overflow: hidden;
-    -webkit-tap-highlight-color: transparent;
-    user-select: none;
-    transition: background 0.18s ease, color 0.18s ease;
-    /* Üst kenar çizgisi: pasif = şeffaf, aktif = renkli */
-    border-top: 3px solid transparent;
-  }
-
-  /* Üst kenardaki renkli çizginin arkasındaki pseudo — aynı şeride
-     içe doğru azalan gradient (home-nav-card ::after mantığı) */
-  .bnav-item::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      180deg,
-      var(--bnav-soft, rgba(13, 110, 253, 0.08)) 0%,
-      transparent 72%
-    );
-    opacity: 0;
-    transition: opacity 0.2s ease;
-    pointer-events: none;
-  }
-
-  /* Pasif hover */
-  .bnav-item:hover,
-  .bnav-item:focus-visible {
-    color: var(--bnav-color, var(--sa-primary));
-    outline: none;
-  }
-  .bnav-item:hover::before,
-  .bnav-item:focus-visible::before {
-    opacity: 0.6;
-  }
-
-  /* İkon — pasif: gri, aktif: renkli (renk değişkeni) */
-  .bnav-icon {
-    font-size: 1.18rem;
-    line-height: 1;
-    color: inherit;
-    transition: color 0.18s ease, transform 0.15s ease;
-    position: relative;
-    z-index: 1;
-  }
-
-  /* Etiket */
-  .bnav-label {
-    font-size: 0.62rem;
-    font-weight: 700;
-    line-height: 1;
-    letter-spacing: 0.1px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
-    color: inherit;
-    transition: color 0.15s ease, font-weight 0.15s ease;
-    position: relative;
-    z-index: 1;
-  }
-
-  /* ── AKTİF SEKME ──
-     home-nav-card ile aynı dil:
-     • üst kenar 3px renkli çizgi  (border-top)
-     • içe doğru azalan soft gradient (::before)
-     • ikon renklenir
-     Oval pill yok, kare köşe korunur */
-  .bnav-item.active {
-    color: var(--bnav-color, var(--sa-primary));
-    border-top-color: var(--bnav-color, var(--sa-primary));
-  }
-
-  .bnav-item.active::before {
-    opacity: 1;
-  }
-
-  .bnav-item.active .bnav-icon {
-    color: var(--bnav-color, var(--sa-primary));
-    transform: translateY(-1px);
-  }
-
-  .bnav-item.active .bnav-label {
-    font-weight: 800;
-  }
-
-  /* Admin-only sekme */
-  .bnav-item.admin-only {
-    display: none !important;
-  }
-  body.is-admin .bnav-item.admin-only {
-    display: flex !important;
-  }
-
-  /* Toast container'ı barın üzerinde tut */
-  #toastContainer {
-    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
-    top: auto;
-  }
-
-  /* PWA popup da barın üzerinde */
-  #pwaInstallPopup {
-    bottom: calc(74px + env(safe-area-inset-bottom, 0px));
-    top: auto;
-    transform: translateX(-50%);
-  }
-}
-
-/* Print: bottom nav hiç basılmasın */
-@media print {
-  .bottom-nav { display: none !important; }
-}
