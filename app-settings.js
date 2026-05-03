@@ -431,7 +431,7 @@ async function confirmUpload() {
 }
 
 // ---- top-level (orig lines 4003-4007) ----
-const APP_CACHE_NAME = 'sinav-analizi-adminlte4-r55';
+const APP_CACHE_NAME = 'sinav-analizi-adminlte4-r56';
 
 let APP_BOOTED = false;
 function bootApp(){
@@ -452,7 +452,7 @@ function bootApp(){
     }
   });
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-    navigator.serviceWorker.register('./sw.js?v=adminlte4-r55', { scope: './' })
+    navigator.serviceWorker.register('./sw.js?v=adminlte4-r56', { scope: './' })
       .then(reg => { console.log('SW kayıtlı:', reg.scope); reg.update(); })
       .catch(err => console.error('SW hatası:', err));
   }

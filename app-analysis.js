@@ -813,7 +813,7 @@ function buildRiskInfoCards(stuNo, examType, stuClass) {
     </div>
   </div>`;
 
-  return `<div class="row mb-2">
+  return `<div class="row mb-2 no-print">
     <div class="col-12 mb-2">
       <div class="risk-info-title"><i class="fas fa-shield-alt me-1"></i>Risk Analizi</div>
       ${cardInner}

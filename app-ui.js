@@ -181,6 +181,7 @@ function executeTabSwitch(id, isPopState) {
 
   const titles={anasayfa_genel:'Ana Sayfa',anasayfa:'Öğrenci',sonuclar:'Sonuçlar & Analizler',rapor:'Toplu Rapor',ayarlar:'Ayarlar'};
   if(getEl('breadcrumb')) getEl('breadcrumb').textContent = titles[id] || id;
+  if(getEl('mobilePageTitle')) getEl('mobilePageTitle').textContent = titles[id] || id;
 
   if(id==='anasayfa_genel' && typeof uStat === 'function') runPaneTask(id, () => uStat());
   if(id==='anasayfa' && aNo && typeof reqProfile === 'function') runPaneTask(id, () => reqProfile());
@@ -647,11 +648,12 @@ ${cssLinks}
   .sec-card.sec-pos .sec-icon{background:#198754 !important;}
   .sec-card.sec-neg .sec-icon{background:#dc3545 !important;}
   .sec-card.sec-neutral .sec-icon{background:#6c757d !important;}
-  .sec-card .sec-label{font-size:0.7rem;font-weight:700;color:#6c757d;text-transform:uppercase;}
-  .sec-card .sec-value{font-size:1rem;font-weight:700;color:#212529;line-height:1.2;}
-  .sec-card .sec-sub{font-size:0.7rem;color:#6c757d;}
-  .sec-card.sec-pos .sec-value{color:#198754;}
-  .sec-card.sec-neg .sec-value{color:#dc3545;}
+  .sec-card .sec-label{font-size:9px !important;font-weight:700 !important;color:#6c757d !important;text-transform:uppercase !important;}
+  .sec-card .sec-value{font-size:15px !important;font-weight:700 !important;color:#212529 !important;line-height:1.2 !important;}
+  .sec-card .sec-sub{font-size:9px !important;color:#6c757d !important;font-weight:400 !important;}
+  .sec-card .sec-explain{font-size:8px !important;color:#9ca3af !important;font-weight:400 !important;line-height:1.25 !important;}
+  .sec-card.sec-pos .sec-value{color:#198754 !important;}
+  .sec-card.sec-neg .sec-value{color:#dc3545 !important;}
 
   /* Info-box */
   .info-box{display:flex !important;align-items:stretch;border-radius:5px;margin-bottom:4px;page-break-inside:avoid !important;break-inside:avoid !important;}
@@ -667,8 +669,15 @@ ${cssLinks}
   .info-box.bg-secondary,.bg-secondary{background:#6c757d !important;color:#fff !important;}
   .info-box.bg-primary *,.info-box.bg-success *,.info-box.bg-danger *,.info-box.bg-warning *,.info-box.bg-info *,.info-box.bg-secondary *{color:inherit !important;}
 
-  /* Trend kartı */
+  /* Trend kartı — font hiyerarşisi px ile sabitlendi; Bootstrap .small/.text-muted ezildi */
   .trend-card{background:#f5f7fa !important;border:1px solid #dee2e6;border-radius:6px;padding:6px 8px;margin-bottom:5px;page-break-inside:avoid !important;break-inside:avoid !important;}
+  .trend-card .trend-metric-value{font-size:20px !important;font-weight:700 !important;color:var(--metric-color,#212529) !important;line-height:1.2 !important;}
+  .trend-card .small,.trend-card .small.text-muted,.trend-card small{font-size:13px !important;font-weight:400 !important;color:#374151 !important;}
+  .trend-card .small strong{font-size:13px !important;font-weight:700 !important;color:#212529 !important;}
+  .trend-card .x-small,.trend-card span.x-small{font-size:10px !important;font-weight:400 !important;color:#6c757d !important;line-height:1.25 !important;}
+  /* Bootstrap genel .small ve .text-muted kurallarının trend/sec kartları ezmesini engelle */
+  .trend-card .text-muted{color:#6c757d !important;}
+  .small,small{font-size:0.82em;}
   .trend-indicator{display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:0.78em;font-weight:bold;}
   .trend-up{background:rgba(40,167,69,0.15) !important;color:#1e7e34 !important;}
   .trend-down{background:rgba(220,53,69,0.15) !important;color:#b02a37 !important;}

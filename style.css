@@ -198,12 +198,32 @@ select.form-control {
 .pane { display:none; }
 .pane.active-pane,
 .pane[aria-hidden="false"] { display:block; }
+/* Mobil üst bar sayfa başlığı */
+.mobile-page-title {
+  display: inline-block;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--sa-text, #1e293b);
+  line-height: 1.2;
+  padding: 0 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 42vw;
+  vertical-align: middle;
+}
+
 .sa-content-header {
   padding: 10px 0.5rem;
   border-bottom: 1px solid var(--sa-border);
   background: rgba(255,255,255,0.88);
   box-shadow: 0 1px 0 rgba(15,23,42,0.03);
   margin-bottom: 14px;
+}
+
+/* Mobilde breadcrumb alanını gizle */
+@media (max-width: 767px) {
+  .sa-content-header { display: none !important; }
 }
 .sa-breadcrumb {
   background: transparent;
@@ -1963,9 +1983,15 @@ body.sidebar-collapse .app-sidebar.sa-sidebar:hover .sidebar-brand .brand-text {
     break-inside: auto !important;
   }
   /* İstatistik kartı (trend-card) yazı boyutları: px ile sabitlendi, print'te sıra bozulmasın */
+  .trend-card .trend-metric-value {
+    font-size: 20px !important;
+    font-weight: 700 !important;
+    line-height: 1.2 !important;
+  }
   .trend-card .small,
   .trend-card .small.text-muted {
     font-size: 13px !important;
+    font-weight: 400 !important;
   }
   .trend-card .small strong {
     font-size: 13px !important;
@@ -1976,6 +2002,11 @@ body.sidebar-collapse .app-sidebar.sa-sidebar:hover .sidebar-brand .brand-text {
     font-size: 10px !important;
     line-height: 1.25 !important;
   }
+  /* sec-card font hiyerarşisi: px sabitlendi, Bootstrap ezmesi engellendi */
+  .sec-card .sec-value { font-size: 15px !important; font-weight: 700 !important; }
+  .sec-card .sec-label { font-size: 9px !important; font-weight: 700 !important; }
+  .sec-card .sec-sub   { font-size: 9px !important; font-weight: 400 !important; }
+  .sec-card .sec-explain { font-size: 8px !important; font-weight: 400 !important; }
 }
 
 /* ====== Trend kartı açıklama satırı (Türkçeleştirme + ipucu) ====== */
@@ -2016,7 +2047,7 @@ body.sidebar-collapse .app-sidebar.sa-sidebar:hover .sidebar-brand .brand-text {
 /* Trend kartı içinde Performans Tutarlılığı sütunu için aynı x-small kuralı zaten var. */
 
 /* ===================================================================
-   BOTTOM NAVIGATION BAR — Mobil navigasyon (≤991px)
+   BOTTOM NAVIGATION BAR — Mobil navigasyon (≤767px)
    Her sekme ana sayfadaki info-box kartlarıyla aynı gradient renkleri
    taşır. Aktif: dolu gradient + beyaz ikon/etiket. Pasif: soluk ton.
    =================================================================== */
@@ -2051,9 +2082,7 @@ body.sidebar-collapse .app-sidebar.sa-sidebar:hover .sidebar-brand .brand-text {
   display: none; /* Masaüstünde gizli */
 }
 
-@media (max-width: 991px) {
-  /* Barın kendisi */
-  .bottom-nav {
+@media (max-width: 767px) {
     display: flex;
     position: fixed;
     bottom: 0;

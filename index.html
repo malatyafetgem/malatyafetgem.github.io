@@ -11,8 +11,8 @@
 <link rel="manifest" href="./manifest.json">
 <title>Sınav Analiz Sistemi</title>
 <script>
-window.SA_APP_VERSION = 'adminlte4-r55';
-window.SA_CACHE_NAME = 'sinav-analizi-adminlte4-r55';
+window.SA_APP_VERSION = 'adminlte4-r56';
+window.SA_CACHE_NAME = 'sinav-analizi-adminlte4-r56';
 window.SA_CACHE_READY = (async function(){
   try {
     const markerKey = 'sinavAnalizi.cacheReadyVersion';
@@ -52,7 +52,7 @@ window.SA_CACHE_READY = (async function(){
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
 
-<link rel="stylesheet" href="./style.css?v=adminlte4-r55">
+<link rel="stylesheet" href="./style.css?v=adminlte4-r56">
 </head>
 <body class="layout-fixed sidebar-expand-lg sidebar-mini" data-active-pane="anasayfa_genel">
 
@@ -112,6 +112,7 @@ window.SA_CACHE_READY = (async function(){
   <nav class="app-header navbar navbar-expand bg-body sa-topbar" id="topNav">
     <ul class="navbar-nav">
       <li class="nav-item"><a class="nav-link top-icon-link" data-lte-toggle="sidebar" href="#" role="button" onclick="event.preventDefault()" aria-label="Menüyü aç/kapat"><i class="fas fa-bars"></i></a></li>
+      <li class="nav-item d-lg-none"><span id="mobilePageTitle" class="mobile-page-title">Ana Sayfa</span></li>
       <li class="nav-item d-none d-sm-inline-block">
         <span class="nav-link top-user-email"><i class="fas fa-user-circle"></i><span id="userEmail"></span></span>
       </li>
@@ -439,7 +440,7 @@ window.SA_CACHE_READY = (async function(){
 
 <script>
 (async function loadAppScripts(){
-  const version = window.SA_APP_VERSION || 'adminlte4-r55';
+  const version = window.SA_APP_VERSION || 'adminlte4-r56';
   const scripts = ['app-core.js','app-ui.js','app-analysis.js','app-settings.js'];
   const refreshLocalStyle = () => {
     const current = document.querySelector('link[href*="style.css"]');
