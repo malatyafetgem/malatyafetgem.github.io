@@ -2083,6 +2083,7 @@ body.sidebar-collapse .app-sidebar.sa-sidebar:hover .sidebar-brand .brand-text {
 }
 
 @media (max-width: 991px) and (hover: none) {
+  .bottom-nav {
     display: flex;
     position: fixed;
     bottom: 0;
