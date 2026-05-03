@@ -1270,16 +1270,15 @@ body.is-admin button.w-100.admin-only { display:block !important; }
   margin-bottom: 10px;
 }
 @media (max-width: 767.98px) {
-  /* Mobilde bilgi kartları tek sütun (tam genişlik) */
-  .sec-cards-row > [class*="col-"] {
+  /* Mobilde bilgi kartları (sec-card) tek sütun — tam genişlik */
+  [class*="col-"]:has(> .sec-card),
+  [class*="col-"]:has(> .sec-card.h-100) {
     flex: 0 0 100% !important;
     max-width: 100% !important;
     padding-left: 5px !important;
     padding-right: 5px !important;
     margin-bottom: 8px !important;
   }
-  /* single-exam-cards içindeki row */
-  .single-exam-cards .sec-cards-row { margin-bottom: 8px !important; }
 }
 /* Trend scroll hint stili */
 /* trend-scroll-hint: artık kullanılmıyor, her zaman gizli */
