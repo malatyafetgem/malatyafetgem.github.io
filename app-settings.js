@@ -431,7 +431,7 @@ async function confirmUpload() {
 }
 
 // ---- top-level (orig lines 4003-4007) ----
-const APP_CACHE_NAME = 'sinav-analizi-adminlte4-r62';
+const APP_CACHE_NAME = 'sinav-analizi-adminlte4-r63';
 
 let APP_BOOTED = false;
 function bootApp(){
@@ -452,7 +452,7 @@ function bootApp(){
     }
   });
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-    navigator.serviceWorker.register('./sw.js?v=adminlte4-r62', { scope: './' })
+    navigator.serviceWorker.register('./sw.js?v=adminlte4-r63', { scope: './' })
       .then(reg => { console.log('SW kayıtlı:', reg.scope); reg.update(); })
       .catch(err => console.error('SW hatası:', err));
   }
@@ -485,7 +485,7 @@ function showPwaPopupIfReady() {
 function closePwaPopup() { const popup = document.getElementById('pwaInstallPopup'); if (!popup || popup.style.display === 'none') return; clearTimeout(pwaPopupTimer); popup.style.animation = 'popupSlideUp 0.3s ease-in forwards'; setTimeout(() => { popup.style.display = 'none'; popup.style.animation = ''; }, 300); }
 
 // ---- triggerInstall (orig lines 4018-4018) ----
-function triggerInstall(e) { e.preventDefault(); closePwaPopup(); if (!deferredInstallPrompt) return; deferredInstallPrompt.prompt(); deferredInstallPrompt.userChoice.then(choice => { if (choice.outcome === 'accepted') showToast('Uygulama yükleniyor...', 'info'); deferredInstallPrompt = null; document.getElementById('installBtnWrapper').style.display = 'none'; }); }
+function triggerInstall(e) { e.preventDefault(); closePwaPopup(); if (!deferredInstallPrompt) return; deferredInstallPrompt.prompt(); deferredInstallPrompt.userChoice.then(choice => { if (choice.outcome === 'accepted') { showToast('Uygulama yükleniyor...', 'info'); } else { deferredInstallPrompt = null; } }); }
 
 
 
