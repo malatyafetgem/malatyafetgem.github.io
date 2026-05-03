@@ -467,19 +467,24 @@ if(document.readyState === 'complete') bootApp();
 else window.addEventListener('load', bootApp);
 
 // ---- top-level (orig lines 4009-4009) ----
-let deferredInstallPrompt = null, pwaPopupTimer = null, userLoggedIn = false, appInstallToastShown = false;
+let deferredInstallPrompt = null, pwaPopupTimer = null, userLoggedIn = false;
 
 // ---- top-level (orig lines 4010-4010) ----
 window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredInstallPrompt = e; if (userLoggedIn) showPwaPopupIfReady(); });
 
 // ---- top-level (orig lines 4011-4011) ----
-// "appinstalled" tek ve yetkili kaynak — çift tetiklenmeye karşı flag korundu
+// "appinstalled" tek ve yetkili toast kaynağı.
+// sessionStorage flag'i ile aynı oturumda çift tetiklenme engellenir.
 window.addEventListener('appinstalled', () => {
   deferredInstallPrompt = null;
   document.getElementById('installBtnWrapper').style.display = 'none';
   closePwaPopup();
-  if (!appInstallToastShown) {
-    appInstallToastShown = true;
+  try {
+    if (!sessionStorage.getItem('pwaInstallDone')) {
+      sessionStorage.setItem('pwaInstallDone', '1');
+      showToast('Uygulama başarıyla yüklendi!', 'success');
+    }
+  } catch(e) {
     showToast('Uygulama başarıyla yüklendi!', 'success');
   }
 });
@@ -494,8 +499,8 @@ function showPwaPopupIfReady() {
 function closePwaPopup() { const popup = document.getElementById('pwaInstallPopup'); if (!popup || popup.style.display === 'none') return; clearTimeout(pwaPopupTimer); popup.style.animation = 'popupSlideUp 0.3s ease-in forwards'; setTimeout(() => { popup.style.display = 'none'; popup.style.animation = ''; }, 300); }
 
 // ---- triggerInstall (orig lines 4018-4018) ----
-// userChoice sadece kullanıcının diyalogu kabul/reddettiğini bildirir, yükleme tamamlandığını değil.
-// Toast'lar appinstalled üzerinden yönetilir; burada sadece "yükleniyor" bilgisi verilir.
+// userChoice kullanıcının diyalogu kabul/reddettiğini bildirir, yükleme tamamını değil.
+// "Yüklendi" toast'ı appinstalled üzerinden gelir; burada sadece "yükleniyor" gösterilir.
 function triggerInstall(e) {
   e.preventDefault();
   closePwaPopup();
