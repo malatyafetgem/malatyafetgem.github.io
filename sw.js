@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sinav-analizi-adminlte4-r63';
+const CACHE_NAME = 'sinav-analizi-adminlte4-r64';
 const ASSETS = [
   './',
   './index.html',

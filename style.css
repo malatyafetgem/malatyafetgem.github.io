@@ -2060,20 +2060,20 @@ body.sidebar-collapse .app-sidebar.sa-sidebar:hover .sidebar-brand .brand-text {
    --bnav-color: ikon ve metin rengi; --bnav-soft: pasif hover arka planı
    =================================================================== */
 #bnav-anasayfa_genel {
+  --bnav-color: #6c757d;
+  --bnav-soft:  rgba(108, 117, 125, 0.08);
+}
+#bnav-anasayfa {
   --bnav-color: #0d6efd;
   --bnav-soft:  rgba(13, 110, 253, 0.08);
 }
-#bnav-anasayfa {
+#bnav-sonuclar {
   --bnav-color: #198754;
   --bnav-soft:  rgba(25, 135, 84, 0.08);
 }
-#bnav-sonuclar {
+#bnav-rapor {
   --bnav-color: #0891b2;
   --bnav-soft:  rgba(8, 145, 178, 0.08);
-}
-#bnav-rapor {
-  --bnav-color: #d97706;
-  --bnav-soft:  rgba(217, 119, 6, 0.08);
 }
 #bnav-ayarlar {
   --bnav-color: #d97706;
