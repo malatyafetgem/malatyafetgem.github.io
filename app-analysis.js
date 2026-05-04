@@ -1511,20 +1511,22 @@ function rAnl(){
         // Sınıf & Kurum ortalamaları
         let cvAll = DB.e.filter(x => x.date===_seDate && (x.publisher||'')===_sePub && x.examType===eT && x.studentClass===st.class && !x.abs).map(getValSE).filter(v=>v!==null);
         let ivAll = DB.e.filter(x => x.date===_seDate && (x.publisher||'')===_sePub && x.examType===eT && getGrade(x.studentClass)===stGrade && !x.abs).map(getValSE).filter(v=>v!==null);
-        let clsA = cvAll.length ? cvAll.reduce((a,b)=>a+b,0)/cvAll.length : null;
-        let insA = ivAll.length ? ivAll.reduce((a,b)=>a+b,0)/ivAll.length : null;
+        let _clsRaw = cvAll.length ? cvAll.reduce((a,b)=>a+b,0)/cvAll.length : null;
+        let _insRaw = ivAll.length ? ivAll.reduce((a,b)=>a+b,0)/ivAll.length : null;
+        let clsA = (isRank && _clsRaw!==null) ? Math.round(_clsRaw) : _clsRaw;
+        let insA = (isRank && _insRaw!==null) ? Math.round(_insRaw) : _insRaw;
 
         let _std = (arr) => { if(arr.length<2) return null; let m=arr.reduce((a,b)=>a+b,0)/arr.length; let v=arr.reduce((a,b)=>a+(b-m)*(b-m),0)/(arr.length-1); return Math.sqrt(v); };
         let clsZ = null, insZ = null;
         if(!isRank && curVal!==null){
           let cs = _std(cvAll), is2 = _std(ivAll);
-          clsZ = (clsA!==null&&cs&&cs>0)?((curVal-clsA)/cs):null;
-          insZ = (insA!==null&&is2&&is2>0)?((curVal-insA)/is2):null;
+          clsZ = (_clsRaw!==null&&cs&&cs>0)?((curVal-_clsRaw)/cs):null;
+          insZ = (_insRaw!==null&&is2&&is2>0)?((curVal-_insRaw)/is2):null;
         }
         let clsPerc = (!isRank && curVal!==null && cvAll.length>1) ? Math.round(cvAll.filter(v=> (isRank?(v>=curVal):(v<=curVal)) ).length/cvAll.length*100) : null;
         let insPerc = (!isRank && curVal!==null && ivAll.length>1) ? Math.round(ivAll.filter(v=> (isRank?(v>=curVal):(v<=curVal)) ).length/ivAll.length*100) : null;
 
-        let fmtV = v => v===null?'—':(isRank?v:v.toFixed(2));
+        let fmtV = v => v===null?'—':(isRank?String(Math.round(v)):v.toFixed(2));
 
         let card1 = `<div class="col-12 col-md-3"><div class="sec-card">
           <div class="sec-icon"><i class="fas fa-star"></i></div>
