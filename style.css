@@ -108,7 +108,7 @@ body.auth-pending .loader-spinner { color:var(--sa-primary) !important; border-w
   display:inline-flex !important;
   align-items:center;
   gap:7px;
-  border: 1px solid var(--sa-border);
+  border: none;
   background: #fff;
   color: var(--sa-muted) !important;
   font-size:0.78rem;
@@ -121,34 +121,31 @@ body.auth-pending .loader-spinner { color:var(--sa-primary) !important; border-w
   border-radius: 999px;
   flex: 0 0 auto;
   background: #94a3b8;
-  box-shadow: 0 0 0 3px rgba(148,163,184,0.13);
+  box-shadow: 0 0 0 3px rgba(148,163,184,0.30);
 }
 .conn-badge.is-online {
-  border-color: rgba(5,150,105,0.24);
-  background: rgba(5,150,105,0.08);
+  background: transparent;
   color: #047857 !important;
 }
 .conn-badge.is-pending {
-  border-color: rgba(100,116,139,0.22);
-  background: #f8fafc;
+  background: transparent;
   color: #475569 !important;
 }
 .conn-badge.is-pending .conn-dot {
   background: #94a3b8;
-  box-shadow: 0 0 0 3px rgba(148,163,184,0.14);
+  box-shadow: 0 0 0 3px rgba(148,163,184,0.35);
 }
 .conn-badge.is-online .conn-dot {
   background: var(--sa-success);
-  box-shadow: 0 0 0 3px rgba(5,150,105,0.16);
+  box-shadow: 0 0 0 3px rgba(5,150,105,0.30);
 }
 .conn-badge.is-offline {
-  border-color: rgba(220,38,38,0.22);
-  background: rgba(220,38,38,0.08);
+  background: transparent;
   color: #b91c1c !important;
 }
 .conn-badge.is-offline .conn-dot {
   background: var(--sa-danger);
-  box-shadow: 0 0 0 3px rgba(220,38,38,0.14);
+  box-shadow: 0 0 0 3px rgba(220,38,38,0.30);
 }
 .top-action-link {
   min-height: 34px;
@@ -705,7 +702,7 @@ body.is-admin button.w-100.admin-only { display:block !important; }
   .breadcrumb { font-size: 0.92rem !important; line-height: 1.25; }
   .navbar .nav-link { padding-left: 0.5rem; padding-right: 0.5rem; }
   .top-icon-link { width: 38px; height: 38px; }
-  #connBadge { min-width: 30px; justify-content: center; padding-left: 8px !important; padding-right: 8px !important; border: none !important; background: transparent !important; box-shadow: none !important; }
+  #connBadge { min-width: 30px; justify-content: center; padding-left: 8px !important; padding-right: 8px !important; }
   #connTxt { display: none; }
   .logout-link span { display: none; }
   .logout-link { min-width: 34px; justify-content: center; padding-left: 8px !important; padding-right: 8px !important; }
