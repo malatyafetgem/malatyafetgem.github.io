@@ -1,7 +1,9 @@
-const CACHE_NAME = 'sinav-analizi-adminlte4-r64';
+importScripts('./version.js'); // APP_VERSION tek kaynaktan gelir
+const CACHE_NAME = 'sinav-analizi-' + APP_VERSION;
 const ASSETS = [
   './',
   './index.html',
+  './version.js',
   './style.css',
   './app-core.js',
   './app-ui.js',
