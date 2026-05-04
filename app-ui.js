@@ -1009,7 +1009,13 @@ function _setSelectPlaceholder(id, label){
 function _setSelectLock(id, locked, title){
   let el = getEl(id); if(!el) return;
   el.disabled = !!locked;
-  el.title = locked ? (title || 'Önce önceki filtreyi seçin') : '';
+  let msg = locked ? (title || 'Önce önceki filtreyi seçin') : '';
+  el.title = msg;
+  // Kapalıyken ilk disabled option'ın metnini güncelle (zincirleme mesaj dropdown içinde görünsün)
+  if(locked && msg && el.options.length > 0 && el.options[0].disabled){
+    el.options[0].text = msg;
+    if(el.value === '') el.options[0].selected = true;
+  }
 }
 
 function _selectHasConcreteValue(id){
@@ -1790,26 +1796,35 @@ function _updateAnalysisFilterLocks(){
   ['aLvl','aBr','aEx','aDate','aExDate','aSub','riskGradeFilter','riskBranchFilter','riskExTypeFilter','riskLevelFilter'].forEach(id => _setSelectLock(id, false, ''));
 
   if(t === 'student'){
-    _setSelectLock('aEx', !aNo, 'Önce öğrenci seçin');
-    _setSelectLock('aExDate', !aNo || !ex, !aNo ? 'Önce öğrenci seçin' : 'Önce sınav türü seçin');
-    _setSelectLock('aSub', !aNo || !ex || !stuDateSelected, !aNo ? 'Önce öğrenci seçin' : (!ex ? 'Önce sınav türü seçin' : 'Önce sınav seçin'));
+    // Zincir: Öğrenci → Sınav Türü → Sınav → Veri
+    // "Açık ama seçilmemiş ilk filtre" hangisi → ondan sonraki hepsi onu gösterir
+    let blockMsg = !aNo ? 'Önce öğrenci seçin' : (!ex ? 'Önce sınav türü seçin' : 'Önce sınav seçin');
+    _setSelectLock('aEx',     !aNo,                            !aNo ? 'Önce öğrenci seçin' : '');
+    _setSelectLock('aExDate', !aNo || !ex,                     !aNo || !ex ? blockMsg : '');
+    _setSelectLock('aSub',    !aNo || !ex || !stuDateSelected, !aNo || !ex || !stuDateSelected ? blockMsg : '');
   } else if(t === 'class' || t === 'subject'){
-    _setSelectLock('aBr', !lvl, 'Önce sınıf seviyesi seçin');
-    _setSelectLock('aEx', !lvl || !brRaw, !lvl ? 'Önce sınıf seviyesi seçin' : 'Önce şube seçin');
-    _setSelectLock('aDate', !lvl || !brRaw || !ex, !ex ? 'Önce sınav türü seçin' : 'Önceki filtreleri seçin');
-    _setSelectLock('aSub', !lvl || !brRaw || !ex || !dateSelected, !dateSelected ? 'Önce sınav seçin' : 'Önceki filtreleri seçin');
+    // Zincir: Sınıf Seviyesi → Şube → Sınav Türü → Sınav → Veri
+    let blockMsg = !lvl ? 'Önce sınıf seviyesi seçin' : (!brRaw ? 'Önce şube seçin' : (!ex ? 'Önce sınav türü seçin' : 'Önce sınav seçin'));
+    _setSelectLock('aBr',   !lvl,                              !lvl ? 'Önce sınıf seviyesi seçin' : '');
+    _setSelectLock('aEx',   !lvl || !brRaw,                    !lvl || !brRaw ? blockMsg : '');
+    _setSelectLock('aDate', !lvl || !brRaw || !ex,             !lvl || !brRaw || !ex ? blockMsg : '');
+    _setSelectLock('aSub',  !lvl || !brRaw || !ex || !dateSelected, !lvl || !brRaw || !ex || !dateSelected ? blockMsg : '');
   } else if(t === 'examdetail'){
-    _setSelectLock('aBr', !lvl, 'Önce sınıf seviyesi seçin');
-    _setSelectLock('aEx', !lvl || !brRaw, !lvl ? 'Önce sınıf seviyesi seçin' : 'Önce şube seçin');
-    _setSelectLock('aDate', !lvl || !brRaw || !ex, !ex ? 'Önce sınav türü seçin' : 'Önceki filtreleri seçin');
-    _setSelectLock('aSub', !lvl || !brRaw || !ex || !dateSelected, !dateSelected ? 'Önce sınav seçin' : 'Önceki filtreleri seçin');
+    // Zincir: Sınıf Seviyesi → Şube → Sınav Türü → Sınav → Veri
+    let blockMsg = !lvl ? 'Önce sınıf seviyesi seçin' : (!brRaw ? 'Önce şube seçin' : (!ex ? 'Önce sınav türü seçin' : 'Önce sınav seçin'));
+    _setSelectLock('aBr',   !lvl,                              !lvl ? 'Önce sınıf seviyesi seçin' : '');
+    _setSelectLock('aEx',   !lvl || !brRaw,                    !lvl || !brRaw ? blockMsg : '');
+    _setSelectLock('aDate', !lvl || !brRaw || !ex,             !lvl || !brRaw || !ex ? blockMsg : '');
+    _setSelectLock('aSub',  !lvl || !brRaw || !ex || !dateSelected, !lvl || !brRaw || !ex || !dateSelected ? blockMsg : '');
   } else if(t === 'risk'){
+    // Zincir: Sınıf Seviyesi → Şube → Sınav Türü → Risk Türü
     let rg = getEl('riskGradeFilter') ? getEl('riskGradeFilter').value : '';
     let rb = getEl('riskBranchFilter') ? getEl('riskBranchFilter').value : '';
     let re = getEl('riskExTypeFilter') ? getEl('riskExTypeFilter').value : '';
-    _setSelectLock('riskBranchFilter', !rg, 'Önce sınıf seviyesi seçin');
-    _setSelectLock('riskExTypeFilter', !rg || !rb, !rg ? 'Önce sınıf seviyesi seçin' : 'Önce şube seçin');
-    _setSelectLock('riskLevelFilter', !rg || !rb || !re, !re ? 'Önce sınav türü seçin' : 'Önceki filtreleri seçin');
+    let blockMsg = !rg ? 'Önce sınıf seviyesi seçin' : (!rb ? 'Önce şube seçin' : 'Önce sınav türü seçin');
+    _setSelectLock('riskBranchFilter', !rg,           !rg ? 'Önce sınıf seviyesi seçin' : '');
+    _setSelectLock('riskExTypeFilter', !rg || !rb,    !rg || !rb ? blockMsg : '');
+    _setSelectLock('riskLevelFilter',  !rg || !rb || !re, !rg || !rb || !re ? blockMsg : '');
   }
 }
 

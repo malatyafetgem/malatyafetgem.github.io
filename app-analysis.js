@@ -3016,9 +3016,10 @@ function raporUpdateLocks() {
   let et = getEl('rExType') ? getEl('rExType').value : '';
   raporFillReportTypes();
   if(typeof _setSelectLock === 'function') {
-    _setSelectLock('rBr', !lvl, 'Önce sınıf seviyesi seçin');
-    _setSelectLock('rExType', !lvl || !br, !lvl ? 'Önce sınıf seviyesi seçin' : 'Önce şube seçin');
-    _setSelectLock('rReportType', !lvl || !br || !et, !et ? 'Önce sınav türü seçin' : 'Önceki filtreleri seçin');
+    // Zincir: Sınıf Seviyesi → Şube → Sınav Türü → Rapor Türü
+    _setSelectLock('rBr',         !lvl,             'Önce sınıf seviyesi seçin');
+    _setSelectLock('rExType',     !lvl || !br,      !lvl ? 'Önce sınıf seviyesi seçin' : 'Önce şube seçin');
+    _setSelectLock('rReportType', !lvl || !br || !et, !lvl ? 'Önce sınıf seviyesi seçin' : (!br ? 'Önce şube seçin' : 'Önce sınav türü seçin'));
   } else {
     if(getEl('rBr')) getEl('rBr').disabled = !lvl;
     if(getEl('rExType')) getEl('rExType').disabled = !lvl || !br;
