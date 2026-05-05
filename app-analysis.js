@@ -1353,11 +1353,13 @@ function rAnl(){
           let _clsTNStd = _statStd(clsTN);
           let _clsTNMean = clsTN.length ? clsTN.reduce((a,b)=>a+b,0)/clsTN.length : null;
           let _clsTNZ = (_tnVal!==null && _clsTNMean!==null && _clsTNStd && _clsTNStd>0) ? ((_tnVal-_clsTNMean)/_clsTNStd) : null;
+          let _clsTNF = (_tnVal!==null && _tnVal!==undefined && _clsTNMean!==null) ? (_tnVal - _clsTNMean) : null;
           let _clsTNPerc = (_tnVal!==null && clsTN.length >= 3) ? Math.round(clsTN.filter(v=>v<=_tnVal).length/clsTN.length*100) : null;
           // Z-skoru ve yüzdelik dilim (kurum)
           let _insTNStd = _statStd(insTN);
           let _insTNMean = insTN.length ? insTN.reduce((a,b)=>a+b,0)/insTN.length : null;
           let _insTNZ = (_tnVal!==null && _insTNMean!==null && _insTNStd && _insTNStd>0) ? ((_tnVal-_insTNMean)/_insTNStd) : null;
+          let _insTNF = (_tnVal!==null && _tnVal!==undefined && _insTNMean!==null) ? (_tnVal - _insTNMean) : null;
           let _insTNPerc = (_tnVal!==null && insTN.length >= 3) ? Math.round(insTN.filter(v=>v<=_tnVal).length/insTN.length*100) : null;
 
           if(clsTN.length >= 3 || insTN.length >= 3) {
@@ -1368,8 +1370,8 @@ function rAnl(){
               seStatsItems.push(_statItem(
                 'Sınıf İçi Konum',
                 `${_clsTNZ!==null?_clsTNZ.toFixed(2)+'σ':'—'}`,
-                `${_clsTNPerc!==null?'Top %'+(100-_clsTNPerc)+' · '+clsTN.length+' öğrenci':'Yetersiz veri'}`,
-                'Standart sapma, sınıftaki netlerin ortalama etrafındaki yayılımıdır. Z=0 ortalama; +1 belirgin üst, -1 belirgin alt.',
+                `${_clsTNMean!==null?'Ort: '+_clsTNMean.toFixed(2):''}${_clsTNF!==null?' · Fark: '+(_clsTNF>0?'+':'')+_clsTNF.toFixed(2):''}${_clsTNPerc!==null?' · Top %'+(100-_clsTNPerc):''}`,
+                'Z=0 ortalama; + değer ortalamanın üstünü, - değer altını gösterir.',
                 _statTone(_clsZCls)
               ));
             }
@@ -1377,8 +1379,8 @@ function rAnl(){
               seStatsItems.push(_statItem(
                 'Kurum İçi Konum',
                 `${_insTNZ!==null?_insTNZ.toFixed(2)+'σ':'—'}`,
-                `${_insTNPerc!==null?'Top %'+(100-_insTNPerc)+' · '+insTN.length+' öğrenci':'Yetersiz veri'}`,
-                'Standart sapma, kurum grubundaki netlerin ortalama etrafındaki yayılımıdır. Z=0 ortalama; +1 belirgin üst, -1 belirgin alt.',
+                `${_insTNMean!==null?'Ort: '+_insTNMean.toFixed(2):''}${_insTNF!==null?' · Fark: '+(_insTNF>0?'+':'')+_insTNF.toFixed(2):''}${_insTNPerc!==null?' · Top %'+(100-_insTNPerc):''}`,
+                'Z=0 ortalama; + değer ortalamanın üstünü, - değer altını gösterir.',
                 _statTone(_insZCls)
               ));
             }
@@ -1495,17 +1497,17 @@ function rAnl(){
         let subjectStatsHtml = _statsBlock('', [
           subjectDeltaItem,
           _statItem(
-            'Sınıf Karşılaştırma',
-            `${clsA!==null?clsA.toFixed(2):'—'} <small class="sec-unit-muted">ort</small>`,
-            `Fark: ${_fC!==null?(_fC>0?'+':'')+_fC.toFixed(2):'—'}${clsZ!==null?' · Z: '+clsZ.toFixed(2):''}${clsPerc!==null?' · Top %'+(100-clsPerc):''}`,
-            'Öğrencinin bu dersteki netinin sınıf ortalamasına göre konumu.',
+            'Sınıf İçi Konum',
+            `${clsZ!==null?clsZ.toFixed(2)+'σ':'—'}`,
+            `${clsA!==null?'Ort: '+clsA.toFixed(2):''}${_fC!==null?' · Fark: '+(_fC>0?'+':'')+_fC.toFixed(2):''}${clsPerc!==null?' · Top %'+(100-clsPerc):''}`,
+            'Z=0 ortalama; + değer ortalamanın üstünü, - değer altını gösterir.',
             _statTone(_fCs)
           ),
           _statItem(
-            'Kurum Karşılaştırma',
-            `${insA!==null?insA.toFixed(2):'—'} <small class="sec-unit-muted">ort</small>`,
-            `Fark: ${_fI!==null?(_fI>0?'+':'')+_fI.toFixed(2):'—'}${insZ!==null?' · Z: '+insZ.toFixed(2):''}${insPerc!==null?' · Top %'+(100-insPerc):''}`,
-            'Öğrencinin bu dersteki netinin kurum ortalamasına göre konumu.',
+            'Kurum İçi Konum',
+            `${insZ!==null?insZ.toFixed(2)+'σ':'—'}`,
+            `${insA!==null?'Ort: '+insA.toFixed(2):''}${_fI!==null?' · Fark: '+(_fI>0?'+':'')+_fI.toFixed(2):''}${insPerc!==null?' · Top %'+(100-insPerc):''}`,
+            'Z=0 ortalama; + değer ortalamanın üstünü, - değer altını gösterir.',
             _statTone(_fIs)
           )
         ], 'fa-chart-bar');
@@ -1621,17 +1623,17 @@ function rAnl(){
         let metricStatsHtml = _statsBlock('', [
           metricDeltaItem,
           _statItem(
-            `Sınıf ${isRank?'Sıra':'Karşılaştırma'}`,
-            `${clsA!==null?fmtV(clsA):'—'} <small class="sec-unit-muted">ort</small>`,
-            isRank ? `${cvAll.length} öğrenci · düşük değer daha iyi` : `${!isRank&&_fC!==null?'Fark: '+(_fC>0?'+':'')+_fC.toFixed(2):''}${clsZ!==null?' · Z: '+clsZ.toFixed(2):''}${clsPerc!==null?' · Top %'+(100-clsPerc):''}`,
-            isRank ? 'Seçili sınavda sınıf içindeki ortalama sıra konumu.' : 'Seçili ölçütün sınıf ortalamasına göre farkı, Z-skoru ve yüzdelik konumu.',
+            isRank ? 'Sınıf Ortalama Sıra' : 'Sınıf İçi Konum',
+            isRank ? `${clsA!==null?fmtV(clsA):'—'} <small class="sec-unit-muted">ort</small>` : `${clsZ!==null?clsZ.toFixed(2)+'σ':'—'}`,
+            isRank ? `${cvAll.length} öğrenci · düşük sıra daha iyi` : `${clsA!==null?'Ort: '+fmtV(clsA):''}${_fC!==null?' · Fark: '+(_fC>0?'+':'')+_fC.toFixed(2):''}${clsPerc!==null?' · Top %'+(100-clsPerc):''}`,
+            isRank ? 'Z-skoru değildir; sınıftaki sıra değerlerinin ortalamasıdır.' : 'Z=0 ortalama; + değer ortalamanın üstünü, - değer altını gösterir.',
             _statTone(_fCs2)
           ),
           _statItem(
-            `Kurum ${isRank?'Sıra':'Karşılaştırma'}`,
-            `${insA!==null?fmtV(insA):'—'} <small class="sec-unit-muted">ort</small>`,
-            isRank ? `${ivAll.length} öğrenci · düşük değer daha iyi` : `${!isRank&&_fI!==null?'Fark: '+(_fI>0?'+':'')+_fI.toFixed(2):''}${insZ!==null?' · Z: '+insZ.toFixed(2):''}${insPerc!==null?' · Top %'+(100-insPerc):''}`,
-            isRank ? 'Seçili sınavda kurum içindeki ortalama sıra konumu.' : 'Seçili ölçütün kurum ortalamasına göre farkı, Z-skoru ve yüzdelik konumu.',
+            isRank ? 'Kurum Ortalama Sıra' : 'Kurum İçi Konum',
+            isRank ? `${insA!==null?fmtV(insA):'—'} <small class="sec-unit-muted">ort</small>` : `${insZ!==null?insZ.toFixed(2)+'σ':'—'}`,
+            isRank ? `${ivAll.length} öğrenci · düşük sıra daha iyi` : `${insA!==null?'Ort: '+fmtV(insA):''}${_fI!==null?' · Fark: '+(_fI>0?'+':'')+_fI.toFixed(2):''}${insPerc!==null?' · Top %'+(100-insPerc):''}`,
+            isRank ? 'Z-skoru değildir; kurumdaki sıra değerlerinin ortalamasıdır.' : 'Z=0 ortalama; + değer ortalamanın üstünü, - değer altını gösterir.',
             _statTone(_fIs2)
           )
         ], 'fa-chart-bar');

@@ -1380,8 +1380,16 @@ function _methodologyData(aT){
       original: 'Z-skoru + yüzdelik dilim',
       when: 'Tek sınav modunda; Toplam Net, Puan veya Ders Neti karşılaştırmasında grup içinde en az 3 geçerli değer varsa görünür. Sıralama verisinde Z-skoru hesaplanmaz.',
       meaning: 'Öğrencinin sınıf veya kurum grubuna göre ortalamanın ne kadar üstünde/altında olduğunu gösterir.',
-      calc: 'Z = (öğrenci değeri - grup ortalaması) / standart sapma. Standart sapma, gruptaki netlerin ortalama etrafında ne kadar yayıldığını gösterir; Z=0 ortalama, +1 belirgin üst, -1 belirgin alt demektir. Yüzdelik dilim, öğrencinin grupta kaç kişinin üstünde kaldığına göre hesaplanır.',
+      calc: 'Z = (öğrenci değeri - grup ortalaması) / standart sapma. Z=0 ortalama; + değer ortalamanın üstünü, - değer altını gösterir. Top %, öğrencinin grupta yaklaşık kaçıncı üst dilimde olduğunu gösterir.',
       limit: 'Grup küçükse veya standart sapma çok düşükse Z-skoru oynaklaşır; tek başına öğrenci etiketi değildir.'
+    },
+    {
+      display: 'Sınıf Ortalama Sıra / Kurum Ortalama Sıra',
+      original: 'Sıralama konumu / ordinal ortalama',
+      when: 'Tek sınav modunda Sınıf Sıralaması, Kurum Sıralaması veya Genel Sıra seçildiğinde görünür.',
+      meaning: 'Karşılaştırma grubundaki sıra değerlerinin ortalamasını gösterir. Küçük sıra daha iyidir.',
+      calc: 'Sıra değerleri toplanır ve öğrenci sayısına bölünür. Bu Z-skoru veya standart sapma hesabı değildir.',
+      limit: 'Sıra değerleri net/puan farkının büyüklüğünü göstermez; net veya puanla birlikte okunmalıdır.'
     },
     {
       display: 'Önceki Sınava Fark',
