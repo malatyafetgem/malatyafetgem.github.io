@@ -710,7 +710,7 @@ ${cssLinks}
 
   /* Sınav türü blokları — inline renk gelir; varsayılan da ver */
   .exam-type-block,.karne-bolum{background:#fff;border:1px solid #c7d0db;border-left:4px solid var(--exam-color,#1a5fa8);border-right:4px solid var(--exam-color,#1a5fa8);border-radius:6px;padding:8px 10px;background-clip:padding-box !important;}
-  .exam-type-block>h5,.karne-bolum>h5{font-size:11px !important;border-bottom:1px solid #d5dde7;padding-bottom:5px;margin:0 0 6px 0;color:var(--exam-color,#1a5fa8);}
+  .exam-type-block>h5,.karne-bolum>h5{font-size:11px !important;border-bottom:1px solid #d5dde7;padding-bottom:5px;margin:0 0 10px 0;color:var(--exam-color,#1a5fa8);}
 
   /* sec-card / home-stat-card */
   .sec-card,.home-stat-card{background:#fff;border:1px solid #e9ecef;border-left:3px solid var(--exam-color,#1a5fa8);border-right:3px solid var(--exam-color,#1a5fa8);border-radius:8px;padding:8px 10px;display:flex;align-items:center;gap:10px;min-height:60px;box-shadow:none !important;}
@@ -753,7 +753,7 @@ ${cssLinks}
   .print-chart-img{max-width:100%;width:100%;max-height:${isLandscape?'150px':'180px'};height:auto;object-fit:contain;display:block;margin:2px auto 4px;}
   .chart-box{height:auto !important;margin-bottom:4px;page-break-inside:avoid !important;break-inside:avoid !important;}
   .analysis-print-part{position:relative;page-break-inside:avoid;break-inside:avoid;}
-  .analysis-print-part + .analysis-print-part{margin-top:7px !important;padding-top:7px !important;border-top:1px solid #d8dee8 !important;}
+  .analysis-print-part + .analysis-print-part{margin-top:10px !important;padding-top:9px !important;border-top:1px solid #d8dee8 !important;}
   .analysis-print-part + .analysis-print-part::before{content:"";position:absolute;top:-1px;left:50%;width:min(360px,72%);height:1px;transform:translateX(-50%);background:linear-gradient(90deg,transparent,#c7d0dc 16%,#9aa9ba 50%,#c7d0dc 84%,transparent);}
   .exam-type-block>h5 + .analysis-print-part,.karne-bolum>h5 + .analysis-print-part,.report-card-body>.analysis-print-part:first-child{margin-top:0 !important;padding-top:0 !important;border-top:0 !important;}
   .exam-type-block>h5 + .analysis-print-part::before,.karne-bolum>h5 + .analysis-print-part::before,.report-card-body>.analysis-print-part:first-child::before{display:none !important;}
