@@ -924,7 +924,7 @@ function buildKarneExamCards(summary, examType, metricLabel) {
       </div>`;
     }
 
-    trendHtml = `<div class="trend-card mt-2 mb-1"><div class="row align-items-center text-center trend-row">
+    trendHtml = `<div class="student-profile-part student-profile-stats-part"><div class="trend-card mt-2 mb-1"><div class="row align-items-center text-center trend-row">
       <div class="col border-right mb-1 trend-metric" title="${r2Tooltip}">
         <span class="trend-indicator trend-indicator-sm ${trend.trendClass}"><i class="fas ${trend.trendIcon} me-1"></i>${trend.trendText}</span>
         <div class="small text-muted mt-1 trend-label"><strong>Genel Yön (Trend)</strong></div>
@@ -951,13 +951,13 @@ function buildKarneExamCards(summary, examType, metricLabel) {
         <div class="small text-muted trend-label"><strong>Katıldığı Sınav</strong></div>
         <div class="confidence-chip ${conf.cls}" title="${escapeHtml(conf.note)}"><i class="fas fa-shield-alt"></i>${escapeHtml(conf.label)}</div>
       </div>
-    </div></div>`;
+    </div></div></div>`;
   }
 
   let avgLabel = isScore ? 'Ortalama Puan' : `Ortalama ${metricLabel}`;
   let genOrtLabel = isScore ? 'Genel Puan Ort' : 'Genel Ort';
 
-  let cardsHtml = `<div class="row mb-2">
+  let cardsHtml = `<div class="student-profile-part student-profile-info-part"><div class="row mb-2">
     <div class="col-12 col-md-3 mb-2">
       <div class="sec-card">
         <div class="sec-icon"><i class="fas fa-chart-bar"></i></div>
@@ -998,7 +998,7 @@ function buildKarneExamCards(summary, examType, metricLabel) {
         </div>
       </div>
     </div>
-  </div>${trendHtml}`;
+  </div></div>${trendHtml}`;
   return cardsHtml;
 }
 
@@ -1038,7 +1038,7 @@ function rH(){
     let _examCount = el.filter(e=>!e.abs).length;
     let _examColorIdx = (typeof examColorIdx === 'function') ? examColorIdx(t) : 0;
     let _examLabel = (typeof toExamLabel === 'function') ? toExamLabel(t) : t;
-    h+=`<div class="karne-bolum exam-type-block exam-color-${_examColorIdx}${isFirstType?' exam-type-first':''}" data-stu-name="${stuNameSafe}" data-stu-class="${stuClassSafe}"><h5 class="mt-3 mb-2 text-primary border-bottom pb-2"><span>${escapeHtml(_examLabel)} Sınavları</span><span class="etb-count no-print">${_examCount} Sınav</span></h5>${cardsHtml}${riskCardsHtml}<div id="${bpKarneId}"></div><div class="scroll-hint"><i class="fas fa-arrows-alt-h me-1"></i>Tabloyu kaydırın</div><div class="scroll"><table class="table table-sm table-bordered table-striped" data-sh="${escapeHtml(t)}"><thead><tr><th>#</th><th>Tarih</th><th>Yayınevi</th>${sb.map(x=>`<th title="${escapeHtml(toTitleCase(x))}">${escapeHtml(abbrevSub(x,shorten))}</th>`).join('')}<th>Top.Net</th><th>Puan</th><th>Snf(S/K)</th><th>Okul(S/K)</th></tr></thead><tbody>`;
+    h+=`<div class="karne-bolum exam-type-block exam-color-${_examColorIdx}${isFirstType?' exam-type-first':''}" data-stu-name="${stuNameSafe}" data-stu-class="${stuClassSafe}"><h5 class="mt-3 mb-2 text-primary border-bottom pb-2"><span>${escapeHtml(_examLabel)} Sınavları</span><span class="etb-count no-print">${_examCount} Sınav</span></h5>${cardsHtml}${riskCardsHtml}<div id="${bpKarneId}" class="student-profile-part student-profile-boxplot-part"></div><div class="student-profile-part student-profile-table-part"><div class="scroll-hint"><i class="fas fa-arrows-alt-h me-1"></i>Tabloyu kaydırın</div><div class="scroll"><table class="table table-sm table-bordered table-striped" data-sh="${escapeHtml(t)}"><thead><tr><th>#</th><th>Tarih</th><th>Yayınevi</th>${sb.map(x=>`<th title="${escapeHtml(toTitleCase(x))}">${escapeHtml(abbrevSub(x,shorten))}</th>`).join('')}<th>Top.Net</th><th>Puan</th><th>Snf(S/K)</th><th>Okul(S/K)</th></tr></thead><tbody>`;
     
     let kIdx = 1;
     el.forEach(e=>{
@@ -1065,7 +1065,7 @@ function rH(){
       h += `<tr class="avg-row"><td colspan="3" class="avg-label">Kurum Ortalama (${stGrade}. Sınıflar)</td>${genAvgSubs.map(v=>`<td>${v}</td>`).join('')}<td>${genAvgNet}</td><td>${genAvgScore}</td><td colspan="2">—</td></tr>`;
     }
 
-    h+=`</tbody></table></div><div class="chart-box chart-box-sm chart-box-tight avoid-break"><div class="chart-title">${escapeHtml(t)} — Toplam Net Gelişimi</div><canvas id="${canvasId}"></canvas></div></div>`;
+    h+=`</tbody></table></div></div><div class="student-profile-part student-profile-chart-part"><div class="chart-box chart-box-sm chart-box-tight avoid-break"><div class="chart-title">${escapeHtml(t)} — Toplam Net Gelişimi</div><canvas id="${canvasId}"></canvas></div></div></div>`;
   });
 
   h+=`</div></div>`;

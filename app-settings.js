@@ -468,7 +468,8 @@ else window.addEventListener('load', bootApp);
 
 // ---- top-level (orig lines 4009-4009) ----
 let deferredInstallPrompt = null, pwaPopupTimer = null, userLoggedIn = false;
-let pwaInstallToast = null, pwaInstallCompleted = false;
+let pwaInstallToast = null, pwaInstallCompleted = false, pwaInstallStartedAt = 0;
+let pwaInstallSuccessTimer = null, pwaInstallSuccessShown = false;
 
 function clearPwaInstallToast() {
   if(pwaInstallToast && pwaInstallToast.parentNode) pwaInstallToast.remove();
@@ -476,8 +477,38 @@ function clearPwaInstallToast() {
   document.querySelectorAll('[data-toast-key="pwa-install-loading"]').forEach(toast => toast.remove());
 }
 
+function showPwaInstallLoading() {
+  if(pwaInstallToast && pwaInstallToast.parentNode) return;
+  pwaInstallStartedAt = Date.now();
+  clearPwaInstallToast();
+  pwaInstallToast = showToast('Uygulama yükleniyor...', 'info', 12000);
+  if(pwaInstallToast) pwaInstallToast.dataset.toastKey = 'pwa-install-loading';
+}
+
+function showPwaInstallSuccess() {
+  if(pwaInstallSuccessShown) return;
+  pwaInstallSuccessShown = true;
+  if(!pwaInstallToast) showPwaInstallLoading();
+  let elapsed = pwaInstallStartedAt ? (Date.now() - pwaInstallStartedAt) : 0;
+  let waitMs = Math.max(0, 1300 - elapsed);
+  if(pwaInstallSuccessTimer) clearTimeout(pwaInstallSuccessTimer);
+  pwaInstallSuccessTimer = setTimeout(() => {
+    clearPwaInstallToast();
+    showToast('Uygulama başarıyla yüklendi!', 'success');
+    pwaInstallSuccessTimer = null;
+  }, waitMs);
+}
+
 // ---- top-level (orig lines 4010-4010) ----
-window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredInstallPrompt = e; if (userLoggedIn) showPwaPopupIfReady(); });
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  pwaInstallCompleted = false;
+  pwaInstallSuccessShown = false;
+  pwaInstallStartedAt = 0;
+  if (pwaInstallSuccessTimer) clearTimeout(pwaInstallSuccessTimer);
+  if (userLoggedIn) showPwaPopupIfReady();
+});
 
 // ---- top-level (orig lines 4011-4011) ----
 // "appinstalled" tek ve yetkili toast kaynağı.
@@ -487,15 +518,7 @@ window.addEventListener('appinstalled', () => {
   deferredInstallPrompt = null;
   document.getElementById('installBtnWrapper').style.display = 'none';
   closePwaPopup();
-  clearPwaInstallToast();
-  try {
-    if (!sessionStorage.getItem('pwaInstallDone')) {
-      sessionStorage.setItem('pwaInstallDone', '1');
-      showToast('Uygulama başarıyla yüklendi!', 'success');
-    }
-  } catch(e) {
-    showToast('Uygulama başarıyla yüklendi!', 'success');
-  }
+  showPwaInstallSuccess();
 });
 
 // ---- showPwaPopupIfReady (orig lines 4013-4016) ----
@@ -515,20 +538,23 @@ function triggerInstall(e) {
   closePwaPopup();
   if (!deferredInstallPrompt) return;
   pwaInstallCompleted = false;
+  pwaInstallSuccessShown = false;
+  pwaInstallStartedAt = 0;
+  if (pwaInstallSuccessTimer) clearTimeout(pwaInstallSuccessTimer);
   const promptEvent = deferredInstallPrompt;
   promptEvent.prompt();
   promptEvent.userChoice.then(choice => {
     deferredInstallPrompt = null;
     if (choice.outcome === 'accepted') {
       document.getElementById('installBtnWrapper').style.display = 'none';
-      if(!pwaInstallCompleted) {
-        clearPwaInstallToast();
-        pwaInstallToast = showToast('Uygulama yükleniyor...', 'info', 12000);
-        if(pwaInstallToast) pwaInstallToast.dataset.toastKey = 'pwa-install-loading';
-      }
+      if(!pwaInstallCompleted && !pwaInstallSuccessShown) showPwaInstallLoading();
+    } else {
+      clearPwaInstallToast();
+      pwaInstallStartedAt = 0;
     }
   }).catch(() => {
     deferredInstallPrompt = null;
+    clearPwaInstallToast();
+    pwaInstallStartedAt = 0;
   });
 }
-

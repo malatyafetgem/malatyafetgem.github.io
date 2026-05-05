@@ -455,6 +455,21 @@ function xPR(sourceId, title, btn, orientation) {
   clone.querySelectorAll('.no-print, .d-flex.justify-content-end, .scroll-hint, button:not(.risk-badge), .btn:not(.risk-badge)').forEach(el => el.remove());
   clone.querySelectorAll('.report-header').forEach(el => el.style.display = 'flex');
 
+  // Ortak parça düzeni: bilgi kartı, istatistik, kutu grafik, tablo ve grafik bloklarını yazdırmada ayır.
+  const markPrintPart = el => {
+    if(!el || el.classList.contains('analysis-print-part')) return;
+    if((el.classList.contains('table-responsive') || el.classList.contains('scroll')) && !el.querySelector('table')) return;
+    el.classList.add('analysis-print-part');
+  };
+  clone.querySelectorAll('.trend-card, .boxplot-card, .chart-box, .table-responsive, .scroll, .card.shadow-sm.avoid-break, .risk-note, #riskStatCards, .risk-list-wrap').forEach(markPrintPart);
+  clone.querySelectorAll('.row').forEach(row => {
+    try {
+      if(row.querySelector(':scope > [class*="col-"] .sec-card, :scope > [class*="col-"] .info-box')) markPrintPart(row);
+    } catch(e) {
+      if(row.querySelector('.sec-card, .info-box')) markPrintPart(row);
+    }
+  });
+
   // ── SINAV TÜRÜ RENKLERİNİ INLINE YAZ ───────────────────────────────
   // Her .exam-type-block / .karne-bolum / üst seviye renkli kart için
   // gerçek hex rengi DOM'dan oku ve hem CSS değişkeni hem inline border olarak yapıştır.
@@ -725,6 +740,10 @@ ${cssLinks}
 
   /* Trend kartı */
   .trend-card{background:#f5f7fa !important;border:1px solid #dee2e6;border-radius:6px;padding:6px 8px;margin-bottom:5px;page-break-inside:avoid !important;break-inside:avoid !important;}
+  .trend-card .trend-metric{position:relative !important;padding-left:6px !important;padding-right:6px !important;}
+  .trend-card .trend-metric:not(:last-child)::after{content:"" !important;position:absolute !important;top:16% !important;bottom:16% !important;right:0 !important;width:1px !important;background:linear-gradient(180deg,transparent,#c7d0dc 16%,#8fa0b5 50%,#c7d0dc 84%,transparent) !important;box-shadow:1px 0 0 rgba(255,255,255,0.9) !important;}
+  .trend-stat-item{position:relative !important;border-right:0 !important;}
+  .trend-stat-item:not(:last-child)::after{content:"" !important;position:absolute !important;top:18% !important;bottom:18% !important;right:0 !important;width:1px !important;background:linear-gradient(180deg,transparent,#c7d0dc 16%,#8fa0b5 50%,#c7d0dc 84%,transparent) !important;box-shadow:1px 0 0 rgba(255,255,255,0.9) !important;}
   .trend-indicator{display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:0.78em;font-weight:bold;}
   .trend-up{background:rgba(40,167,69,0.15) !important;color:#1e7e34 !important;}
   .trend-down{background:rgba(220,53,69,0.15) !important;color:#b02a37 !important;}
@@ -733,6 +752,11 @@ ${cssLinks}
   /* Grafikler */
   .print-chart-img{max-width:100%;width:100%;max-height:${isLandscape?'150px':'180px'};height:auto;object-fit:contain;display:block;margin:2px auto 4px;}
   .chart-box{height:auto !important;margin-bottom:4px;page-break-inside:avoid !important;break-inside:avoid !important;}
+  .analysis-print-part{position:relative;page-break-inside:avoid;break-inside:avoid;}
+  .analysis-print-part + .analysis-print-part{margin-top:7px !important;padding-top:7px !important;border-top:1px solid #d8dee8 !important;}
+  .analysis-print-part + .analysis-print-part::before{content:"";position:absolute;top:-1px;left:50%;width:min(360px,72%);height:1px;transform:translateX(-50%);background:linear-gradient(90deg,transparent,#c7d0dc 16%,#9aa9ba 50%,#c7d0dc 84%,transparent);}
+  .exam-type-block>h5 + .analysis-print-part,.karne-bolum>h5 + .analysis-print-part,.report-card-body>.analysis-print-part:first-child{margin-top:0 !important;padding-top:0 !important;border-top:0 !important;}
+  .exam-type-block>h5 + .analysis-print-part::before,.karne-bolum>h5 + .analysis-print-part::before,.report-card-body>.analysis-print-part:first-child::before{display:none !important;}
 
   /* Box plot */
   .boxplot-card{background:#f8f9ff !important;border:1px solid #c8d4ee !important;border-radius:6px;padding:5px 8px;margin-top:3px;page-break-inside:avoid !important;break-inside:avoid !important;}
