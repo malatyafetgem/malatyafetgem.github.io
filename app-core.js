@@ -311,6 +311,7 @@ function showToast(message, type = 'info', duration = 4000) {
   toast.innerHTML = `<i class="fas ${icons[type] || icons.info}"></i><span>${escapeHtml(message)}</span><span class="toast-close" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></span>`;
   container.appendChild(toast);
   setTimeout(() => { toast.style.animation = 'slideOutRight 0.3s ease-out forwards'; setTimeout(() => toast.remove(), 300); }, duration);
+  return toast;
 }
 
 // ---- toTitleCase (orig lines 796-799) ----

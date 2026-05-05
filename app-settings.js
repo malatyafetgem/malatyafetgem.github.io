@@ -452,7 +452,7 @@ function bootApp(){
     }
   });
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-    navigator.serviceWorker.register('./sw.js?v=' + window.SA_APP_VERSION, { scope: './' })
+    navigator.serviceWorker.register('./sw.js?v=' + window.SA_APP_VERSION, { scope: './', updateViaCache: 'none' })
       .then(reg => { console.log('SW kayıtlı:', reg.scope); reg.update(); })
       .catch(err => console.error('SW hatası:', err));
   }
@@ -468,6 +468,13 @@ else window.addEventListener('load', bootApp);
 
 // ---- top-level (orig lines 4009-4009) ----
 let deferredInstallPrompt = null, pwaPopupTimer = null, userLoggedIn = false;
+let pwaInstallToast = null, pwaInstallCompleted = false;
+
+function clearPwaInstallToast() {
+  if(pwaInstallToast && pwaInstallToast.parentNode) pwaInstallToast.remove();
+  pwaInstallToast = null;
+  document.querySelectorAll('[data-toast-key="pwa-install-loading"]').forEach(toast => toast.remove());
+}
 
 // ---- top-level (orig lines 4010-4010) ----
 window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredInstallPrompt = e; if (userLoggedIn) showPwaPopupIfReady(); });
@@ -476,9 +483,11 @@ window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); defe
 // "appinstalled" tek ve yetkili toast kaynağı.
 // sessionStorage flag'i ile aynı oturumda çift tetiklenme engellenir.
 window.addEventListener('appinstalled', () => {
+  pwaInstallCompleted = true;
   deferredInstallPrompt = null;
   document.getElementById('installBtnWrapper').style.display = 'none';
   closePwaPopup();
+  clearPwaInstallToast();
   try {
     if (!sessionStorage.getItem('pwaInstallDone')) {
       sessionStorage.setItem('pwaInstallDone', '1');
@@ -505,16 +514,21 @@ function triggerInstall(e) {
   e.preventDefault();
   closePwaPopup();
   if (!deferredInstallPrompt) return;
-  deferredInstallPrompt.prompt();
-  deferredInstallPrompt.userChoice.then(choice => {
+  pwaInstallCompleted = false;
+  const promptEvent = deferredInstallPrompt;
+  promptEvent.prompt();
+  promptEvent.userChoice.then(choice => {
+    deferredInstallPrompt = null;
     if (choice.outcome === 'accepted') {
-      showToast('Uygulama yükleniyor...', 'info');
-    } else {
-      deferredInstallPrompt = null;
+      document.getElementById('installBtnWrapper').style.display = 'none';
+      if(!pwaInstallCompleted) {
+        clearPwaInstallToast();
+        pwaInstallToast = showToast('Uygulama yükleniyor...', 'info', 12000);
+        if(pwaInstallToast) pwaInstallToast.dataset.toastKey = 'pwa-install-loading';
+      }
     }
+  }).catch(() => {
+    deferredInstallPrompt = null;
   });
 }
-
-
-
 
