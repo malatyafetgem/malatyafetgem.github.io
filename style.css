@@ -702,6 +702,7 @@ body.is-admin button.w-100.admin-only { display:block !important; }
   .breadcrumb { font-size: 0.92rem !important; line-height: 1.25; }
   .navbar .nav-link { padding-left: 0.5rem; padding-right: 0.5rem; }
   .top-icon-link { width: 38px; height: 38px; }
+  .top-mobile-brand { margin-left: 6px; }
   #connBadge { min-width: 30px; justify-content: center; padding-left: 8px !important; padding-right: 8px !important; }
   #connTxt { display: none; }
   .logout-link span { display: none; }
