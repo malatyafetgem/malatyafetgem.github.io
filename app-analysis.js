@@ -1108,17 +1108,18 @@ function buildSubjectSparklines(stuNo, examType, curExam, subjects){
   return '';
 }
 
-// ---- buildSingleExamCards: Tek sınav modu için 4 özet kart ----
-// (1) Puan & Sıra  (2) Önceki Sınava Fark  (3) En Başarılı Ders  (4) En Zayıf Ders
+// ---- buildSingleExamCards: Tek sınav modu için genel bilgi kartları ----
+// (1) Puan & Sıra  (2) Önceki Sınava Fark  (3) En Başarılı Ders  (4) En Zayıf Ders  (5) Genel Katılım
 // Karşılaştırma: ders bazında öğrenci neti hem Sınıf hem Kurum ortalamasıyla kıyaslanır.
 function buildSingleExamCards(stu, examType, curExam, prevExam, stGrade){
+  let cardCol = 'col-12 col-md-6 col-lg';
   // Card 1: Puan & Sıra
   let scoreTxt = (curExam.score!==undefined && curExam.score!==null) ? curExam.score.toFixed(2) : '—';
   let netTxt   = (curExam.totalNet!==undefined && curExam.totalNet!==null) ? curExam.totalNet.toFixed(2) : '—';
   let rankBits =[];
   if(curExam.cR) rankBits.push(`Sınıf ${curExam.cR}/${curExam.cP||'—'}`);
   if(curExam.iR) rankBits.push(`Okul ${curExam.iR}/${curExam.iP||'—'}`);
-  let card1 = `<div class="col-12 col-md-3"><div class="sec-card">
+  let card1 = `<div class="${cardCol}"><div class="sec-card">
     <div class="sec-icon"><i class="fas fa-star"></i></div>
     <div class="sec-body">
       <div class="sec-label">Puan &amp; Sıra</div>
@@ -1126,8 +1127,8 @@ function buildSingleExamCards(stu, examType, curExam, prevExam, stGrade){
       <div class="sec-sub">Net: ${netTxt}${rankBits.length?' · '+rankBits.join(' · '):''}</div>
     </div></div></div>`;
 
-  // İstatistik: Önceki sınava göre fark
-  let prevStatsHtml;
+  // Bilgi kartı: Önceki sınava göre fark
+  let prevCard;
   if(prevExam){
     let dN = curExam.totalNet - prevExam.totalNet;
     let dS = (curExam.score||0) - (prevExam.score||0);
@@ -1136,25 +1137,21 @@ function buildSingleExamCards(stu, examType, curExam, prevExam, stGrade){
     let sign = dN > 0 ? '+' : '';
     let signS = dS > 0 ? '+' : '';
     let _pubP = prevExam.publisher ? ` (${toTitleCase(prevExam.publisher)})` : '';
-    prevStatsHtml = _statsBlock('', [
-      _statItem(
-        'Önceki Sınava Fark',
-        `${sign}${dN.toFixed(2)} <small class="sec-unit">net</small>`,
-        `Puan: ${signS}${dS.toFixed(2)} · ${prevExam.date}${_pubP}`,
-        'Seçili sınav ile önceki sınav arasındaki toplam net ve puan değişimi.',
-        _statTone(cls)
-      )
-    ], 'fa-chart-line');
+    prevCard = `<div class="${cardCol}"><div class="sec-card ${cls}">
+      <div class="sec-icon"><i class="fas ${icon}"></i></div>
+      <div class="sec-body">
+        <div class="sec-label">Önceki Sınava Fark</div>
+        <div class="sec-value">${sign}${dN.toFixed(2)} <small class="sec-unit">net</small></div>
+        <div class="sec-sub">Puan: ${signS}${dS.toFixed(2)} · ${prevExam.date}${_pubP}</div>
+      </div></div></div>`;
   } else {
-    prevStatsHtml = _statsBlock('', [
-      _statItem(
-        'Önceki Sınava Fark',
-        '—',
-        'Önceki sınav verisi yok',
-        'Seçili sınav ile önceki sınav arasındaki toplam net ve puan değişimi.',
-        'stat-neutral'
-      )
-    ], 'fa-chart-line');
+    prevCard = `<div class="${cardCol}"><div class="sec-card sec-neutral">
+      <div class="sec-icon"><i class="fas fa-chart-line"></i></div>
+      <div class="sec-body">
+        <div class="sec-label">Önceki Sınava Fark</div>
+        <div class="sec-value">—</div>
+        <div class="sec-sub">Önceki sınav verisi yok</div>
+      </div></div></div>`;
   }
 
   // Cards 3 & 4: En Başarılı / En Zayıf Ders
@@ -1183,7 +1180,7 @@ function buildSingleExamCards(stu, examType, curExam, prevExam, stGrade){
       let label = isBest ? 'En Başarılı Ders' : 'En Zayıf Ders';
       let dCstr = it.dC===null ? '—' : (it.dC>0?'+':'')+it.dC.toFixed(2);
       let dIstr = it.dI===null ? '—' : (it.dI>0?'+':'')+it.dI.toFixed(2);
-      return `<div class="col-12 col-md-3"><div class="sec-card ${cls}">
+      return `<div class="${cardCol}"><div class="sec-card ${cls}">
         <div class="sec-icon"><i class="fas ${icon}"></i></div>
         <div class="sec-body">
           <div class="sec-label">${label}</div>
@@ -1194,7 +1191,7 @@ function buildSingleExamCards(stu, examType, curExam, prevExam, stGrade){
     card3 = mkSubCard(best, true);
     card4 = (worst === best) ? '' : mkSubCard(worst, false);
   } else {
-    let neutral = (lbl,icon) => `<div class="col-12 col-md-3"><div class="sec-card sec-neutral">
+    let neutral = (lbl,icon) => `<div class="${cardCol}"><div class="sec-card sec-neutral">
       <div class="sec-icon"><i class="fas ${icon}"></i></div>
       <div class="sec-body">
         <div class="sec-label">${lbl}</div>
@@ -1204,7 +1201,24 @@ function buildSingleExamCards(stu, examType, curExam, prevExam, stGrade){
     card3 = neutral('En Başarılı Ders','fa-trophy');
     card4 = neutral('En Zayıf Ders','fa-exclamation-triangle');
   }
-  return `<div class="row">${card1}${card3}${card4}</div>${prevStatsHtml}`;
+
+  // Bilgi kartı: Bu sınav türünde öğrencinin genel katılımı
+  let _allTypeDates = new Set();
+  DB.e.forEach(x => { if(x.examType===examType && getGrade(x.studentClass)===stGrade) _allTypeDates.add(x.date+'||'+(x.publisher||'')); });
+  let _attTypeDates = new Set();
+  DB.e.forEach(x => { if(x.studentNo===curExam.studentNo && x.examType===examType && !x.abs) _attTypeDates.add(x.date+'||'+(x.publisher||'')); });
+  let _seTot = _allTypeDates.size, _seAtt = _attTypeDates.size;
+  let _seRate = _seTot > 0 ? Math.round(_seAtt/_seTot*100) : 0;
+  let _seRateCls = _seRate >= 80 ? 'sec-pos' : (_seRate >= 50 ? 'sec-neutral' : 'sec-neg');
+  let participationCard = `<div class="${cardCol}"><div class="sec-card ${_seRateCls}">
+    <div class="sec-icon"><i class="fas fa-calendar-check"></i></div>
+    <div class="sec-body">
+      <div class="sec-label">Genel Katılım</div>
+      <div class="sec-value">${_seRate}%</div>
+      <div class="sec-sub">${_seAtt} / ${_seTot} Sınav</div>
+    </div></div></div>`;
+
+  return `<div class="row g-2">${card1}${prevCard}${card3}${card4}${participationCard}</div>`;
 }
 
 // ---- buildStuBoxPlots (orig lines 2503-2550) ----
@@ -1355,7 +1369,7 @@ function rAnl(){
                 'Sınıf İçi Konum',
                 `${_clsTNZ!==null?_clsTNZ.toFixed(2)+'σ':'—'}`,
                 `${_clsTNPerc!==null?'Top %'+(100-_clsTNPerc)+' · '+clsTN.length+' öğrenci':'Yetersiz veri'}`,
-                'Z-skoru: sınıf ortalamasından kaç standart sapma uzakta?',
+                'Standart sapma, sınıftaki netlerin ortalama etrafındaki yayılımıdır. Z=0 ortalama; +1 belirgin üst, -1 belirgin alt.',
                 _statTone(_clsZCls)
               ));
             }
@@ -1364,29 +1378,12 @@ function rAnl(){
                 'Kurum İçi Konum',
                 `${_insTNZ!==null?_insTNZ.toFixed(2)+'σ':'—'}`,
                 `${_insTNPerc!==null?'Top %'+(100-_insTNPerc)+' · '+insTN.length+' öğrenci':'Yetersiz veri'}`,
-                'Z-skoru: kurum ortalamasından kaç standart sapma uzakta?',
+                'Standart sapma, kurum grubundaki netlerin ortalama etrafındaki yayılımıdır. Z=0 ortalama; +1 belirgin üst, -1 belirgin alt.',
                 _statTone(_insZCls)
               ));
             }
             seExtraCardsHtml += _statsBlock('', seStatsItems, 'fa-chart-bar');
           }
-
-          // Katılım oranı (bu sınav türüne genel katılım)
-          let _allTypeDates = new Set();
-          DB.e.forEach(x => { if(x.examType===eT && getGrade(x.studentClass)===stGrade) _allTypeDates.add(x.date+'||'+(x.publisher||'')); });
-          let _attTypeDates = new Set();
-          DB.e.forEach(x => { if(x.studentNo===no && x.examType===eT && !x.abs) _attTypeDates.add(x.date+'||'+(x.publisher||'')); });
-          let _seTot = _allTypeDates.size, _seAtt = _attTypeDates.size;
-          let _seRate = _seTot > 0 ? Math.round(_seAtt/_seTot*100) : 0;
-          let _seRateCls = _seRate >= 80 ? 'sec-pos' : (_seRate >= 50 ? 'sec-neutral' : 'sec-neg');
-          seExtraCardsHtml += `<div class="row mt-2">
-            <div class="col-12 col-md-3"><div class="sec-card ${_seRateCls}">
-              <div class="sec-icon"><i class="fas fa-calendar-check"></i></div>
-              <div class="sec-body"><div class="sec-label">Genel Katılım</div>
-              <div class="sec-value">${_seRate}%</div>
-              <div class="sec-sub">${_seAtt} / ${_seTot} Sınav</div>
-              </div></div></div>
-          </div>`;
         }
 
         // Detay tablosu

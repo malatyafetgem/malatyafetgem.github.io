@@ -343,13 +343,11 @@ function xXLMul(cId,fn){
   XLSX.writeFile(wb,fn+'.xlsx');
 }
 
-// ---- xPR (Yeniden yazıldı: sınav türü renkleri inline, otomatik yön, sınav türü başına yeni sayfa, tablo başlık tekrarı) ----
-// Yön kararı:
-//   - Yatay (landscape): "Öğrenci (Sorgula)" sayfası (kCont = karne, pS sourceId'li 3 görünüm:
-//     Ogrenci_Tek_Sinav / Ogrenci_Ders / Ogrenci_Veri) ve "Toplu Rapor" (raporCont).
-//     Ayrıca pED/pEDAll çağrı tarafından zaten 'landscape' param ile gelir.
-//   - Dikey (portrait): "Öğrenci Analizi" (pS + 'Ogrenci_Analizi'), Sınıf Analizi (pC),
-//     Ders Analizi (pSubj), Sınav Özeti (pSummary, pGenSummary).
+// ---- xPR: merkezi yazdırma motoru ----
+// Tek kaynak: yön, grid, kart, istatistik, tablo, grafik ve sayfa kırma kuralları burada yönetilir.
+// Özel modlar yalnızca çıktı türü gerektirdiğinde devreye girer:
+//   - compact-list: çok satırlı toplu liste tabloları
+//   - one-page-summary: tek sınav öğrenci özeti
 const _XPR_LANDSCAPE_IDS = new Set(['kCont','raporCont','raporRes']);
 const _XPR_LANDSCAPE_TITLES = new Set(['Ogrenci_Tek_Sinav','Ogrenci_Ders','Ogrenci_Veri']);
 function _xprIsLandscape(sourceId, title, orientation){
@@ -396,13 +394,13 @@ function xPR(sourceId, title, btn, orientation) {
   try { if(c && c.a){ c.a.tooltip.setActiveElements([]); c.a.update('none'); } } catch(e){}
   try { if(c && c.h){ c.h.tooltip.setActiveElements([]); c.h.update('none'); } } catch(e){}
 
-  // YÖN: explicit param > sourceId haritası > default portrait
-  let isLandscape = _xprIsLandscape(sourceId, title, orientation);
-  let isPortrait = !isLandscape;
+  // YÖN: explicit param > merkezi harita > default portrait
 
   let sourceEl = getEl(sourceId);
   if(!sourceEl){ return; }
+  let isLandscape = _xprIsLandscape(sourceId, title, orientation);
   let isCompactListPrint = sourceId === 'raporCont' && sourceEl.classList.contains('print-compact-list');
+  let isOnePageSummaryPrint = title === 'Ogrenci_Tek_Sinav';
   // Kompakt liste her zaman yatay — sütun sayısı portrait'a sığmaz
   if(isCompactListPrint) isLandscape = true;
   let orig = btn ? btn.innerHTML : '';
@@ -634,11 +632,14 @@ function xPR(sourceId, title, btn, orientation) {
 
   // Sınav türü palet sabitleri yeni pencerede de class olarak çalışsın diye CSS bloğu üret
   let paletteCss = _XPR_EXAM_PALETTE.map((c,i) => `.exam-color-${i}{--exam-color:${c};}`).join('\n');
-  let printBaseFont = isCompactListPrint ? '10.5px' : (isLandscape ? '10px' : '10.5px');
-  let printPageMargin = isCompactListPrint ? '7mm 6mm' : '8mm 7mm';
-  let printTableFont = isCompactListPrint ? '9px' : (isLandscape ? '8px' : '9px');
-  let printTableHeadFont = isCompactListPrint ? '8.8px' : (isLandscape ? '7.5px' : '8.5px');
-  let printTablePadding = isCompactListPrint ? '3px 4px' : '2px 4px';
+  let printModeClass = isCompactListPrint ? 'print-compact-list-mode' : (isOnePageSummaryPrint ? 'print-one-page-summary-mode' : 'print-standard-report-mode');
+  let printBaseFont = isCompactListPrint ? '10.5px' : (isOnePageSummaryPrint ? '9px' : (isLandscape ? '10px' : '10.5px'));
+  let printPageMargin = isCompactListPrint ? '7mm 6mm' : (isOnePageSummaryPrint ? '6mm 6mm' : '8mm 7mm');
+  let printTableFont = isCompactListPrint ? '9px' : (isOnePageSummaryPrint ? '7.5px' : (isLandscape ? '8px' : '9px'));
+  let printTableHeadFont = isCompactListPrint ? '8.8px' : (isOnePageSummaryPrint ? '7.2px' : (isLandscape ? '7.5px' : '8.5px'));
+  let printTablePadding = isCompactListPrint ? '3px 4px' : (isOnePageSummaryPrint ? '1.5px 3px' : '2px 4px');
+  let printChartMaxHeight = isOnePageSummaryPrint ? '112px' : (isLandscape ? '150px' : '180px');
+  let printBoxplotMaxHeight = isOnePageSummaryPrint ? '92px' : (isLandscape ? '110px' : '140px');
 
   let printHtml = `<!DOCTYPE html>
 <html lang="tr">
@@ -662,6 +663,7 @@ ${cssLinks}
   .col-md-4,.col-lg-4,.col-md-4.col-sm-12{flex:0 0 33.333% !important;max-width:33.333% !important;padding:0 4px !important;}
   .col-md-3,.col-sm-3{flex:0 0 25% !important;max-width:25% !important;padding:0 4px !important;}
   .col-md-2{flex:0 0 16.666% !important;max-width:16.666% !important;padding:0 4px !important;}
+  .col,.col-lg{flex:1 1 0 !important;max-width:100% !important;padding:0 4px !important;}
 
   .mb-1{margin-bottom:3px !important;} .mb-2{margin-bottom:5px !important;}
   .mb-3{margin-bottom:8px !important;} .mb-4{margin-bottom:12px !important;}
@@ -724,6 +726,19 @@ ${cssLinks}
   .sec-card.sec-pos .sec-value{color:#198754;}
   .sec-card.sec-neg .sec-value{color:#dc3545;}
 
+  /* İstatistik blokları */
+  .stats-block{background:#f5f7fa !important;border:1px solid #dee2e6;border-radius:6px;padding:6px 8px;margin-bottom:5px;page-break-inside:avoid !important;break-inside:avoid !important;}
+  .stats-row{display:flex !important;flex-wrap:wrap !important;align-items:stretch !important;width:100% !important;}
+  .stats-item{flex:1 1 160px;min-width:140px;position:relative;text-align:center;padding:5px 10px;}
+  .stats-item:not(:last-child)::after{content:"";position:absolute;top:16%;bottom:16%;right:0;width:1px;background:linear-gradient(180deg,transparent,#c7d0dc 16%,#8fa0b5 50%,#c7d0dc 84%,transparent);box-shadow:1px 0 0 rgba(255,255,255,0.9);}
+  .stats-label{font-size:0.68rem;font-weight:800;color:#64748b;text-transform:uppercase;line-height:1.12;}
+  .stats-value{font-size:0.96rem;font-weight:800;color:#334155;line-height:1.15;margin-top:2px;}
+  .stats-sub{font-size:0.68rem;color:#6c757d;line-height:1.2;margin-top:2px;}
+  .stats-explain{border-top:1px dashed #d7dde5;color:#7b8794;font-size:0.62rem;line-height:1.16;margin-top:3px;padding-top:3px;}
+  .stats-item.stat-pos .stats-value{color:#198754;}
+  .stats-item.stat-neg .stats-value{color:#dc3545;}
+  .stats-item.stat-neutral .stats-value{color:#495057;}
+
   /* Info-box */
   .info-box{display:flex !important;align-items:stretch;border-radius:5px;margin-bottom:4px;page-break-inside:avoid !important;break-inside:avoid !important;}
   .info-box-icon{display:flex !important;align-items:center;justify-content:center;width:44px !important;min-width:44px;font-size:1.1em;color:#fff;}
@@ -750,7 +765,7 @@ ${cssLinks}
   .trend-stable{background:rgba(108,117,125,0.15) !important;color:#495057 !important;}
 
   /* Grafikler */
-  .print-chart-img{max-width:100%;width:100%;max-height:${isLandscape?'150px':'180px'};height:auto;object-fit:contain;display:block;margin:2px auto 4px;}
+  .print-chart-img{max-width:100%;width:100%;max-height:${printChartMaxHeight};height:auto;object-fit:contain;display:block;margin:2px auto 4px;}
   .chart-box{height:auto !important;margin-bottom:4px;page-break-inside:avoid !important;break-inside:avoid !important;}
   .analysis-print-part{position:relative;page-break-inside:avoid;break-inside:avoid;}
   .analysis-print-part + .analysis-print-part{margin-top:10px !important;padding-top:9px !important;border-top:1px solid #d8dee8 !important;}
@@ -762,7 +777,7 @@ ${cssLinks}
   .boxplot-card{background:#f8f9ff !important;border:1px solid #c8d4ee !important;border-radius:6px;padding:5px 8px;margin-top:3px;page-break-inside:avoid !important;break-inside:avoid !important;}
   .boxplot-title{font-size:9px;font-weight:700;color:#1a5fa8;margin-bottom:3px;}
   .boxplot-wrap{overflow:visible !important;}
-  .boxplot-svg{max-height:${isLandscape?'110px':'140px'} !important;width:100% !important;height:auto !important;}
+  .boxplot-svg{max-height:${printBoxplotMaxHeight} !important;width:100% !important;height:auto !important;}
 
   /* Risk badge */
   .risk-badge{display:inline-flex;align-items:center;gap:2px;padding:1px 6px;border-radius:20px;font-size:0.68em;font-weight:600;white-space:nowrap;}
@@ -790,6 +805,39 @@ ${cssLinks}
   .exam-type-block{page-break-inside:auto;break-inside:auto;}
   .karne-bolum{page-break-inside:auto;break-inside:auto;}
   .student-rapor-wrapper{page-break-inside:auto;break-inside:auto;}
+
+  /* Tek sınav öğrenci özeti: aynı merkezi kuralların tek sayfaya sıkı hali */
+  body.print-one-page-summary-mode{line-height:1.18;}
+  body.print-one-page-summary-mode>div{padding:0 !important;}
+  body.print-one-page-summary-mode .card{margin-bottom:0;border-radius:4px;}
+  body.print-one-page-summary-mode .card-body,
+  body.print-one-page-summary-mode .report-card-body-spacious{padding:4px 6px !important;}
+  body.print-one-page-summary-mode .report-header{padding:5px 8px;margin-bottom:4px;border-radius:4px;}
+  body.print-one-page-summary-mode .report-title-main{font-size:10.5px !important;line-height:1.15;}
+  body.print-one-page-summary-mode .report-title-sub{font-size:9px !important;line-height:1.15;}
+  body.print-one-page-summary-mode .single-exam-cards{margin-bottom:0 !important;}
+  body.print-one-page-summary-mode .single-exam-cards .row{margin:0 -2px !important;}
+  body.print-one-page-summary-mode .single-exam-cards .col-lg{flex:0 0 20% !important;max-width:20% !important;padding:0 2px !important;}
+  body.print-one-page-summary-mode .sec-card{min-height:46px;padding:4px 5px;gap:5px;border-radius:5px;}
+  body.print-one-page-summary-mode .sec-card .sec-icon{width:24px;height:24px;border-radius:5px;font-size:0.75em;}
+  body.print-one-page-summary-mode .sec-card .sec-label{font-size:0.54rem;line-height:1.05;}
+  body.print-one-page-summary-mode .sec-card .sec-value{font-size:0.76rem;line-height:1.08;margin-top:1px;}
+  body.print-one-page-summary-mode .sec-card .sec-sub{font-size:0.55rem;line-height:1.08;margin-top:1px;}
+  body.print-one-page-summary-mode .stats-block,
+  body.print-one-page-summary-mode .trend-card{padding:4px 6px;margin-bottom:2px;border-radius:5px;}
+  body.print-one-page-summary-mode .stats-row{flex-wrap:nowrap !important;}
+  body.print-one-page-summary-mode .stats-item{flex:1 1 0 !important;min-width:0 !important;padding:3px 8px;}
+  body.print-one-page-summary-mode .stats-label{font-size:0.58rem;}
+  body.print-one-page-summary-mode .stats-value{font-size:0.78rem;}
+  body.print-one-page-summary-mode .stats-sub{font-size:0.56rem;}
+  body.print-one-page-summary-mode .stats-explain{font-size:0.52rem;line-height:1.12;margin-top:2px;padding-top:2px;}
+  body.print-one-page-summary-mode .single-exam-chart-title{font-size:8.8px !important;margin:3px 0 2px !important;line-height:1.1;}
+  body.print-one-page-summary-mode .analysis-print-part + .analysis-print-part{margin-top:4px !important;padding-top:4px !important;}
+  body.print-one-page-summary-mode .table{font-size:${printTableFont} !important;line-height:1.12 !important;margin-bottom:0 !important;}
+  body.print-one-page-summary-mode .table th,
+  body.print-one-page-summary-mode .table td{padding:${printTablePadding} !important;line-height:1.12 !important;}
+  body.print-one-page-summary-mode .table thead th{font-size:${printTableHeadFont} !important;line-height:1.1 !important;}
+  body.print-one-page-summary-mode .avg-row td{font-size:7.2px !important;line-height:1.1 !important;}
 
   /* Toplu Liste: mobil yazdırmada gereksiz sayfa kırmalarını ve boşlukları azalt */
   body.print-compact-list-mode{line-height:1.25;}
@@ -835,7 +883,7 @@ ${cssLinks}
   .app-wrapper,.app-main,.container-fluid{margin:0 !important;padding:0 !important;width:100% !important;max-width:100% !important;}
 </style>
 </head>
-<body class="${isCompactListPrint ? 'print-compact-list-mode' : ''}">
+<body class="${printModeClass}">
 <div style="padding:0 2px;">${clone.outerHTML}</div>
 <script>
 (function(){
@@ -1332,7 +1380,7 @@ function _methodologyData(aT){
       original: 'Z-skoru + yüzdelik dilim',
       when: 'Tek sınav modunda; Toplam Net, Puan veya Ders Neti karşılaştırmasında grup içinde en az 3 geçerli değer varsa görünür. Sıralama verisinde Z-skoru hesaplanmaz.',
       meaning: 'Öğrencinin sınıf veya kurum grubuna göre ortalamanın ne kadar üstünde/altında olduğunu gösterir.',
-      calc: 'Z = (öğrenci değeri - grup ortalaması) / standart sapma. Yüzdelik dilim, öğrencinin grupta kaç kişinin üstünde kaldığına göre hesaplanır.',
+      calc: 'Z = (öğrenci değeri - grup ortalaması) / standart sapma. Standart sapma, gruptaki netlerin ortalama etrafında ne kadar yayıldığını gösterir; Z=0 ortalama, +1 belirgin üst, -1 belirgin alt demektir. Yüzdelik dilim, öğrencinin grupta kaç kişinin üstünde kaldığına göre hesaplanır.',
       limit: 'Grup küçükse veya standart sapma çok düşükse Z-skoru oynaklaşır; tek başına öğrenci etiketi değildir.'
     },
     {
