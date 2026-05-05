@@ -13,6 +13,9 @@
   --sa-text:#172033;
   --sa-muted:#64748b;
   --sa-shadow:0 10px 28px rgba(15,23,42,0.08);
+  --analysis-part-gap:20px;
+  --analysis-part-rule-gap:14px;
+  --analysis-part-rule-width:min(420px, 74%);
 }
 html,body{background:var(--sa-bg) !important;color:var(--sa-text);font-family:"Source Sans 3","Segoe UI",system-ui,-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;}
 
@@ -805,6 +808,18 @@ body.is-admin button.w-100.admin-only { display:block !important; }
 .trend-card { background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 12px; padding: 16px; margin-bottom: 15px; }
 .trend-card .trend-row { overflow-x: visible; flex-wrap: wrap !important; }
 .trend-card .trend-metric { min-width: 90px; flex: 1 1 120px; margin-bottom: 8px; position: relative; }
+@media (min-width: 576px) {
+  .trend-card .trend-row > .trend-metric:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    top: 16%;
+    right: 0;
+    bottom: 16%;
+    width: 1px;
+    background: linear-gradient(180deg, transparent, #c7d0dc 16%, #8fa0b5 50%, #c7d0dc 84%, transparent);
+    box-shadow: 1px 0 0 rgba(255,255,255,0.9);
+  }
+}
 @media (max-width: 575px) {
   .trend-card .trend-metric { flex: 0 0 50%; min-width: 0; padding-bottom: 12px; }
   .trend-card .trend-metric::after {
@@ -1281,7 +1296,7 @@ body.is-admin button.w-100.admin-only { display:block !important; }
 .exam-type-block.karne-bolum:last-child { margin-bottom: 0; }
 .exam-type-block.karne-bolum > h5 {
   display: flex; align-items: center; justify-content: space-between;
-  gap: 10px; margin-top: 4px !important; margin-bottom: 12px !important;
+  gap: 10px; margin-top: 4px !important; margin-bottom: var(--analysis-part-gap) !important;
   padding-bottom: 8px !important;
   color: var(--exam-color, #0d6efd) !important;
   border-bottom-color: rgba(var(--exam-color-rgb, 13,110,253),0.2) !important;
@@ -1298,15 +1313,23 @@ body.is-admin button.w-100.admin-only { display:block !important; }
 
 #kCont .student-profile-part {
   position: relative;
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid rgba(var(--exam-color-rgb, 13,110,253),0.16);
-  border-top-color: color-mix(in srgb, var(--exam-color, #0d6efd) 18%, transparent);
+  margin-top: var(--analysis-part-gap);
+  padding-top: 0;
+  border-top: 0;
 }
 #kCont .exam-type-block.karne-bolum > h5 + .student-profile-part {
   margin-top: 0;
   padding-top: 0;
   border-top: 0;
+}
+#kCont .student-profile-part:not(.student-profile-info-part)::before {
+  content: "";
+  display: block;
+  width: var(--analysis-part-rule-width);
+  height: 1px;
+  margin: 0 auto var(--analysis-part-rule-gap);
+  background: linear-gradient(90deg, transparent, #d4dbe6 16%, #aeb9c8 50%, #d4dbe6 84%, transparent);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.9);
 }
 #kCont .student-profile-info-part .row,
 #kCont .student-profile-stats-part .trend-card,
@@ -1330,6 +1353,9 @@ body.is-admin button.w-100.admin-only { display:block !important; }
 :where(#homeArea, #anlRes, #raporRes) :where(
   .row:has(> [class*="col-"] .sec-card),
   .row:has(> [class*="col-"] .info-box),
+  .row:has(> [class*="col-"] .trend-card),
+  .row:has(> [class*="col-"] .boxplot-card),
+  .row:has(> [class*="col-"] > .card.shadow-sm.avoid-break),
   .trend-card,
   .boxplot-card,
   .table-responsive:has(table),
@@ -1341,6 +1367,11 @@ body.is-admin button.w-100.admin-only { display:block !important; }
 }
 
 :where(#homeArea, #anlRes, #raporRes) :where(
+  .row:has(> [class*="col-"] .sec-card),
+  .row:has(> [class*="col-"] .info-box),
+  .row:has(> [class*="col-"] .trend-card),
+  .row:has(> [class*="col-"] .boxplot-card),
+  .row:has(> [class*="col-"] > .card.shadow-sm.avoid-break),
   .trend-card,
   .boxplot-card,
   .table-responsive:has(table),
@@ -1348,10 +1379,16 @@ body.is-admin button.w-100.admin-only { display:block !important; }
   .chart-box,
   .card.shadow-sm.avoid-break
 ):not(.risk-panel-card):not(:first-child) {
-  margin-top: 16px;
+  margin-top: var(--analysis-part-gap) !important;
+  padding-top: var(--analysis-part-rule-gap) !important;
 }
 
 :where(#homeArea, #anlRes, #raporRes) :where(
+  .row:has(> [class*="col-"] .sec-card),
+  .row:has(> [class*="col-"] .info-box),
+  .row:has(> [class*="col-"] .trend-card),
+  .row:has(> [class*="col-"] .boxplot-card),
+  .row:has(> [class*="col-"] > .card.shadow-sm.avoid-break),
   .trend-card,
   .boxplot-card,
   .table-responsive:has(table),
@@ -1359,17 +1396,47 @@ body.is-admin button.w-100.admin-only { display:block !important; }
   .chart-box
 ):not(:first-child)::before {
   content: "";
-  display: block;
-  width: min(100%, 360px);
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: var(--analysis-part-rule-width);
   height: 1px;
-  margin: 0 auto 14px;
+  transform: translateX(-50%);
   background: linear-gradient(90deg, transparent, #d4dbe6 16%, #aeb9c8 50%, #d4dbe6 84%, transparent);
   box-shadow: 0 1px 0 rgba(255,255,255,0.9);
 }
 
-:where(#homeArea, #anlRes, #raporRes) :where(.trend-card)::before,
-:where(#homeArea, #anlRes, #raporRes) :where(.boxplot-card)::before {
-  margin-top: -2px;
+:where(#homeArea, #anlRes, #raporRes) :where(.exam-type-block, .karne-bolum, .report-card-body, .card-body) > h5 + :where(
+  .row:has(> [class*="col-"] .sec-card),
+  .row:has(> [class*="col-"] .info-box),
+  .row:has(> [class*="col-"] .trend-card),
+  .row:has(> [class*="col-"] .boxplot-card),
+  .row:has(> [class*="col-"] > .card.shadow-sm.avoid-break),
+  .trend-card,
+  .boxplot-card,
+  .table-responsive:has(table),
+  .scroll:has(table),
+  .chart-box,
+  .card.shadow-sm.avoid-break
+) {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+:where(#homeArea, #anlRes, #raporRes) :where(.exam-type-block, .karne-bolum, .report-card-body, .card-body) > h5 + :where(
+  .row:has(> [class*="col-"] .sec-card),
+  .row:has(> [class*="col-"] .info-box),
+  .row:has(> [class*="col-"] .trend-card),
+  .row:has(> [class*="col-"] .boxplot-card),
+  .row:has(> [class*="col-"] > .card.shadow-sm.avoid-break),
+  .trend-card,
+  .boxplot-card,
+  .table-responsive:has(table),
+  .scroll:has(table),
+  .chart-box,
+  .card.shadow-sm.avoid-break
+)::before {
+  display: none !important;
 }
 
 #riskPanel .risk-note,
@@ -1379,14 +1446,15 @@ body.is-admin button.w-100.admin-only { display:block !important; }
 }
 #riskPanel #riskStatCards,
 #riskPanel .risk-list-wrap {
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid rgba(220,38,38,0.14);
+  margin-top: var(--analysis-part-gap);
+  padding-top: var(--analysis-part-rule-gap);
+  border-top: 0;
 }
+#riskPanel #riskStatCards::before,
 #riskPanel .risk-list-wrap::before {
   content: "";
   position: absolute;
-  top: -1px;
+  top: 0;
   left: 50%;
   width: min(360px, 70%);
   height: 1px;
@@ -1397,8 +1465,23 @@ body.is-admin button.w-100.admin-only { display:block !important; }
 #kCont .student-profile-part :where(.trend-card, .boxplot-card, .chart-box, .scroll:has(table), .table-responsive:has(table)) {
   margin-top: 0 !important;
 }
+#kCont .student-profile-part :where(.chart-box, .scroll:has(table), .table-responsive:has(table)) {
+  padding-top: 0 !important;
+}
+#kCont .student-profile-stats-part .trend-card {
+  padding-top: 16px !important;
+}
+#kCont .student-profile-boxplot-part .boxplot-card {
+  padding-top: 14px !important;
+}
 #kCont .student-profile-part :where(.trend-card, .boxplot-card, .chart-box, .scroll:has(table), .table-responsive:has(table))::before {
   display: none !important;
+}
+
+@media (max-width: 575px) {
+  #kCont .student-profile-stats-part .trend-card {
+    padding-top: 12px !important;
+  }
 }
 
 /* Print: blok sarmalayıcı görsel ekleri ekran-only */
