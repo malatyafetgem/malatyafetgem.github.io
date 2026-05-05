@@ -1,4 +1,4 @@
-// app-analysis.js — Risk scoring, box plots, karne, rH, rAnl, rapor
+﻿// app-analysis.js — Risk scoring, box plots, karne, rH, rAnl, rapor
 
 // ---- top-level (orig lines 1079-1079) ----
 let _riskCache = null;
@@ -130,6 +130,69 @@ function _homogeneityLabel(cv){
 function _explain(txt){
   if(!txt) return '';
   return `<div class="sec-explain" title="${escapeHtml(txt)}">${escapeHtml(txt)}</div>`;
+}
+
+function _statTone(cls){
+  if(!cls) return '';
+  if(String(cls).indexOf('sec-pos') >= 0) return 'stat-pos';
+  if(String(cls).indexOf('sec-neg') >= 0) return 'stat-neg';
+  return 'stat-neutral';
+}
+
+function _statItem(label, valueHtml, subHtml, explainText, toneClass){
+  let cls = toneClass ? ` ${toneClass}` : '';
+  return `<div class="stats-item${cls}">
+    <div class="stats-label">${escapeHtml(label)}</div>
+    <div class="stats-value">${valueHtml}</div>
+    ${subHtml ? `<div class="stats-sub">${subHtml}</div>` : ''}
+    ${explainText ? `<div class="stats-explain" title="${escapeHtml(explainText)}">${escapeHtml(explainText)}</div>` : ''}
+  </div>`;
+}
+
+function _trendStatItem(label, valueHtml, subHtml, titleText, toneClass){
+  let cls = toneClass ? ` ${toneClass}` : '';
+  let title = titleText ? ` title="${escapeHtml(titleText)}"` : '';
+  return `<div class="trend-stat-item${cls}"${title}>
+    <div class="trend-stat-value">${valueHtml}</div>
+    <div class="trend-stat-label">${escapeHtml(label)}</div>
+    ${subHtml ? `<div class="trend-stat-sub">${subHtml}</div>` : ''}
+  </div>`;
+}
+
+function _trendStatBlock(items){
+  let visible = (items || []).filter(Boolean);
+  if(!visible.length) return '';
+  return `<div class="trend-card trend-stat-card mb-3"><div class="trend-stat-grid">${visible.join('')}</div></div>`;
+}
+
+function _statsRow(items){
+  let visible = (items || []).filter(Boolean);
+  if(!visible.length) return '';
+  return `<div class="stats-row">${visible.join('')}</div>`;
+}
+
+function _statsInline(items){
+  let row = _statsRow(items);
+  return row ? `<div class="stats-inline-row">${row}</div>` : '';
+}
+
+function _appendStatsToTrend(trendHtml, items){
+  let visible = (items || []).filter(Boolean);
+  if(!visible.length) return trendHtml || '';
+  if(!trendHtml) return _trendStatBlock(visible);
+  if(String(trendHtml).indexOf('trend-stat-grid') >= 0) {
+    let marker = '</div></div>';
+    let idx = trendHtml.lastIndexOf(marker);
+    if(idx >= 0) return trendHtml.slice(0, idx) + visible.join('') + trendHtml.slice(idx);
+  }
+  let inline = _statsInline(visible);
+  let idx = trendHtml.lastIndexOf('</div>');
+  return idx >= 0 ? (trendHtml.slice(0, idx) + inline + trendHtml.slice(idx)) : (trendHtml + inline);
+}
+
+function _statsBlock(title, items, icon){
+  let row = _statsRow(items);
+  return row ? `<div class="trend-card stats-block">${row}</div>` : '';
 }
 
 // Trend kartı için minimum sınav sayısı (regresyonun anlamlı olması için).
@@ -1063,8 +1126,8 @@ function buildSingleExamCards(stu, examType, curExam, prevExam, stGrade){
       <div class="sec-sub">Net: ${netTxt}${rankBits.length?' · '+rankBits.join(' · '):''}</div>
     </div></div></div>`;
 
-  // Card 2: Önceki Sınava Fark
-  let card2;
+  // İstatistik: Önceki sınava göre fark
+  let prevStatsHtml;
   if(prevExam){
     let dN = curExam.totalNet - prevExam.totalNet;
     let dS = (curExam.score||0) - (prevExam.score||0);
@@ -1073,21 +1136,25 @@ function buildSingleExamCards(stu, examType, curExam, prevExam, stGrade){
     let sign = dN > 0 ? '+' : '';
     let signS = dS > 0 ? '+' : '';
     let _pubP = prevExam.publisher ? ` (${toTitleCase(prevExam.publisher)})` : '';
-    card2 = `<div class="col-12 col-md-3"><div class="sec-card ${cls}">
-      <div class="sec-icon"><i class="fas ${icon}"></i></div>
-      <div class="sec-body">
-        <div class="sec-label">Önceki Sınava Fark</div>
-        <div class="sec-value">${sign}${dN.toFixed(2)} <small class="sec-unit">net</small></div>
-        <div class="sec-sub">Puan: ${signS}${dS.toFixed(2)} · ${prevExam.date}${_pubP}</div>
-      </div></div></div>`;
+    prevStatsHtml = _statsBlock('', [
+      _statItem(
+        'Önceki Sınava Fark',
+        `${sign}${dN.toFixed(2)} <small class="sec-unit">net</small>`,
+        `Puan: ${signS}${dS.toFixed(2)} · ${prevExam.date}${_pubP}`,
+        'Seçili sınav ile önceki sınav arasındaki toplam net ve puan değişimi.',
+        _statTone(cls)
+      )
+    ], 'fa-chart-line');
   } else {
-    card2 = `<div class="col-12 col-md-3"><div class="sec-card sec-neutral">
-      <div class="sec-icon"><i class="fas fa-minus"></i></div>
-      <div class="sec-body">
-        <div class="sec-label">Önceki Sınava Fark</div>
-        <div class="sec-value">—</div>
-        <div class="sec-sub">Önceki sınav verisi yok</div>
-      </div></div></div>`;
+    prevStatsHtml = _statsBlock('', [
+      _statItem(
+        'Önceki Sınava Fark',
+        '—',
+        'Önceki sınav verisi yok',
+        'Seçili sınav ile önceki sınav arasındaki toplam net ve puan değişimi.',
+        'stat-neutral'
+      )
+    ], 'fa-chart-line');
   }
 
   // Cards 3 & 4: En Başarılı / En Zayıf Ders
@@ -1137,7 +1204,7 @@ function buildSingleExamCards(stu, examType, curExam, prevExam, stGrade){
     card3 = neutral('En Başarılı Ders','fa-trophy');
     card4 = neutral('En Zayıf Ders','fa-exclamation-triangle');
   }
-  return `<div class="row">${card1}${card2}${card3}${card4}</div>`;
+  return `<div class="row">${card1}${card3}${card4}</div>${prevStatsHtml}`;
 }
 
 // ---- buildStuBoxPlots (orig lines 2503-2550) ----
@@ -1282,26 +1349,26 @@ function rAnl(){
           if(clsTN.length >= 3 || insTN.length >= 3) {
             let _clsZCls = _clsTNZ===null?'sec-neutral':(_clsTNZ>0?'sec-pos':(_clsTNZ<0?'sec-neg':'sec-neutral'));
             let _insZCls = _insTNZ===null?'sec-neutral':(_insTNZ>0?'sec-pos':(_insTNZ<0?'sec-neg':'sec-neutral'));
-            seExtraCardsHtml += `<div class="row mt-2">`;
+            let seStatsItems = [];
             if(clsTN.length >= 3) {
-              seExtraCardsHtml += `<div class="col-12 col-md-3"><div class="sec-card ${_clsZCls}">
-                <div class="sec-icon"><i class="fas fa-chart-bar"></i></div>
-                <div class="sec-body"><div class="sec-label">Sınıf İçi Konum</div>
-                <div class="sec-value">${_clsTNZ!==null?_clsTNZ.toFixed(2)+'σ':'—'}</div>
-                <div class="sec-sub">${_clsTNPerc!==null?'Top %'+(100-_clsTNPerc)+' · '+clsTN.length+' öğrenci':'Yetersiz veri'}</div>
-                ${_explain('Z-skoru: sınıf ortalamasından kaç standart sapma uzakta?')}
-                </div></div></div>`;
+              seStatsItems.push(_statItem(
+                'Sınıf İçi Konum',
+                `${_clsTNZ!==null?_clsTNZ.toFixed(2)+'σ':'—'}`,
+                `${_clsTNPerc!==null?'Top %'+(100-_clsTNPerc)+' · '+clsTN.length+' öğrenci':'Yetersiz veri'}`,
+                'Z-skoru: sınıf ortalamasından kaç standart sapma uzakta?',
+                _statTone(_clsZCls)
+              ));
             }
             if(insTN.length >= 3) {
-              seExtraCardsHtml += `<div class="col-12 col-md-3"><div class="sec-card ${_insZCls}">
-                <div class="sec-icon"><i class="fas fa-school"></i></div>
-                <div class="sec-body"><div class="sec-label">Kurum İçi Konum</div>
-                <div class="sec-value">${_insTNZ!==null?_insTNZ.toFixed(2)+'σ':'—'}</div>
-                <div class="sec-sub">${_insTNPerc!==null?'Top %'+(100-_insTNPerc)+' · '+insTN.length+' öğrenci':'Yetersiz veri'}</div>
-                ${_explain('Z-skoru: kurum ortalamasından kaç standart sapma uzakta?')}
-                </div></div></div>`;
+              seStatsItems.push(_statItem(
+                'Kurum İçi Konum',
+                `${_insTNZ!==null?_insTNZ.toFixed(2)+'σ':'—'}`,
+                `${_insTNPerc!==null?'Top %'+(100-_insTNPerc)+' · '+insTN.length+' öğrenci':'Yetersiz veri'}`,
+                'Z-skoru: kurum ortalamasından kaç standart sapma uzakta?',
+                _statTone(_insZCls)
+              ));
             }
-            seExtraCardsHtml += `</div>`;
+            seExtraCardsHtml += _statsBlock('', seStatsItems, 'fa-chart-bar');
           }
 
           // Katılım oranı (bu sınav türüne genel katılım)
@@ -1416,30 +1483,35 @@ function rAnl(){
           <div class="sec-sub">${dog!==null?'D:'+dog+' Y:'+yan+(bos!==null?' B:'+bos:''):'Detay yok'}</div>
           </div></div></div>`;
 
-        let card2 = `<div class="col-12 col-md-3"><div class="sec-card ${dCls}">
-          <div class="sec-icon"><i class="fas ${dIcon}"></i></div>
-          <div class="sec-body"><div class="sec-label">Önceki Sınava Fark</div>
-          <div class="sec-value">${delta!==null?dSign+delta.toFixed(2):'—'} <small class="sec-unit">net</small></div>
-          <div class="sec-sub">${prevNet!==null?'Önceki: '+prevNet.toFixed(2):'Önceki veri yok'}</div>
-          </div></div></div>`;
+        let subjectDeltaItem = _statItem(
+          'Önceki Sınava Fark',
+          `${delta!==null?dSign+delta.toFixed(2):'—'} <small class="sec-unit">net</small>`,
+          `${prevNet!==null?'Önceki: '+prevNet.toFixed(2):'Önceki veri yok'}`,
+          'Seçili derste önceki sınava göre net değişimi.',
+          _statTone(dCls)
+        );
 
         let _fC = (net!==null&&clsA!==null)?(net-clsA):null;
         let _fI = (net!==null&&insA!==null)?(net-insA):null;
         let _fCs = _fC===null?'sec-neutral':(_fC>0?'sec-pos':(_fC<0?'sec-neg':'sec-neutral'));
         let _fIs = _fI===null?'sec-neutral':(_fI>0?'sec-pos':(_fI<0?'sec-neg':'sec-neutral'));
-        let card3 = `<div class="col-12 col-md-3"><div class="sec-card ${_fCs}">
-          <div class="sec-icon"><i class="fas fa-users"></i></div>
-          <div class="sec-body"><div class="sec-label">Sınıf Karşılaştırma</div>
-          <div class="sec-value">${clsA!==null?clsA.toFixed(2):'—'} <small class="sec-unit-muted">ort</small></div>
-          <div class="sec-sub">Fark: ${_fC!==null?(_fC>0?'+':'')+_fC.toFixed(2):'—'}${clsZ!==null?' · Z: '+clsZ.toFixed(2):''}${clsPerc!==null?' · Top %'+(100-clsPerc):''}</div>
-          </div></div></div>`;
-
-        let card4 = `<div class="col-12 col-md-3"><div class="sec-card ${_fIs}">
-          <div class="sec-icon"><i class="fas fa-school"></i></div>
-          <div class="sec-body"><div class="sec-label">Kurum Karşılaştırma</div>
-          <div class="sec-value">${insA!==null?insA.toFixed(2):'—'} <small class="sec-unit-muted">ort</small></div>
-          <div class="sec-sub">Fark: ${_fI!==null?(_fI>0?'+':'')+_fI.toFixed(2):'—'}${insZ!==null?' · Z: '+insZ.toFixed(2):''}${insPerc!==null?' · Top %'+(100-insPerc):''}</div>
-          </div></div></div>`;
+        let subjectStatsHtml = _statsBlock('', [
+          subjectDeltaItem,
+          _statItem(
+            'Sınıf Karşılaştırma',
+            `${clsA!==null?clsA.toFixed(2):'—'} <small class="sec-unit-muted">ort</small>`,
+            `Fark: ${_fC!==null?(_fC>0?'+':'')+_fC.toFixed(2):'—'}${clsZ!==null?' · Z: '+clsZ.toFixed(2):''}${clsPerc!==null?' · Top %'+(100-clsPerc):''}`,
+            'Öğrencinin bu dersteki netinin sınıf ortalamasına göre konumu.',
+            _statTone(_fCs)
+          ),
+          _statItem(
+            'Kurum Karşılaştırma',
+            `${insA!==null?insA.toFixed(2):'—'} <small class="sec-unit-muted">ort</small>`,
+            `Fark: ${_fI!==null?(_fI>0?'+':'')+_fI.toFixed(2):'—'}${insZ!==null?' · Z: '+insZ.toFixed(2):''}${insPerc!==null?' · Top %'+(100-insPerc):''}`,
+            'Öğrencinin bu dersteki netinin kurum ortalamasına göre konumu.',
+            _statTone(_fIs)
+          )
+        ], 'fa-chart-bar');
 
         // D/Y/B dağılım barı
         let dybBar = '';
@@ -1467,7 +1539,8 @@ function rAnl(){
             <span class="report-title-sub">Sınıf: ${stClassSafe} | ${_exLabelSafe}</span>
           </div>
           <div class="card-body report-card-body-spacious">
-            <div class="row">${card1}${card2}${card3}${card4}</div>
+            <div class="row">${card1}</div>
+            ${subjectStatsHtml}
             ${dybBar}
             ${singleBarHtml}
             ${trendCard}
@@ -1535,31 +1608,36 @@ function rAnl(){
           <div class="sec-sub">${curExam.date}${_pubLbl}</div>
           </div></div></div>`;
 
-        let card2 = `<div class="col-12 col-md-3"><div class="sec-card ${dCls}">
-          <div class="sec-icon"><i class="fas ${dIcon}"></i></div>
-          <div class="sec-body"><div class="sec-label">Önceki Sınava Fark</div>
-          <div class="sec-value">${delta!==null?dSign+(isRank?delta:delta.toFixed(2)):'—'}</div>
-          <div class="sec-sub">${prevVal!==null?'Önceki: '+fmtV(prevVal):'Önceki veri yok'}</div>
-          </div></div></div>`;
+        let metricDeltaItem = _statItem(
+          'Önceki Sınava Fark',
+          `${delta!==null?dSign+(isRank?delta:delta.toFixed(2)):'—'}`,
+          `${prevVal!==null?'Önceki: '+fmtV(prevVal):'Önceki veri yok'}`,
+          'Seçili ölçütte önceki sınava göre değişim. Sıra ölçütlerinde pozitif değer iyileşmeyi gösterir.',
+          _statTone(dCls)
+        );
 
         let _fC = (!isRank&&curVal!==null&&clsA!==null)?(curVal-clsA):null;
         let _fI = (!isRank&&curVal!==null&&insA!==null)?(curVal-insA):null;
         let _fCs2 = _fC===null?'sec-neutral':(_fC>0?'sec-pos':(_fC<0?'sec-neg':'sec-neutral'));
         let _fIs2 = _fI===null?'sec-neutral':(_fI>0?'sec-pos':(_fI<0?'sec-neg':'sec-neutral'));
 
-        let card3 = `<div class="col-12 col-md-3"><div class="sec-card ${_fCs2}">
-          <div class="sec-icon"><i class="fas fa-users"></i></div>
-          <div class="sec-body"><div class="sec-label">Sınıf ${isRank?'Sıra':'Karşılaştırma'}</div>
-          <div class="sec-value">${clsA!==null?fmtV(clsA):'—'} <small class="sec-unit-muted">ort</small></div>
-          <div class="sec-sub">${!isRank&&_fC!==null?'Fark: '+(_fC>0?'+':'')+_fC.toFixed(2):''}${clsZ!==null?' · Z: '+clsZ.toFixed(2):''}${clsPerc!==null?' · Top %'+(100-clsPerc):''}</div>
-          </div></div></div>`;
-
-        let card4 = `<div class="col-12 col-md-3"><div class="sec-card ${_fIs2}">
-          <div class="sec-icon"><i class="fas fa-school"></i></div>
-          <div class="sec-body"><div class="sec-label">Kurum ${isRank?'Sıra':'Karşılaştırma'}</div>
-          <div class="sec-value">${insA!==null?fmtV(insA):'—'} <small class="sec-unit-muted">ort</small></div>
-          <div class="sec-sub">${!isRank&&_fI!==null?'Fark: '+(_fI>0?'+':'')+_fI.toFixed(2):''}${insZ!==null?' · Z: '+insZ.toFixed(2):''}${insPerc!==null?' · Top %'+(100-insPerc):''}</div>
-          </div></div></div>`;
+        let metricStatsHtml = _statsBlock('', [
+          metricDeltaItem,
+          _statItem(
+            `Sınıf ${isRank?'Sıra':'Karşılaştırma'}`,
+            `${clsA!==null?fmtV(clsA):'—'} <small class="sec-unit-muted">ort</small>`,
+            isRank ? `${cvAll.length} öğrenci · düşük değer daha iyi` : `${!isRank&&_fC!==null?'Fark: '+(_fC>0?'+':'')+_fC.toFixed(2):''}${clsZ!==null?' · Z: '+clsZ.toFixed(2):''}${clsPerc!==null?' · Top %'+(100-clsPerc):''}`,
+            isRank ? 'Seçili sınavda sınıf içindeki ortalama sıra konumu.' : 'Seçili ölçütün sınıf ortalamasına göre farkı, Z-skoru ve yüzdelik konumu.',
+            _statTone(_fCs2)
+          ),
+          _statItem(
+            `Kurum ${isRank?'Sıra':'Karşılaştırma'}`,
+            `${insA!==null?fmtV(insA):'—'} <small class="sec-unit-muted">ort</small>`,
+            isRank ? `${ivAll.length} öğrenci · düşük değer daha iyi` : `${!isRank&&_fI!==null?'Fark: '+(_fI>0?'+':'')+_fI.toFixed(2):''}${insZ!==null?' · Z: '+insZ.toFixed(2):''}${insPerc!==null?' · Top %'+(100-insPerc):''}`,
+            isRank ? 'Seçili sınavda kurum içindeki ortalama sıra konumu.' : 'Seçili ölçütün kurum ortalamasına göre farkı, Z-skoru ve yüzdelik konumu.',
+            _statTone(_fIs2)
+          )
+        ], 'fa-chart-bar');
 
         let trendCard = _buildSingleMetricSparkline(no, eT, curExam, sb, ls);
 
@@ -1570,7 +1648,8 @@ function rAnl(){
             <span class="report-title-sub">Sınıf: ${stClassSafe} | ${_exLabelSafe}</span>
           </div>
           <div class="card-body report-card-body-spacious">
-            <div class="row">${card1}${card2}${card3}${card4}</div>
+            <div class="row">${card1}</div>
+            ${metricStatsHtml}
             <div class="single-exam-chart-title"><i class="fas fa-chart-line"></i>${escapeHtml(ls)} — Sınav Trend</div>
             <div class="chart-box chart-box-xl avoid-break"><canvas id="cA"></canvas></div>
             ${trendCard}
@@ -1735,6 +1814,7 @@ function rAnl(){
     let clsLabel=''; {let lv=getEl('aLvl').value,br=getBrVal(); if(lv&&br)clsLabel=lv+br; else if(lv)clsLabel=lv+'. Sınıflar'; else if(br)clsLabel=br; else clsLabel='Hepsi';}
     
     let clsPerfHtml = '';
+    let cohenHtml = '';
     let showCompCards = false;
     if(sortedClasses.length > 0 && allVals.length > 0) {
       let topCls = sortedClasses.map(clsName => { let cv = ex.filter(x=>x.studentClass===clsName).map(x=>{ if(sb==='score')return x.score; if(sb==='totalNet'||!sb)return x.totalNet; return x.subs[toTitleCase(sb.replace('s_',''))]?.net||0; }); return {cls: clsName, avg: cv.length?(cv.reduce((a,b)=>a+b,0)/cv.length):0, count: cv.length}; }).sort((a,b)=>b.avg-a.avg);
@@ -1778,7 +1858,6 @@ function rAnl(){
       //   Öğrenci başına ortalama, ölçeği eşitler ve gerçek grup farkını yansıtır.
       // Minimum n≥10 öğrenci: küçük örneklemlerde Cohen's d güvenilir değildir
       //   (standart hata büyür, etki büyüklüğü kolayca aşırı oynar).
-      let cohenHtml = '';
       if(showCompCards && sd.length >= 2) {
         // Her şube için öğrenci başına ortalama
         let _stuAvgsForCls = (cls) => {
@@ -1814,7 +1893,13 @@ function rAnl(){
             let compHtml = compLines.length > 0
               ? `<div class="comparison-list">${compLines.join('')}</div>`
               : `<div class="sec-sub">${labMain} fark — ${best.cls} vs ${worst.cls}</div>`;
-            cohenHtml = `<div class="col-12 col-md-4 col-lg flex-fill mb-2"><div class="sec-card h-100"><div class="sec-icon"><i class="fas fa-balance-scale"></i></div><div class="sec-body"><div class="sec-label">Şubeler Arası Etki Büyüklüğü (Cohen's d)</div><div class="sec-value" style="--metric-color:${dColorMain}; color:var(--metric-color);">d = ${dMain.toFixed(2)}</div>${compHtml}</div></div></div>`;
+            cohenHtml = _trendStatItem(
+              "Şubeler Arası Etki Büyüklüğü (Cohen's d)",
+              `<span style="color:${dColorMain};">d = ${dMain.toFixed(2)}</span>`,
+              `${escapeHtml(labMain)} · ${escapeHtml(best.cls)} vs ${escapeHtml(worst.cls)}`,
+              "Cohen's d: en güçlü şube ile karşılaştırılan şubeler arasındaki standartlaştırılmış ortalama farkı.",
+              ''
+            );
           }
         }
       }
@@ -1851,7 +1936,6 @@ function rAnl(){
           <div class="row mb-3">
             <div class="col-12 col-md-4 col-lg flex-fill mb-2"><div class="sec-card sec-pos h-100"><div class="sec-icon"><i class="fas fa-trophy"></i></div><div class="sec-body"><div class="sec-label">En İyi Sınıf</div><div class="sec-value">${best.cls}</div><div class="sec-sub">Ort: ${best.avg.toFixed(2)}</div></div></div></div>
             <div class="col-12 col-md-4 col-lg flex-fill mb-2"><div class="sec-card sec-neg h-100"><div class="sec-icon"><i class="fas fa-exclamation-circle"></i></div><div class="sec-body"><div class="sec-label">En Düşük Sınıf</div><div class="sec-value">${worst.cls}</div><div class="sec-sub">Ort: ${worst.avg.toFixed(2)}</div></div></div></div>
-            ${cohenHtml}
           </div>`;
       } else {
         // Tek şube seçili ama singleExam değil
@@ -1966,46 +2050,58 @@ function rAnl(){
         let clsTR2Lab = clsTR2 >= 0.65 ? 'Güçlü trend' : (clsTR2 >= clsTR2Thr ? 'Orta trend' : 'Zayıf trend');
         let clsTR2Col = clsTR2 >= 0.65 ? '#28a745'     : (clsTR2 >= clsTR2Thr ? '#fd7e14'   : '#dc3545');
 
-        clsTrendHtml = `<div class="trend-card mb-3"><div class="row align-items-center">
-          <div class="col-12 col-md-2 text-center mb-2 mb-md-0" title="Sınıf ortalamasının zaman içindeki yönü">
-            <span class="trend-indicator ${clsTClass}"><i class="fas ${clsTIcon} me-1"></i>${clsTText}</span>
-            <div class="mt-2 small text-muted"><strong>Genel Eğilim</strong></div>
-            <div class="x-small text-muted">Sınıf ortalamasının yönü</div>
-          </div>
-          <div class="col-12 col-md-2 text-center border-left mb-2 mb-md-0" title="İlk sınavdan son sınava ortalamadaki net değişim (regresyon)">
-            <div class="trend-metric-value" style="--metric-color:${clsTColor};">${clsTSign}${clsTTotal.toFixed(2)}</div>
-            <div class="small text-muted"><strong>Toplam Net Değişimi</strong></div>
-            <div class="x-small text-muted">Süreç Boyunca</div>
-          </div>
-          <div class="col-12 col-md-2 text-center border-left mb-2 mb-md-0" title="Her yeni sınavda beklenen ortalama değişim">
-            <div class="trend-metric-value" style="--metric-color:${clsTColor};">${clsSSign}${clsTSlope.toFixed(2)}</div>
-            <div class="small text-muted"><strong>Sınav Başına Değişim</strong></div>
-            <div class="x-small text-muted">(Regresyon Analizi)</div>
-          </div>
-          <div class="col-12 col-md-2 text-center border-left mb-2 mb-md-0" title="Analize dahil edilen toplam sınav sayısı">
-            <div class="trend-metric-value">${dateAvgSeries.length}</div>
-            <div class="small text-muted"><strong>Sınav Sayısı</strong></div>
-            <div class="x-small text-muted">Trend hesabına dahil</div>
-          </div>
-          <div class="col-12 col-md-2 text-center border-left mb-2 mb-md-0" title="Öğrencilerin ortalama etrafındaki dağılımı (örneklem standart sapması, n-1). Düşük = homojen sınıf.">
-            <div class="trend-metric-value trend-tone-purple">±${ssVal.toFixed(2)}</div>
-            <div class="small text-muted"><strong>Sınıf İçi Dağılım</strong></div>
-            <div class="x-small text-muted">${_consistencyLabelC}</div>
-          </div>
-          <div class="col-12 col-md-2 text-center border-left mb-2 mb-md-0" title="En yüksek ortalamalı sınıf ile en düşük arasındaki fark">
-            <div class="trend-metric-value text-warning">${mmDiff !== null ? mmDiff.toFixed(2) : '—'}</div>
-            <div class="small text-muted"><strong>Şubeler Arası Fark</strong></div>
-            <div class="x-small text-muted">En iyi − en düşük şube</div>
-          </div>
-        </div>
-        <div class="row mt-2 pt-2 border-top">
-          <div class="col-12 text-center" title="R² (determinasyon katsayısı): 1'e yakınsa trend veriye iyi uyuyor, 0'a yakınsa gürültülü. Adaptif eşik: n=${dateAvgSeries.length} sınav için min R²=${clsTR2Thr.toFixed(2)}.">
-            <span class="x-small text-muted">Trend Güvenilirliği (R²):&nbsp;</span>
-            <strong class="trend-r2-value" style="--metric-color:${clsTR2Col};">${clsTR2.toFixed(2)}</strong>
-            <span class="x-small text-muted ms-1">— ${clsTR2Lab}</span>
-          </div>
-        </div>
-        </div>`;
+        clsTrendHtml = _trendStatBlock([
+          _trendStatItem(
+            'Genel Eğilim',
+            `<span class="trend-indicator ${clsTClass}"><i class="fas ${clsTIcon} me-1"></i>${clsTText}</span>`,
+            'Sınıf ortalamasının yönü',
+            'Sınıf ortalamasının zaman içindeki yönü',
+            ''
+          ),
+          _trendStatItem(
+            'Toplam Net Değişimi',
+            `<span style="--metric-color:${clsTColor}; color:var(--metric-color);">${clsTSign}${clsTTotal.toFixed(2)}</span>`,
+            'Süreç boyunca',
+            'İlk sınavdan son sınava ortalamadaki net değişim (regresyon)',
+            ''
+          ),
+          _trendStatItem(
+            'Sınav Başına Değişim',
+            `<span style="--metric-color:${clsTColor}; color:var(--metric-color);">${clsSSign}${clsTSlope.toFixed(2)}</span>`,
+            'Regresyon analizi',
+            'Her yeni sınavda beklenen ortalama değişim',
+            ''
+          ),
+          _trendStatItem(
+            'Sınav Sayısı',
+            `${dateAvgSeries.length}`,
+            'Trend hesabına dahil',
+            'Analize dahil edilen toplam sınav sayısı',
+            ''
+          ),
+          _trendStatItem(
+            'Sınıf İçi Dağılım',
+            `<span class="trend-tone-purple">±${ssVal.toFixed(2)}</span>`,
+            _consistencyLabelC,
+            'Öğrencilerin ortalama etrafındaki dağılımı (örneklem standart sapması, n-1). Düşük = homojen sınıf.',
+            ''
+          ),
+          _trendStatItem(
+            'Şubeler Arası Fark',
+            `<span class="text-warning">${mmDiff !== null ? mmDiff.toFixed(2) : '—'}</span>`,
+            'En iyi - en düşük şube',
+            'En yüksek ortalamalı sınıf ile en düşük arasındaki fark',
+            ''
+          ),
+          _trendStatItem(
+            'Trend Güvenilirliği (R²)',
+            `<span style="--metric-color:${clsTR2Col}; color:var(--metric-color);">${clsTR2.toFixed(2)}</span>`,
+            clsTR2Lab,
+            `R² (determinasyon katsayısı): 1'e yakınsa trend veriye iyi uyuyor, 0'a yakınsa gürültülü. Adaptif eşik: n=${dateAvgSeries.length} sınav için min R²=${clsTR2Thr.toFixed(2)}.`,
+            ''
+          ),
+          cohenHtml
+        ]);
       }
     }
 
@@ -2158,58 +2254,68 @@ function rAnl(){
         let subjR2Lab = subjR2 >= 0.65 ? 'Güçlü trend' : (subjR2 >= subjR2Thr ? 'Orta trend' : 'Zayıf trend');
         let subjR2Col = subjR2 >= 0.65 ? '#28a745'     : (subjR2 >= subjR2Thr ? '#fd7e14'   : '#dc3545');
 
-        subjTrendHtml = `<div class="trend-card mb-3"><div class="row align-items-center">
-          <div class="col-12 col-md-2 text-center mb-2 mb-md-0" title="Bu dersin ortalamasının zaman içindeki yönü">
-            <span class="trend-indicator ${subjTClass}"><i class="fas ${subjTIcon} me-1"></i>${subjTText}</span>
-            <div class="mt-2 small text-muted"><strong>Genel Eğilim</strong></div>
-            <div class="x-small text-muted">Ders ortalamasının yönü</div>
-          </div>
-          <div class="col-12 col-md-2 text-center border-left mb-2 mb-md-0" title="İlk sınavdan son sınava ders ortalamasındaki değişim (regresyon)">
-            <div class="trend-metric-value" style="--metric-color:${subjTColor};">${subjTSign}${subjTotal.toFixed(2)}</div>
-            <div class="small text-muted"><strong>Toplam Net Değişimi</strong></div>
-            <div class="x-small text-muted">Süreç Boyunca</div>
-          </div>
-          <div class="col-12 col-md-2 text-center border-left mb-2 mb-md-0" title="Her yeni sınavda derste beklenen değişim">
-            <div class="trend-metric-value" style="--metric-color:${subjTColor};">${subjSSign}${subjSlope.toFixed(2)}</div>
-            <div class="small text-muted"><strong>Sınav Başına Değişim</strong></div>
-            <div class="x-small text-muted">(Regresyon Analizi)</div>
-          </div>
-          <div class="col-12 col-md-2 text-center border-left mb-2 mb-md-0" title="Trend hesabına dahil edilen toplam sınav sayısı">
-            <div class="trend-metric-value">${subjDateAvgSeries.length}</div>
-            <div class="small text-muted"><strong>Sınav Sayısı</strong></div>
-            <div class="x-small text-muted">Bu dersi içeren sınavlar</div>
-          </div>
-          <div class="col-12 col-md-2 text-center border-left mb-2 mb-md-0" title="Öğrenci netlerinin ortalama etrafındaki dağılımı (örneklem standart sapması, n-1)">
-            <div class="trend-metric-value trend-tone-purple">±${subjSS.toFixed(2)}</div>
-            <div class="small text-muted"><strong>Öğrenciler Arası Dağılım</strong></div>
-            <div class="x-small text-muted">${_consistencyLabelS}</div>
-          </div>
-          <div class="col-12 col-md-2 text-center border-left mb-2 mb-md-0" title="Bu derste en yüksek ve en düşük sınıf ortalaması arasındaki fark">
-            <div class="trend-metric-value text-warning">${subjMMDiff !== null ? subjMMDiff.toFixed(2) : '—'}</div>
-            <div class="small text-muted"><strong>Sınıflar Arası Fark</strong></div>
-            <div class="x-small text-muted">En iyi − en düşük sınıf</div>
-          </div>
-        </div>
-        <div class="row mt-2 pt-2 border-top">
-          <div class="col-12 text-center" title="R² (determinasyon katsayısı): 1'e yakınsa ders trendi güçlü, 0'a yakınsa gürültülü. Adaptif eşik: n=${subjDateAvgSeries.length} sınav için min R²=${subjR2Thr.toFixed(2)}.">
-            <span class="x-small text-muted">Trend Güvenilirliği (R²):&nbsp;</span>
-            <strong class="trend-r2-value" style="--metric-color:${subjR2Col};">${subjR2.toFixed(2)}</strong>
-            <span class="x-small text-muted ms-1">— ${subjR2Lab}</span>
-          </div>
-        </div>
-        </div>`;
+        subjTrendHtml = _trendStatBlock([
+          _trendStatItem(
+            'Genel Eğilim',
+            `<span class="trend-indicator ${subjTClass}"><i class="fas ${subjTIcon} me-1"></i>${subjTText}</span>`,
+            'Ders ortalamasının yönü',
+            'Bu dersin ortalamasının zaman içindeki yönü',
+            ''
+          ),
+          _trendStatItem(
+            'Toplam Net Değişimi',
+            `<span style="--metric-color:${subjTColor}; color:var(--metric-color);">${subjTSign}${subjTotal.toFixed(2)}</span>`,
+            'Süreç boyunca',
+            'İlk sınavdan son sınava ders ortalamasındaki değişim (regresyon)',
+            ''
+          ),
+          _trendStatItem(
+            'Sınav Başına Değişim',
+            `<span style="--metric-color:${subjTColor}; color:var(--metric-color);">${subjSSign}${subjSlope.toFixed(2)}</span>`,
+            'Regresyon analizi',
+            'Her yeni sınavda derste beklenen değişim',
+            ''
+          ),
+          _trendStatItem(
+            'Sınav Sayısı',
+            `${subjDateAvgSeries.length}`,
+            'Bu dersi içeren sınavlar',
+            'Trend hesabına dahil edilen toplam sınav sayısı',
+            ''
+          ),
+          _trendStatItem(
+            'Öğrenciler Arası Dağılım',
+            `<span class="trend-tone-purple">±${subjSS.toFixed(2)}</span>`,
+            _consistencyLabelS,
+            'Öğrenci netlerinin ortalama etrafındaki dağılımı (örneklem standart sapması, n-1)',
+            ''
+          ),
+          _trendStatItem(
+            'Sınıflar Arası Fark',
+            `<span class="text-warning">${subjMMDiff !== null ? subjMMDiff.toFixed(2) : '—'}</span>`,
+            'En iyi - en düşük sınıf',
+            'Bu derste en yüksek ve en düşük sınıf ortalaması arasındaki fark',
+            ''
+          ),
+          _trendStatItem(
+            'Trend Güvenilirliği (R²)',
+            `<span style="--metric-color:${subjR2Col}; color:var(--metric-color);">${subjR2.toFixed(2)}</span>`,
+            subjR2Lab,
+            `R² (determinasyon katsayısı): 1'e yakınsa ders trendi güçlü, 0'a yakınsa gürültülü. Adaptif eşik: n=${subjDateAvgSeries.length} sınav için min R²=${subjR2Thr.toFixed(2)}.`,
+            ''
+          )
+        ]);
       }
     }
 
-    // Ders Analizi Cohen's d: satır 2'de inline col olarak üretiliyor (aşağıda subjCohenColHtml)
+    // Ders Analizi Cohen's d: bilgi kartlarından ayrılıp kompakt istatistik bloğunda gösterilir.
     let subjCohenHtml = ''; // (artık doğrudan kullanılmıyor, uyumluluk için tutuldu)
 
-    // Ders Analizi — Şube "Tümü" iken En İyi / En Zayıf Sınıf + Cohen's d inline kartları
+    // Ders Analizi — Şube "Tümü" iken En İyi / En Zayıf Sınıf + Cohen's d istatistik bloğu
     let subjBestClsObj  = clsArr.length > 0 ? clsArr[0] : null;
     let subjWorstClsObj = clsArr.length > 1 ? clsArr[clsArr.length - 1] : null;
 
-    // Cohen's d kartı satır 2'ye (subjCohenColHtml) entegre edildi
-    let subjCohenColHtml = '';
+    let subjStatsHtml = '';
     if(!br && clsArr.length >= 2) {
       let subjBestClsN  = clsArr[0].cls;
       let _subjStuAvgs2 = (cls) => {
@@ -2244,10 +2350,17 @@ function rAnl(){
           let subjCompHtml = subjCompLines.length > 0
             ? `<div class="comparison-list">${subjCompLines.join('')}</div>`
             : `<div class="sec-sub">${subjDLab2} fark — ${subjBestClsN} vs ${subjWorstClsN2}</div>`;
-          subjCohenColHtml = `<div class="col-12 col-md-4 col-lg flex-fill mb-2"><div class="sec-card h-100"><div class="sec-icon"><i class="fas fa-balance-scale"></i></div><div class="sec-body"><div class="sec-label">Şubeler Arası Etki Büyüklüğü (Cohen's d)</div><div class="sec-value" style="--metric-color:${subjDCol2}; color:var(--metric-color);">d = ${subjD2.toFixed(2)}</div>${subjCompHtml}</div></div></div>`;
+          subjStatsHtml = _trendStatItem(
+            "Şubeler Arası Etki Büyüklüğü (Cohen's d)",
+            `<span style="color:${subjDCol2};">d = ${subjD2.toFixed(2)}</span>`,
+            `${escapeHtml(subjDLab2)} · ${escapeHtml(subjBestClsN)} vs ${escapeHtml(subjWorstClsN2)}`,
+            "Cohen's d: en güçlü sınıf ile karşılaştırılan sınıflar arasındaki standartlaştırılmış ortalama farkı.",
+            ''
+          );
         }
       }
     }
+    subjTrendHtml = _appendStatsToTrend(subjTrendHtml, [subjStatsHtml]);
 
     // Satır 1: Toplam Kayıt | Katılım Oranı | Genel Ortalama
     let subjRow1Html = `<div class="row mb-2">
@@ -2257,13 +2370,12 @@ function rAnl(){
     </div>`;
 
     // Satır 2 (yalnızca Şube=Tümü ve birden fazla sınıf varsa):
-    // En İyi Sınıf | En Zayıf Sınıf | Şubeler Arası Etki Büyüklüğü (Cohen's d)
+    // En İyi Sınıf | En Zayıf Sınıf
     let subjRow2Html = '';
     if(!br && clsArr.length > 1) {
       subjRow2Html = `<div class="row mb-2">
         <div class="col-12 col-md-4 col-lg flex-fill mb-2"><div class="sec-card sec-pos h-100"><div class="sec-icon"><i class="fas fa-school"></i></div><div class="sec-body"><div class="sec-label">En İyi Sınıf</div><div class="sec-value">${subjBestClsObj.cls}</div><div class="sec-sub">Ort: ${subjBestClsObj.avg.toFixed(2)} Net</div></div></div></div>
         <div class="col-12 col-md-4 col-lg flex-fill mb-2"><div class="sec-card sec-neg h-100"><div class="sec-icon"><i class="fas fa-exclamation-circle"></i></div><div class="sec-body"><div class="sec-label">En Zayıf Sınıf</div><div class="sec-value">${subjWorstClsObj.cls}</div><div class="sec-sub">Ort: ${subjWorstClsObj.avg.toFixed(2)} Net</div></div></div></div>
-        ${subjCohenColHtml}
       </div>`;
     }
 
@@ -2443,11 +2555,29 @@ function rAnl(){
               <div class="row mt-2">
                 <div class="col-12"><div class="sec-card"><div class="sec-icon"><i class="fas fa-chart-bar"></i></div><div class="sec-body"><div class="sec-label">Ortalama Net <small class="sec-label-note">(Tüm Sınavlar)</small></div><div class="sec-value">${_gsMean.toFixed(2)} <span class="sec-inline-summary">(${Object.keys(_gsClsAvg).sort().map(cls=>`${escapeHtml(cls)}: ${(_gsClsAvg[cls].reduce((a,b)=>a+b,0)/_gsClsAvg[cls].length).toFixed(2)}`).join('  ')})</span></div></div></div></div>
               </div>
-              <div class="row mt-2">
-                <div class="col-12 col-md-4"><div class="sec-card"><div class="sec-icon"><i class="fas fa-arrows-alt-h"></i></div><div class="sec-body"><div class="sec-label">Ortalamadan Uzaklık</div><div class="sec-value">±${_gsStd.toFixed(2)}</div><div class="sec-sub">Standart sapma · ${_gsHomLab}</div>${_explain('Öğrencilerin tüm sınav ortalamalarının genel ortalama etrafındaki yayılımı. Düşükse grup homojen.')}</div></div></div>
-                <div class="col-12 col-md-4"><div class="sec-card"><div class="sec-icon"><i class="fas fa-equals"></i></div><div class="sec-body"><div class="sec-label">Medyan Net</div><div class="sec-value">${_gsMed.toFixed(2)}</div><div class="sec-sub">Ortalama: ${_gsMean.toFixed(2)}</div>${_explain('Öğrenciler kendi sınav ortalamalarına göre sıralandığında ortadaki değer. Ortalamadan belirgin farklıysa dağılım çarpıktır.')}</div></div></div>
-                <div class="col-12 col-md-4"><div class="sec-card"><div class="sec-icon"><i class="fas fa-grip-lines-vertical"></i></div><div class="sec-body"><div class="sec-label">Çeyrekler Arası Aralık (IQR)</div><div class="sec-value" style="color:${_gsIqrColor};">${_gsQ.iqr.toFixed(2)}</div><div class="sec-sub" style="color:${_gsIqrColor};font-weight:600;">${_gsIqrLabel}</div><div class="sec-sub">Q1: ${_gsQ.q1.toFixed(2)} · Q3: ${_gsQ.q3.toFixed(2)}</div></div></div></div>
-              </div>`;
+              ${_trendStatBlock([
+                _trendStatItem(
+                  'Ortalamadan Uzaklık (Standart Sapma)',
+                  `±${_gsStd.toFixed(2)}`,
+                  `Standart sapma · ${_gsHomLab}`,
+                  'Öğrencilerin tüm sınav ortalamalarının genel ortalama etrafındaki yayılımı. Düşükse grup homojen.',
+                  ''
+                ),
+                _trendStatItem(
+                  'Medyan Net',
+                  `${_gsMed.toFixed(2)}`,
+                  `Ortalama: ${_gsMean.toFixed(2)}`,
+                  'Öğrenciler kendi sınav ortalamalarına göre sıralandığında ortadaki değer. Ortalamadan belirgin farklıysa dağılım çarpıktır.',
+                  ''
+                ),
+                _trendStatItem(
+                  'Çeyrekler Arası Aralık (IQR)',
+                  `<span style="color:${_gsIqrColor};">${_gsQ.iqr.toFixed(2)}</span>`,
+                  `<span style="color:${_gsIqrColor};font-weight:600;">${_gsIqrLabel}</span><br>Q1: ${_gsQ.q1.toFixed(2)} · Q3: ${_gsQ.q3.toFixed(2)}`,
+                  'IQR, öğrencilerin orta yüzde 50’lik bölümünün genişliğini gösterir; büyüdükçe seviye farkı artar.',
+                  ''
+                )
+              ])}`;
         }
 
         let h = `<div class="d-flex justify-content-end mb-2 no-print"><button class="btn-print no-print" onclick="xPR('pGenSummary',${jsArg(safeName)},this)"><i class='fas fa-print me-1'></i>Yazdır</button></div>
@@ -2617,11 +2747,29 @@ function rAnl(){
           else if(_iqrRatio < 0.40) { _iqrColor = '#fd7e14'; _iqrLabel = 'Seviye Farkı Var (Dikkat!)'; }
           else                      { _iqrColor = '#dc3545'; _iqrLabel = 'Kritik Kopukluk (Uçurum!)'; }
         }
-        examStatsHtml = `<div class="row mt-2">
-          <div class="col-12 col-md-4"><div class="sec-card"><div class="sec-icon"><i class="fas fa-arrows-alt-h"></i></div><div class="sec-body"><div class="sec-label">Ortalamadan Uzaklık</div><div class="sec-value">±${_eStd.toFixed(2)}</div><div class="sec-sub">Standart sapma · ${_eHomLab}</div>${_explain('Öğrenci netlerinin ortalama etrafındaki yayılımı. Düşükse grup homojen.')}</div></div></div>
-          <div class="col-12 col-md-4"><div class="sec-card"><div class="sec-icon"><i class="fas fa-equals"></i></div><div class="sec-body"><div class="sec-label">Medyan Net</div><div class="sec-value">${_eMed.toFixed(2)}</div><div class="sec-sub">Ortalama: ${_eMean.toFixed(2)}</div>${_explain('Sıralandığında ortadaki öğrencinin neti. Aşırı uçlardan etkilenmez; ortalamadan farklıysa dağılım çarpıktır.')}</div></div></div>
-          <div class="col-12 col-md-4"><div class="sec-card"><div class="sec-icon"><i class="fas fa-grip-lines-vertical"></i></div><div class="sec-body"><div class="sec-label">Çeyrekler Arası Aralık (IQR)</div><div class="sec-value" style="color:${_iqrColor};">${_eQ.iqr.toFixed(2)}</div><div class="sec-sub" style="color:${_iqrColor};font-weight:600;">${_iqrLabel}</div><div class="sec-sub">Q1: ${_eQ.q1.toFixed(2)} · Q3: ${_eQ.q3.toFixed(2)}</div></div></div></div>
-        </div>`;
+        examStatsHtml = _trendStatBlock([
+          _trendStatItem(
+            'Ortalamadan Uzaklık (Standart Sapma)',
+            `±${_eStd.toFixed(2)}`,
+            `Standart sapma · ${_eHomLab}`,
+            'Öğrenci netlerinin ortalama etrafındaki yayılımı. Düşükse grup homojen.',
+            ''
+          ),
+          _trendStatItem(
+            'Medyan Net',
+            `${_eMed.toFixed(2)}`,
+            `Ortalama: ${_eMean.toFixed(2)}`,
+            'Sıralandığında ortadaki öğrencinin neti. Aşırı uçlardan etkilenmez; ortalamadan farklıysa dağılım çarpıktır.',
+            ''
+          ),
+          _trendStatItem(
+            'Çeyrekler Arası Aralık (IQR)',
+            `<span style="color:${_iqrColor};">${_eQ.iqr.toFixed(2)}</span>`,
+            `<span style="color:${_iqrColor};font-weight:600;">${_iqrLabel}</span><br>Q1: ${_eQ.q1.toFixed(2)} · Q3: ${_eQ.q3.toFixed(2)}`,
+            'IQR, öğrencilerin orta yüzde 50’lik bölümünün genişliğini gösterir; büyüdükçe seviye farkı artar.',
+            ''
+          )
+        ]);
       }
 
       // Katılmayan öğrenci listesi: "Katılım %82" kartı hangi %18'in kim olduğunu söylemiyor.

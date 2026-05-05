@@ -19,6 +19,62 @@ function routeBase() {
   return window.location.pathname + window.location.search;
 }
 
+function mediaMatches(query, fallback) {
+  try {
+    if(window.matchMedia) return window.matchMedia(query).matches;
+  } catch(e) {}
+  return fallback;
+}
+
+function isLikelyDesktopSiteRequest() {
+  const ua = navigator.userAgent || '';
+  let uaDataMobile = null;
+  try {
+    if(navigator.userAgentData && typeof navigator.userAgentData.mobile === 'boolean') {
+      uaDataMobile = navigator.userAgentData.mobile;
+    }
+  } catch(e) {}
+
+  const coarsePointer = mediaMatches('(pointer: coarse)', false);
+  const touchDevice = coarsePointer || (navigator.maxTouchPoints || 0) > 0;
+  const mobileUa = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(ua);
+  const narrowLayout = mediaMatches('(max-width: 991px)', window.innerWidth < 992);
+  const screenShortSide = window.screen ? Math.min(window.screen.width || 0, window.screen.height || 0) : 0;
+  const desktopLikeViewport = touchDevice && screenShortSide > 0 && window.innerWidth >= 900 && window.innerWidth > screenShortSide * 1.35;
+
+  return narrowLayout && touchDevice && (uaDataMobile === false || !mobileUa || desktopLikeViewport);
+}
+
+function updateResponsiveMode() {
+  if(!document.body) return;
+  const narrowNav = mediaMatches('(max-width: 991px)', window.innerWidth < 992);
+  const desktopSite = isLikelyDesktopSiteRequest();
+  document.body.classList.toggle('desktop-site-mode', desktopSite);
+  document.body.classList.toggle('mobile-app-mode', narrowNav && !desktopSite);
+  document.body.setAttribute('data-responsive-mode', desktopSite ? 'desktop-site' : (narrowNav ? 'mobile' : 'desktop'));
+}
+
+function isMobileAppMode() {
+  updateResponsiveMode();
+  return document.body.classList.contains('mobile-app-mode') && mediaMatches('(max-width: 767px)', window.innerWidth < 768);
+}
+
+function isMobileNavMode() {
+  updateResponsiveMode();
+  return document.body.classList.contains('mobile-app-mode') && mediaMatches('(max-width: 991px)', window.innerWidth < 992);
+}
+
+function scheduleResponsiveModeUpdate() {
+  updateResponsiveMode();
+  setTimeout(updateResponsiveMode, 180);
+}
+
+updateResponsiveMode();
+window.addEventListener('resize', scheduleResponsiveModeUpdate);
+window.addEventListener('orientationchange', scheduleResponsiveModeUpdate);
+document.addEventListener('DOMContentLoaded', updateResponsiveMode);
+if(window.visualViewport) window.visualViewport.addEventListener('resize', scheduleResponsiveModeUpdate);
+
 function setPaneHistory(id, mode) {
   id = normalizePaneId(id);
   let url = id === 'anasayfa_genel' ? routeBase() : routeBase() + '#' + id;
@@ -62,7 +118,7 @@ function runPaneTask(id, fn) {
 
 // ---- top-level (orig lines 945-970) ----
 window.addEventListener('popstate', function(e) {
-  let isMobile = window.innerWidth < 768;
+  let isMobile = isMobileAppMode();
   // Giriş ekranı görünüyorsa: tarayıcıyı kapat / bir önceki sayfaya git (zaten doğal davranış)
   let loginVisible = getEl('loginScreen') && getEl('loginScreen').style.display !== 'none';
   if(loginVisible) return; // Giriş ekranındaysa doğal davranışa bırak
@@ -111,7 +167,7 @@ function sTab(id, el) {
 }
 
 function closeSidebarIfOpen() {
-  if(window.innerWidth >= 992) return;
+  if(!isMobileNavMode()) return;
   const toggleBtn = document.querySelector('[data-lte-toggle="sidebar"]');
   if(document.body.classList.contains('sidebar-open') && toggleBtn) {
     try {
@@ -143,7 +199,7 @@ function executeTabSwitch(id, isPopState) {
   }
 
   if (!isPopState) {
-      let isMobile = window.innerWidth < 768;
+      let isMobile = isMobileAppMode();
       if (id === 'anasayfa_genel') {
           // Ana sayfaya dönerken history'yi temizle (back tuşu uygulamadan çıksın)
           setPaneHistory('anasayfa_genel', 'replace');
@@ -192,7 +248,10 @@ function executeTabSwitch(id, isPopState) {
   setTimeout(() => ensurePaneVisibility(id), 0);
 }
 
-window.addEventListener('load', () => setTimeout(() => ensurePaneVisibility(), 250));
+window.addEventListener('load', () => {
+  updateResponsiveMode();
+  setTimeout(() => ensurePaneVisibility(), 250);
+});
 
 // ---- sAct (orig lines 1021-1028) ----
 async function sAct(no,clr=false){

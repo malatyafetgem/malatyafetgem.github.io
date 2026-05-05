@@ -27,6 +27,19 @@ function isNavigationRequest(request, url) {
     url.pathname.endsWith('/index.html');
 }
 
+function isFreshAppAsset(url) {
+  const fileName = url.pathname.split('/').pop();
+  return [
+    'version.js',
+    'style.css',
+    'app-core.js',
+    'app-ui.js',
+    'app-analysis.js',
+    'app-settings.js',
+    'sw.js'
+  ].includes(fileName);
+}
+
 function requestUrl(request) {
   return new URL(typeof request === 'string' ? request : request.url, self.location.href);
 }
@@ -85,6 +98,20 @@ self.addEventListener('fetch', event => {
     return;
   }
 
+  if (isFreshAppAsset(url)) {
+    event.respondWith(
+      fetch(event.request, { cache: 'no-store' })
+        .then(response => {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then(cache => safeCachePut(cache, event.request, copy));
+          return response;
+        })
+        .catch(() => caches.match(event.request)
+          .then(response => response || caches.match(event.request, { ignoreSearch: true })))
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request, { ignoreSearch: true })
       .then(response => response || fetch(event.request).then(networkResponse => {
@@ -94,5 +121,4 @@ self.addEventListener('fetch', event => {
       }))
   );
 });
-
 
