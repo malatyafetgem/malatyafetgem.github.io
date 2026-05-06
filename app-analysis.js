@@ -1755,7 +1755,7 @@ function rAnl(){
     }
 
     let h=`<div class="d-flex justify-content-end mb-2 no-print"><button class="btn-print no-print" onclick="xPR('pS','Ogrenci_Analizi',this)"><i class='fas fa-print me-1'></i>Yazdır</button></div>
-    <div id="pS" class="card shadow-sm report-card report-card-info">
+    <div id="pS" class="card shadow-sm report-card sa-report-info">
       <div class="report-header">
         <span class="report-title-main"><i class="fas fa-chart-line me-2"></i><strong>${stNameSafe}</strong> — Analiz (${escapeHtml(ls)})</span>
         <span class="report-title-sub">Sınıf: ${stClassSafe} | ${eTSafe}</span>
@@ -2106,7 +2106,7 @@ function rAnl(){
     }
 
     let h=`<div class="d-flex justify-content-end mb-2 no-print"><button class="btn-print no-print" onclick="xPR('pC','Sinif_Analizi',this)"><i class='fas fa-print me-1'></i>Yazdır</button></div>
-    <div id="pC" class="card shadow-sm report-card report-card-success">
+    <div id="pC" class="card shadow-sm report-card sa-report-success">
       <div class="report-header">
         <span class="report-title-main"><i class="fas fa-users me-2"></i>Sınıf Analizi — ${escapeHtml(eT)} (${escapeHtml(ls)})</span>
         <span class="report-title-sub">${escapeHtml(clsLabel)}</span>
@@ -2389,7 +2389,7 @@ function rAnl(){
     let subjReportName = safeFileName(`${subjTitle}_Analizi`);
     let h = `
     <div class="d-flex justify-content-end mb-2 no-print"><button class="btn-print no-print" onclick="xPR('pSubj',${jsArg(subjReportName)},this)"><i class='fas fa-print me-1'></i>Yazdır</button></div>
-    <div id="pSubj" class="card shadow-sm report-card report-card-primary report-card-soft">
+    <div id="pSubj" class="card shadow-sm report-card sa-report-primary sa-report-soft">
       <div class="report-header">
         <span class="report-title-main"><i class="fas fa-book-open me-2"></i><strong>${escapeHtml(subjTitle)}</strong> — Ders Analizi</span>
         <span class="report-title-sub">${escapeHtml(eT)} | ${escapeHtml(lvlStr)} | Toplam ${dates.length} Sınav</span>
@@ -2581,7 +2581,7 @@ function rAnl(){
         }
 
         let h = `<div class="d-flex justify-content-end mb-2 no-print"><button class="btn-print no-print" onclick="xPR('pGenSummary',${jsArg(safeName)},this)"><i class='fas fa-print me-1'></i>Yazdır</button></div>
-        <div id="pGenSummary" class="card shadow-sm report-card report-card-soft">
+        <div id="pGenSummary" class="card shadow-sm report-card sa-report-soft">
           <div class="report-header">
               <span class="report-title-main"><i class="fas fa-globe me-2"></i><strong>${escapeHtml(eT)}</strong> — Sınav Özeti (Tüm Sınavlar)</span>
               <span class="report-title-sub">${escapeHtml(lvlStr)} | Toplam ${dates.length} Sınav</span>
@@ -2793,7 +2793,7 @@ function rAnl(){
 
       let summaryReportName = safeFileName(`Sinav_Ozeti_${safeName}`);
       let h = `<div class="d-flex justify-content-end mb-2 no-print"><button class="btn-print no-print" onclick="xPR('pSummary',${jsArg(summaryReportName)},this)"><i class='fas fa-print me-1'></i>Yazdır</button></div>
-      <div id="pSummary" class="card shadow-sm report-card report-card-info report-card-soft">
+      <div id="pSummary" class="card shadow-sm report-card sa-report-info sa-report-soft">
         <div class="report-header">
             <span class="report-title-main"><i class="fas fa-file-alt me-2"></i>${escapeHtml(dt)} Sınav Değerlendirmesi</span>
             <span class="report-title-sub">${escapeHtml(eT)}${pubName ? ' / ' + escapeHtml(toTitleCase(pubName)) : ''} | ${escapeHtml(lvlStr)}</span>
@@ -2942,7 +2942,7 @@ function rAnl(){
       }
       let lvlStr = targetLvl ? `${targetLvl}. Sınıflar ` : '', safeName=safeFileName(`Sinav_${eT}_${String(dt).replace(/\./g,'-')}`);
       let h=`<div class="d-flex justify-content-end mb-2 no-print"><button class="btn btn-success btn-sm me-2" onclick="xXL('tED',${jsArg(safeName)})"><i class='fas fa-file-excel me-1'></i>Excel</button><button class="btn-print no-print" onclick="xPR('pED',${jsArg(safeName)},this,'landscape')"><i class='fas fa-print me-1'></i>Yazdır</button></div>
-      <div id="pED" class="card shadow-sm report-card report-card-warning">
+      <div id="pED" class="card shadow-sm report-card sa-report-warning">
         <div class="report-header">
           <span class="report-title-main"><i class="fas fa-list me-2"></i><strong>${escapeHtml(eT)}</strong> — ${escapeHtml(dt)} Toplu Liste</span>
           <span class="report-title-sub">${escapeHtml(lvlStr ? lvlStr : "")}| ${escapeHtml(metaStr)}</span>
@@ -3049,7 +3049,7 @@ function rAnl(){
 
       let safeNameAll = safeFileName(`${eT}_TumSinavlar_Toplu`);
       let hAll = `<div class="d-flex justify-content-end mb-2 no-print"><button class="btn btn-success btn-sm me-2" onclick="xXL('tEDAll',${jsArg(safeNameAll)})"><i class='fas fa-file-excel me-1'></i>Excel</button><button class="btn-print no-print" onclick="xPR('pEDAll',${jsArg(safeNameAll)},this,'landscape')"><i class='fas fa-print me-1'></i>Yazdır</button></div>
-      <div id="pEDAll" class="card shadow-sm report-card report-card-primary">
+      <div id="pEDAll" class="card shadow-sm report-card sa-report-primary">
         <div class="report-header">
           <span class="report-title-main"><i class="fas fa-list-alt me-2"></i><strong>${escapeHtml(eT)}</strong> — Tüm Sınavlar Toplu Liste</span>
           <span class="report-title-sub">${escapeHtml(lvlStr ? lvlStr : "")}| ${escapeHtml(metaStrAll)}</span>

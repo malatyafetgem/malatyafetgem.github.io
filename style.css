@@ -575,11 +575,11 @@ body.is-admin button.w-100.admin-only { display:block !important; }
 .report-title-main { font-size:16px; }
 .report-title-sub { font-size:13px; }
 .report-card { border-top:3px solid #0d6efd; }
-.report-card-info { border-top-color:#17a2b8; }
-.report-card-success { border-top-color:#28a745; }
-.report-card-warning { border-top-color:#ffc107; }
-.report-card-primary { border-top-color:#007bff; }
-.report-card-soft { background:#f4f6f9; }
+.sa-report-info { border-top-color: var(--sa-info); }
+.sa-report-success { border-top-color: var(--sa-success); }
+.sa-report-warning { border-top-color: var(--sa-warning); }
+.sa-report-primary { border-top-color: var(--sa-primary); }
+.sa-report-soft { background:#f4f6f9; }
 .report-card-body { padding-top:5px; }
 .report-card-body-spacious { padding-top:8px; }
 .avoid-break-row { page-break-inside:avoid; break-inside:avoid; }
