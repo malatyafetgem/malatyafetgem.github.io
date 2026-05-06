@@ -1226,21 +1226,61 @@ body.is-admin button.w-100.admin-only { display:block !important; }
 .risk-info-card.risk-low .risk-info-score strong { color:#856404; }
 .risk-info-score { margin-left:8px; font-size:0.78em; color:#6c757d; }
 .risk-info-badges { display:flex; flex-wrap:wrap; gap:3px; }
-.risk-stat-box {
+.risk-stat-card {
   min-height: 64px;
   color: #fff;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  border-radius: 8px;
+  padding: 10px 12px;
+  box-shadow: 0 8px 18px rgba(15,23,42,0.10);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 .risk-stat-high { background: linear-gradient(135deg,#dc3545,#b02a37); }
 .risk-stat-med { background: linear-gradient(135deg,#fd7e14,#e06a10); }
 .risk-stat-low { background: linear-gradient(135deg,#ffc107,#d4a000); color: #212529; }
-.risk-stat-low .info-box-text,
-.risk-stat-low .info-box-number,
-.risk-stat-low .info-box-icon { color: #212529 !important; }
 .risk-stat-total { background: linear-gradient(135deg,#0d6efd,#0a58ca); }
-.risk-stat-box:focus-visible {
+.risk-stat-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(15,23,42,0.14);
+}
+.risk-stat-card:focus-visible {
   outline: 3px solid rgba(13,110,253,0.35);
   outline-offset: 2px;
+}
+.risk-stat-icon {
+  width: 42px;
+  min-width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.18);
+  color: inherit;
+  font-size: 1.15rem;
+}
+.risk-stat-content {
+  min-width: 0;
+  flex: 1;
+}
+.risk-stat-label {
+  display: block;
+  color: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.15;
+}
+.risk-stat-number {
+  display: block;
+  color: inherit;
+  font-size: 1.1rem;
+  font-weight: 800;
+  line-height: 1.1;
+  margin-top: 2px;
 }
 .risk-summary-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
 .risk-sum-pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
