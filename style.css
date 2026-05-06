@@ -1097,11 +1097,6 @@ body.is-admin button.w-100.admin-only { display:block !important; }
 .trend-stable { background-color: rgba(108, 117, 125, 0.15); color: #6c757d; }
 
 /* ===== AdminLTE v4 temel uyum katmani ===== */
-.card-header.bg-success, .card-header.bg-success.text-white, .card-header.bg-success.text-white * { background: var(--sa-success) !important; color: #fff !important; }
-.card-header.bg-danger, .card-header.bg-danger.text-white, .card-header.bg-danger.text-white * { background: var(--sa-danger) !important; color: #fff !important; }
-.card-header.bg-warning { background: #fef3c7 !important; color: #78350f !important; }
-.card-header.bg-info, .card-header.bg-info.text-white, .card-header.bg-info.text-white * { background: #e0f7fb !important; color: #0f5663 !important; }
-.card-header.bg-primary, .card-header.bg-primary.text-white, .card-header.bg-primary.text-white * { background: var(--sa-primary) !important; color: #fff !important; }
 .btn-success { background-color: var(--sa-success) !important; border-color: var(--sa-success) !important; }
 .btn-success:hover { background-color: #047857 !important; border-color: #047857 !important; }
 .btn-danger { background-color: var(--sa-danger) !important; border-color: var(--sa-danger) !important; }
@@ -1703,16 +1698,6 @@ body.is-admin button.w-100.admin-only { display:block !important; }
   border-bottom: 2px solid color-mix(in srgb, var(--exam-color, #0d6efd) 35%, transparent) !important;
   font-weight: 600;
 }
-/* Mevcut özel header'lar (bg-success/bg-danger — Top5/Bottom5 kartları) korunur */
-[data-exam-color] .card-header.bg-success,
-[data-exam-color] .card-header.bg-danger,
-[data-exam-color] .card-header.bg-info,
-[data-exam-color] .card-header.bg-warning,
-[data-exam-color] .card-header.bg-primary {
-  /* Bu tablolar thead'e değil card-header'a sahip; yine de korunsun diye
-     içteki tablo thead'lerini pastel yapalım ama renkli card-header'ı koruyalım */
-}
-
 /* --- Toplu Rapor karneleri için de renk sistemi (karne-bolum zaten var) --- */
 #raporRes[data-exam-color] > div > .card.exam-type-block,
 #raporRes .exam-type-block[data-exam-color-idx] {
@@ -1981,6 +1966,29 @@ body.is-admin button.w-100.admin-only { display:block !important; }
 .app-main .sa-panel.sa-panel-warning > .card-header .card-title > i { background: rgba(217,119,6,0.12) !important; color: var(--sa-warning) !important; }
 .app-main .sa-panel.sa-panel-info > .card-header .card-title > i { background: rgba(8,145,178,0.10) !important; color: var(--sa-info) !important; }
 .app-main .sa-panel.sa-panel-danger > .card-header .card-title > i { background: rgba(220,38,38,0.10) !important; color: var(--sa-danger) !important; }
+.sa-list-header {
+  --sa-list-accent: var(--sa-primary);
+  --sa-list-soft: var(--sa-primary-soft);
+  min-height: 46px;
+  padding: 0.64rem 0.82rem !important;
+  background: var(--sa-list-soft) !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--sa-list-accent) 24%, var(--sa-border));
+  border-left: 4px solid var(--sa-list-accent);
+  color: var(--sa-text) !important;
+}
+.sa-list-header .card-title {
+  color: var(--sa-text) !important;
+  font-weight: 800 !important;
+}
+.sa-list-header .card-title > i {
+  background: #fff !important;
+  color: var(--sa-list-accent) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--sa-list-accent) 18%, transparent);
+}
+.sa-list-success { --sa-list-accent: var(--sa-success); --sa-list-soft: rgba(5,150,105,0.10); }
+.sa-list-danger { --sa-list-accent: var(--sa-danger); --sa-list-soft: rgba(220,38,38,0.10); }
+.sa-list-info { --sa-list-accent: var(--sa-info); --sa-list-soft: rgba(8,145,178,0.10); }
+.sa-list-warning { --sa-list-accent: var(--sa-warning); --sa-list-soft: rgba(217,119,6,0.12); }
 .app-main .card-header .btn-sm {
   min-height: 34px;
   border-radius: 8px;
