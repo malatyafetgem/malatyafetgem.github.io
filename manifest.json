@@ -2,17 +2,46 @@
   "name": "Sınav Analiz Sistemi",
   "short_name": "Sınav Analizi",
   "id": "./",
+  "lang": "tr",
   "description": "Öğrenci, sınıf, ders, sınav ve risk analizleri için PWA destekli eğitim raporlama sistemi.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f6f8fb",
   "theme_color": "#2563eb",
+  "categories": ["education", "productivity"],
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/3135/3135810.png",
+      "src": "./icon.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Ana Sayfa",
+      "short_name": "Ana Sayfa",
+      "url": "./index.html#anasayfa_genel",
+      "icons": [{ "src": "./icon.png", "sizes": "512x512", "type": "image/png" }]
+    },
+    {
+      "name": "Öğrenci Sorgula",
+      "short_name": "Öğrenci",
+      "url": "./index.html#anasayfa",
+      "icons": [{ "src": "./icon.png", "sizes": "512x512", "type": "image/png" }]
+    },
+    {
+      "name": "Sonuçlar ve Analizler",
+      "short_name": "Analizler",
+      "url": "./index.html#sonuclar",
+      "icons": [{ "src": "./icon.png", "sizes": "512x512", "type": "image/png" }]
+    },
+    {
+      "name": "Toplu Rapor",
+      "short_name": "Rapor",
+      "url": "./index.html#rapor",
+      "icons": [{ "src": "./icon.png", "sizes": "512x512", "type": "image/png" }]
     }
   ]
 }

@@ -230,7 +230,7 @@ window.SA_CACHE_READY = (async function(){
                   <div class="col-6 col-md-3 mb-2"><div class="info-box mb-0 risk-stat-box risk-stat-low" role="button" tabindex="0" onclick="setRiskLevel('low')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setRiskLevel('low')}"><span class="info-box-icon"><i class="fas fa-info-circle"></i></span><div class="info-box-content"><span class="info-box-text">Düşük Risk</span><span class="info-box-number" id="riskCardLow">0</span></div></div></div>
                   <div class="col-6 col-md-3 mb-2"><div class="info-box mb-0 risk-stat-box risk-stat-total" role="button" tabindex="0" onclick="setRiskLevel('')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setRiskLevel('')}"><span class="info-box-icon"><i class="fas fa-users"></i></span><div class="info-box-content"><span class="info-box-text">Toplam Risk</span><span class="info-box-number" id="riskCardTotal">0</span></div></div></div>
                 </div>
-                <div class="risk-list-wrap" id="riskList"></div>
+                <div class="risk-list-wrap" id="riskList" role="list"></div>
               </div>
             </div>
           </div>
@@ -396,7 +396,7 @@ window.SA_CACHE_READY = (async function(){
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Vazgeç</button>
-        <button type="button" class="btn btn-danger btn-sm" onclick="xDel()">Evet, Sil</button>
+        <button type="button" class="btn btn-danger btn-sm" id="mConfOkBtn" onclick="xDel()">Evet, Sil</button>
       </div>
     </div>
   </div>
@@ -470,7 +470,6 @@ window.SA_CACHE_READY = (async function(){
 
 </body>
 </html>
-
 
 
 

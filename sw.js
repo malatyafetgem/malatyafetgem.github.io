@@ -9,7 +9,8 @@ const ASSETS = [
   './app-ui.js',
   './app-analysis.js',
   './app-settings.js',
-  './manifest.json'
+  './manifest.json',
+  './icon.png'
 ];
 
 function isFirebaseRequest(url) {
@@ -36,6 +37,8 @@ function isFreshAppAsset(url) {
     'app-ui.js',
     'app-analysis.js',
     'app-settings.js',
+    'manifest.json',
+    'icon.png',
     'sw.js'
   ].includes(fileName);
 }
@@ -121,4 +124,3 @@ self.addEventListener('fetch', event => {
       }))
   );
 });
-

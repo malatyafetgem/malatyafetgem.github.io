@@ -554,7 +554,7 @@ function renderRiskPanel() {
       let typeKey = (typeLabel[f.type] && typeIcon[f.type]) ? f.type : 'trend';
       return `<button type="button" class="risk-badge rb-${escapeHtml(typeKey)}" title="${safeTitle}" onclick="showToast(${jsArg(f.detail)}, 'warning', 4000)"><i class="fas ${typeIcon[typeKey]} risk-badge-icon"></i>${escapeHtml(typeLabel[typeKey])}</button>`;
     }).join('');
-    return `<div class="risk-card risk-${r.level}">
+    return `<div class="risk-card risk-${r.level}" role="listitem">
       <div class="risk-avatar"><i class="fas ${levelIcon[r.level]}"></i></div>
       <div class="risk-body">
         <div class="risk-name">${escapeHtml(r.name)}</div>

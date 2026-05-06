@@ -53,6 +53,7 @@ async function svExam(){
     return metaIntersectsGrades(em, m.grades || []);
   });
   if(dupId){ showToast('Bu tarih ve tür kombinasyonu aynı sınıf seviyesi için zaten mevcut!','error'); return; }
+  if(!ensureOnlineForWrite('Sınav güncelleme')) return;
   
   ld(1,'Sınav güncelleniyor...');
   try {
@@ -62,7 +63,7 @@ async function svExam(){
       CACHED_RESULTS[bId] = CACHED_RESULTS[bId].map(e => ({...e, date: newDate, examType: newType, publisher: newPub}));
       await database.ref('db_v2/examResults/'+bId).set(CACHED_RESULTS[bId]);
     } else {
-      let snap = await database.ref('db_v2/examResults/'+bId).once('value'), arr = snap.val() || [];
+      let snap = await database.ref('db_v2/examResults/'+bId).once('value'), arr = toCleanArray(snap.val());
       let updated = arr.map(e => e ? ({...e, date: newDate, examType: newType, publisher: newPub}) : null);
       await database.ref('db_v2/examResults/'+bId).set(updated); CACHED_RESULTS[bId] = updated.filter(x=>x);
     }
@@ -86,16 +87,43 @@ function oModAdd(){getEl('mSTit').textContent='Öğrenci Ekle';getEl('mSNo').val
 function eStu(n){let s=getStuMap().get(n);if(s){getEl('mSTit').textContent='Öğrenci Düzenle';getEl('mSNo').value=s.no;getEl('mSNo').disabled=true;getEl('mSNa').value=toTitleCase(s.name);getEl('mSCl').value=s.class;oMod('mStu');}}
 
 // ---- cDel (orig lines 3695-3695) ----
-function cDel(t,m,id=null){dInf={t,id};getEl('cTxt').textContent=m;oMod('mConf');}
+function cDel(t,m,id=null){
+  dInf={t,id};
+  let title = getEl('mConfTitle'), ok = getEl('mConfOkBtn');
+  if(title) title.textContent = 'Dikkat!';
+  if(ok) ok.textContent = 'Evet, Sil';
+  getEl('cTxt').textContent=m;
+  oMod('mConf');
+}
+
+function appConfirm(message, onConfirm, options = {}){
+  dInf = { t:'callback', cb:onConfirm };
+  let title = getEl('mConfTitle'), ok = getEl('mConfOkBtn');
+  if(title) title.textContent = options.title || 'Onay';
+  if(ok) ok.textContent = options.okText || 'Onayla';
+  getEl('cTxt').textContent = message;
+  oMod('mConf');
+}
 
 // ---- xDel (orig lines 3697-3741) ----
 async function xDel(){
   let t=dInf.t,id=dInf.id;
+  if(t === 'callback'){
+    let cb = dInf.cb;
+    cMod('mConf');
+    dInf = {};
+    if(typeof cb === 'function') cb();
+    return;
+  }
+  if(!ensureOnlineForWrite('Silme işlemi')){ cMod('mConf'); return; }
   if(t==='student'){
     // === FIX v11: Hayalet (orphan) veri temizliği — Firebase'deki TÜM sınav paketlerinden öğrenciyi sil ===
-    DB.s = DB.s.filter(x => x.no !== id);
+    let previousStudents = DB.s.slice();
+    let nextStudents = DB.s.filter(x => x.no !== id);
     try {
-      await database.ref('db_v2/students').set(DB.s);
+      await database.ref('db_v2/students').set(nextStudents);
+      DB.s = nextStudents;
+      _stuMapCache = null;
       // Önce bellekte hangi paketlerde geçtiğini bul (DB.e + CACHED_RESULTS); ayrıca güvenlik için EXAM_META anahtarlarını da tara
       let touchedBatches = new Set();
       DB.e.forEach(e => { if(e.studentNo === id && e.examBatchId) touchedBatches.add(e.examBatchId); });
@@ -103,14 +131,14 @@ async function xDel(){
       // Geriye dönük tarama: bellekte yer almayan eski paketleri de Firebase'den kontrol et
       let allBatchIds = Object.keys(EXAM_META||{});
       let unloaded = allBatchIds.filter(b => !touchedBatches.has(b) && !CACHED_RESULTS[b]);
-      let unloadedScans = await Promise.all(unloaded.map(bId => database.ref('db_v2/examResults/'+bId).once('value').then(snap => ({bId, val: snap.val()||[]})).catch(() => ({bId, val: []}))));
+      let unloadedScans = await Promise.all(unloaded.map(bId => database.ref('db_v2/examResults/'+bId).once('value').then(snap => ({bId, val: toCleanArray(snap.val())})).catch(() => ({bId, val: []}))));
       unloadedScans.forEach(({bId, val}) => { if(Array.isArray(val) && val.some(x => x && x.studentNo === id)) touchedBatches.add(bId); });
       // Şimdi her etkilenen paketten öğrencinin kayıtlarını sil ve Firebase'e yaz
       let writePromises = [];
       touchedBatches.forEach(bId => {
         writePromises.push((async () => {
           let snap = await database.ref('db_v2/examResults/'+bId).once('value');
-          let res = snap.val() || [];
+          let res = toCleanArray(snap.val());
           if(!Array.isArray(res)) return;
           let cleaned = res.filter(x => x && x.studentNo !== id);
           if(cleaned.length !== res.length){
@@ -126,12 +154,25 @@ async function xDel(){
       if(aNo === id) sAct(null);
       showToast('Öğrenci ve tüm sınav kayıtları silindi (' + touchedBatches.size + ' paket).', 'success');
     } catch(err){
-      showToast('Öğrenci silindi ama bazı sınav kayıtları temizlenemedi: ' + err.message, 'warning');
+      DB.s = previousStudents;
+      _stuMapCache = null;
+      rTabS();
+      showToast('Öğrenci silinemedi: ' + err.message, 'error');
     }
   }
-  else if(t==='allStudents'){ await database.ref('db_v2/students').set([]); await database.ref('db_v2/examResults').remove(); await database.ref('db_v2/examMeta').remove(); DB.s=[]; CACHED_RESULTS={}; DB.e=[]; EXAM_META={}; sAct(null); rTabS(); rTabE(); uStat(); uDrp(); }
-  else if(t==='exam'){ await database.ref('db_v2/examResults/'+id).remove(); await database.ref('db_v2/examMeta/'+id).remove(); if(CACHED_RESULTS[id]) delete CACHED_RESULTS[id]; delete EXAM_META[id]; DB.e = DB.e.filter(x => x.examBatchId !== id); rTabE(); uStat(); uDrp(); if(aNo) reqProfile(); else if(getEl('sonuclar').classList.contains('active-pane')) reqAnl(); }
-  else if(t==='all'){ ld(1,'Sıfırlanıyor...'); await database.ref('db_v2').remove(); await database.ref('sinavDB').remove(); location.reload(); return; }
+  else if(t==='allStudents'){
+    try { await database.ref('db_v2/students').set([]); await database.ref('db_v2/examResults').remove(); await database.ref('db_v2/examMeta').remove(); DB.s=[]; CACHED_RESULTS={}; DB.e=[]; EXAM_META={}; sAct(null); rTabS(); rTabE(); uStat(); uDrp(); showToast('Tüm öğrenci ve sınav verileri silindi.', 'success'); }
+    catch(err){ showToast('Silme işlemi başarısız: ' + err.message, 'error'); }
+  }
+  else if(t==='exam'){
+    try { await database.ref('db_v2/examResults/'+id).remove(); await database.ref('db_v2/examMeta/'+id).remove(); if(CACHED_RESULTS[id]) delete CACHED_RESULTS[id]; delete EXAM_META[id]; DB.e = DB.e.filter(x => x.examBatchId !== id); rTabE(); uStat(); uDrp(); if(aNo) reqProfile(); else if(getEl('sonuclar').classList.contains('active-pane')) reqAnl(); showToast('Sınav silindi.', 'success'); }
+    catch(err){ showToast('Sınav silinemedi: ' + err.message, 'error'); }
+  }
+  else if(t==='all'){
+    ld(1,'Sıfırlanıyor...');
+    try { await database.ref('db_v2').remove(); await database.ref('sinavDB').remove(); location.reload(); return; }
+    catch(err){ showToast('Sıfırlama başarısız: ' + err.message, 'error'); ld(0); }
+  }
   cMod('mConf');
 }
 
@@ -139,7 +180,10 @@ async function xDel(){
 async function svStu(){
   let n=String(getEl('mSNo').value).trim(),nm=getEl('mSNa').value.trim(),cc=getEl('mSCl').value.trim();
   if(!n||!nm||!cc){showToast('Tüm alanları doldurun!','warning');return;}
+  if(!ensureOnlineForWrite('Öğrenci kaydı')) return;
   let s=getStuMap().get(n); 
+  let originalStudent = s ? {...s} : null;
+  let isNewStudent = !s;
   
   if(s){ 
     let oldClass = s.class; s.name=toTitleCase(nm); s.class=cc; 
@@ -148,15 +192,25 @@ async function svStu(){
       try {
         let batchesToUpdate = new Set(); DB.e.forEach(e => { if (e.studentNo === n) batchesToUpdate.add(e.examBatchId); });
         let promises = [];
-        batchesToUpdate.forEach(bId => { promises.push(database.ref('db_v2/examResults/' + bId).once('value').then(snap => { let res = snap.val() || []; let changed = false; let updated = res.map(e => { if (e && e.studentNo === n && e.studentClass !== cc) { changed = true; return { ...e, studentClass: cc }; } return e; }); if (changed) { if (CACHED_RESULTS[bId]) CACHED_RESULTS[bId] = updated.filter(x=>x); return database.ref('db_v2/examResults/' + bId).set(updated); } })); });
+        batchesToUpdate.forEach(bId => { promises.push(database.ref('db_v2/examResults/' + bId).once('value').then(snap => { let res = toCleanArray(snap.val()); let changed = false; let updated = res.map(e => { if (e && e.studentNo === n && e.studentClass !== cc) { changed = true; return { ...e, studentClass: cc }; } return e; }); if (changed) { if (CACHED_RESULTS[bId]) CACHED_RESULTS[bId] = updated.filter(x=>x); return database.ref('db_v2/examResults/' + bId).set(updated); } })); });
         await Promise.all(promises); DB.e = DB.e.map(e => e.studentNo === n ? { ...e, studentClass: cc } : e);
-      } catch (err) { showToast('Sınıf güncellenirken hata oluştu: ' + err.message, 'error'); }
+      } catch (err) { Object.assign(s, originalStudent); _stuMapCache = null; showToast('Sınıf güncellenirken hata oluştu: ' + err.message, 'error'); ld(0); return; }
       ld(0);
     }
     if(aNo===n) reqProfile(); 
   } else{ DB.s.push({no:n,name:toTitleCase(nm),class:cc}); }
   
-  await database.ref('db_v2/students').set(DB.s); rTabS(); uStat();
+  _stuMapCache = null;
+  try {
+    await database.ref('db_v2/students').set(DB.s);
+  } catch(err) {
+    if(isNewStudent) DB.s = DB.s.filter(x => x.no !== n);
+    else if(originalStudent) Object.assign(s, originalStudent);
+    _stuMapCache = null;
+    showToast('Öğrenci kaydedilemedi: ' + err.message, 'error');
+    return;
+  }
+  rTabS(); uStat();
   if(aNo){ let upd=getStuMap().get(aNo); if(upd){ getEl('aBadge').innerHTML=`<span class="badge bg-success rounded-pill px-3 py-2"><i class="fas fa-check-circle me-1"></i>Seçili Öğrenci: ${escapeHtml(upd.name)} (${escapeHtml(upd.class)})</span>`; let ab=getEl('anlStuBadge'); if(ab) ab.innerHTML=`<span class="badge bg-success rounded-pill px-2 py-1 selected-student-pill"><i class="fas fa-check-circle me-1"></i>Seçili Öğrenci: ${escapeHtml(upd.name)} (${escapeHtml(upd.class)})</span>`; } }
   cMod('mStu'); showToast('Öğrenci bilgileri kaydedildi.', 'success');
 }
@@ -172,19 +226,39 @@ async function expDB(){
 async function impDB(e){
   if(auth.currentUser.uid !== ADMIN_UID){ showToast('Bu işlem sadece admin tarafından yapılabilir.', 'error'); e.target.value = ''; return; }
   let f = e.target.files[0]; if(!f){ e.target.value=''; return; }
-  if(!confirm('⚠️ Mevcut tüm verinin üzerine yazılacak.\nBu işlem geri alınamaz. Devam edilsin mi?')){ e.target.value=''; return; }
+  if(!ensureOnlineForWrite('Geri yükleme')){ e.target.value=''; return; }
+  appConfirm('Mevcut tüm verinin üzerine yazılacak. Bu işlem geri alınamaz. Devam edilsin mi?', () => restoreBackupFile(f), {
+    title: 'Geri Yükleme Onayı',
+    okText: 'Evet, Geri Yükle'
+  });
+  e.target.value = '';
+}
+
+function restoreBackupFile(f){
+  if(!f) return;
+  if(!ensureOnlineForWrite('Geri yükleme')) return;
   let rd = new FileReader();
   rd.onload = async ev => {
     try {
       let p = JSON.parse(ev.target.result); if(typeof p !== 'object' || !Array.isArray(p.students)) throw new Error('Geçersiz yedek dosyası. students alanı bulunamadı.'); if(!p.examMeta || typeof p.examMeta !== 'object') throw new Error('Geçersiz yedek dosyası. examMeta alanı bulunamadı.');
       ld(1,'Veriler geri yükleniyor...'); await database.ref('db_v2').remove(); await database.ref('db_v2/students').set(p.students); await database.ref('db_v2/examMeta').set(p.examMeta); if(p.examResults && Object.keys(p.examResults).length > 0) await database.ref('db_v2/examResults').set(p.examResults);
-      CACHED_RESULTS = {}; alert('✅ Geri yükleme tamamlandı. Sayfa yenilenecek.'); location.reload();
+      CACHED_RESULTS = {}; showToast('Geri yükleme tamamlandı. Sayfa yenileniyor...', 'success', 2500); setTimeout(() => location.reload(), 700);
     } catch(err) { showToast('Geri yükleme başarısız: ' + err.message, 'error'); ld(0); }
-  }; rd.readAsText(f); e.target.value = '';
+  };
+  rd.onerror = () => { showToast('Yedek dosyası okunamadı.', 'error'); ld(0); };
+  rd.readAsText(f);
 }
 
 // ---- cancelUpload (orig lines 3788-3788) ----
-function cancelUpload() { PENDING_UPLOAD = null; getEl('fStu').value = ''; getEl('fEx').value = ''; wizardStep = 0; hideModal('mMappings'); hideModal('mUploadPreview'); }
+function cancelUpload() {
+  PENDING_UPLOAD = null;
+  let fStu = getEl('fStu'), fEx = getEl('fEx');
+  if(fStu) fStu.value = '';
+  if(fEx) fEx.value = '';
+  wizardStep = 0;
+  hideModal('mMappings');
+  hideModal('mUploadPreview');
+}
 
 // ---- backToMapping (orig lines 3789-3789) ----
 function backToMapping() { hideModal('mUploadPreview'); showModal('mMappings'); }
@@ -419,9 +493,11 @@ function processMappings() {
 
 // ---- confirmUpload (orig lines 3991-4001) ----
 async function confirmUpload() {
-  if(!PENDING_UPLOAD) return cancelUpload(); hideModal('mUploadPreview'); ld(1, 'Veriler buluta gönderiliyor, lütfen bekleyin...');
+  if(!PENDING_UPLOAD) return cancelUpload();
+  if(!ensureOnlineForWrite('Veri yükleme')) return;
+  hideModal('mUploadPreview'); ld(1, 'Veriler buluta gönderiliyor, lütfen bekleyin...');
   try {
-    if(PENDING_UPLOAD.type === 's') { DB.s = DB.s.concat(PENDING_UPLOAD.data); await database.ref('db_v2/students').set(DB.s); rTabS(); uStat(); showToast(`${PENDING_UPLOAD.data.length} yeni öğrenci sisteme başarıyla eklendi.`, 'success'); } 
+    if(PENDING_UPLOAD.type === 's') { DB.s = DB.s.concat(PENDING_UPLOAD.data); _stuMapCache = null; await database.ref('db_v2/students').set(DB.s); rTabS(); uStat(); showToast(`${PENDING_UPLOAD.data.length} yeni öğrenci sisteme başarıyla eklendi.`, 'success'); } 
     else if (PENDING_UPLOAD.type === 'e') {
       if(PENDING_UPLOAD.existsId) { await database.ref('db_v2/examResults/' + PENDING_UPLOAD.existsId).remove(); await database.ref('db_v2/examMeta/' + PENDING_UPLOAD.existsId).remove(); delete CACHED_RESULTS[PENDING_UPLOAD.existsId]; }
       await database.ref('db_v2/examResults/' + PENDING_UPLOAD.bId).set(PENDING_UPLOAD.newResults); 

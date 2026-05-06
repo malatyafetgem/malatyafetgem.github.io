@@ -23,16 +23,49 @@ const database = firebase.database();
 // ---- top-level (orig lines 687-687) ----
 const auth = firebase.auth();
 
+let APP_BROWSER_ONLINE = (typeof navigator === 'undefined') ? true : navigator.onLine !== false;
+let APP_FIREBASE_CONNECTED = false;
+let _lastOfflineWriteToastAt = 0;
+let _raporInitTimer = null;
+let _batchFetchChain = Promise.resolve();
+
+function canWriteOnline(){
+  return APP_BROWSER_ONLINE && APP_FIREBASE_CONNECTED;
+}
+
+function ensureOnlineForWrite(actionLabel = 'Bu işlem'){
+  if(canWriteOnline()) return true;
+  let now = Date.now();
+  if(now - _lastOfflineWriteToastAt > 1500){
+    showToast(`${actionLabel} için aktif internet/Firebase bağlantısı gerekiyor. Bağlantı kurulunca tekrar deneyin.`, 'warning', 5500);
+    _lastOfflineWriteToastAt = now;
+  }
+  return false;
+}
+
 // ---- uConn (orig lines 689-693) ----
 function uConn(online){
+  APP_FIREBASE_CONNECTED = online === true;
   const d=document.getElementById('connDot'),t=document.getElementById('connTxt'),b=document.getElementById('connBadge');if(!d||!t||!b)return;
   d.textContent='';
-  if(online){t.textContent='Bağlı';b.className='nav-link conn-badge is-online';b.title='Firebase bağlantısı aktif';}
-  else{t.textContent='Çevrimdışı';b.className='nav-link conn-badge is-offline';b.title='Firebase bağlantısı yok';}
+  if(APP_BROWSER_ONLINE && APP_FIREBASE_CONNECTED){t.textContent='Bağlı';b.className='nav-link conn-badge is-online';b.title='Firebase bağlantısı aktif';}
+  else{t.textContent='Çevrimdışı';b.className='nav-link conn-badge is-offline';b.title=APP_BROWSER_ONLINE?'Firebase bağlantısı yok':'İnternet bağlantısı yok';}
 }
 
 // ---- top-level (orig lines 694-694) ----
-database.ref('.info/connected').on('value',snap=>uConn(snap.val()===true));
+database.ref('.info/connected').on('value',snap=>uConn(snap.val()===true),()=>uConn(false));
+
+window.addEventListener('online', () => {
+  APP_BROWSER_ONLINE = true;
+  uConn(APP_FIREBASE_CONNECTED);
+  showToast('İnternet bağlantısı yeniden kuruldu.', 'success', 2500);
+});
+
+window.addEventListener('offline', () => {
+  APP_BROWSER_ONLINE = false;
+  uConn(false);
+  showToast('İnternet bağlantısı kesildi. Veri yazma işlemleri bağlantı gelene kadar durduruldu.', 'warning', 5000);
+});
 
 // ---- top-level (orig lines 696-696) ----
 const ADMIN_UID="YLozrXC5w4OmD4HRzjlgF80qPCp1";
@@ -66,6 +99,10 @@ function metaIntersectsGrades(meta, grades){
   if(!wanted.length) return true;
   const existing = metaGrades(meta);
   return !existing.length || wanted.some(g => existing.includes(g));
+}
+
+function toCleanArray(val){
+  return Array.isArray(val) ? val.filter(x => x) : (val && typeof val === 'object' ? Object.values(val).filter(x => x) : []);
 }
 
 function getSelectValueIfEnabled(id){
@@ -300,11 +337,16 @@ let dInf={},searchDebounceTimer=null,anlDebounceTimer=null,chartTimer=null;
 let currentExcelData=[], currentUploadType='', currentHeaders=[], PENDING_UPLOAD=null;
 
 // ---- ld (orig lines 784-784) ----
-function ld(s,m="İşlem yapılıyor..."){getEl('l-txt').textContent=m;getEl('loader').style.display=s?'flex':'none';}
+function ld(s,m="İşlem yapılıyor..."){
+  const txt = getEl('l-txt'), loader = getEl('loader');
+  if(txt) txt.textContent = m;
+  if(loader) loader.style.display = s ? 'flex' : 'none';
+}
 
 // ---- showToast (orig lines 786-794) ----
 function showToast(message, type = 'info', duration = 4000) {
   const container = getEl('toastContainer');
+  if(!container){ console.warn(message); return null; }
   const icons = { success: 'fa-check-circle', error: 'fa-times-circle', warning: 'fa-exclamation-triangle', info: 'fa-info-circle' };
   const toast = document.createElement('div');
   toast.className = `toast-item ${type}`;
@@ -312,6 +354,24 @@ function showToast(message, type = 'info', duration = 4000) {
   container.appendChild(toast);
   setTimeout(() => { toast.style.animation = 'slideOutRight 0.3s ease-out forwards'; setTimeout(() => toast.remove(), 300); }, duration);
   return toast;
+}
+
+function rebuildDbFromCache(){
+  let allE = [];
+  Object.keys(CACHED_RESULTS || {}).forEach(bId => {
+    if(Array.isArray(CACHED_RESULTS[bId])) allE = allE.concat(CACHED_RESULTS[bId]);
+  });
+  let validNos = new Set((DB.s || []).map(s => s.no));
+  DB.e = allE.filter(e => e && e.studentNo && validNos.has(e.studentNo));
+  _riskCache = null;
+}
+
+function scheduleRaporInit(delay = 150){
+  if(!getEl('rapor') || !getEl('rapor').classList.contains('active-pane') || typeof raporInit !== 'function') return;
+  clearTimeout(_raporInitTimer);
+  _raporInitTimer = setTimeout(() => {
+    if(getEl('rapor') && getEl('rapor').classList.contains('active-pane') && typeof raporInit === 'function') raporInit();
+  }, delay);
 }
 
 // ---- toTitleCase (orig lines 796-799) ----
@@ -327,68 +387,96 @@ async function init(){
 
   let v2Snap = await database.ref('db_v2/students').once('value');
   if (!v2Snap.exists()) {
-    ld(1, 'Veritabanı yeni nesil altyapıya geçiriliyor (Sadece 1 kez yapılır)...');
-    let oldSnap = await database.ref('sinavDB').once('value'), oldDB = oldSnap.val();
-    if (oldDB && oldDB.s && oldDB.e) {
-      let cleanStudents = oldDB.s.filter(x => x !== null);
-      await database.ref('db_v2/students').set(cleanStudents);
-      let meta = {}, results = {};
-      oldDB.e.forEach(ex => {
-        if(!ex) return; let bId = ex.examBatchId;
-        if(!meta[bId]) { meta[bId] = { date: ex.date, examType: ex.examType, publisher: ex.publisher || '', count: 0, subjects: [], grades: [] }; results[bId] = []; }
-        meta[bId].count++; results[bId].push(ex);
-        let stGrade = getGrade(ex.studentClass);
-        if(stGrade && !meta[bId].grades.includes(stGrade)) meta[bId].grades.push(stGrade);
-        if(!ex.abs && ex.subs) meta[bId].subjects = Array.from(new Set([...meta[bId].subjects, ...Object.keys(ex.subs)]));
-      });
-      if(Object.keys(meta).length > 0) {
-        await database.ref('db_v2/examMeta').set(meta); await database.ref('db_v2/examResults').set(results);
-      }
-    } else { await database.ref('db_v2/students').set([]); }
+    try {
+      ld(1, 'Veritabanı yeni nesil altyapıya geçiriliyor (Sadece 1 kez yapılır)...');
+      let oldSnap = await database.ref('sinavDB').once('value'), oldDB = oldSnap.val();
+      if (oldDB && oldDB.s && oldDB.e) {
+        let cleanStudents = oldDB.s.filter(x => x !== null);
+        await database.ref('db_v2/students').set(cleanStudents);
+        let meta = {}, results = {};
+        oldDB.e.forEach(ex => {
+          if(!ex) return; let bId = ex.examBatchId;
+          if(!meta[bId]) { meta[bId] = { date: ex.date, examType: ex.examType, publisher: ex.publisher || '', count: 0, subjects: [], grades: [] }; results[bId] = []; }
+          meta[bId].count++; results[bId].push(ex);
+          let stGrade = getGrade(ex.studentClass);
+          if(stGrade && !meta[bId].grades.includes(stGrade)) meta[bId].grades.push(stGrade);
+          if(!ex.abs && ex.subs) meta[bId].subjects = Array.from(new Set([...meta[bId].subjects, ...Object.keys(ex.subs)]));
+        });
+        if(Object.keys(meta).length > 0) {
+          await database.ref('db_v2/examMeta').set(meta); await database.ref('db_v2/examResults').set(results);
+        }
+      } else { await database.ref('db_v2/students').set([]); }
+    } catch(err) {
+      showToast('Veritabanı geçişi tamamlanamadı: ' + err.message, 'error', 7000);
+    } finally {
+      ld(0);
+    }
   }
 
   database.ref('db_v2/students').on('value', snap => { 
     let sData = snap.val(); DB.s = (sData ? (Array.isArray(sData) ? sData.filter(x => x) : Object.values(sData).filter(x => x)) : []).map(s => s ? {...s, name: toTitleCase(s.name)} : s);
     _stuMapCache = null; // Map index'i yenile
-    rTabS(); 
-    if(getEl('rapor') && getEl('rapor').classList.contains('active-pane') && typeof raporInit === 'function') raporInit();
-  });
+    rebuildDbFromCache();
+    rTabS(); uStat(); uDrp();
+    scheduleRaporInit();
+  }, err => showToast('Öğrenci verileri okunamadı: ' + err.message, 'error'));
 
   database.ref('db_v2/examMeta').on('value', async snap => {
     EXAM_META = snap.val() || {}; uDrp(); rTabE(); uStat();
-    if(getEl('rapor') && getEl('rapor').classList.contains('active-pane') && typeof raporInit === 'function') raporInit();
-    if(getEl('sonuclar').classList.contains('active-pane')) reqAnl();
-    if(aNo) reqProfile();
-    // examResults'i examMeta ile paralel cek — panel diger bolumlerle birlikte acilsin
     let allIds = Object.keys(EXAM_META);
-    let missing = allIds.filter(bId => !CACHED_RESULTS[bId]);
-    if(missing.length > 0) {
-      await Promise.all(missing.map(bId =>
-        database.ref('db_v2/examResults/' + bId).once('value').then(s => { CACHED_RESULTS[bId] = s.val() || []; })
-      ));
+    try {
+      if(allIds.length) await fetchBatches(allIds, { showLoader:false });
+      else rebuildDbFromCache();
+    } catch(err) {
+      rebuildDbFromCache();
     }
-    let validNos = new Set(DB.s.map(s => s.no));
-    let allE = [];
-    allIds.forEach(bId => { if(CACHED_RESULTS[bId]) allE = allE.concat(CACHED_RESULTS[bId]); });
-    DB.e = allE.filter(e => e && e.studentNo && validNos.has(e.studentNo));
-    _riskCache = null;
+    uDrp(); uStat();
     if(getEl('sonuclar') && getEl('sonuclar').classList.contains('active-pane') && typeof uUI === 'function') uUI();
-    if(getEl('rapor') && getEl('rapor').classList.contains('active-pane') && typeof raporInit === 'function') raporInit();
-    renderRiskPanel();
+    if(getEl('anasayfa') && getEl('anasayfa').classList.contains('active-pane') && aNo) reqProfile();
+    scheduleRaporInit();
+    if(typeof renderRiskPanel === 'function') renderRiskPanel();
     ld(0);
-  });
+  }, err => showToast('Sınav bilgileri okunamadı: ' + err.message, 'error'));
 }
 
 // ---- fetchBatches (orig lines 853-862) ----
-async function fetchBatches(batchIds) {
-  let promises = [];
-  batchIds.forEach(bId => { if(!CACHED_RESULTS[bId]) { promises.push( database.ref('db_v2/examResults/' + bId).once('value').then(snap => { CACHED_RESULTS[bId] = snap.val() || []; }) ); } });
-  if(promises.length > 0) { ld(1, 'Sonuçlar indiriliyor...'); await Promise.all(promises); ld(0); }
-  // === FIX: DB.e'yi tüm cache'teki verilerden yeniden oluştur (sadece istenen batch değil) ===
-  let allE = [];
-  Object.keys(CACHED_RESULTS).forEach(bId => { if(CACHED_RESULTS[bId]) allE = allE.concat(CACHED_RESULTS[bId]); });
-  let validNos = new Set(DB.s.map(s => s.no));
-  DB.e = allE.filter(e => e && e.studentNo && validNos.has(e.studentNo));
+async function fetchBatches(batchIds, options = {}) {
+  let ids = [...new Set((batchIds || []).filter(Boolean))].filter(bId => !CACHED_RESULTS[bId]);
+  if(!ids.length){ rebuildDbFromCache(); return; }
+
+  let run = _batchFetchChain.then(async () => {
+    let missing = ids.filter(bId => !CACHED_RESULTS[bId]);
+    if(!missing.length){ rebuildDbFromCache(); return; }
+    if(APP_BROWSER_ONLINE === false){
+      showToast('İnternet yokken eksik sınav sonuçları indirilemedi. Bağlantı gelince tekrar deneyin.', 'warning', 5500);
+      rebuildDbFromCache();
+      return;
+    }
+
+    let useLoader = options.showLoader !== false;
+    if(useLoader) ld(1, options.message || 'Sonuçlar indiriliyor...');
+    try {
+      const chunkSize = options.chunkSize || 6;
+      for(let i = 0; i < missing.length; i += chunkSize){
+        let chunk = missing.slice(i, i + chunkSize).filter(bId => !CACHED_RESULTS[bId]);
+        if(!chunk.length) continue;
+        await Promise.all(chunk.map(bId =>
+          database.ref('db_v2/examResults/' + bId).once('value').then(snap => {
+            let val = snap.val();
+            CACHED_RESULTS[bId] = toCleanArray(val);
+          })
+        ));
+      }
+    } catch(err) {
+      showToast('Sınav sonuçları indirilemedi: ' + err.message, 'error', 6000);
+      throw err;
+    } finally {
+      rebuildDbFromCache();
+      if(useLoader) ld(0);
+    }
+  });
+  _batchFetchChain = run.catch(() => {});
+  return run;
 }
 
 // ---- reqProfile (orig lines 866-871) ----
@@ -405,8 +493,14 @@ async function reqAnl() {
   let needed = [];
   if(typeof updateFilterSummary === 'function') updateFilterSummary();
 
-  // Risk analizi modu: fetch gerekmez, renderRiskPanel zaten uUI'dan çağrılıyor
-  if(aT === 'risk') { if(typeof applyExamColorToFilters === 'function') applyExamColorToFilters(); return; }
+  // Risk analizi tüm geçmiş sonuçlardan üretildiği için eksik paket varsa bu ekranda tamamlanır.
+  if(aT === 'risk') {
+    let ids = Object.keys(EXAM_META || {});
+    if(ids.length) await fetchBatches(ids, { message:'Risk verileri hazırlanıyor...' });
+    if(typeof renderRiskPanel === 'function') renderRiskPanel();
+    if(typeof applyExamColorToFilters === 'function') applyExamColorToFilters();
+    return;
+  }
 
   if(aT === 'student'){
     if(!aNo){
@@ -656,7 +750,8 @@ function safeFileName(value, fallback = 'rapor'){
 // DB.s değiştiğinde çağrılır; _stuMap._ts !== DB.s.length ile stale check yapılır
 let _stuMapCache = null;
 function getStuMap(){
-  if(_stuMapCache && _stuMapCache._len === DB.s.length) return _stuMapCache._map;
-  _stuMapCache = { _map: new Map(DB.s.map(s=>[s.no, s])), _len: DB.s.length };
+  let sig = (DB.s || []).map(s => `${s.no}|${s.name}|${s.class}`).join('¶');
+  if(_stuMapCache && _stuMapCache._sig === sig) return _stuMapCache._map;
+  _stuMapCache = { _map: new Map((DB.s || []).map(s=>[s.no, s])), _sig: sig };
   return _stuMapCache._map;
 }

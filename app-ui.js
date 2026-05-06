@@ -231,9 +231,9 @@ function executeTabSwitch(id, isPopState) {
   if (matchLink) matchLink.classList.add('active');
 
   // Bottom nav aktif item güncelle
-  document.querySelectorAll('.bnav-item').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.bnav-item').forEach(x => { x.classList.remove('active'); x.removeAttribute('aria-current'); });
   let bnavItem = document.getElementById('bnav-' + id);
-  if(bnavItem) bnavItem.classList.add('active');
+  if(bnavItem) { bnavItem.classList.add('active'); bnavItem.setAttribute('aria-current', 'page'); }
 
   if(id==='anasayfa_genel' && typeof uStat === 'function') runPaneTask(id, () => uStat());
   if(id==='anasayfa' && aNo && typeof reqProfile === 'function') runPaneTask(id, () => reqProfile());
