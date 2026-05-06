@@ -358,6 +358,17 @@ function _xprIsLandscape(sourceId, title, orientation){
   return false; // varsayılan dikey
 }
 
+function _xprIsMobilePrintDevice(){
+  let ua = (navigator.userAgent || navigator.vendor || '').toString();
+  let mobileUA = /Android|iPhone|iPad|iPod|Mobile|Silk/i.test(ua);
+  let coarse = false;
+  try { coarse = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches); } catch(e){}
+  let sw = (window.screen && window.screen.width) ? window.screen.width : window.innerWidth;
+  let sh = (window.screen && window.screen.height) ? window.screen.height : window.innerHeight;
+  let smallScreen = Math.min(sw || 0, sh || 0) <= 820;
+  return mobileUA || (smallScreen && (coarse || (navigator.maxTouchPoints || 0) > 1));
+}
+
 // Sınav türü paleti — style.css'teki .exam-color-N ile birebir aynı (yeni pencerede style.css yok, inline yazıyoruz)
 // Yeni palet: birbirinden net ayırt edilebilen, şık 8 renk.
 const _XPR_EXAM_PALETTE = ['#2563eb','#059669','#d97706','#dc2626','#7c3aed','#0891b2','#be185d','#4b5563'];
@@ -401,9 +412,11 @@ function xPR(sourceId, title, btn, orientation) {
   let isLandscape = _xprIsLandscape(sourceId, title, orientation);
   let isExamDetailListPrint = (sourceId === 'pED' || sourceId === 'pEDAll') && !!sourceEl.querySelector('.list-scroll table');
   let isCompactListPrint = (sourceId === 'raporCont' && sourceEl.classList.contains('print-compact-list')) || isExamDetailListPrint;
+  let isMobileListPrint = isCompactListPrint && _xprIsMobilePrintDevice();
   let isOnePageSummaryPrint = title === 'Ogrenci_Tek_Sinav';
-  // Kompakt liste her zaman yatay — sütun sayısı portrait'a sığmaz
-  if(isCompactListPrint) isLandscape = true;
+  // Masaüstünde liste yatay kalır. Mobil tarayıcılar çoğu kez landscape'i yok saydığı için
+  // mobil liste çıktısı özel portrait düzeniyle hazırlanır.
+  if(isCompactListPrint) isLandscape = !isMobileListPrint;
   let orig = btn ? btn.innerHTML : '';
   if(btn){ btn.innerHTML = "<i class='fas fa-spinner fa-spin me-1'></i>"; btn.disabled = true; }
   let winW = isLandscape ? 1200 : 900;
@@ -434,6 +447,31 @@ function xPR(sourceId, title, btn, orientation) {
     clone.classList.add('exam-detail-list-print', 'rapor-list-report');
     clone.querySelectorAll('.list-scroll table').forEach(tbl => {
       tbl.classList.add('rapor-list-table', 'exam-detail-list-table');
+      if(!tbl.querySelector('colgroup')){
+        let headCells = tbl.querySelectorAll('thead tr:last-child th');
+        let totalCols = headCells.length;
+        if(totalCols > 0){
+          let subjectCols = Math.max(totalCols - 9, 0);
+          let subjectWidth = subjectCols ? Math.max(3.2, (100 - 60) / subjectCols) : 4;
+          let widths = [];
+          for(let i=0; i<totalCols; i++){
+            if(i === 0) widths.push(3.4);
+            else if(i === 1) widths.push(16);
+            else if(i === 2) widths.push(4.6);
+            else if(i === 3) widths.push(7.2);
+            else if(i === 4) widths.push(6);
+            else if(i >= totalCols - 4) widths.push(i >= totalCols - 2 ? 6 : 5.4);
+            else widths.push(subjectWidth);
+          }
+          let cg = document.createElement('colgroup');
+          widths.forEach(w => {
+            let col = document.createElement('col');
+            col.style.width = w + '%';
+            cg.appendChild(col);
+          });
+          tbl.insertBefore(cg, tbl.firstChild);
+        }
+      }
     });
   }
 
@@ -644,12 +682,14 @@ function xPR(sourceId, title, btn, orientation) {
 
   // Sınav türü palet sabitleri yeni pencerede de class olarak çalışsın diye CSS bloğu üret
   let paletteCss = _XPR_EXAM_PALETTE.map((c,i) => `.exam-color-${i}{--exam-color:${c};}`).join('\n');
-  let printModeClass = isCompactListPrint ? 'print-compact-list-mode' : (isOnePageSummaryPrint ? 'print-one-page-summary-mode' : 'print-standard-report-mode');
-  let printBaseFont = isCompactListPrint ? '10.5px' : (isOnePageSummaryPrint ? '9px' : (isLandscape ? '10px' : '10.5px'));
-  let printPageMargin = isCompactListPrint ? '7mm 6mm' : (isOnePageSummaryPrint ? '6mm 6mm' : '8mm 7mm');
-  let printTableFont = isCompactListPrint ? '9px' : (isOnePageSummaryPrint ? '7.5px' : (isLandscape ? '8px' : '9px'));
-  let printTableHeadFont = isCompactListPrint ? '8.8px' : (isOnePageSummaryPrint ? '7.2px' : (isLandscape ? '7.5px' : '8.5px'));
-  let printTablePadding = isCompactListPrint ? '3px 4px' : (isOnePageSummaryPrint ? '1.5px 3px' : '2px 4px');
+  let printModeClass = isCompactListPrint
+    ? `print-compact-list-mode${isMobileListPrint ? ' print-mobile-list-mode' : ''}${isExamDetailListPrint ? ' print-exam-detail-list-mode' : ''}`
+    : (isOnePageSummaryPrint ? 'print-one-page-summary-mode' : 'print-standard-report-mode');
+  let printBaseFont = isMobileListPrint ? '9.2px' : (isCompactListPrint ? '10.5px' : (isOnePageSummaryPrint ? '9px' : (isLandscape ? '10px' : '10.5px')));
+  let printPageMargin = isMobileListPrint ? '4mm 2.5mm' : (isCompactListPrint ? '7mm 6mm' : (isOnePageSummaryPrint ? '6mm 6mm' : '8mm 7mm'));
+  let printTableFont = isMobileListPrint ? '7.4px' : (isCompactListPrint ? '9px' : (isOnePageSummaryPrint ? '7.5px' : (isLandscape ? '8px' : '9px')));
+  let printTableHeadFont = isMobileListPrint ? '7px' : (isCompactListPrint ? '8.8px' : (isOnePageSummaryPrint ? '7.2px' : (isLandscape ? '7.5px' : '8.5px')));
+  let printTablePadding = isMobileListPrint ? '1.35px 1.6px' : (isCompactListPrint ? '3px 4px' : (isOnePageSummaryPrint ? '1.5px 3px' : '2px 4px'));
   let printChartMaxHeight = isOnePageSummaryPrint ? '112px' : (isLandscape ? '150px' : '180px');
   let printBoxplotMaxHeight = isOnePageSummaryPrint ? '92px' : (isLandscape ? '110px' : '140px');
 
@@ -910,6 +950,89 @@ ${cssLinks}
   body.print-compact-list-mode .mb-3{margin-bottom:6px !important;}
   body.print-compact-list-mode h4{font-size:10px !important;margin:4px 0;}
   body.print-compact-list-mode h5{font-size:9.6px !important;margin:4px 0;}
+
+  /* Mobil liste çıktısı: Android/iOS print genelde A4 portrait'e zorlar.
+     Bu mod sadece listelerde devreye girer; satır kırılmalarını azaltıp sayfa sayısını düşürür. */
+  body.print-mobile-list-mode{line-height:1.06;}
+  body.print-mobile-list-mode>div{padding:0 !important;}
+  body.print-mobile-list-mode .report-header{
+    padding:3px 5px !important;
+    margin-bottom:2px !important;
+    gap:4px !important;
+    align-items:flex-start !important;
+    border-left-width:2px !important;
+    border-radius:3px !important;
+  }
+  body.print-mobile-list-mode .report-title-main{font-size:8.4px !important;line-height:1.08 !important;}
+  body.print-mobile-list-mode .report-title-sub{font-size:7.2px !important;line-height:1.08 !important;text-align:right !important;}
+  body.print-mobile-list-mode .card,
+  body.print-mobile-list-mode .report-card,
+  body.print-mobile-list-mode .exam-type-block,
+  body.print-mobile-list-mode .rapor-list-block{
+    margin:0 0 3px !important;
+    padding:0 !important;
+    border-radius:3px !important;
+    page-break-inside:auto !important;
+    break-inside:auto !important;
+  }
+  body.print-mobile-list-mode .card-body,
+  body.print-mobile-list-mode .report-card-body{padding:1px 0 0 !important;}
+  body.print-mobile-list-mode .rapor-list-block>.card-header{display:none !important;}
+  body.print-mobile-list-mode tr.print-title-row th{
+    font-size:7.2px !important;
+    line-height:1.05 !important;
+    padding:1.2px 2px !important;
+  }
+  body.print-mobile-list-mode .rapor-list-table,
+  body.print-mobile-list-mode .exam-detail-list-table{
+    table-layout:fixed !important;
+    width:100% !important;
+    max-width:100% !important;
+    margin:0 !important;
+    font-size:${printTableFont} !important;
+    line-height:1.06 !important;
+    page-break-inside:auto !important;
+    break-inside:auto !important;
+  }
+  body.print-mobile-list-mode .rapor-list-table col.rl-col-idx{width:3.4% !important;}
+  body.print-mobile-list-mode .rapor-list-table col.rl-col-name{width:16% !important;}
+  body.print-mobile-list-mode .rapor-list-table col.rl-col-class{width:4.6% !important;}
+  body.print-mobile-list-mode .rapor-list-table col.rl-col-net{width:6.2% !important;}
+  body.print-mobile-list-mode .rapor-list-table col.rl-col-score{width:6.2% !important;}
+  body.print-mobile-list-mode .rapor-list-table col.rl-col-rank{width:5.8% !important;}
+  body.print-mobile-list-mode .rapor-list-table col.rl-col-count{width:4.8% !important;}
+  body.print-mobile-list-mode .rapor-list-table th,
+  body.print-mobile-list-mode .rapor-list-table td,
+  body.print-mobile-list-mode .exam-detail-list-table th,
+  body.print-mobile-list-mode .exam-detail-list-table td{
+    padding:${printTablePadding} !important;
+    line-height:1.06 !important;
+    white-space:nowrap !important;
+    word-break:normal !important;
+    overflow:hidden !important;
+    text-overflow:clip !important;
+  }
+  body.print-mobile-list-mode .rapor-list-table thead th,
+  body.print-mobile-list-mode .exam-detail-list-table thead th{
+    font-size:${printTableHeadFont} !important;
+    line-height:1.05 !important;
+    font-weight:800 !important;
+  }
+  body.print-mobile-list-mode .rapor-list-table .rl-name{
+    min-width:0 !important;
+    white-space:nowrap !important;
+    word-break:normal !important;
+    text-align:left !important;
+  }
+  body.print-mobile-list-mode .avg-row td{
+    font-size:7px !important;
+    line-height:1.05 !important;
+    padding:1.2px 1.4px !important;
+  }
+  body.print-mobile-list-mode tbody tr{
+    page-break-inside:avoid !important;
+    break-inside:avoid !important;
+  }
 
   /* Gizle */
   .no-print,button:not(.risk-badge),.btn:not(.risk-badge),.scroll-hint,.d-flex.justify-content-end,#riskPanel,
