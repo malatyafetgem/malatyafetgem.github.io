@@ -349,7 +349,7 @@ function xXLMul(cId,fn){
 //   - compact-list: çok satırlı toplu liste tabloları
 //   - one-page-summary: tek sınav öğrenci özeti
 const _XPR_LANDSCAPE_IDS = new Set(['kCont','raporCont','raporRes']);
-const _XPR_LANDSCAPE_TITLES = new Set(['Ogrenci_Tek_Sinav','Ogrenci_Ders','Ogrenci_Veri']);
+const _XPR_LANDSCAPE_TITLES = new Set(['Ogrenci_Tek_Sinav','Ogrenci_Ders','Ogrenci_Veri','Sinif_Analizi']);
 function _xprIsLandscape(sourceId, title, orientation){
   if(orientation === 'landscape') return true;
   if(orientation === 'portrait')  return false;
@@ -399,7 +399,8 @@ function xPR(sourceId, title, btn, orientation) {
   let sourceEl = getEl(sourceId);
   if(!sourceEl){ return; }
   let isLandscape = _xprIsLandscape(sourceId, title, orientation);
-  let isCompactListPrint = sourceId === 'raporCont' && sourceEl.classList.contains('print-compact-list');
+  let isExamDetailListPrint = (sourceId === 'pED' || sourceId === 'pEDAll') && !!sourceEl.querySelector('.list-scroll table');
+  let isCompactListPrint = (sourceId === 'raporCont' && sourceEl.classList.contains('print-compact-list')) || isExamDetailListPrint;
   let isOnePageSummaryPrint = title === 'Ogrenci_Tek_Sinav';
   // Kompakt liste her zaman yatay — sütun sayısı portrait'a sığmaz
   if(isCompactListPrint) isLandscape = true;
@@ -429,6 +430,12 @@ function xPR(sourceId, title, btn, orientation) {
     .map(l => `<link rel="stylesheet" href="${l.href}">`).join('\n');
 
   let clone = sourceEl.cloneNode(true);
+  if(isExamDetailListPrint){
+    clone.classList.add('exam-detail-list-print', 'rapor-list-report');
+    clone.querySelectorAll('.list-scroll table').forEach(tbl => {
+      tbl.classList.add('rapor-list-table', 'exam-detail-list-table');
+    });
+  }
 
   // Canvas → IMG değişimi
   clone.querySelectorAll('canvas').forEach((cv, idx) => {
@@ -467,6 +474,11 @@ function xPR(sourceId, title, btn, orientation) {
       if(row.querySelector('.sec-card, .info-box')) markPrintPart(row);
     }
   });
+  if(isCompactListPrint){
+    clone.querySelectorAll('.scroll.list-scroll, .table-responsive').forEach(el => {
+      if(el.querySelector('table')) el.classList.remove('analysis-print-part');
+    });
+  }
 
   // ── SINAV TÜRÜ RENKLERİNİ INLINE YAZ ───────────────────────────────
   // Her .exam-type-block / .karne-bolum / üst seviye renkli kart için
@@ -725,6 +737,15 @@ ${cssLinks}
   .sec-card .sec-sub{font-size:0.7rem;color:#6c757d;}
   .sec-card.sec-pos .sec-value{color:#198754;}
   .sec-card.sec-neg .sec-value{color:#dc3545;}
+  .class-info-cards{display:flex !important;flex-wrap:wrap !important;align-items:stretch !important;margin:0 -3px 5px !important;}
+  .class-info-cards>[class*="col-"]{display:flex !important;padding:0 3px !important;margin-bottom:5px !important;}
+  .class-info-cards .sec-card{width:100%;min-height:54px;}
+  body.print-standard-report-mode #pC .class-compare-cards>[class*="col-"]{flex:0 0 20% !important;max-width:20% !important;}
+  body.print-standard-report-mode #pC .class-context-cards>[class*="col-"]{flex:1 1 0 !important;max-width:100% !important;}
+  body.print-standard-report-mode #pC .class-progress-cards>[class*="col-"]{flex:0 0 50% !important;max-width:50% !important;}
+  .class-rank-tables{display:flex !important;flex-wrap:nowrap !important;align-items:stretch !important;margin:0 -3px 5px !important;}
+  .class-rank-tables>[class*="col-"]{display:flex !important;flex:0 0 50% !important;max-width:50% !important;padding:0 3px !important;}
+  .class-rank-tables .card{width:100%;}
 
   /* İstatistik blokları */
   .stats-block{background:#f5f7fa !important;border:1px solid #dee2e6;border-radius:6px;padding:6px 8px;margin-bottom:5px;page-break-inside:avoid !important;break-inside:avoid !important;}
@@ -757,8 +778,17 @@ ${cssLinks}
   .trend-card{background:#f5f7fa !important;border:1px solid #dee2e6;border-radius:6px;padding:6px 8px;margin-bottom:5px;page-break-inside:avoid !important;break-inside:avoid !important;}
   .trend-card .trend-metric{position:relative !important;padding-left:6px !important;padding-right:6px !important;}
   .trend-card .trend-metric:not(:last-child)::after{content:"" !important;position:absolute !important;top:16% !important;bottom:16% !important;right:0 !important;width:1px !important;background:linear-gradient(180deg,transparent,#c7d0dc 16%,#8fa0b5 50%,#c7d0dc 84%,transparent) !important;box-shadow:1px 0 0 rgba(255,255,255,0.9) !important;}
+  .trend-stat-card{overflow:hidden !important;page-break-inside:avoid !important;break-inside:avoid !important;}
+  .trend-stat-grid{display:grid !important;grid-template-columns:repeat(auto-fit,minmax(118px,1fr)) !important;margin:0 -1px -1px 0 !important;}
   .trend-stat-item{position:relative !important;border-right:0 !important;}
   .trend-stat-item:not(:last-child)::after{content:"" !important;position:absolute !important;top:18% !important;bottom:18% !important;right:0 !important;width:1px !important;background:linear-gradient(180deg,transparent,#c7d0dc 16%,#8fa0b5 50%,#c7d0dc 84%,transparent) !important;box-shadow:1px 0 0 rgba(255,255,255,0.9) !important;}
+  body.print-standard-report-mode #pC .trend-stat-grid{grid-template-columns:repeat(4,1fr) !important;}
+  body.print-standard-report-mode #pC .trend-stat-item:nth-child(4n)::after{display:none !important;}
+  .trend-stat-item{min-height:56px !important;padding:5px 7px !important;text-align:center;display:flex !important;flex-direction:column !important;justify-content:center !important;border-bottom:1px solid #d7dde5 !important;}
+  .trend-stat-value{font-size:0.86rem !important;line-height:1.1 !important;min-height:0 !important;}
+  .trend-stat-value .trend-indicator{font-size:0.72rem !important;white-space:normal !important;}
+  .trend-stat-label{font-size:0.58rem !important;line-height:1.08 !important;margin-top:3px !important;}
+  .trend-stat-sub{font-size:0.56rem !important;line-height:1.1 !important;margin-top:2px !important;}
   .trend-indicator{display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:0.78em;font-weight:bold;}
   .trend-up{background:rgba(40,167,69,0.15) !important;color:#1e7e34 !important;}
   .trend-down{background:rgba(220,53,69,0.15) !important;color:#b02a37 !important;}
@@ -844,6 +874,12 @@ ${cssLinks}
   body.print-compact-list-mode>div{padding:0 !important;}
   body.print-compact-list-mode .rapor-list-report{width:100% !important;margin:0 !important;padding:0 !important;}
   body.print-compact-list-mode .report-header{padding:6px 8px;margin-bottom:6px;border-radius:4px;}
+  body.print-compact-list-mode .report-card{page-break-inside:auto !important;break-inside:auto !important;margin:0 !important;padding:0 !important;}
+  body.print-compact-list-mode .report-card-body{padding:4px 0 0 !important;}
+  body.print-compact-list-mode .list-scroll{page-break-inside:auto !important;break-inside:auto !important;margin:0 !important;padding:0 !important;border:0 !important;}
+  body.print-compact-list-mode .analysis-print-part{page-break-inside:auto !important;break-inside:auto !important;}
+  body.print-compact-list-mode .exam-detail-list-print .report-header{margin-bottom:4px !important;}
+  body.print-compact-list-mode .exam-detail-list-table{table-layout:auto !important;width:100% !important;max-width:100% !important;margin:0 !important;page-break-inside:auto !important;break-inside:auto !important;}
   body.print-compact-list-mode .exam-type-block,
   body.print-compact-list-mode .karne-bolum{padding:6px 8px;margin-bottom:8px;border-left-width:3px !important;border-right-width:0 !important;border-radius:4px;page-break-before:auto !important;break-before:auto !important;page-break-inside:auto !important;break-inside:auto !important;}
   body.print-compact-list-mode .exam-type-block>h5,
@@ -2105,4 +2141,36 @@ function handleSubChange(){
   _updateGDateVisibility();
   _updateAnalysisFilterLocks();
   reqAnl(); 
+}
+
+// Mobil tablo ipucu: "Tabloyu Kaydırın" sadece gerçekten yatay taşma varsa görünsün.
+function updateScrollHints(root){
+  let scope = root && root.querySelectorAll ? root : document;
+  scope.querySelectorAll('.scroll-hint').forEach(hint => {
+    let box = hint.nextElementSibling;
+    while(box && !(box.classList && (box.classList.contains('scroll') || box.classList.contains('table-responsive') || box.classList.contains('list-scroll')))) {
+      box = box.nextElementSibling;
+    }
+    let needs = false;
+    if(box) {
+      let table = box.querySelector ? box.querySelector('table') : null;
+      needs = (box.scrollWidth > box.clientWidth + 2) || (table && table.scrollWidth > box.clientWidth + 2);
+    }
+    hint.classList.toggle('is-needed', !!needs);
+  });
+}
+function scheduleScrollHints(root){
+  clearTimeout(window._scrollHintTimer);
+  window._scrollHintTimer = setTimeout(() => updateScrollHints(root || document), 80);
+}
+if(typeof document !== 'undefined'){
+  document.addEventListener('DOMContentLoaded', () => {
+    scheduleScrollHints();
+    if(window.MutationObserver && document.body){
+      let observer = new MutationObserver(() => scheduleScrollHints());
+      observer.observe(document.body, { childList:true, subtree:true });
+      window._scrollHintObserver = observer;
+    }
+    window.addEventListener('resize', () => scheduleScrollHints());
+  });
 }
