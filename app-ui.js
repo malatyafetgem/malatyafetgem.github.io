@@ -507,9 +507,9 @@ function xPR(sourceId, title, btn, orientation) {
   clone.querySelectorAll('.trend-card, .boxplot-card, .chart-box, .table-responsive, .scroll, .card.shadow-sm.avoid-break, .risk-note, #riskStatCards, .risk-list-wrap').forEach(markPrintPart);
   clone.querySelectorAll('.row').forEach(row => {
     try {
-      if(row.querySelector(':scope > [class*="col-"] .sec-card, :scope > [class*="col-"] .info-box')) markPrintPart(row);
+      if(row.querySelector(':scope > [class*="col-"] .sec-card, :scope > [class*="col-"] .risk-stat-card')) markPrintPart(row);
     } catch(e) {
-      if(row.querySelector('.sec-card, .info-box')) markPrintPart(row);
+      if(row.querySelector('.sec-card, .risk-stat-card')) markPrintPart(row);
     }
   });
   if(isCompactListPrint){
@@ -574,8 +574,8 @@ function xPR(sourceId, title, btn, orientation) {
   });
 
   // ── KARTLARIN ÇERÇEVELERİNİ INLINE GARANTİLE ──────────────────────
-  let srcCards   = sourceEl.querySelectorAll('.card, .home-stat-card, .boxplot-card, .trend-card, .info-box, .sec-card');
-  let cloneCards = clone.querySelectorAll('.card, .home-stat-card, .boxplot-card, .trend-card, .info-box, .sec-card');
+  let srcCards   = sourceEl.querySelectorAll('.card, .home-stat-card, .boxplot-card, .trend-card, .risk-stat-card, .sec-card');
+  let cloneCards = clone.querySelectorAll('.card, .home-stat-card, .boxplot-card, .trend-card, .risk-stat-card, .sec-card');
   cloneCards.forEach((el, idx) => {
     let src = srcCards[idx]; if(!src) return;
     let cs = window.getComputedStyle(src);
@@ -639,7 +639,7 @@ function xPR(sourceId, title, btn, orientation) {
     // Blok içindeki kart/grafik/tablo birimleri: compact liste modunda avoid yazma,
     // CSS kuralları yönetir. Diğer modlarda inline avoid yaz.
     if(!isCompactListPrint){
-      blk.querySelectorAll('.card, .chart-box, .boxplot-card, .trend-card, .info-box, .sec-card').forEach(el => {
+      blk.querySelectorAll('.card, .chart-box, .boxplot-card, .trend-card, .risk-stat-card, .sec-card').forEach(el => {
         el.style.cssText += ';page-break-inside:avoid;break-inside:avoid;';
       });
     }
@@ -800,19 +800,12 @@ ${cssLinks}
   .stats-item.stat-neg .stats-value{color:#dc3545;}
   .stats-item.stat-neutral .stats-value{color:#495057;}
 
-  /* Info-box */
-  .info-box{display:flex !important;align-items:stretch;border-radius:5px;margin-bottom:4px;page-break-inside:avoid !important;break-inside:avoid !important;}
-  .info-box-icon{display:flex !important;align-items:center;justify-content:center;width:44px !important;min-width:44px;font-size:1.1em;color:#fff;}
-  .info-box-content{padding:5px 8px;flex:1;}
-  .info-box-text{display:block;font-size:0.72em;font-weight:700;}
-  .info-box-number{display:block;font-size:1.05em;font-weight:bold;margin:1px 0;}
-  .info-box.bg-primary,.bg-primary{background:#1a5fa8 !important;color:#fff !important;}
-  .info-box.bg-success,.bg-success{background:#198754 !important;color:#fff !important;}
-  .info-box.bg-danger,.bg-danger{background:#dc3545 !important;color:#fff !important;}
-  .info-box.bg-warning,.bg-warning{background:#e6a800 !important;color:#fff !important;}
-  .info-box.bg-info,.bg-info{background:#0dcaf0 !important;color:#055160 !important;}
-  .info-box.bg-secondary,.bg-secondary{background:#6c757d !important;color:#fff !important;}
-  .info-box.bg-primary *,.info-box.bg-success *,.info-box.bg-danger *,.info-box.bg-warning *,.info-box.bg-info *,.info-box.bg-secondary *{color:inherit !important;}
+  /* Risk sayaç kartları */
+  .risk-stat-card{display:flex !important;align-items:center;gap:8px;border-radius:5px;margin-bottom:4px;padding:6px 8px;page-break-inside:avoid !important;break-inside:avoid !important;}
+  .risk-stat-icon{display:flex !important;align-items:center;justify-content:center;width:34px !important;min-width:34px;height:34px;border-radius:7px;background:rgba(255,255,255,0.18);font-size:1em;color:inherit;}
+  .risk-stat-content{flex:1;min-width:0;}
+  .risk-stat-label{display:block;font-size:0.72em;font-weight:700;line-height:1.15;}
+  .risk-stat-number{display:block;font-size:1.05em;font-weight:bold;margin:1px 0;line-height:1.1;}
 
   /* Trend kartı */
   .trend-card{background:#f5f7fa !important;border:1px solid #dee2e6;border-radius:6px;padding:6px 8px;margin-bottom:5px;page-break-inside:avoid !important;break-inside:avoid !important;}

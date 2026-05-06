@@ -779,12 +779,7 @@ body.is-admin button.w-100.admin-only { display:block !important; }
   .methodology-body { padding: 12px; font-size: 0.78rem; }
   .methodology-items { grid-template-columns: 1fr; }
   .methodology-context { display: flex; }
-  .info-box { min-height: 70px; }
   .home-nav-card { min-height: 72px; }
-  .info-box-icon { width: 60px; font-size: 1.2rem; }
-  .info-box-content { padding: 8px 10px; }
-  .info-box-text { font-size: 0.8em; }
-  .info-box-number { font-size: 1em; }
   .chart-box { height: 250px !important; }
   #toastContainer { left: 10px; right: 10px; max-width: none; top: auto; bottom: 70px; }
   .scroll { -webkit-overflow-scrolling: touch; overflow-x: auto; }
@@ -830,8 +825,6 @@ body.is-admin button.w-100.admin-only { display:block !important; }
   }
   .scroll-hint.is-needed { display: block; }
 }
-
-.info-box-text { display: block; font-size: 0.78em; font-weight: 600; }
 
 /* ===== KUTU GRAFİĞİ ===== */
 .boxplot-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -1115,29 +1108,6 @@ body.is-admin button.w-100.admin-only { display:block !important; }
 .btn-danger:hover { background-color: #b91c1c !important; border-color: #b91c1c !important; }
 .btn-warning { background-color: #f59e0b !important; border-color: #f59e0b !important; color: #111827 !important; }
 .btn-info { background-color: var(--sa-info) !important; border-color: var(--sa-info) !important; color: #fff !important; }
-.info-box.bg-secondary,
-.info-box.bg-teal {
-  background: #fff !important;
-  color: var(--sa-text) !important;
-  border: 1px solid var(--sa-border);
-  box-shadow: var(--sa-shadow);
-}
-.info-box.bg-secondary { border-left: 4px solid #64748b; }
-.info-box.bg-teal { border-left: 4px solid #0f766e; }
-.info-box.bg-secondary .info-box-icon { background: rgba(100,116,139,0.12) !important; color: #475569 !important; }
-.info-box.bg-teal .info-box-icon { background: rgba(15,118,110,0.12) !important; color: #0f766e !important; }
-.info-box.bg-secondary .info-box-text,
-.info-box.bg-secondary .info-box-number,
-.info-box.bg-teal .info-box-text,
-.info-box.bg-teal .info-box-number { color: var(--sa-text) !important; }
-
-/* Inline gri/danger info-box override (AdminLTE v4) */
-.info-box[style*="background:#6c757d"] { background: linear-gradient(135deg, #6c757d, #495057) !important; color: #fff !important; }
-.info-box[style*="background:#6c757d"] *, .info-box[style*="background:#6c757d"] i { color: #fff !important; }
-.info-box[style*="background:#6c757d"] .progress-description { color: #e9ecef !important; }
-.info-box[style*="background:#dc3545"] { background: linear-gradient(135deg, #dc3545, #b02a37) !important; color: #fff !important; }
-.info-box[style*="background:#dc3545"] *, .info-box[style*="background:#dc3545"] i { color: #fff !important; }
-
 /* ===== SİSTEM YÖNETİMİ — temel yerleşim ===== */
 .sys-mgmt-inner { margin: 0 auto; }
 .sys-mgmt-section { display: grid; grid-template-columns: 1fr 1fr; }
@@ -1468,7 +1438,7 @@ body.is-admin button.w-100.admin-only { display:block !important; }
 /* ===== GENEL ANALIZ PARCA DUZENI ===== */
 :where(#homeArea, #anlRes, #raporRes) :where(
   .row:has(> [class*="col-"] .sec-card),
-  .row:has(> [class*="col-"] .info-box),
+  .row:has(> [class*="col-"] .risk-stat-card),
   .row:has(> [class*="col-"] .trend-card),
   .row:has(> [class*="col-"] .boxplot-card),
   .row:has(> [class*="col-"] > .card.shadow-sm.avoid-break),
@@ -1487,7 +1457,7 @@ body.is-admin button.w-100.admin-only { display:block !important; }
 
 :where(#homeArea, #anlRes, #raporRes) :where(
   .row:has(> [class*="col-"] .sec-card),
-  .row:has(> [class*="col-"] .info-box),
+  .row:has(> [class*="col-"] .risk-stat-card),
   .row:has(> [class*="col-"] .trend-card),
   .row:has(> [class*="col-"] .boxplot-card),
   .row:has(> [class*="col-"] > .card.shadow-sm.avoid-break),
@@ -1507,7 +1477,7 @@ body.is-admin button.w-100.admin-only { display:block !important; }
 
 :where(#homeArea, #anlRes, #raporRes) :where(
   .row:has(> [class*="col-"] .sec-card),
-  .row:has(> [class*="col-"] .info-box),
+  .row:has(> [class*="col-"] .risk-stat-card),
   .row:has(> [class*="col-"] .trend-card),
   .row:has(> [class*="col-"] .boxplot-card),
   .row:has(> [class*="col-"] > .card.shadow-sm.avoid-break),
@@ -1533,7 +1503,7 @@ body.is-admin button.w-100.admin-only { display:block !important; }
 
 :where(#homeArea, #anlRes, #raporRes) :where(.exam-type-block, .karne-bolum, .report-card-body, .card-body) > h5 + :where(
   .row:has(> [class*="col-"] .sec-card),
-  .row:has(> [class*="col-"] .info-box),
+  .row:has(> [class*="col-"] .risk-stat-card),
   .row:has(> [class*="col-"] .trend-card),
   .row:has(> [class*="col-"] .boxplot-card),
   .row:has(> [class*="col-"] > .card.shadow-sm.avoid-break),
@@ -1553,7 +1523,7 @@ body.is-admin button.w-100.admin-only { display:block !important; }
 
 :where(#homeArea, #anlRes, #raporRes) :where(.exam-type-block, .karne-bolum, .report-card-body, .card-body) > h5 + :where(
   .row:has(> [class*="col-"] .sec-card),
-  .row:has(> [class*="col-"] .info-box),
+  .row:has(> [class*="col-"] .risk-stat-card),
   .row:has(> [class*="col-"] .trend-card),
   .row:has(> [class*="col-"] .boxplot-card),
   .row:has(> [class*="col-"] > .card.shadow-sm.avoid-break),
@@ -2042,46 +2012,6 @@ body.is-admin button.w-100.admin-only { display:block !important; }
   color: var(--sa-primary-600) !important;
   box-shadow: 0 4px 12px rgba(37,99,235,0.18);
 }
-.info-box.bg-primary,
-.info-box.bg-success,
-.info-box.bg-info,
-.info-box.bg-warning,
-.info-box.bg-danger {
-  background: #fff !important;
-  color: var(--sa-text) !important;
-  border: 1px solid var(--sa-border);
-  box-shadow: var(--sa-shadow);
-}
-.info-box.bg-primary { border-left: 4px solid var(--sa-primary); }
-.info-box.bg-success { border-left: 4px solid var(--sa-success); }
-.info-box.bg-info { border-left: 4px solid var(--sa-info); }
-.info-box.bg-warning { border-left: 4px solid var(--sa-warning); }
-.info-box.bg-danger { border-left: 4px solid var(--sa-danger); }
-.info-box.bg-primary .info-box-icon { background: rgba(37,99,235,0.10) !important; color: var(--sa-primary) !important; }
-.info-box.bg-success .info-box-icon { background: rgba(5,150,105,0.10) !important; color: var(--sa-success) !important; }
-.info-box.bg-info .info-box-icon { background: rgba(8,145,178,0.10) !important; color: var(--sa-info) !important; }
-.info-box.bg-warning .info-box-icon { background: rgba(217,119,6,0.12) !important; color: var(--sa-warning) !important; }
-.info-box.bg-danger .info-box-icon { background: rgba(220,38,38,0.10) !important; color: var(--sa-danger) !important; }
-.info-box.bg-primary *,
-.info-box.bg-success *,
-.info-box.bg-info *,
-.info-box.bg-warning *,
-.info-box.bg-danger * { color: inherit !important; }
-.info-box.bg-primary .info-box-text,
-.info-box.bg-success .info-box-text,
-.info-box.bg-info .info-box-text,
-.info-box.bg-warning .info-box-text,
-.info-box.bg-danger .info-box-text,
-.info-box.bg-primary .info-box-number,
-.info-box.bg-success .info-box-number,
-.info-box.bg-info .info-box-number,
-.info-box.bg-warning .info-box-number,
-.info-box.bg-danger .info-box-number { color: var(--sa-text) !important; }
-.info-box.bg-primary .progress-description,
-.info-box.bg-success .progress-description,
-.info-box.bg-info .progress-description,
-.info-box.bg-warning .progress-description,
-.info-box.bg-danger .progress-description { color: var(--sa-muted) !important; }
 .app-sidebar.sa-sidebar .sidebar-brand .brand-link,
 .app-sidebar.sa-sidebar .sidebar-brand .brand-link i,
 .app-sidebar.sa-sidebar .sidebar-brand .brand-link span { color: #0f2f66 !important; }
@@ -2457,7 +2387,7 @@ body.sidebar-collapse .app-sidebar.sa-sidebar:hover .sidebar-brand .brand-text {
     color: #111827 !important;
     border-bottom: 2px solid #cbd5e1 !important;
   }
-  .card, .exam-type-block, .karne-bolum, .sec-card, .home-stat-card, .info-box,
+  .card, .exam-type-block, .karne-bolum, .sec-card, .home-stat-card, .risk-stat-card,
   .trend-card, .boxplot-card, .report-header, .print-page-hdr {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
