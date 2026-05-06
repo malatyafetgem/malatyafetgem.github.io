@@ -96,7 +96,7 @@ body.auth-pending .loader-spinner { color:var(--sa-primary) !important; border-w
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.home-nav-card .progress-description { font-size:0.8em; }
+.home-nav-card .home-nav-desc { font-size:0.8em; }
 .search-wrapper { position:relative; }
 .btn-search-clear { border-color:#ced4da; }
 .settings-toolbar { gap:10px; }
@@ -663,10 +663,6 @@ body.is-admin button.w-100.admin-only { display:block !important; }
   white-space: nowrap;
 }
 
-/* ===== YAZDIR BUTONU ===== */
-.btn-print { background: linear-gradient(135deg, #0d6efd, #0a58ca); color: #fff !important; border: none; border-radius: 4px; padding: 4px 12px; font-size: 0.875rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; box-shadow: 0 1px 3px rgba(13,110,253,0.25); height: calc(1.5em + .5rem + 2px); }
-.btn-print:hover { background: linear-gradient(135deg, #0a58ca, #a0c4e8); box-shadow: 0 4px 12px rgba(108,142,191,0.35); transform: translateY(-1px); }
-
 /* ===== PRINT — Tüm cihazlar için temel kurallar ===== */
 
 
@@ -1142,45 +1138,30 @@ body.is-admin button.w-100.admin-only { display:block !important; }
 .info-box[style*="background:#dc3545"] { background: linear-gradient(135deg, #dc3545, #b02a37) !important; color: #fff !important; }
 .info-box[style*="background:#dc3545"] *, .info-box[style*="background:#dc3545"] i { color: #fff !important; }
 
-/* ===== SİSTEM YÖNETİMİ — MODERN TASARIM ===== */
-.sys-mgmt-card { border: none !important; border-radius: 12px !important; overflow: hidden; box-shadow: 0 4px 20px rgba(13,110,253,0.08) !important; background: #fff; }
-.sys-mgmt-card .card-header { background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%) !important; color: #fff !important; padding: 16px 20px !important; border-bottom: none !important; position: relative; }
-.sys-mgmt-card .card-header h3 { color: #fff !important; font-weight: 600; font-size: 1.05rem; margin: 0; display: flex; align-items: center; gap: 10px; }
-.sys-mgmt-card .card-header h3 i { background: rgba(255,255,255,0.2); width: 36px; height: 36px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; font-size: 1.1em; }
-.sys-mgmt-card .card-body { padding: 24px !important; }
-.sys-mgmt-inner { max-width: 960px; margin: 0 auto; }
-.sys-mgmt-section { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px; }
+/* ===== SİSTEM YÖNETİMİ — temel yerleşim ===== */
+.sys-mgmt-inner { margin: 0 auto; }
+.sys-mgmt-section { display: grid; grid-template-columns: 1fr 1fr; }
 @media (max-width: 575px) { .sys-mgmt-section { grid-template-columns: 1fr; } }
 @media (min-width: 992px) {
-  .sys-mgmt-card .card-body { padding: 28px 32px !important; }
-  .sys-mgmt-section { gap: 20px; margin-bottom: 22px; }
-  .sys-mgmt-tile { padding: 18px 20px; }
-  .sys-mgmt-tile .tile-icon { width: 52px; height: 52px; font-size: 1.4em; }
   .sys-mgmt-tile .tile-text strong { font-size: 1rem; }
   .sys-mgmt-tile .tile-text span { font-size: 0.82rem; }
-  .sys-mgmt-danger { padding: 18px 22px; }
-  .sys-mgmt-danger .danger-icon { width: 52px; height: 52px; font-size: 1.4em; }
   .sys-mgmt-danger .danger-text strong { font-size: 1rem; }
   .sys-mgmt-danger .danger-text span { font-size: 0.82rem; }
   .sys-mgmt-danger .btn-danger-modern { padding: 10px 22px; font-size: 0.92rem; }
-  .sys-mgmt-divider { margin: 22px 0; }
 }
-.sys-mgmt-tile { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 10px; border: 1px solid #e9ecef; background: #f8f9fa; cursor: pointer; transition: all 0.2s ease; text-align: left; width: 100%; }
-.sys-mgmt-tile:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(13,110,253,0.12); border-color: #0d6efd; background: #fff; }
-.sys-mgmt-tile .tile-icon { flex-shrink: 0; width: 44px; height: 44px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; font-size: 1.2em; color: #fff; }
-.sys-mgmt-tile.tile-export .tile-icon { background: linear-gradient(135deg, #198754, #146c43); }
-.sys-mgmt-tile.tile-import .tile-icon { background: linear-gradient(135deg, #0d6efd, #0a58ca); }
+.sys-mgmt-tile { display: flex; align-items: center; gap: 14px; cursor: pointer; transition: all 0.2s ease; text-align: left; width: 100%; }
+.sys-mgmt-tile .tile-icon { flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; }
 .sys-mgmt-tile .tile-text { flex: 1; min-width: 0; }
-.sys-mgmt-tile .tile-text strong { display: block; font-size: 0.92rem; color: #212529; font-weight: 600; margin-bottom: 2px; }
-.sys-mgmt-tile .tile-text span { display: block; font-size: 0.78rem; color: #6c757d; line-height: 1.3; }
-.sys-mgmt-divider { height: 1px; background: linear-gradient(90deg, transparent, #dee2e6, transparent); margin: 18px 0; }
-.sys-mgmt-danger { background: linear-gradient(135deg, #fff5f5, #ffe9ec); border: 1px solid #f5c2c7; border-radius: 10px; padding: 14px 16px; display: flex; align-items: center; gap: 14px; }
-.sys-mgmt-danger .danger-icon { width: 44px; height: 44px; border-radius: 10px; background: linear-gradient(135deg, #dc3545, #b02a37); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 1.2em; flex-shrink: 0; }
+.sys-mgmt-tile .tile-text strong { display: block; font-size: 0.92rem; margin-bottom: 2px; }
+.sys-mgmt-tile .tile-text span { display: block; font-size: 0.78rem; line-height: 1.3; }
+.sys-mgmt-divider { height: 1px; }
+.sys-mgmt-danger { display: flex; align-items: center; gap: 14px; }
+.sys-mgmt-danger .danger-icon { display: inline-flex; align-items: center; justify-content: center; font-size: 1.2em; flex-shrink: 0; }
 .sys-mgmt-danger .danger-text { flex: 1; min-width: 0; }
-.sys-mgmt-danger .danger-text strong { display: block; font-size: 0.92rem; color: #842029; font-weight: 600; margin-bottom: 2px; }
-.sys-mgmt-danger .danger-text span { display: block; font-size: 0.78rem; color: #842029; opacity: 0.85; line-height: 1.3; }
-.sys-mgmt-danger .btn-danger-modern { background: linear-gradient(135deg, #dc3545, #b02a37); color: #fff; border: none; border-radius: 8px; padding: 8px 16px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.2s; flex-shrink: 0; box-shadow: 0 2px 6px rgba(220,53,69,0.3); }
-.sys-mgmt-danger .btn-danger-modern:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(220,53,69,0.4); }
+.sys-mgmt-danger .danger-text strong { display: block; font-size: 0.92rem; margin-bottom: 2px; }
+.sys-mgmt-danger .danger-text span { display: block; font-size: 0.78rem; opacity: 0.85; line-height: 1.3; }
+.sys-mgmt-danger .btn-danger-modern { color: #fff; border: none; padding: 8px 16px; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; flex-shrink: 0; }
+.sys-mgmt-danger .btn-danger-modern:hover { transform: translateY(-1px); }
 
 /* ===== RİSK UYARI SİSTEMİ ===== */
 #riskPanel { margin-top: 0; margin-bottom: 14px; }
@@ -1833,6 +1814,11 @@ body.is-admin button.w-100.admin-only { display:block !important; }
   width: 100%;
   margin-bottom: 0;
 }
+@media (min-width: 769px) {
+  #anasayfa_genel .home-shortcuts-row {
+    margin-top: 16px !important;
+  }
+}
 .student-report-actions,
 .rapor-action-bar {
   align-items: center;
@@ -2067,97 +2053,16 @@ body.is-admin button.w-100.admin-only { display:block !important; }
   background: var(--sa-primary) !important;
   box-shadow: 0 4px 12px rgba(37,99,235,0.22);
 }
-.home-nav-card.info-box {
-  --home-accent: var(--sa-primary);
-  --home-accent-2: var(--sa-primary-600);
-  position: relative;
-  min-height: 92px;
-  border: 0 !important;
-  color: #fff !important;
-  box-shadow: 0 12px 26px rgba(15,23,42,0.18) !important;
-  overflow: hidden;
-}
-.home-nav-card.info-box::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.16), transparent 44%);
-  pointer-events: none;
-}
-.home-nav-card.bg-primary { --home-accent: #0d6efd; --home-accent-2: #0a58ca; background: linear-gradient(135deg, #0d6efd, #0a58ca) !important; }
-.home-nav-card.bg-success { --home-accent: #198754; --home-accent-2: #20c997; background: linear-gradient(135deg, #198754, #20c997) !important; }
-.home-nav-card.bg-info { --home-accent: #0dcaf0; --home-accent-2: #0d6efd; background: linear-gradient(135deg, #0dcaf0, #0d6efd) !important; }
-.home-nav-card.bg-warning { --home-accent: #f97316; --home-accent-2: #c2410c; background: linear-gradient(135deg, #f97316, #c2410c) !important; }
-.home-nav-card .info-box-icon {
-  position: relative;
-  z-index: 1;
-  align-self: center;
-  width: 58px;
-  min-width: 58px;
-  height: 58px;
-  margin-left: 12px;
-  border-radius: 14px;
-  background: rgba(255,255,255,0.18) !important;
-  border: 1px solid rgba(255,255,255,0.24);
-  color: #fff !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 8px 18px rgba(15,23,42,0.16);
-}
-.home-nav-card .info-box-icon i {
-  color: #fff !important;
-  font-size: 1.35rem;
-}
-.home-nav-card .info-box-content {
-  position: relative;
-  z-index: 1;
-  justify-content: center;
-  padding: 12px 14px !important;
-}
-.home-nav-card .info-box-text {
-  color: #fff !important;
-  font-weight: 800;
-  font-size: 1rem;
-  letter-spacing: 0;
-  text-shadow: 0 1px 2px rgba(15,23,42,0.28);
-}
-.home-nav-card .progress-description {
-  color: #fff !important;
-  font-size: 0.78rem;
-  font-weight: 400;
-  margin-top: 2px;
-  opacity: 1;
-  text-shadow: 0 1px 2px rgba(15,23,42,0.34);
-}
-.info-box.home-nav-card.bg-primary .info-box-text,
-.info-box.home-nav-card.bg-success .info-box-text,
-.info-box.home-nav-card.bg-info .info-box-text,
-.info-box.home-nav-card.bg-warning .info-box-text,
-.info-box.home-nav-card.bg-danger .info-box-text {
-  color: #fff !important;
-  font-weight: 800 !important;
-}
-.info-box.home-nav-card.bg-primary .progress-description,
-.info-box.home-nav-card.bg-success .progress-description,
-.info-box.home-nav-card.bg-info .progress-description,
-.info-box.home-nav-card.bg-warning .progress-description,
-.info-box.home-nav-card.bg-danger .progress-description {
-  color: #fff !important;
-  opacity: 1 !important;
-  font-size: 0.78rem !important;
-  font-weight: 400 !important;
-}
-.home-nav-card:hover,
-.home-nav-card:focus {
-  box-shadow: 0 16px 34px rgba(15,23,42,0.24) !important;
-  filter: saturate(1.08) brightness(1.02);
-}
-
 /* ===== AdminLTE v4 ana yüzey revizyonu ===== */
 #anasayfa_genel > .row.mb-3 {
   --bs-gutter-y: 0.75rem;
   margin-bottom: 1rem !important;
 }
-.home-nav-card.info-box {
+.home-nav-card {
   --home-accent-bg: rgba(37,99,235,0.10);
+  position: relative;
+  display: flex;
+  align-items: center;
   min-height: 86px;
   border: 1px solid var(--sa-border) !important;
   border-left: 4px solid var(--home-accent) !important;
@@ -2165,36 +2070,47 @@ body.is-admin button.w-100.admin-only { display:block !important; }
   background: #fff !important;
   color: var(--sa-text) !important;
   box-shadow: var(--sa-shadow) !important;
+  overflow: hidden;
 }
-.home-nav-card.info-box::after {
+.home-nav-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
   background: linear-gradient(90deg, var(--home-accent-bg), transparent 72%);
   opacity: 0.72;
+  pointer-events: none;
 }
-.home-nav-card.bg-primary {
+.home-nav-card.home-nav-primary {
   --home-accent: var(--sa-primary);
   --home-accent-2: var(--sa-primary-600);
   --home-accent-bg: rgba(37,99,235,0.10);
   background: #fff !important;
 }
-.home-nav-card.bg-success {
+.home-nav-card.home-nav-success {
   --home-accent: var(--sa-success);
   --home-accent-2: #047857;
   --home-accent-bg: rgba(5,150,105,0.10);
   background: #fff !important;
 }
-.home-nav-card.bg-info {
+.home-nav-card.home-nav-info {
   --home-accent: var(--sa-info);
   --home-accent-2: #0e7490;
   --home-accent-bg: rgba(8,145,178,0.10);
   background: #fff !important;
 }
-.home-nav-card.bg-warning {
+.home-nav-card.home-nav-warning {
   --home-accent: var(--sa-warning);
   --home-accent-2: #b45309;
   --home-accent-bg: rgba(217,119,6,0.12);
   background: #fff !important;
 }
-.home-nav-card .info-box-icon {
+.home-nav-card .home-nav-icon {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
   width: 52px;
   min-width: 52px;
   height: 52px;
@@ -2205,30 +2121,27 @@ body.is-admin button.w-100.admin-only { display:block !important; }
   color: var(--home-accent) !important;
   box-shadow: none;
 }
-.home-nav-card .info-box-icon i {
+.home-nav-card .home-nav-icon i {
   color: var(--home-accent) !important;
   font-size: 1.22rem;
 }
-.home-nav-card .info-box-content {
+.home-nav-card .home-nav-content {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   padding: 11px 14px !important;
 }
-.home-nav-card .info-box-text,
-.info-box.home-nav-card.bg-primary .info-box-text,
-.info-box.home-nav-card.bg-success .info-box-text,
-.info-box.home-nav-card.bg-info .info-box-text,
-.info-box.home-nav-card.bg-warning .info-box-text,
-.info-box.home-nav-card.bg-danger .info-box-text {
+.home-nav-card .home-nav-title {
   color: var(--sa-text) !important;
   font-size: 0.98rem;
   font-weight: 800 !important;
   text-shadow: none;
 }
-.home-nav-card .progress-description,
-.info-box.home-nav-card.bg-primary .progress-description,
-.info-box.home-nav-card.bg-success .progress-description,
-.info-box.home-nav-card.bg-info .progress-description,
-.info-box.home-nav-card.bg-warning .progress-description,
-.info-box.home-nav-card.bg-danger .progress-description {
+.home-nav-card .home-nav-desc {
   color: var(--sa-muted) !important;
   font-size: 0.78rem !important;
   font-weight: 500 !important;
@@ -2672,7 +2585,7 @@ body.sidebar-collapse .app-sidebar.sa-sidebar:hover .sidebar-brand .brand-text {
 
 /* ===================================================================
    BOTTOM NAVIGATION BAR — Mobil navigasyon (≤991px)
-   Her sekme ana sayfadaki info-box kartlarıyla aynı gradient renkleri
+   Her sekme ana sayfadaki kısayol kartlarıyla aynı vurgu renklerini
    taşır. Aktif: dolu gradient + beyaz ikon/etiket. Pasif: soluk ton.
    =================================================================== */
 

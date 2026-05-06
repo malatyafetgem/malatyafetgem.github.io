@@ -1511,7 +1511,7 @@ function _methodologyData(aT){
       limit: 'R² düşükse yön etiketi temkinli okunur. Az sınavda trend, kesin yargı değil izleme sinyalidir.'
     },
     {
-      display: 'Toplam Değişim / Sınav Başı Değişim',
+      display: 'Toplam Net/Puan/Ders Değişimi / Sınav Başı Değişim',
       original: 'Regresyon doğrusuna dayalı toplam değişim ve regresyon eğimi',
       when: 'Trend kartıyla birlikte görünür.',
       meaning: 'Süreç boyunca beklenen toplam artış/azalışı ve her yeni sınav için ortalama değişim hızını gösterir.',
@@ -1578,12 +1578,20 @@ function _methodologyData(aT){
 
   const classItems = [
     {
-      display: 'Genel Eğilim / Sınav Başına Değişim',
-      original: 'Sınıf ortalaması üzerinden doğrusal regresyon eğimi + R²',
+      display: 'Genel Eğilim / Toplam Net Değişimi / Sınav Başına Değişim',
+      original: 'Sınıf ortalaması üzerinden doğrusal regresyon eğimi ve toplam değişim',
       when: 'Seçilen sınıf/şube/veri için en az 2 sınav ortalaması oluştuğunda görünür; 3 ve üzeri sınavda yorum daha sağlıklıdır.',
       meaning: 'Sınıf ortalamasının zaman içinde yükselme, düşme veya sabit kalma yönünü gösterir.',
-      calc: 'Her sınav için sınıf ortalaması hesaplanır; bu seri üzerinden regresyon eğimi ve R² bulunur.',
+      calc: 'Her sınav için sınıf ortalaması hesaplanır; sınav sırası x ekseni, ortalama y ekseni alınır. Eğim sınav başına değişimi, eğim x (sınav sayısı - 1) toplam değişimi verir.',
       limit: 'İki sınavlık değişim gerçek trend sayılmaz; R² düşükse sonuç dalgalı kabul edilmelidir.'
+    },
+    {
+      display: 'Trend Güvenilirliği (R²)',
+      original: 'Determinasyon katsayısı / R-kare',
+      when: 'Trend bloğu içinde, en az 3 sınav ortalaması oluştuğunda görünür.',
+      meaning: 'Trend çizgisinin sınıf ortalaması serisini ne kadar iyi açıkladığını gösterir.',
+      calc: 'R², regresyon çizgisinin açıkladığı değişim oranıdır. 1’e yaklaştıkça trend daha tutarlı, 0’a yaklaştıkça sonuçlar daha dalgalıdır. Sistem sınav sayısına göre adaptif alt eşik kullanır.',
+      limit: 'R² düşükse yükseliş veya düşüş etiketi tek başına güçlü yorum sayılmaz; sonuç izleme sinyali olarak okunur.'
     },
     {
       display: 'Sınıf İçi Dağılım',
@@ -1621,12 +1629,20 @@ function _methodologyData(aT){
 
   const subjectItems = [
     {
-      display: 'Genel Eğilim / Sınav Başına Değişim',
-      original: 'Ders ortalaması üzerinden doğrusal regresyon eğimi + R²',
+      display: 'Genel Eğilim / Toplam Net Değişimi / Sınav Başına Değişim',
+      original: 'Ders ortalaması üzerinden doğrusal regresyon eğimi ve toplam değişim',
       when: 'Seçili derste en az 3 sınavlık karşılaştırılabilir veri varsa görünür.',
       meaning: 'Dersin kurum/sınıf genelinde zamanla güçlenip güçlenmediğini gösterir.',
-      calc: 'Her sınav için ders ortalaması hesaplanır; bu seri üzerinden regresyon eğimi, toplam değişim ve R² hesaplanır.',
+      calc: 'Her sınav için ders ortalaması hesaplanır; sınav sırası x ekseni, ders ortalaması y ekseni alınır. Eğim sınav başına değişimi, eğim x (sınav sayısı - 1) toplam değişimi verir.',
       limit: 'Ders kapsamı sınavdan sınava değişebilir; R² düşükse eğilim zayıf kabul edilir.'
+    },
+    {
+      display: 'Trend Güvenilirliği (R²)',
+      original: 'Determinasyon katsayısı / R-kare',
+      when: 'Trend bloğu içinde, en az 3 sınavlık ders ortalaması oluştuğunda görünür.',
+      meaning: 'Ders trend çizgisinin sınav ortalamalarına ne kadar iyi uyduğunu gösterir.',
+      calc: 'R², regresyon çizgisinin açıkladığı değişim oranıdır. 1’e yakın değer düzenli bir gidişi, 0’a yakın değer dalgalı bir seriyi anlatır.',
+      limit: 'R² düşükse ders için yükseliş veya düşüş yorumu zayıf kabul edilir; konu kapsamı farkı ayrıca düşünülmelidir.'
     },
     {
       display: 'Öğrenciler Arası Dağılım',
@@ -1664,7 +1680,7 @@ function _methodologyData(aT){
 
   const examItems = [
     {
-      display: 'Ortalamadan Uzaklık',
+      display: 'Ortalamadan Uzaklık (Standart Sapma)',
       original: 'Örneklem standart sapması + CV etiketi',
       when: 'Tek sınav özetinde en az 5 öğrenci sonucu varsa görünür. Tüm sınavlar özetinde ise öğrenci ortalamaları üzerinden en az 5 değer gerekir.',
       meaning: 'Grubun ortalama etrafında ne kadar dağıldığını gösterir.',
