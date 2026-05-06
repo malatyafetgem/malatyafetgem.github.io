@@ -1108,6 +1108,25 @@ body.is-admin button.w-100.admin-only { display:block !important; }
 .btn-danger:hover { background-color: #b91c1c !important; border-color: #b91c1c !important; }
 .btn-warning { background-color: #f59e0b !important; border-color: #f59e0b !important; color: #111827 !important; }
 .btn-info { background-color: var(--sa-info) !important; border-color: var(--sa-info) !important; color: #fff !important; }
+
+/* ===== MODALLAR — AU başlık sistemi ===== */
+.sa-modal-header {
+  border-bottom: 0;
+  color: #fff;
+}
+.sa-modal-header .modal-title,
+.sa-modal-header .modal-title * {
+  color: inherit !important;
+}
+.sa-modal-primary { background: var(--sa-primary) !important; }
+.sa-modal-info { background: var(--sa-info) !important; }
+.sa-modal-danger { background: var(--sa-danger) !important; }
+.sa-modal-warning {
+  background: #fef3c7 !important;
+  color: #78350f;
+  border-bottom: 1px solid rgba(217,119,6,0.18);
+}
+
 /* ===== SİSTEM YÖNETİMİ — temel yerleşim ===== */
 .sys-mgmt-inner { margin: 0 auto; }
 .sys-mgmt-section { display: grid; grid-template-columns: 1fr 1fr; }
