@@ -805,9 +805,12 @@ ${cssLinks}
   .class-info-cards{display:flex !important;flex-wrap:wrap !important;align-items:stretch !important;margin:0 -3px 5px !important;}
   .class-info-cards>[class*="col-"]{display:flex !important;padding:0 3px !important;margin-bottom:5px !important;}
   .class-info-cards .sec-card{width:100%;min-height:54px;}
-  body.print-standard-report-mode #pC .class-compare-cards>[class*="col-"]{flex:0 0 20% !important;max-width:20% !important;}
+  body.print-standard-report-mode #pC .class-summary-cards>[class*="col-"]{flex:0 0 33.333% !important;max-width:33.333% !important;}
+  body.print-standard-report-mode #pC .class-compare-cards>[class*="col-"]{flex:0 0 50% !important;max-width:50% !important;}
   body.print-standard-report-mode #pC .class-context-cards>[class*="col-"]{flex:1 1 0 !important;max-width:100% !important;}
   body.print-standard-report-mode #pC .class-progress-cards>[class*="col-"]{flex:0 0 50% !important;max-width:50% !important;}
+  body.print-standard-report-mode #pC .class-info-cards.analysis-print-part + .class-info-cards.analysis-print-part{margin-top:0 !important;padding-top:0 !important;border-top:0 !important;}
+  body.print-standard-report-mode #pC .class-info-cards.analysis-print-part + .class-info-cards.analysis-print-part::before{content:none !important;display:none !important;}
   .class-rank-tables{display:flex !important;flex-wrap:nowrap !important;align-items:stretch !important;margin:0 -3px 5px !important;}
   .class-rank-tables>[class*="col-"]{display:flex !important;flex:0 0 50% !important;max-width:50% !important;padding:0 3px !important;}
   .class-rank-tables .card{width:100%;}
@@ -858,6 +861,10 @@ ${cssLinks}
   .analysis-print-part{position:relative;page-break-inside:avoid;break-inside:avoid;}
   .analysis-print-part + .analysis-print-part{margin-top:10px !important;padding-top:9px !important;border-top:1px solid #d8dee8 !important;}
   .analysis-print-part + .analysis-print-part::before{content:"";position:absolute;top:-1px;left:50%;width:min(360px,72%);height:1px;transform:translateX(-50%);background:linear-gradient(90deg,transparent,#c7d0dc 16%,#9aa9ba 50%,#c7d0dc 84%,transparent);}
+  .analysis-print-part:has(> [class*="col-"] .sec-card) + .analysis-print-part:has(> [class*="col-"] .sec-card),
+  .analysis-print-part:has(> [class*="col-"] .risk-stat-card) + .analysis-print-part:has(> [class*="col-"] .risk-stat-card){margin-top:4px !important;padding-top:0 !important;border-top:0 !important;}
+  .analysis-print-part:has(> [class*="col-"] .sec-card) + .analysis-print-part:has(> [class*="col-"] .sec-card)::before,
+  .analysis-print-part:has(> [class*="col-"] .risk-stat-card) + .analysis-print-part:has(> [class*="col-"] .risk-stat-card)::before{content:none !important;display:none !important;}
   .single-exam-chart-title.chart-section-title{position:relative;margin-top:10px !important;padding-top:9px !important;margin-bottom:3px !important;}
   .single-exam-chart-title.chart-section-title::before{content:"";position:absolute;top:0;left:50%;width:min(360px,72%);height:1px;transform:translateX(-50%);background:linear-gradient(90deg,transparent,#c7d0dc 16%,#9aa9ba 50%,#c7d0dc 84%,transparent);}
   .single-exam-chart-title + .chart-box.analysis-print-part{margin-top:0 !important;padding-top:0 !important;border-top:0 !important;}
