@@ -2671,7 +2671,7 @@ function rAnl(){
             });
             if(gsChartArea && !gsChartArea.dataset.titleAdded) {
               let title = document.createElement('div');
-              title.style.cssText = 'font-size:11px;font-weight:bold;color:#4a6fa5;margin-bottom:4px;text-align:left;';
+              title.className = 'single-exam-chart-title chart-section-title';
               title.textContent = `${eT} — Sınıf Bazlı Ortalama Net (Tüm Sınavlar)`;
               gsChartArea.parentNode.insertBefore(title, gsChartArea);
               gsChartArea.dataset.titleAdded = 'true';
@@ -2886,7 +2886,7 @@ function rAnl(){
           
           if(chartArea && !chartArea.dataset.titleAdded) { 
             let title = document.createElement('div'); 
-            title.style.cssText='font-size:11px;font-weight:bold;color:#4a6fa5;margin-bottom:4px;text-align:left;'; 
+            title.className = 'single-exam-chart-title chart-section-title';
             title.textContent = `${eT} ${dt} — Sınıf Bazlı Ortalama Net`; 
             chartArea.parentNode.insertBefore(title, chartArea); 
             chartArea.dataset.titleAdded = 'true';

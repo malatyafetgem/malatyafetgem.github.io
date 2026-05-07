@@ -1579,6 +1579,65 @@ body.is-admin button.w-100.admin-only { display:block !important; }
   margin-bottom: 6px;
 }
 
+:where(#homeArea, #anlRes, #raporRes) .scroll-hint + :where(.scroll, .table-responsive, .list-scroll),
+:where(#homeArea, #anlRes, #raporRes) .single-exam-chart-title + .chart-box {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+:where(#homeArea, #anlRes, #raporRes) .scroll-hint + :where(.scroll, .table-responsive, .list-scroll)::before,
+:where(#homeArea, #anlRes, #raporRes) .single-exam-chart-title + .chart-box::before {
+  content: none !important;
+  display: none !important;
+}
+
+.app-main .card > .sa-list-header + .card-body.table-responsive,
+.app-main .card > .sa-list-header + .card-body.table-responsive:has(table),
+.app-main .card > .scroll-hint + .card-body.table-responsive,
+.app-main .card > .scroll-hint + .card-body.table-responsive:has(table) {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  border-top: 0 !important;
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0 !important;
+}
+
+.app-main .card > .sa-list-header + .card-body.table-responsive::before,
+.app-main .card > .sa-list-header + .card-body.table-responsive:has(table)::before,
+.app-main .card > .scroll-hint + .card-body.table-responsive::before,
+.app-main .card > .scroll-hint + .card-body.table-responsive:has(table)::before {
+  content: none !important;
+  display: none !important;
+}
+
+.app-main .card > .sa-list-header + .scroll-hint {
+  display: none !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+:where(#homeArea, #anlRes, #raporRes) .chart-section-title {
+  position: relative;
+  margin-top: var(--analysis-part-gap) !important;
+  padding-top: var(--analysis-part-rule-gap) !important;
+  margin-bottom: 6px !important;
+}
+
+:where(#homeArea, #anlRes, #raporRes) .chart-section-title::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: var(--analysis-part-rule-width);
+  height: 1px;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, transparent, #d4dbe6 16%, #aeb9c8 50%, #d4dbe6 84%, transparent);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.9);
+}
+
 #riskPanel .risk-note,
 #riskPanel #riskStatCards,
 #riskPanel .risk-list-wrap {

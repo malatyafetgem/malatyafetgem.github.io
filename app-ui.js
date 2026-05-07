@@ -2275,9 +2275,27 @@ function handleSubChange(){
   reqAnl(); 
 }
 
+function _ensureTableScrollHints(scope){
+  let boxes = [];
+  if(scope.matches && scope.matches('.scroll, .table-responsive, .list-scroll')) boxes.push(scope);
+  boxes = boxes.concat(Array.from(scope.querySelectorAll('.scroll, .table-responsive, .list-scroll')));
+  let seen = new Set();
+  boxes.forEach(box => {
+    if(!box || seen.has(box) || !box.querySelector || !box.querySelector('table')) return;
+    seen.add(box);
+    let prev = box.previousElementSibling;
+    if(prev && prev.classList && prev.classList.contains('scroll-hint')) return;
+    let hint = document.createElement('div');
+    hint.className = 'scroll-hint';
+    hint.innerHTML = '<i class="fas fa-arrows-alt-h me-1"></i>Tabloyu kaydırın';
+    box.parentNode.insertBefore(hint, box);
+  });
+}
+
 // Mobil tablo ipucu: "Tabloyu Kaydırın" sadece gerçekten yatay taşma varsa görünsün.
 function updateScrollHints(root){
   let scope = root && root.querySelectorAll ? root : document;
+  _ensureTableScrollHints(scope);
   scope.querySelectorAll('.scroll-hint').forEach(hint => {
     let box = hint.nextElementSibling;
     while(box && !(box.classList && (box.classList.contains('scroll') || box.classList.contains('table-responsive') || box.classList.contains('list-scroll')))) {
