@@ -543,7 +543,7 @@ if(document.readyState === 'complete') bootApp();
 else window.addEventListener('load', bootApp);
 
 // ---- top-level (orig lines 4009-4009) ----
-let deferredInstallPrompt = null, pwaPopupTimer = null, userLoggedIn = false;
+let deferredInstallPrompt = null, pwaPopupTimer = null, pwaPopupShowTimer = null, userLoggedIn = false;
 let pwaInstallToast = null, pwaInstallCompleted = false, pwaInstallStartedAt = 0;
 let pwaInstallSuccessTimer = null, pwaInstallSuccessShown = false;
 
@@ -564,9 +564,9 @@ function showPwaInstallLoading() {
 function showPwaInstallSuccess() {
   if(pwaInstallSuccessShown) return;
   pwaInstallSuccessShown = true;
-  if(!pwaInstallToast) showPwaInstallLoading();
-  let elapsed = pwaInstallStartedAt ? (Date.now() - pwaInstallStartedAt) : 0;
-  let waitMs = Math.max(0, 1300 - elapsed);
+  let hadLoadingToast = !!(pwaInstallToast && pwaInstallToast.parentNode);
+  let elapsed = hadLoadingToast && pwaInstallStartedAt ? (Date.now() - pwaInstallStartedAt) : 0;
+  let waitMs = hadLoadingToast ? Math.max(0, 1300 - elapsed) : 0;
   if(pwaInstallSuccessTimer) clearTimeout(pwaInstallSuccessTimer);
   pwaInstallSuccessTimer = setTimeout(() => {
     clearPwaInstallToast();
@@ -582,48 +582,98 @@ window.addEventListener('beforeinstallprompt', (e) => {
   pwaInstallCompleted = false;
   pwaInstallSuccessShown = false;
   pwaInstallStartedAt = 0;
-  if (pwaInstallSuccessTimer) clearTimeout(pwaInstallSuccessTimer);
+  if (pwaInstallSuccessTimer) {
+    clearTimeout(pwaInstallSuccessTimer);
+    pwaInstallSuccessTimer = null;
+  }
+  clearPwaInstallToast();
   if (userLoggedIn) showPwaPopupIfReady();
 });
 
 // ---- top-level (orig lines 4011-4011) ----
-// "appinstalled" tek ve yetkili toast kaynağı.
-// sessionStorage flag'i ile aynı oturumda çift tetiklenme engellenir.
+// "Başarıyla yüklendi" mesajının tek yetkili kaynağı appinstalled olayıdır.
 window.addEventListener('appinstalled', () => {
   pwaInstallCompleted = true;
   deferredInstallPrompt = null;
-  document.getElementById('installBtnWrapper').style.display = 'none';
+  let installWrap = document.getElementById('installBtnWrapper');
+  if(installWrap) installWrap.style.display = 'none';
   closePwaPopup();
   showPwaInstallSuccess();
 });
 
 // ---- showPwaPopupIfReady (orig lines 4013-4016) ----
 function showPwaPopupIfReady() {
-  userLoggedIn = true; if (!deferredInstallPrompt) return; document.getElementById('installBtnWrapper').style.display = 'block';
-  setTimeout(() => { const popup = document.getElementById('pwaInstallPopup'), bar = popup.querySelector('.pwa-progress'); bar.style.animation = 'none'; bar.offsetHeight; bar.style.animation = 'pwaBar 4s linear forwards'; popup.style.animation = 'popupSlideDown 0.4s ease-out'; popup.style.display = 'flex'; pwaPopupTimer = setTimeout(() => closePwaPopup(), 4000); }, 1500);
+  userLoggedIn = true;
+  if (!deferredInstallPrompt || pwaInstallCompleted || pwaInstallSuccessShown) return;
+  let installWrap = document.getElementById('installBtnWrapper');
+  if(installWrap) installWrap.style.display = 'block';
+  if(pwaPopupShowTimer) clearTimeout(pwaPopupShowTimer);
+  pwaPopupShowTimer = setTimeout(() => {
+    pwaPopupShowTimer = null;
+    if (!deferredInstallPrompt || pwaInstallCompleted || pwaInstallSuccessShown) return;
+    const popup = document.getElementById('pwaInstallPopup');
+    if(!popup) return;
+    const bar = popup.querySelector('.pwa-progress');
+    if(bar) {
+      bar.style.animation = 'none';
+      bar.offsetHeight;
+      bar.style.animation = 'pwaBar 4s linear forwards';
+    }
+    popup.style.animation = 'popupSlideDown 0.4s ease-out';
+    popup.style.display = 'flex';
+    if(pwaPopupTimer) clearTimeout(pwaPopupTimer);
+    pwaPopupTimer = setTimeout(() => closePwaPopup(), 4000);
+  }, 1500);
 }
 
 // ---- closePwaPopup (orig lines 4017-4017) ----
-function closePwaPopup() { const popup = document.getElementById('pwaInstallPopup'); if (!popup || popup.style.display === 'none') return; clearTimeout(pwaPopupTimer); popup.style.animation = 'popupSlideUp 0.3s ease-in forwards'; setTimeout(() => { popup.style.display = 'none'; popup.style.animation = ''; }, 300); }
+function closePwaPopup() {
+  if(pwaPopupShowTimer) {
+    clearTimeout(pwaPopupShowTimer);
+    pwaPopupShowTimer = null;
+  }
+  const popup = document.getElementById('pwaInstallPopup');
+  if (!popup || popup.style.display === 'none') return;
+  clearTimeout(pwaPopupTimer);
+  popup.style.animation = 'popupSlideUp 0.3s ease-in forwards';
+  setTimeout(() => { popup.style.display = 'none'; popup.style.animation = ''; }, 300);
+}
 
 // ---- triggerInstall (orig lines 4018-4018) ----
 // userChoice kullanıcının diyalogu kabul/reddettiğini bildirir, yükleme tamamını değil.
 // "Yüklendi" toast'ı appinstalled üzerinden gelir; burada sadece "yükleniyor" gösterilir.
 function triggerInstall(e) {
-  e.preventDefault();
+  if(e && e.preventDefault) e.preventDefault();
   closePwaPopup();
-  if (!deferredInstallPrompt) return;
+  if (!deferredInstallPrompt) {
+    let installWrap = document.getElementById('installBtnWrapper');
+    if(installWrap) installWrap.style.display = 'none';
+    showToast('Uygulama yükleme hazır değil. Sayfayı yenileyip tekrar deneyin.', 'warning', 4500);
+    return;
+  }
   pwaInstallCompleted = false;
   pwaInstallSuccessShown = false;
   pwaInstallStartedAt = 0;
-  if (pwaInstallSuccessTimer) clearTimeout(pwaInstallSuccessTimer);
+  if (pwaInstallSuccessTimer) {
+    clearTimeout(pwaInstallSuccessTimer);
+    pwaInstallSuccessTimer = null;
+  }
   const promptEvent = deferredInstallPrompt;
-  promptEvent.prompt();
-  promptEvent.userChoice.then(choice => {
+  showPwaInstallLoading();
+  try {
+    promptEvent.prompt();
+  } catch(err) {
     deferredInstallPrompt = null;
-    if (choice.outcome === 'accepted') {
-      document.getElementById('installBtnWrapper').style.display = 'none';
-      if(!pwaInstallCompleted && !pwaInstallSuccessShown) showPwaInstallLoading();
+    clearPwaInstallToast();
+    pwaInstallStartedAt = 0;
+    showToast('Yükleme penceresi açılamadı. Sayfayı yenileyip tekrar deneyin.', 'warning', 4500);
+    return;
+  }
+  Promise.resolve(promptEvent.userChoice).then(choice => {
+    deferredInstallPrompt = null;
+    if (choice && choice.outcome === 'accepted') {
+      let installWrap = document.getElementById('installBtnWrapper');
+      if(installWrap) installWrap.style.display = 'none';
     } else {
       clearPwaInstallToast();
       pwaInstallStartedAt = 0;

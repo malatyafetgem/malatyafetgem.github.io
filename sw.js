@@ -10,6 +10,7 @@ const ASSETS = [
   './app-analysis.js',
   './app-settings.js',
   './manifest.json',
+  './icon-192.png',
   './icon.png'
 ];
 
@@ -38,6 +39,7 @@ function isFreshAppAsset(url) {
     'app-analysis.js',
     'app-settings.js',
     'manifest.json',
+    'icon-192.png',
     'icon.png',
     'sw.js'
   ].includes(fileName);
