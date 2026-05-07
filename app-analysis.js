@@ -1521,7 +1521,7 @@ function rAnl(){
         let dybBar = '';
         if(dog!==null && yan!==null && sn.total){
           let pD=Math.round(dog/sn.total*100), pY=Math.round(yan/sn.total*100), pB=100-pD-pY;
-          dybBar = `<div class="single-exam-chart-title dyb-title-offset"><i class="fas fa-tasks"></i>Doğru / Yanlış / Boş Dağılımı</div>
+          dybBar = `<div class="single-exam-chart-title chart-section-title dyb-title-offset"><i class="fas fa-tasks"></i>Doğru / Yanlış / Boş Dağılımı</div>
           <div class="dyb-bar">
             <div class="dyb-segment correct" style="--dyb-width:${pD}%;">${dog} D (${pD}%)</div>
             <div class="dyb-segment wrong" style="--dyb-width:${pY}%;">${yan} Y (${pY}%)</div>
@@ -1533,7 +1533,7 @@ function rAnl(){
         let trendCard = _buildSingleMetricSparkline(no, eT, curExam, 's_'+_sKey, subjKey+' Neti');
 
         // Tek ders çubuk grafik (öğrenci vs sınıf vs kurum — sadece bu ders)
-        let singleBarHtml = `<div class="single-exam-chart-title"><i class="fas fa-chart-bar"></i>${subjKey} — Karşılaştırma</div>
+        let singleBarHtml = `<div class="single-exam-chart-title chart-section-title"><i class="fas fa-chart-bar"></i>${subjKey} — Karşılaştırma</div>
           <div class="chart-box chart-box-md avoid-break"><canvas id="cA"></canvas></div>`;
 
         let h = `<div class="d-flex justify-content-end mb-2 no-print"><button class="btn-print no-print" onclick="xPR('pS','Ogrenci_Ders',this)"><i class='fas fa-print me-1'></i>Yazdır</button></div>
@@ -1654,7 +1654,7 @@ function rAnl(){
           <div class="card-body report-card-body-spacious">
             <div class="row">${card1}</div>
             ${metricStatsHtml}
-            <div class="single-exam-chart-title"><i class="fas fa-chart-line"></i>${escapeHtml(ls)} — Sınav Trend</div>
+            <div class="single-exam-chart-title chart-section-title"><i class="fas fa-chart-line"></i>${escapeHtml(ls)} — Sınav Trend</div>
             <div class="chart-box chart-box-xl avoid-break"><canvas id="cA"></canvas></div>
             ${trendCard}
           </div>
@@ -1764,6 +1764,7 @@ function rAnl(){
         ${karneCardsHtml}${stuRiskHtml}${perfHtml}
         <div id="stuBoxPlotArea"></div>
         <div class="table-responsive"><table class="table table-sm table-hover table-bordered" id="tS"><thead><tr><th>#</th><th>Tarih</th><th>Yayınevi</th><th>${valHeader}</th><th>Değişim</th></tr></thead><tbody>${rows}${avgRowHtml}</tbody></table></div>
+        <div class="single-exam-chart-title chart-section-title"><i class="fas fa-chart-line"></i>${escapeHtml(ls)} — Gelişim Grafiği</div>
         <div class="chart-box chart-box-top avoid-break"><canvas id="cA"></canvas></div>
       </div>
     </div>`;
@@ -2118,6 +2119,7 @@ function rAnl(){
         <div id="clsBoxPlotArea"></div>
         ${top5Bottom5Html}
         <div class="table-responsive"><table class="table table-sm table-hover table-bordered" id="tC"><thead><tr><th>#</th><th>Sınıf</th><th>Tarih</th><th>Yayınevi</th><th>Ortalama</th></tr></thead><tbody>${tr.join('')}${clsAvgRow}</tbody></table></div>
+        <div class="single-exam-chart-title chart-section-title"><i class="fas fa-chart-line"></i>${escapeHtml(ls)} — Sınıf Ortalamaları Grafiği</div>
         <div class="chart-box chart-box-top avoid-break"><canvas id="cA"></canvas></div>
       </div>
     </div>`;
@@ -2405,6 +2407,7 @@ function rAnl(){
           <div class="col-lg-4"><div class="card shadow-sm avoid-break"><div class="card-header sa-list-header sa-list-danger"><h3 class="card-title m-0"><i class="fas fa-exclamation-circle me-1"></i> En Düşük 5 Öğrenci</h3></div><div class="card-body p-0 table-responsive"><table class="table table-sm table-striped m-0 table-compact"><thead><tr><th>#</th><th>Ad Soyad</th><th>Sınıf</th><th>Ort.Net</th></tr></thead><tbody>${bottom5.map((s,i) => `<tr><td>${i+1}</td><td>${escapeHtml(s.name)}</td><td>${escapeHtml(s.cls)}</td><td><strong>${s.avg.toFixed(2)}</strong></td></tr>`).join('')}</tbody></table></div></div></div>
           <div class="col-lg-4"><div class="card shadow-sm avoid-break"><div class="card-header sa-list-header sa-list-info"><h3 class="card-title m-0"><i class="fas fa-school me-1"></i> Sınıf Ortalamaları</h3></div><div class="card-body p-0 table-responsive table-scroll-compact"><table class="table table-sm table-striped m-0 table-compact"><thead><tr><th>#</th><th>Sınıf</th><th>Ort.Net</th><th>Kayıt</th></tr></thead><tbody>${clsArr.map((c,i) => `<tr><td>${i+1}</td><td>${escapeHtml(c.cls)}</td><td><strong>${c.avg.toFixed(2)}</strong></td><td>${c.count}</td></tr>`).join('')}</tbody></table></div></div></div>
         </div>
+        <div class="single-exam-chart-title chart-section-title"><i class="fas fa-chart-line"></i>${escapeHtml(subjTitle)} — Sınıf Ortalamaları Grafiği</div>
         <div class="chart-box chart-box-lg mt-3 avoid-break"><canvas id="cA"></canvas></div>
       </div>
     </div>`;
@@ -3309,7 +3312,7 @@ async function generateRapor() {
 
       let _colCount = 3 + allSubKeys.length + 5; /* #, Ad Soyad, Sınıf + dersler + Top.Net, Puan, Sıra/Sınıf, Sıra/Okul, Sınav Say. */
       html += `<div class="card shadow-sm mb-4 exam-type-block rapor-list-block exam-color-${_rExColorIdx}${isFirst?' exam-type-first':''}" data-exam-color-idx="${_rExColorIdx}" data-exam-color="${_rExColorIdx}">
-        <div class="card-header bg-light">
+        <div class="card-header sa-exam-header">
           <h3 class="card-title card-title-md m-0"><i class="fas fa-list-alt me-2"></i>${escapeHtml(_rExLabel)} — Toplu Liste | <span class="card-title-subtle">${escapeHtml(lvlStr)}</span></h3>
         </div>
         <div class="card-body p-2">
@@ -3400,12 +3403,13 @@ let genAvgScoreR = allGradeExamsR.length > 0 ? (allGradeExamsR.reduce((a,e)=>a+e
         let _rExColorIdx = (typeof examColorIdx === 'function') ? examColorIdx(t) : 0;
         let _rExLabel    = (typeof toExamLabel === 'function') ? toExamLabel(t) : t;
         html += `<div class="card shadow-sm mb-4 exam-type-block exam-color-${_rExColorIdx}${typs.indexOf(t)===0?' exam-type-first':''}" data-stu-name="${escapeHtml(stu.name)}" data-stu-class="${escapeHtml(stu.class)}" data-exam-color-idx="${_rExColorIdx}" data-exam-color="${_rExColorIdx}">
-          <div class="card-header bg-light"><h3 class="card-title card-title-md m-0"><i class="fas fa-book me-2"></i>${escapeHtml(_rExLabel)} Sınavları</h3></div>
+          <div class="card-header sa-exam-header"><h3 class="card-title card-title-md m-0"><i class="fas fa-book me-2"></i>${escapeHtml(_rExLabel)} Sınavları</h3></div>
           <div class="card-body p-2">
             ${cardsHtml}
             ${riskCardsHtml}
             <div id="${bpId}"></div>
             <div class="scroll"><table class="table table-sm table-bordered table-striped" data-sh="${escapeHtml(t)}"><thead><tr><th>#</th><th>Tarih</th><th>Yayınevi</th>${sb.map(x=>`<th title="${escapeHtml(toTitleCase(x))}">${escapeHtml(abbrev(x))}</th>`).join('')}<th>Top.Net</th><th>Puan</th><th>Snf(S/K)</th><th>Okul(S/K)</th></tr></thead><tbody>${karneRows}${avgRow}</tbody></table></div>
+            <div class="single-exam-chart-title chart-section-title"><i class="fas fa-chart-line"></i>${escapeHtml(_rExLabel)} — Toplam Net Gelişimi</div>
             <div class="chart-box chart-box-xs chart-box-top avoid-break"><canvas id="${chartId}"></canvas></div>
           </div></div>`;
       });

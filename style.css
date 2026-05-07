@@ -102,6 +102,12 @@ body.auth-pending .loader-spinner { color:var(--sa-primary) !important; border-w
 .settings-toolbar { gap:10px; }
 .settings-search { max-width:250px; }
 .selected-student-pill { font-size:0.8em; }
+.sa-selected-pill {
+  background: rgba(5,150,105,0.12) !important;
+  color: #047857 !important;
+  border: 1px solid rgba(5,150,105,0.24);
+  font-weight: 700;
+}
 #connBadge,
 .conn-badge {
   min-height: 32px;
@@ -747,6 +753,7 @@ body.is-admin button.w-100.admin-only { display:block !important; }
 .wizard-step-label.is-complete { color:#28a745; }
 .wizard-progress .progress { height:7px; border-radius:4px; }
 .wizard-progress .progress-bar { border-radius:4px; transition:width 0.3s; }
+.wizard-progress-bar { background: var(--sa-primary) !important; }
 .subj-map-row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; background: #fff; padding: 10px; border-radius: 4px; border: 1px dashed #ccc; }
 .subj-map-row select, .subj-map-row input { flex: 1; }
 .subj-map-row .btn-remove { flex: 0 0 auto; }
@@ -1469,6 +1476,7 @@ body.is-admin button.w-100.admin-only { display:block !important; }
   .row:has(> [class*="col-"] > .card.shadow-sm.avoid-break),
   .trend-card,
   .boxplot-card,
+  :where(#stuBoxPlotArea, #clsBoxPlotArea, #subjBoxPlotArea, #genSummaryBPArea, #examSummaryBPArea):has(.boxplot-card),
   .table-responsive:has(table),
   .scroll:has(table),
   .chart-box,
@@ -1488,6 +1496,7 @@ body.is-admin button.w-100.admin-only { display:block !important; }
   .row:has(> [class*="col-"] > .card.shadow-sm.avoid-break),
   .trend-card,
   .boxplot-card,
+  :where(#stuBoxPlotArea, #clsBoxPlotArea, #subjBoxPlotArea, #genSummaryBPArea, #examSummaryBPArea):has(.boxplot-card),
   .table-responsive:has(table),
   .scroll:has(table),
   .chart-box,
@@ -1508,6 +1517,7 @@ body.is-admin button.w-100.admin-only { display:block !important; }
   .row:has(> [class*="col-"] > .card.shadow-sm.avoid-break),
   .trend-card,
   .boxplot-card,
+  :where(#stuBoxPlotArea, #clsBoxPlotArea, #subjBoxPlotArea, #genSummaryBPArea, #examSummaryBPArea):has(.boxplot-card),
   .table-responsive:has(table),
   .scroll:has(table),
   .chart-box,
@@ -1534,6 +1544,7 @@ body.is-admin button.w-100.admin-only { display:block !important; }
   .row:has(> [class*="col-"] > .card.shadow-sm.avoid-break),
   .trend-card,
   .boxplot-card,
+  :where(#stuBoxPlotArea, #clsBoxPlotArea, #subjBoxPlotArea, #genSummaryBPArea, #examSummaryBPArea):has(.boxplot-card),
   .table-responsive:has(table),
   .scroll:has(table),
   .chart-box,
@@ -1554,6 +1565,7 @@ body.is-admin button.w-100.admin-only { display:block !important; }
   .row:has(> [class*="col-"] > .card.shadow-sm.avoid-break),
   .trend-card,
   .boxplot-card,
+  :where(#stuBoxPlotArea, #clsBoxPlotArea, #subjBoxPlotArea, #genSummaryBPArea, #examSummaryBPArea):has(.boxplot-card),
   .table-responsive:has(table),
   .scroll:has(table),
   .chart-box,
@@ -1573,6 +1585,38 @@ body.is-admin button.w-100.admin-only { display:block !important; }
 
 :where(#homeArea, #anlRes, #raporRes) .scroll.list-scroll::before,
 :where(#homeArea, #anlRes, #raporRes) .scroll.list-scroll:not(.risk-panel-card):not(:first-child)::before {
+  content: none !important;
+  display: none !important;
+}
+
+:where(#homeArea, #anlRes, #raporRes) :where(
+  .row:has(> [class*="col-"] .sec-card),
+  .row:has(> [class*="col-"] .risk-stat-card),
+  .row:has(> [class*="col-"] .trend-card),
+  .row:has(> [class*="col-"] .boxplot-card),
+  .row:has(> [class*="col-"] > .card.shadow-sm.avoid-break),
+  .trend-card,
+  .boxplot-card,
+  :where(#stuBoxPlotArea, #clsBoxPlotArea, #subjBoxPlotArea, #genSummaryBPArea, #examSummaryBPArea):has(.boxplot-card),
+  .table-responsive:has(table),
+  .scroll:has(table),
+  .chart-box,
+  .card.shadow-sm.avoid-break,
+  .risk-info-section,
+  .single-exam-table-part,
+  .single-exam-chart-part
+) {
+  margin-bottom: 0 !important;
+}
+
+:where(#homeArea, #anlRes, #raporRes) .row:has(> [class*="col-"] .sec-card) + .row:has(> [class*="col-"] .sec-card),
+:where(#homeArea, #anlRes, #raporRes) .row:has(> [class*="col-"] .risk-stat-card) + .row:has(> [class*="col-"] .risk-stat-card) {
+  margin-top: 8px !important;
+  padding-top: 0 !important;
+}
+
+:where(#homeArea, #anlRes, #raporRes) .row:has(> [class*="col-"] .sec-card) + .row:has(> [class*="col-"] .sec-card)::before,
+:where(#homeArea, #anlRes, #raporRes) .row:has(> [class*="col-"] .risk-stat-card) + .row:has(> [class*="col-"] .risk-stat-card)::before {
   content: none !important;
   display: none !important;
 }
@@ -2010,11 +2054,15 @@ body.is-admin button.w-100.admin-only { display:block !important; }
 .sa-panel-warning { border-top-color: var(--sa-warning) !important; }
 .sa-panel-info { border-top-color: var(--sa-info) !important; }
 .sa-panel-danger { border-top-color: var(--sa-danger) !important; }
-.app-main .card:not(.sys-mgmt-card):not(.risk-panel-card) > .card-header:not(.bg-primary):not(.bg-success):not(.bg-danger):not(.bg-warning):not(.bg-info) {
+.app-main .card:not(.sys-mgmt-card):not(.risk-panel-card) > .card-header {
   min-height: 52px;
   padding: 0.72rem 1rem;
   background: #fff;
   border-bottom: 1px solid var(--sa-border);
+}
+.app-main .card:not(.sys-mgmt-card):not(.risk-panel-card) > .card-header.sa-exam-header {
+  background: color-mix(in srgb, var(--exam-color, #2563eb) 9%, #fff) !important;
+  border-bottom-color: color-mix(in srgb, var(--exam-color, #2563eb) 24%, var(--sa-border)) !important;
 }
 .app-main .card:not(.sys-mgmt-card):not(.risk-panel-card) > .card-header .card-title {
   min-width: 0;

@@ -211,7 +211,7 @@ async function svStu(){
     return;
   }
   rTabS(); uStat();
-  if(aNo){ let upd=getStuMap().get(aNo); if(upd){ getEl('aBadge').innerHTML=`<span class="badge bg-success rounded-pill px-3 py-2"><i class="fas fa-check-circle me-1"></i>Seçili Öğrenci: ${escapeHtml(upd.name)} (${escapeHtml(upd.class)})</span>`; let ab=getEl('anlStuBadge'); if(ab) ab.innerHTML=`<span class="badge bg-success rounded-pill px-2 py-1 selected-student-pill"><i class="fas fa-check-circle me-1"></i>Seçili Öğrenci: ${escapeHtml(upd.name)} (${escapeHtml(upd.class)})</span>`; } }
+  if(aNo){ let upd=getStuMap().get(aNo); if(upd){ getEl('aBadge').innerHTML=`<span class="badge rounded-pill px-3 py-2 sa-selected-pill"><i class="fas fa-check-circle me-1"></i>Seçili Öğrenci: ${escapeHtml(upd.name)} (${escapeHtml(upd.class)})</span>`; let ab=getEl('anlStuBadge'); if(ab) ab.innerHTML=`<span class="badge rounded-pill px-2 py-1 sa-selected-pill selected-student-pill"><i class="fas fa-check-circle me-1"></i>Seçili Öğrenci: ${escapeHtml(upd.name)} (${escapeHtml(upd.class)})</span>`; } }
   cMod('mStu'); showToast('Öğrenci bilgileri kaydedildi.', 'success');
 }
 
@@ -339,7 +339,7 @@ function renderWizardStep() {
   let h = currentHeaders, saved = {}; try { saved = JSON.parse(localStorage.getItem('map_e') || '{}'); } catch(e){}
   let today = new Date().toISOString().split('T')[0], [y,m,d] = today.split('-'), trDate = `${d}.${m}.${y}`, b = getEl('mMappingsBody');
 
-  let progHtml = `<div class="wizard-progress"><div class="wizard-step-row">${WIZARD_STEPS.map((s,i) => `<div class="wizard-step-label ${i===wizardStep?'is-active':i<wizardStep?'is-complete':''}">${i<wizardStep?'✓ ':''}${s.title}</div>`).join('')}</div><div class="progress"><div class="progress-bar bg-primary wizard-progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(((wizardStep+1)/WIZARD_STEPS.length)*100)}"></div></div></div>`;
+  let progHtml = `<div class="wizard-progress"><div class="wizard-step-row">${WIZARD_STEPS.map((s,i) => `<div class="wizard-step-label ${i===wizardStep?'is-active':i<wizardStep?'is-complete':''}">${i<wizardStep?'✓ ':''}${s.title}</div>`).join('')}</div><div class="progress"><div class="progress-bar wizard-progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(((wizardStep+1)/WIZARD_STEPS.length)*100)}"></div></div></div>`;
 
   let stepHtml = '';
   if(wizardStep === 0) {

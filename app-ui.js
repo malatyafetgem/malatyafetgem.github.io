@@ -277,8 +277,8 @@ window.addEventListener('load', () => {
 async function sAct(no,clr=false){
   aNo=no; if(clr){let st=getStuMap().get(no); getEl('sInp').value=st?(st.name+' ('+st.class+')'):'';getEl('sRes').innerHTML='';getEl('sRes').style.display='none';}
   let s=getStuMap().get(aNo);
-  getEl('aBadge').innerHTML=s?`<span class="badge bg-success rounded-pill px-3 py-2"><i class="fas fa-check-circle me-1"></i>Seçili Öğrenci: ${escapeHtml(s.name)} (${escapeHtml(s.class)})</span>`:'<span class="text-muted">Seçilmedi</span>';
-  let ab=getEl('anlStuBadge'); if(ab)ab.innerHTML=s?`<span class="badge bg-success rounded-pill px-2 py-1 selected-student-pill"><i class="fas fa-check-circle me-1"></i>Seçili Öğrenci: ${escapeHtml(s.name)} (${escapeHtml(s.class)})</span>`:'';
+  getEl('aBadge').innerHTML=s?`<span class="badge rounded-pill px-3 py-2 sa-selected-pill"><i class="fas fa-check-circle me-1"></i>Seçili Öğrenci: ${escapeHtml(s.name)} (${escapeHtml(s.class)})</span>`:'<span class="text-muted">Seçilmedi</span>';
+  let ab=getEl('anlStuBadge'); if(ab)ab.innerHTML=s?`<span class="badge rounded-pill px-2 py-1 sa-selected-pill selected-student-pill"><i class="fas fa-check-circle me-1"></i>Seçili Öğrenci: ${escapeHtml(s.name)} (${escapeHtml(s.class)})</span>`:'';
   getEl('homeArea').innerHTML='';
   if(no) await reqProfile();
   schedulePaneScrollHintRefresh('anasayfa');
@@ -858,6 +858,10 @@ ${cssLinks}
   .analysis-print-part{position:relative;page-break-inside:avoid;break-inside:avoid;}
   .analysis-print-part + .analysis-print-part{margin-top:10px !important;padding-top:9px !important;border-top:1px solid #d8dee8 !important;}
   .analysis-print-part + .analysis-print-part::before{content:"";position:absolute;top:-1px;left:50%;width:min(360px,72%);height:1px;transform:translateX(-50%);background:linear-gradient(90deg,transparent,#c7d0dc 16%,#9aa9ba 50%,#c7d0dc 84%,transparent);}
+  .single-exam-chart-title.chart-section-title{position:relative;margin-top:10px !important;padding-top:9px !important;margin-bottom:3px !important;}
+  .single-exam-chart-title.chart-section-title::before{content:"";position:absolute;top:0;left:50%;width:min(360px,72%);height:1px;transform:translateX(-50%);background:linear-gradient(90deg,transparent,#c7d0dc 16%,#9aa9ba 50%,#c7d0dc 84%,transparent);}
+  .single-exam-chart-title + .chart-box.analysis-print-part{margin-top:0 !important;padding-top:0 !important;border-top:0 !important;}
+  .single-exam-chart-title + .chart-box.analysis-print-part::before{display:none !important;}
   .exam-type-block>h5 + .analysis-print-part,.karne-bolum>h5 + .analysis-print-part,.report-card-body>.analysis-print-part:first-child{margin-top:0 !important;padding-top:0 !important;border-top:0 !important;}
   .exam-type-block>h5 + .analysis-print-part::before,.karne-bolum>h5 + .analysis-print-part::before,.report-card-body>.analysis-print-part:first-child::before{display:none !important;}
 
@@ -920,6 +924,7 @@ ${cssLinks}
   body.print-one-page-summary-mode .stats-sub{font-size:0.56rem;}
   body.print-one-page-summary-mode .stats-explain{font-size:0.52rem;line-height:1.12;margin-top:2px;padding-top:2px;}
   body.print-one-page-summary-mode .single-exam-chart-title{font-size:8.8px !important;margin:3px 0 2px !important;line-height:1.1;}
+  body.print-one-page-summary-mode .single-exam-chart-title.chart-section-title{margin:4px 0 2px !important;padding-top:4px !important;}
   body.print-one-page-summary-mode .analysis-print-part + .analysis-print-part{margin-top:4px !important;padding-top:4px !important;}
   body.print-one-page-summary-mode .table{font-size:${printTableFont} !important;line-height:1.12 !important;margin-bottom:0 !important;}
   body.print-one-page-summary-mode .table th,
@@ -1129,8 +1134,8 @@ function execAnlStuSearch(){
 // ---- anlStuSelect (orig lines 1907-1911) ----
 function anlStuSelect(no){
   getEl('anlStuRes').style.display='none'; let s=getStuMap().get(no); if(s) getEl('anlStuInp').value=s.name+' ('+s.class+')'; aNo = no;
-  let ab=getEl('anlStuBadge'); if(ab) ab.innerHTML=s?`<span class="badge bg-success rounded-pill px-2 py-1 selected-student-pill"><i class="fas fa-check-circle me-1"></i>Seçili Öğrenci: ${escapeHtml(s.name)} (${escapeHtml(s.class)})</span>`:'';
-  getEl('aBadge').innerHTML=s?`<span class="badge bg-success rounded-pill px-3 py-2"><i class="fas fa-check-circle me-1"></i>Seçili Öğrenci: ${escapeHtml(s.name)} (${escapeHtml(s.class)})</span>`:'<span class="text-muted">Seçilmedi</span>'; reqUI(); 
+  let ab=getEl('anlStuBadge'); if(ab) ab.innerHTML=s?`<span class="badge rounded-pill px-2 py-1 sa-selected-pill selected-student-pill"><i class="fas fa-check-circle me-1"></i>Seçili Öğrenci: ${escapeHtml(s.name)} (${escapeHtml(s.class)})</span>`:'';
+  getEl('aBadge').innerHTML=s?`<span class="badge rounded-pill px-3 py-2 sa-selected-pill"><i class="fas fa-check-circle me-1"></i>Seçili Öğrenci: ${escapeHtml(s.name)} (${escapeHtml(s.class)})</span>`:'<span class="text-muted">Seçilmedi</span>'; reqUI(); 
 }
 
 // ---- anlStuClear (orig lines 1912-1912) ----
