@@ -107,12 +107,30 @@ function handlePaneTaskError(id, err) {
   ensurePaneVisibility(id);
 }
 
+function schedulePaneScrollHintRefresh(id) {
+  if(typeof scheduleScrollHints !== 'function') return;
+  let root = getEl(id) || document;
+  setTimeout(() => scheduleScrollHints(root), 120);
+  setTimeout(() => scheduleScrollHints(root), 520);
+}
+
 function runPaneTask(id, fn) {
   try {
     let result = fn();
-    if(result && typeof result.catch === 'function') result.catch(err => handlePaneTaskError(id, err));
+    if(result && typeof result.then === 'function') {
+      result.then(
+        () => schedulePaneScrollHintRefresh(id),
+        err => {
+          handlePaneTaskError(id, err);
+          schedulePaneScrollHintRefresh(id);
+        }
+      );
+    } else {
+      schedulePaneScrollHintRefresh(id);
+    }
   } catch(err) {
     handlePaneTaskError(id, err);
+    schedulePaneScrollHintRefresh(id);
   }
 }
 
@@ -195,6 +213,7 @@ function executeTabSwitch(id, isPopState) {
     closeSidebarIfOpen();
     document.body.setAttribute('data-active-pane', id);
     setTimeout(() => ensurePaneVisibility(id), 0);
+    if(typeof scheduleScrollHints === 'function') setTimeout(() => scheduleScrollHints(targetPane), 120);
     return false;
   }
 
@@ -246,6 +265,7 @@ function executeTabSwitch(id, isPopState) {
   
   closeSidebarIfOpen();
   setTimeout(() => ensurePaneVisibility(id), 0);
+  if(typeof scheduleScrollHints === 'function') setTimeout(() => scheduleScrollHints(targetPane), 120);
 }
 
 window.addEventListener('load', () => {
@@ -260,7 +280,12 @@ async function sAct(no,clr=false){
   getEl('aBadge').innerHTML=s?`<span class="badge bg-success rounded-pill px-3 py-2"><i class="fas fa-check-circle me-1"></i>Seçili Öğrenci: ${escapeHtml(s.name)} (${escapeHtml(s.class)})</span>`:'<span class="text-muted">Seçilmedi</span>';
   let ab=getEl('anlStuBadge'); if(ab)ab.innerHTML=s?`<span class="badge bg-success rounded-pill px-2 py-1 selected-student-pill"><i class="fas fa-check-circle me-1"></i>Seçili Öğrenci: ${escapeHtml(s.name)} (${escapeHtml(s.class)})</span>`:'';
   getEl('homeArea').innerHTML='';
-  if(no) await reqProfile(); if(getEl('sonuclar').classList.contains('active-pane')) reqUI(); 
+  if(no) await reqProfile();
+  schedulePaneScrollHintRefresh('anasayfa');
+  if(getEl('sonuclar').classList.contains('active-pane')) {
+    reqUI();
+    schedulePaneScrollHintRefresh('sonuclar');
+  }
 }
 
 // ---- getGrade (orig lines 1531-1531) ----
@@ -2292,7 +2317,26 @@ function _ensureTableScrollHints(scope){
   });
 }
 
-// Mobil tablo ipucu: "Tabloyu Kaydırın" sadece gerçekten yatay taşma varsa görünsün.
+function _tableNeedsHorizontalHint(box){
+  if(!box) return false;
+  let table = box.querySelector ? box.querySelector('table') : null;
+  let boxW = box.clientWidth || 0;
+  if((box.scrollWidth || 0) > boxW + 2) return true;
+  if(table && (table.scrollWidth || 0) > boxW + 2) return true;
+  try {
+    let boxRect = box.getBoundingClientRect();
+    let tableRect = table ? table.getBoundingClientRect() : null;
+    let viewportW = window.visualViewport && window.visualViewport.width
+      ? window.visualViewport.width
+      : (document.documentElement ? document.documentElement.clientWidth : window.innerWidth);
+    if(tableRect && (tableRect.width > boxRect.width + 2 || tableRect.right > boxRect.right + 2)) return true;
+    if(boxRect.right > viewportW + 2) return true;
+    if(tableRect && tableRect.right > viewportW + 2) return true;
+  } catch(e) {}
+  return false;
+}
+
+// Tablo ipucu: "Tabloyu kaydırın" sadece gerçekten yatay taşma varsa görünsün.
 function updateScrollHints(root){
   let scope = root && root.querySelectorAll ? root : document;
   _ensureTableScrollHints(scope);
@@ -2302,10 +2346,7 @@ function updateScrollHints(root){
       box = box.nextElementSibling;
     }
     let needs = false;
-    if(box) {
-      let table = box.querySelector ? box.querySelector('table') : null;
-      needs = (box.scrollWidth > box.clientWidth + 2) || (table && table.scrollWidth > box.clientWidth + 2);
-    }
+    if(box) needs = _tableNeedsHorizontalHint(box);
     hint.classList.toggle('is-needed', !!needs);
   });
 }

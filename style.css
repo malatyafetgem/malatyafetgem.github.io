@@ -807,21 +807,24 @@ body.is-admin button.w-100.admin-only { display:block !important; }
   .wizard-section { padding: 10px; }
   .wizard-section .row .col-md-4, .wizard-section .row .col-md-6 { margin-bottom: 6px; }
 }
-/* scroll-hint: sadece tablo kaydırma ipucu için, mobilde görünür */
-.scroll-hint { display: none; }
+/* scroll-hint: tablo gerçekten yatay kayıyorsa görünür */
+.scroll-hint {
+  display: none;
+  position: relative;
+  z-index: 7;
+  font-size: 0.75em;
+  color: #64748b;
+  text-align: right;
+  margin: 0 0 3px;
+  padding: 2px 4px;
+  background: linear-gradient(180deg,#fff 72%,rgba(255,255,255,0.92));
+}
+.scroll-hint.is-needed { display: block; }
 /* sec-cards-row-hint artık kullanılmıyor */
 .sec-cards-row-hint { display: none !important; }
 @media (max-width: 768px) {
   .scroll-hint {
     display: none;
-    position: relative;
-    z-index: 7;
-    font-size: 0.75em;
-    color: #64748b;
-    text-align: right;
-    margin: 0 0 3px;
-    padding: 2px 4px;
-    background: linear-gradient(180deg,#fff 72%,rgba(255,255,255,0.92));
   }
   .scroll-hint.is-needed { display: block; }
 }
@@ -1445,8 +1448,16 @@ body.is-admin button.w-100.admin-only { display:block !important; }
 #kCont .student-profile-boxplot-part:empty {
   display: none;
 }
+#kCont .student-profile-table-part {
+  min-width: 0;
+  max-width: 100%;
+}
 #kCont .student-profile-table-part .scroll {
   margin-top: 6px;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* ===== GENEL ANALIZ PARCA DUZENI ===== */
@@ -1611,12 +1622,21 @@ body.is-admin button.w-100.admin-only { display:block !important; }
 }
 
 .app-main .card > .sa-list-header + .scroll-hint {
-  display: none !important;
+  display: none;
   height: 0 !important;
   min-height: 0 !important;
   margin: 0 !important;
   padding: 0 !important;
   overflow: hidden !important;
+}
+
+.app-main .card > .sa-list-header + .scroll-hint.is-needed {
+  display: block !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 2px 8px 2px 4px !important;
+  overflow: visible !important;
 }
 
 :where(#homeArea, #anlRes, #raporRes) .chart-section-title {
