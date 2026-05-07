@@ -487,6 +487,13 @@ async function reqProfile() {
   await fetchBatches(neededBatches); rH();
 }
 
+function refreshMethodologyAfterAnalysisRender(){
+  if(typeof updateMethodologyContent !== 'function') return;
+  updateMethodologyContent();
+  setTimeout(updateMethodologyContent, 120);
+  setTimeout(updateMethodologyContent, 360);
+}
+
 // ---- reqAnl (orig lines 873-940) ----
 async function reqAnl() {
   let eT = getEl('aEx').value, dt = getAnalysisDateValue(), aT = getEl('aType').value, sub = getSelectValueIfEnabled('aSub');
@@ -499,6 +506,7 @@ async function reqAnl() {
     if(ids.length) await fetchBatches(ids, { message:'Risk verileri hazırlanıyor...' });
     if(typeof renderRiskPanel === 'function') renderRiskPanel();
     if(typeof applyExamColorToFilters === 'function') applyExamColorToFilters();
+    refreshMethodologyAfterAnalysisRender();
     return;
   }
 
@@ -556,6 +564,7 @@ async function reqAnl() {
     if(typeof applyExamColorToFilters === 'function') applyExamColorToFilters();
     if(typeof rAnl === 'function') rAnl();
     else getEl('anlRes').innerHTML='';
+    refreshMethodologyAfterAnalysisRender();
     return;
   }
 
@@ -615,6 +624,7 @@ async function reqAnl() {
 
   if(needed.length > 0) await fetchBatches(needed); 
   rAnl();
+  refreshMethodologyAfterAnalysisRender();
 }
 
 // ---- reqUI (orig lines 942-942) ----

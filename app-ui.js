@@ -1478,26 +1478,34 @@ function _methodologyEsc(v){
   return (typeof escapeHtml === 'function') ? escapeHtml(v) : String(v ?? '');
 }
 
+function _methodologyDisplayTitle(display){
+  return String(display || '').replace(/\s+Kartı$/u, '');
+}
+
 function _methodologyItem(item){
-  let rows = [
-    ['Kartta görünen ad', item.display],
-    ['Orijinal adı', item.original],
-    ['Ne zaman görünür?', item.when],
-    ['Ne anlama gelir?', item.meaning],
-    ['Nasıl hesaplanır?', item.calc],
-    ['Yorum sınırı', item.limit]
-  ].filter(([,value]) => value);
-  return `<div class="methodology-item">
-    <h6>${_methodologyEsc(item.display)}</h6>
-    ${rows.map(([label, value]) => `<p><strong>${_methodologyEsc(label)}:</strong> ${_methodologyEsc(value)}</p>`).join('')}
-  </div>`;
+  let title = _methodologyDisplayTitle(item.display);
+  return `<article class="methodology-item">
+    <header class="methodology-item-head">
+      <h6>${_methodologyEsc(title)}</h6>
+      ${item.original ? `<div class="methodology-original">Bilimsel karşılığı: ${_methodologyEsc(item.original)}</div>` : ''}
+    </header>
+    ${item.when ? `<div class="methodology-when"><i class="fas fa-eye me-1"></i>${_methodologyEsc(item.when)}</div>` : ''}
+    <div class="methodology-copy">
+      ${item.meaning ? `<p>${_methodologyEsc(item.meaning)}</p>` : ''}
+      ${item.calc ? `<p><span>Hesap</span>${_methodologyEsc(item.calc)}</p>` : ''}
+      ${item.limit ? `<p><span>Yorum</span>${_methodologyEsc(item.limit)}</p>` : ''}
+    </div>
+  </article>`;
 }
 
 function _methodologySection(title, intro, items){
+  let hasItems = items && items.length;
   return `<section class="methodology-section">
     <h5>${_methodologyEsc(title)}</h5>
     ${intro ? `<p class="methodology-section-intro">${_methodologyEsc(intro)}</p>` : ''}
-    <div class="methodology-items">${items.map(_methodologyItem).join('')}</div>
+    ${hasItems
+      ? `<div class="methodology-items">${items.map(_methodologyItem).join('')}</div>`
+      : `<div class="methodology-empty"><i class="fas fa-circle-info me-1"></i>Seçili filtre/görünümde ayrıca açıklanması gereken formüllü istatistik kartı yok. Bu ekrandaki bilgiler doğrudan liste, ortalama, katılım veya ham sonuç bilgisidir.</div>`}
   </section>`;
 }
 
@@ -1531,6 +1539,14 @@ function _methodologyContext(aT){
 }
 
 function _methodologyData(aT){
+  let subVal = getEl('aSub') ? (getEl('aSub').value || '') : '';
+  let dateVal = getEl('aDate') ? (getEl('aDate').value || '') : '';
+  let stuDateVal = getEl('aExDate') ? (getEl('aExDate').value || '') : '';
+  let hasAllDate = dateVal === '__ALL__';
+  let hasSingleDate = dateVal && dateVal !== '__ALL__';
+  let studentAllDates = stuDateVal === '__ALL__';
+  let studentSingleDate = stuDateVal && stuDateVal !== '__ALL__';
+
   const studentItems = [
     {
       display: 'Genel Yön (Trend)',
@@ -1568,8 +1584,8 @@ function _methodologyData(aT){
       display: 'Sınıf İçi Konum / Kurum İçi Konum',
       original: 'Z-skoru + yüzdelik dilim',
       when: 'Tek sınav modunda; Toplam Net, Puan veya Ders Neti karşılaştırmasında grup içinde en az 3 geçerli değer varsa görünür. Sıralama verisinde Z-skoru hesaplanmaz.',
-      meaning: 'Öğrencinin sınıf veya kurum grubuna göre ortalamanın ne kadar üstünde/altında olduğunu gösterir.',
-      calc: 'Z = (öğrenci değeri - grup ortalaması) / standart sapma. Z=0 ortalama; + değer ortalamanın üstünü, - değer altını gösterir. Top %, öğrencinin grupta yaklaşık kaçıncı üst dilimde olduğunu gösterir.',
+      meaning: 'Öğrencinin sınıf veya kurum grubuna göre ortalamadan ne kadar ayrıldığını gösterir. Standart sapma, o gruptaki sonuçların ortalamadan tipik uzaklığıdır.',
+      calc: 'Z = (öğrenci değeri - grup ortalaması) / standart sapma. Z=0 ortalama; Z=+1 ortalamanın yaklaşık bir standart sapma üstü, Z=-1 bir standart sapma altıdır. Top %, öğrencinin grupta yaklaşık üst yüzde kaçlık dilimde olduğunu gösterir.',
       limit: 'Grup küçükse veya standart sapma çok düşükse Z-skoru oynaklaşır; tek başına öğrenci etiketi değildir.'
     },
     {
@@ -1794,11 +1810,113 @@ function _methodologyData(aT){
     }
   ];
 
-  if(aT === 'class') return { title: 'Sınıf Analizi', intro: 'Bu sayfada ortalama, katılım, en iyi/en düşük sınıf gibi doğrudan okunan kartlar ayrıca açıklanmaz.', items: classItems };
-  if(aT === 'subject') return { title: 'Ders Analizi', intro: 'Bu sayfada ders bazlı dağılım, trend ve şubeler arası farkların istatistiksel karşılıkları açıklanır.', items: subjectItems };
-  if(aT === 'examdetail') return { title: 'Sınav Analizi', intro: 'Tek sınav özeti ham sınav sonuçlarını; tüm sınavlar özeti ise her öğrencinin sınav ortalamasını temel alır.', items: examItems };
+  if(aT === 'class') {
+    let items = (hasAllDate || hasSingleDate) ? classItems : [];
+    return { title: 'Sınıf Analizi', intro: 'Bu sayfada ortalama, katılım, en iyi/en düşük sınıf gibi doğrudan okunan bilgi kartları ayrıca açıklanmaz. Açıklamalar seçili sınav ve şube filtresine göre daraltılır.', items };
+  }
+  if(aT === 'subject') {
+    let items = (hasAllDate || hasSingleDate) ? subjectItems : [];
+    return { title: 'Ders Analizi', intro: 'Bu sayfada ders bazlı dağılım, trend ve şubeler arası farkların istatistiksel karşılıkları seçili filtrelere göre açıklanır.', items };
+  }
+  if(aT === 'examdetail') {
+    let items = (subVal === 'summary' || subVal === 'general_summary')
+      ? examItems
+      : [];
+    return { title: 'Sınav Analizi', intro: 'Tek sınav özeti ham sınav sonuçlarını; tüm sınavlar özeti ise her öğrencinin sınav ortalamasını temel alır. Toplu liste görünümlerinde ayrıca formüllü istatistik kartı üretilmez.', items };
+  }
   if(aT === 'risk') return { title: 'Risk Analizi', intro: 'Risk sayfası kesin hüküm üretmez; farklı sinyalleri birleştirerek öğretmen için öncelik listesi oluşturur.', items: riskItems };
-  return { title: 'Öğrenci Analizi', intro: 'Bu sayfada tek sınav ve tüm sınavlar seçimleri farklı kartlar üretir. Doğrudan okunan ortalama, derece ve katılım kartları ayrıca açıklanmaz.', items: studentItems };
+  {
+    let items = (studentAllDates || studentSingleDate) ? studentItems : [];
+    return { title: 'Öğrenci Analizi', intro: 'Bu sayfada tek sınav ve tüm sınavlar seçimleri farklı kartlar üretir. Doğrudan okunan ortalama, derece ve katılım kartları ayrıca açıklanmaz.', items };
+  }
+}
+
+function _methodologyNorm(v){
+  return String(v || '').replace(/\s+/g, ' ').trim().toLocaleLowerCase('tr-TR');
+}
+
+function _methodologyResultRoot(aT){
+  if(aT === 'risk') return getEl('riskPanel') || getEl('anlRes');
+  return getEl('anlRes');
+}
+
+function _methodologyRootText(root){
+  return _methodologyNorm(root ? root.textContent : '');
+}
+
+function _methodologyHas(rootText, patterns){
+  return (patterns || []).some(p => rootText.includes(_methodologyNorm(p)));
+}
+
+function _methodologySelectorHasContent(selectors){
+  return (selectors || []).some(sel => {
+    let el = document.querySelector(sel);
+    if(!el) return false;
+    return !!(el.querySelector('.boxplot-card, .trend-stat-card, .trend-stat-item, table, canvas, svg') || (el.textContent || '').trim());
+  });
+}
+
+function _methodologyHasMeaningfulResult(root){
+  if(!root) return false;
+  if(root.querySelector('.trend-stat-card, .trend-stat-item, .boxplot-card, .sec-card, .risk-info-section, .risk-card, table, canvas, svg')) return true;
+  let text = _methodologyRootText(root);
+  if(!text) return false;
+  if(text.includes('analiz oluşturmak için') || text.includes('lütfen bir') || text.includes('seçiniz')) return false;
+  return text.length > 40;
+}
+
+function _methodologyRenderedItemVisible(aT, item, root, rootText){
+  let display = item ? item.display : '';
+  let has = patterns => _methodologyHas(rootText, patterns);
+
+  if(aT === 'risk') return true;
+
+  if(aT === 'student') {
+    if(display === 'Genel Yön (Trend)') return has(['Genel Yön (Trend)']);
+    if(display === 'Toplam Net/Puan/Ders Değişimi / Sınav Başı Değişim') return has(['Toplam Net Değişimi', 'Toplam Puan Değişimi', 'Ders Değişimi', 'Sınav Başı Değişim']);
+    if(display === 'Güncel Performans') return has(['Güncel Performans']);
+    if(display === 'Sürpriz Payı') return has(['Sürpriz Payı']);
+    if(display === 'Sınıf İçi Konum / Kurum İçi Konum') return has(['Sınıf İçi Konum', 'Kurum İçi Konum']);
+    if(display === 'Sınıf Ortalama Sıra / Kurum Ortalama Sıra') return has(['Sınıf Ortalama Sıra', 'Kurum Ortalama Sıra', 'Genel Ortalama Sıra']);
+    if(display === 'Önceki Sınava Fark') return has(['Önceki Sınava Fark']);
+    if(display === 'Kutu Grafiği / Öğrencinin Konumu') return _methodologySelectorHasContent(['#stuBoxPlotArea .boxplot-card']);
+    if(display === 'Risk Analizi Kartı') return !!(root && root.querySelector('.risk-info-section'));
+  }
+
+  if(aT === 'class') {
+    if(display === 'Genel Eğilim / Toplam Net Değişimi / Sınav Başına Değişim') return has(['Genel Eğilim', 'Toplam Net Değişimi', 'Sınav Başına Değişim']);
+    if(display === 'Trend Güvenilirliği (R²)') return has(['Trend Güvenilirliği', 'R²']);
+    if(display === 'Sınıf İçi Dağılım') return has(['Sınıf İçi Dağılım']);
+    if(display === 'Şubeler Arası Fark') return has(['Şubeler Arası Fark']);
+    if(display === "Şubeler Arası Etki Büyüklüğü (Cohen's d)") return has(['Şubeler Arası Etki Büyüklüğü', "Cohen's d", 'Cohen']);
+    if(display === 'Sınıflar Arası Kutu Grafiği') return _methodologySelectorHasContent(['#clsBoxPlotArea .boxplot-card']);
+  }
+
+  if(aT === 'subject') {
+    if(display === 'Genel Eğilim / Toplam Net Değişimi / Sınav Başına Değişim') return has(['Genel Eğilim', 'Toplam Net Değişimi', 'Sınav Başına Değişim']);
+    if(display === 'Trend Güvenilirliği (R²)') return has(['Trend Güvenilirliği', 'R²']);
+    if(display === 'Öğrenciler Arası Dağılım') return has(['Öğrenciler Arası Dağılım']);
+    if(display === 'Sınıflar Arası Fark') return has(['Sınıflar Arası Fark']);
+    if(display === "Şubeler Arası Etki Büyüklüğü (Cohen's d)") return has(['Şubeler Arası Etki Büyüklüğü', "Cohen's d", 'Cohen']);
+    if(display === 'Ders Kutu Grafiği') return _methodologySelectorHasContent(['#subjBoxPlotArea .boxplot-card']);
+  }
+
+  if(aT === 'examdetail') {
+    if(display === 'Ortalamadan Uzaklık (Standart Sapma)') return has(['Ortalamadan Uzaklık', 'Standart Sapma']);
+    if(display === 'Medyan Net') return has(['Medyan Net']);
+    if(display === 'Çeyrekler Arası Aralık (IQR)') return has(['Çeyrekler Arası Aralık', 'IQR']);
+    if(display === 'Sınav Kutu Grafiği / Sınıflar Arası Net Dağılımı') return _methodologySelectorHasContent(['#genSummaryBPArea .boxplot-card', '#examSummaryBPArea .boxplot-card']);
+  }
+
+  return has([display]);
+}
+
+function _methodologyFilterByRendered(aT, items){
+  if(!items || !items.length) return items || [];
+  let root = _methodologyResultRoot(aT);
+  if(!_methodologyHasMeaningfulResult(root)) return items;
+  let rootText = _methodologyRootText(root);
+  return items.filter(item => _methodologyRenderedItemVisible(aT, item, root, rootText));
 }
 
 function updateMethodologyContent(){
@@ -1806,6 +1924,7 @@ function updateMethodologyContent(){
   if(!body) return;
   let aT = getEl('aType') ? getEl('aType').value : 'student';
   let data = _methodologyData(aT);
+  data = { ...data, items: _methodologyFilterByRendered(aT, data.items) };
   body.innerHTML = `
     <div class="methodology-intro">
       <strong>${_methodologyEsc(data.title)} için açıklamalar.</strong>

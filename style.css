@@ -521,26 +521,75 @@ tr.print-title-row { display: none; }
 .methodology-items {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 .methodology-item {
-  border: 1px solid #e4ecf7;
-  border-left: 4px solid var(--sa-primary);
+  border: 1px solid #e6edf7;
   background: linear-gradient(135deg, #ffffff, #fbfdff);
-  padding: 10px 12px;
+  padding: 10px 11px 9px;
   border-radius: 8px;
+  box-shadow: inset 3px 0 0 rgba(37,99,235,0.24);
+}
+.methodology-item-head {
+  margin-bottom: 7px;
 }
 .methodology-item h6 {
-  margin: 0 0 6px;
-  color: #1f3f65;
+  margin: 0;
+  color: #213b5c;
   font-weight: 800;
-  font-size: 0.86rem;
+  font-size: 0.84rem;
+  line-height: 1.18;
+}
+.methodology-original {
+  color: #64748b;
+  font-size: 0.72rem;
+  line-height: 1.25;
+  margin-top: 2px;
+}
+.methodology-when {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 4px;
+  max-width: 100%;
+  padding: 4px 7px;
+  border-radius: 7px;
+  background: #f4f8ff;
+  border: 1px solid #dbeafe;
+  color: #496984;
+  font-size: 0.72rem;
+  line-height: 1.25;
+  margin-bottom: 7px;
+}
+.methodology-copy {
+  display: grid;
+  gap: 5px;
+}
+.methodology-copy p {
+  margin: 0;
+  color: #475569;
+  line-height: 1.38;
+}
+.methodology-copy span {
+  display: inline-flex;
+  margin-right: 6px;
+  color: #31537a;
+  font-size: 0.70rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
 }
 .methodology-item p {
   margin: 0 0 5px;
 }
 .methodology-item p:last-child {
   margin-bottom: 0;
+}
+.methodology-empty {
+  border: 1px dashed #cbd9ee;
+  background: #f8fbff;
+  color: #52657d;
+  border-radius: 8px;
+  padding: 10px 12px;
 }
 .risk-note {
   display: flex;
@@ -785,6 +834,10 @@ body.is-admin button.w-100.admin-only { display:block !important; }
   .methodology-toggle { padding: 10px 12px; }
   .methodology-body { padding: 12px; font-size: 0.78rem; }
   .methodology-items { grid-template-columns: 1fr; }
+  .methodology-item { padding: 9px 10px 8px; box-shadow: inset 3px 0 0 rgba(37,99,235,0.22); }
+  .methodology-item h6 { font-size: 0.82rem; }
+  .methodology-original,
+  .methodology-when { font-size: 0.70rem; }
   .methodology-context { display: flex; }
   .home-nav-card { min-height: 72px; }
   .chart-box { height: 250px !important; }

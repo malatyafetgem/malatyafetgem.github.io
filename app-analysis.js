@@ -2089,13 +2089,13 @@ function rAnl(){
             'Öğrencilerin ortalama etrafındaki dağılımı (örneklem standart sapması, n-1). Düşük = homojen sınıf.',
             ''
           ),
-          _trendStatItem(
+          mmDiff !== null ? _trendStatItem(
             'Şubeler Arası Fark',
-            `<span class="text-warning">${mmDiff !== null ? mmDiff.toFixed(2) : '—'}</span>`,
+            `<span class="text-warning">${mmDiff.toFixed(2)}</span>`,
             'En iyi - en düşük şube',
             'En yüksek ortalamalı sınıf ile en düşük arasındaki fark',
             ''
-          ),
+          ) : '',
           _trendStatItem(
             'Trend Güvenilirliği (R²)',
             `<span style="--metric-color:${clsTR2Col}; color:var(--metric-color);">${clsTR2.toFixed(2)}</span>`,
@@ -2294,13 +2294,13 @@ function rAnl(){
             'Öğrenci netlerinin ortalama etrafındaki dağılımı (örneklem standart sapması, n-1)',
             ''
           ),
-          _trendStatItem(
+          subjMMDiff !== null ? _trendStatItem(
             'Sınıflar Arası Fark',
-            `<span class="text-warning">${subjMMDiff !== null ? subjMMDiff.toFixed(2) : '—'}</span>`,
+            `<span class="text-warning">${subjMMDiff.toFixed(2)}</span>`,
             'En iyi - en düşük sınıf',
             'Bu derste en yüksek ve en düşük sınıf ortalaması arasındaki fark',
             ''
-          ),
+          ) : '',
           _trendStatItem(
             'Trend Güvenilirliği (R²)',
             `<span style="--metric-color:${subjR2Col}; color:var(--metric-color);">${subjR2.toFixed(2)}</span>`,
