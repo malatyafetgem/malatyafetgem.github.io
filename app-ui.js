@@ -472,9 +472,40 @@ function xPR(sourceId, title, btn, orientation) {
     clone.classList.add('exam-detail-list-print', 'rapor-list-report');
     clone.querySelectorAll('.list-scroll table').forEach(tbl => {
       tbl.classList.add('rapor-list-table', 'exam-detail-list-table');
+      let headCells = Array.from(tbl.querySelectorAll('thead tr:last-child th'));
+      let totalCols = headCells.length;
+      if(totalCols > 0 && !tbl.querySelector('thead tr.print-title-row')){
+        let titleMain = (clone.querySelector('.report-title-main')?.textContent || title || 'Toplu Liste').replace(/\s+/g, ' ').trim();
+        let titleSub = (clone.querySelector('.report-title-sub')?.textContent || '').replace(/\s+/g, ' ').trim();
+        let titleRow = document.createElement('tr');
+        titleRow.className = 'print-title-row';
+        let titleCell = document.createElement('th');
+        titleCell.colSpan = totalCols;
+        titleCell.textContent = titleSub ? `${titleMain} | ${titleSub}` : titleMain;
+        titleRow.appendChild(titleCell);
+        let thead = tbl.querySelector('thead');
+        if(thead) thead.insertBefore(titleRow, thead.firstChild);
+      }
+      let columnRole = idx => {
+        if(idx === 0) return 'rl-idx';
+        if(idx === 1) return 'rl-name';
+        if(idx === 2) return 'rl-class';
+        if(idx === 3) return 'rl-date';
+        if(idx === 4) return 'rl-publisher';
+        if(idx >= totalCols - 4) {
+          if(idx === totalCols - 4) return 'rl-net';
+          if(idx === totalCols - 3) return 'rl-score';
+          return 'rl-rank';
+        }
+        return 'rl-sub';
+      };
+      tbl.querySelectorAll('tr').forEach(row => {
+        Array.from(row.cells || []).forEach((cell, idx) => {
+          if(row.classList.contains('print-title-row')) return;
+          cell.classList.add(columnRole(idx));
+        });
+      });
       if(!tbl.querySelector('colgroup')){
-        let headCells = tbl.querySelectorAll('thead tr:last-child th');
-        let totalCols = headCells.length;
         if(totalCols > 0){
           let subjectCols = Math.max(totalCols - 9, 0);
           let subjectWidth = subjectCols ? Math.max(3.2, (100 - 60) / subjectCols) : 4;
@@ -489,9 +520,11 @@ function xPR(sourceId, title, btn, orientation) {
             else widths.push(subjectWidth);
           }
           let cg = document.createElement('colgroup');
-          widths.forEach(w => {
+          widths.forEach((w, idx) => {
             let col = document.createElement('col');
             col.style.width = w + '%';
+            let role = columnRole(idx).replace('rl-', 'rl-col-');
+            col.className = role;
             cg.appendChild(col);
           });
           tbl.insertBefore(cg, tbl.firstChild);
@@ -971,6 +1004,8 @@ ${cssLinks}
   body.print-compact-list-mode .rapor-list-table th.rl-sub,body.print-compact-list-mode .rapor-list-table .rl-sub,
   body.print-compact-list-mode .rapor-list-table th.rl-idx,body.print-compact-list-mode .rapor-list-table .rl-idx,
   body.print-compact-list-mode .rapor-list-table th.rl-class,body.print-compact-list-mode .rapor-list-table .rl-class,
+  body.print-compact-list-mode .rapor-list-table th.rl-date,body.print-compact-list-mode .rapor-list-table .rl-date,
+  body.print-compact-list-mode .rapor-list-table th.rl-publisher,body.print-compact-list-mode .rapor-list-table .rl-publisher,
   body.print-compact-list-mode .rapor-list-table th.rl-net,body.print-compact-list-mode .rapor-list-table .rl-net,
   body.print-compact-list-mode .rapor-list-table th.rl-score,body.print-compact-list-mode .rapor-list-table .rl-score,
   body.print-compact-list-mode .rapor-list-table th.rl-rank,body.print-compact-list-mode .rapor-list-table .rl-rank,
@@ -1027,6 +1062,8 @@ ${cssLinks}
   body.print-mobile-list-mode .rapor-list-table col.rl-col-idx{width:3.4% !important;}
   body.print-mobile-list-mode .rapor-list-table col.rl-col-name{width:16% !important;}
   body.print-mobile-list-mode .rapor-list-table col.rl-col-class{width:4.6% !important;}
+  body.print-mobile-list-mode .rapor-list-table col.rl-col-date{width:7.2% !important;}
+  body.print-mobile-list-mode .rapor-list-table col.rl-col-publisher{width:6% !important;}
   body.print-mobile-list-mode .rapor-list-table col.rl-col-net{width:6.2% !important;}
   body.print-mobile-list-mode .rapor-list-table col.rl-col-score{width:6.2% !important;}
   body.print-mobile-list-mode .rapor-list-table col.rl-col-rank{width:5.8% !important;}
@@ -2451,18 +2488,37 @@ function _ensureTableScrollHints(scope){
 function _tableNeedsHorizontalHint(box){
   if(!box) return false;
   let table = box.querySelector ? box.querySelector('table') : null;
-  let boxW = box.clientWidth || 0;
-  if((box.scrollWidth || 0) > boxW + 2) return true;
-  if(table && (table.scrollWidth || 0) > boxW + 2) return true;
+  if(!table) return false;
+  let estimateTableMinWidth = () => {
+    let row = (table.tHead && table.tHead.rows && table.tHead.rows[0]) || table.rows[0];
+    let cells = row ? Array.from(row.cells || []) : [];
+    if(!cells.length) return 0;
+    return cells.reduce((sum, cell) => {
+      let text = (cell.textContent || '').replace(/\s+/g, ' ').trim();
+      let len = Math.min(18, Math.max(2, text.length));
+      return sum + Math.max(42, Math.min(150, 24 + len * 7));
+    }, 10);
+  };
+  let boxRect = null, tableRect = null;
   try {
-    let boxRect = box.getBoundingClientRect();
-    let tableRect = table ? table.getBoundingClientRect() : null;
+    boxRect = box.getBoundingClientRect();
+    tableRect = table.getBoundingClientRect();
+  } catch(e) {}
+  let boxW = Math.max(box.clientWidth || 0, boxRect ? boxRect.width : 0);
+  if(boxW <= 1) return false;
+  let estimatedW = estimateTableMinWidth();
+  let tableW = Math.max(table.scrollWidth || 0, table.offsetWidth || 0, tableRect ? tableRect.width : 0, estimatedW);
+  if((box.scrollWidth || 0) > boxW + 2) return true;
+  if(tableW > boxW + 2) return true;
+  try {
     let viewportW = window.visualViewport && window.visualViewport.width
       ? window.visualViewport.width
       : (document.documentElement ? document.documentElement.clientWidth : window.innerWidth);
     if(tableRect && (tableRect.width > boxRect.width + 2 || tableRect.right > boxRect.right + 2)) return true;
     if(boxRect.right > viewportW + 2) return true;
     if(tableRect && tableRect.right > viewportW + 2) return true;
+    let colCount = ((table.tHead && table.tHead.rows && table.tHead.rows[0]) || table.rows[0] || { cells:[] }).cells.length;
+    if(viewportW <= 768 && colCount >= 6 && estimatedW > Math.min(boxW || viewportW, viewportW) + 2) return true;
   } catch(e) {}
   return false;
 }

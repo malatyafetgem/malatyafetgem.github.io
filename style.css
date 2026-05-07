@@ -71,6 +71,13 @@ body.auth-pending .loader-spinner { color:var(--sa-primary) !important; border-w
   font-size: 1.05rem;
   color: var(--sa-primary);
 }
+.top-mobile-brand-icon {
+  width: 1.18rem;
+  height: 1.18rem;
+  object-fit: contain;
+  display: block;
+  flex: 0 0 auto;
+}
 .top-mobile-brand:hover,
 .top-mobile-brand:focus {
   background: var(--sa-primary-soft);
@@ -706,6 +713,10 @@ body.is-admin button.w-100.admin-only { display:block !important; }
 .rapor-list-report .rapor-list-table .rl-idx,
 .rapor-list-report .rapor-list-table th.rl-class,
 .rapor-list-report .rapor-list-table .rl-class,
+.rapor-list-report .rapor-list-table th.rl-date,
+.rapor-list-report .rapor-list-table .rl-date,
+.rapor-list-report .rapor-list-table th.rl-publisher,
+.rapor-list-report .rapor-list-table .rl-publisher,
 .rapor-list-report .rapor-list-table th.rl-net,
 .rapor-list-report .rapor-list-table .rl-net,
 .rapor-list-report .rapor-list-table th.rl-score,
@@ -880,8 +891,6 @@ body.is-admin button.w-100.admin-only { display:block !important; }
   background: linear-gradient(180deg,#fff 72%,rgba(255,255,255,0.92));
 }
 .scroll-hint.is-needed { display: block; }
-/* sec-cards-row-hint artık kullanılmıyor */
-.sec-cards-row-hint { display: none !important; }
 @media (max-width: 768px) {
   .scroll-hint {
     display: none;
@@ -1688,13 +1697,15 @@ body.is-admin button.w-100.admin-only { display:block !important; }
 }
 
 :where(#homeArea, #anlRes, #raporRes) .scroll-hint + :where(.scroll, .table-responsive, .list-scroll),
-:where(#homeArea, #anlRes, #raporRes) .single-exam-chart-title + .chart-box {
+:where(#homeArea, #anlRes, #raporRes) .single-exam-chart-title + .chart-box,
+:where(#homeArea, #anlRes, #raporRes) .chart-section-title + :where(.chart-box, .dyb-bar) {
   margin-top: 0 !important;
   padding-top: 0 !important;
 }
 
 :where(#homeArea, #anlRes, #raporRes) .scroll-hint + :where(.scroll, .table-responsive, .list-scroll)::before,
-:where(#homeArea, #anlRes, #raporRes) .single-exam-chart-title + .chart-box::before {
+:where(#homeArea, #anlRes, #raporRes) .single-exam-chart-title + .chart-box::before,
+:where(#homeArea, #anlRes, #raporRes) .chart-section-title + :where(.chart-box, .dyb-bar)::before {
   content: none !important;
   display: none !important;
 }
@@ -1753,6 +1764,10 @@ body.is-admin button.w-100.admin-only { display:block !important; }
   transform: translateX(-50%);
   background: linear-gradient(90deg, transparent, #d4dbe6 16%, #aeb9c8 50%, #d4dbe6 84%, transparent);
   box-shadow: 0 1px 0 rgba(255,255,255,0.9);
+}
+
+:where(#homeArea, #anlRes, #raporRes) .chart-section-title + .chart-box.mt-3 {
+  margin-top: 0 !important;
 }
 
 #riskPanel .risk-note,
@@ -1974,25 +1989,31 @@ body.is-admin button.w-100.admin-only { display:block !important; }
 .sec-cards-row > [class*="col-"] {
   margin-bottom: 10px;
 }
+.analysis-info-cards,
 .class-info-cards {
   align-items: stretch;
   margin-bottom: 14px !important;
 }
+.analysis-info-cards > [class*="col-"],
 .class-info-cards > [class*="col-"] {
   display: flex;
   margin-bottom: 0 !important;
 }
+.analysis-info-cards .sec-card,
 .class-info-cards .sec-card {
   width: 100%;
   min-height: 86px;
 }
+.analysis-info-cards:has(+ .analysis-info-cards),
 .class-info-cards:has(+ .class-info-cards) {
   margin-bottom: 6px !important;
 }
+.analysis-info-cards + .analysis-info-cards,
 .class-info-cards + .class-info-cards {
   margin-top: 0 !important;
   padding-top: 0 !important;
 }
+.analysis-info-cards + .analysis-info-cards::before,
 .class-info-cards + .class-info-cards::before {
   content: none !important;
   display: none !important;
@@ -2033,9 +2054,11 @@ body.is-admin button.w-100.admin-only { display:block !important; }
   gap: 6px;
 }
 @media (max-width: 575px) {
+  .analysis-info-cards,
   .class-info-cards {
     margin-bottom: 12px !important;
   }
+  .analysis-info-cards .sec-card,
   .class-info-cards .sec-card {
     min-height: 78px;
   }
@@ -2090,9 +2113,6 @@ body.is-admin button.w-100.admin-only { display:block !important; }
   }
 }
 /* Bilgi kartları (sec-card) mobilde col-12 col-md-* olarak üretilir — Bootstrap grid yeterli */
-/* Trend scroll hint stili */
-/* trend-scroll-hint: artık kullanılmıyor, her zaman gizli */
-.trend-scroll-hint { display: none !important; }
 
 /* Tek sınav modunda ders bazlı çubuk grafik başlığı */
 .single-exam-chart-title {
@@ -2498,6 +2518,12 @@ body.is-admin button.w-100.admin-only { display:block !important; }
 .app-sidebar.sa-sidebar .sidebar-brand .brand-link .brand-image {
   color: #0f2f66 !important;
 }
+.app-sidebar.sa-sidebar .sidebar-brand img.brand-image {
+  object-fit: contain;
+  display: block;
+  color: transparent !important;
+  border-radius: 4px;
+}
 .app-sidebar.sa-sidebar .sidebar-brand .brand-text {
   min-width: 0;
   overflow: hidden;
@@ -2679,6 +2705,10 @@ body.sidebar-collapse .app-sidebar.sa-sidebar:hover .sidebar-brand .brand-text {
   .print-compact-list .rapor-list-table .rl-idx,
   .print-compact-list .rapor-list-table th.rl-class,
   .print-compact-list .rapor-list-table .rl-class,
+  .print-compact-list .rapor-list-table th.rl-date,
+  .print-compact-list .rapor-list-table .rl-date,
+  .print-compact-list .rapor-list-table th.rl-publisher,
+  .print-compact-list .rapor-list-table .rl-publisher,
   .print-compact-list .rapor-list-table th.rl-net,
   .print-compact-list .rapor-list-table .rl-net,
   .print-compact-list .rapor-list-table th.rl-score,

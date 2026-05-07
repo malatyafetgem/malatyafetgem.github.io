@@ -492,6 +492,12 @@ function refreshMethodologyAfterAnalysisRender(){
   updateMethodologyContent();
   setTimeout(updateMethodologyContent, 120);
   setTimeout(updateMethodologyContent, 360);
+  if(typeof scheduleScrollHints === 'function') {
+    let root = getEl('anlRes') || getEl('riskPanel') || document;
+    scheduleScrollHints(root);
+    setTimeout(() => scheduleScrollHints(root), 160);
+    setTimeout(() => scheduleScrollHints(root), 420);
+  }
 }
 
 // ---- reqAnl (orig lines 873-940) ----

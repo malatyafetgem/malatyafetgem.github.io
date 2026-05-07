@@ -7,7 +7,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Sınav Analizi">
-<link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3135/3135810.png">
+<link rel="icon" type="image/png" sizes="512x512" href="./icon.png">
+<link rel="apple-touch-icon" href="./icon.png">
 <link rel="manifest" href="./manifest.json">
 <title>Sınav Analiz Sistemi</title>
 <script src="./version.js"></script>
@@ -118,7 +119,7 @@ window.SA_CACHE_READY = (async function(){
       </li>
       <li class="nav-item d-flex d-lg-none align-items-center ms-1">
         <a href="#anasayfa_genel" class="top-mobile-brand" onclick="return sTab('anasayfa_genel',this)" aria-label="Ana Sayfa">
-          <i class="fas fa-chart-line"></i><span>Sınav Analizi</span>
+          <img src="./icon.png" alt="" class="top-mobile-brand-icon"><span>Sınav Analizi</span>
         </a>
       </li>
     </ul>
@@ -136,7 +137,7 @@ window.SA_CACHE_READY = (async function(){
   <aside class="app-sidebar bg-body-secondary shadow sa-sidebar" data-bs-theme="light" data-enable-persistence="true">
     <div class="sidebar-brand">
       <a href="#anasayfa_genel" class="brand-link" onclick="return sTab('anasayfa_genel',this)">
-        <i class="fas fa-chart-line brand-image"></i>
+        <img src="./icon.png" alt="" class="brand-image">
         <span class="brand-text fw-bold">Sınav Analizi</span>
       </a>
     </div>

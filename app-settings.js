@@ -529,7 +529,7 @@ function bootApp(){
   });
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     navigator.serviceWorker.register('./sw.js?v=' + window.SA_APP_VERSION, { scope: './', updateViaCache: 'none' })
-      .then(reg => { console.log('SW kayıtlı:', reg.scope); reg.update(); })
+      .then(reg => { reg.update(); })
       .catch(err => console.error('SW hatası:', err));
   }
   if (window.caches) {
