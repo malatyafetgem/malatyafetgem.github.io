@@ -2477,10 +2477,33 @@ function _ensureTableScrollHints(scope){
     if(!box || seen.has(box) || !box.querySelector || !box.querySelector('table')) return;
     seen.add(box);
     let prev = box.previousElementSibling;
-    if(prev && prev.classList && prev.classList.contains('scroll-hint')) return;
+    let header = null;
+    if(prev && prev.classList && prev.classList.contains('scroll-hint')){
+      let headerCandidate = prev.previousElementSibling;
+      if(headerCandidate && headerCandidate.classList && headerCandidate.classList.contains('sa-list-header')){
+        header = headerCandidate;
+        prev.remove();
+      } else {
+        return;
+      }
+    } else if(prev && prev.classList && prev.classList.contains('sa-list-header')){
+      header = prev;
+    }
+    if(header && header.parentNode === box.parentNode){
+      let inlineHint = header.querySelector(':scope > .scroll-hint-inline');
+      if(!inlineHint){
+        inlineHint = document.createElement('span');
+        inlineHint.className = 'scroll-hint scroll-hint-inline';
+        inlineHint.innerHTML = '<i class="fas fa-arrows-alt-h me-1"></i>Tabloyu kaydırın';
+        header.appendChild(inlineHint);
+      }
+      inlineHint._scrollHintBox = box;
+      return;
+    }
     let hint = document.createElement('div');
     hint.className = 'scroll-hint';
     hint.innerHTML = '<i class="fas fa-arrows-alt-h me-1"></i>Tabloyu kaydırın';
+    hint._scrollHintBox = box;
     box.parentNode.insertBefore(hint, box);
   });
 }
@@ -2528,9 +2551,12 @@ function updateScrollHints(root){
   let scope = root && root.querySelectorAll ? root : document;
   _ensureTableScrollHints(scope);
   scope.querySelectorAll('.scroll-hint').forEach(hint => {
-    let box = hint.nextElementSibling;
-    while(box && !(box.classList && (box.classList.contains('scroll') || box.classList.contains('table-responsive') || box.classList.contains('list-scroll')))) {
-      box = box.nextElementSibling;
+    let box = hint._scrollHintBox && document.contains(hint._scrollHintBox) ? hint._scrollHintBox : null;
+    if(!box){
+      box = hint.nextElementSibling;
+      while(box && !(box.classList && (box.classList.contains('scroll') || box.classList.contains('table-responsive') || box.classList.contains('list-scroll')))) {
+        box = box.nextElementSibling;
+      }
     }
     let needs = false;
     if(box) needs = _tableNeedsHorizontalHint(box);

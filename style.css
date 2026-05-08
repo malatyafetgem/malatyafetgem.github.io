@@ -891,6 +891,29 @@ body.is-admin button.w-100.admin-only { display:block !important; }
   background: linear-gradient(180deg,#fff 72%,rgba(255,255,255,0.92));
 }
 .scroll-hint.is-needed { display: block; }
+.sa-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.sa-list-header .card-title {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.scroll-hint.scroll-hint-inline {
+  flex: 0 0 auto;
+  margin: 0 0 0 auto !important;
+  padding: 0 !important;
+  background: transparent !important;
+  font-size: 0.78rem;
+  line-height: 1;
+  white-space: nowrap;
+}
+.scroll-hint.scroll-hint-inline.is-needed {
+  display: inline-flex !important;
+  align-items: center;
+}
 @media (max-width: 768px) {
   .scroll-hint {
     display: none;
@@ -1739,12 +1762,12 @@ body.is-admin button.w-100.admin-only { display:block !important; }
 }
 
 .app-main .card > .sa-list-header + .scroll-hint.is-needed {
-  display: block !important;
-  height: auto !important;
+  display: none !important;
+  height: 0 !important;
   min-height: 0 !important;
   margin: 0 !important;
-  padding: 2px 8px 2px 4px !important;
-  overflow: visible !important;
+  padding: 0 !important;
+  overflow: hidden !important;
 }
 
 :where(#homeArea, #anlRes, #raporRes) .chart-section-title {
