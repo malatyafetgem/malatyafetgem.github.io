@@ -886,7 +886,7 @@ function buildRiskInfoCards(stuNo, examType, stuClass) {
 
 // ---- buildKarneExamCards (orig lines 2344-2417) ----
 // 4 üst kart (Ortalama Net, Katılım, Sınıf Derece, Kurum Derece) + (n≥3 ise) trend bloğu.
-// Trend bloğu: Genel Yön (R² chip), Toplam İlerleme, Sınav Başı Değişim, Performans Tutarlılığı (σ), Son Dönem Ortalaması.
+// Trend bloğu: Genel Yön (R² chip), Toplam İlerleme, Sınav Başına Değişim, Performans Tutarlılığı (σ), Son Dönem Ortalaması.
 // metricLabel: görünen etiket (ör. 'Net', 'Puan', 'Matematik Neti') — belirtilmezse 'Net'
 function buildKarneExamCards(summary, examType, metricLabel) {
   if(!summary) return '';
@@ -937,7 +937,7 @@ function buildKarneExamCards(summary, examType, metricLabel) {
       </div>
       <div class="col mb-1 trend-metric" title="Her yeni sınavda beklenen ortalama değişim (regresyon eğimi)">
         <div class="trend-value ${trendTone}">${sSign}${trend.slope.toFixed(2)}</div>
-        <div class="small text-muted trend-label"><strong>Sınav Başı Değişim</strong></div>
+        <div class="small text-muted trend-label"><strong>Sınav Başına Değişim</strong></div>
         <div class="x-small text-muted">(Regresyon Analizi)</div>
       </div>
       ${consHtml}

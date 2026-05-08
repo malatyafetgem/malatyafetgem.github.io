@@ -488,12 +488,15 @@ async function reqProfile() {
 }
 
 function refreshMethodologyAfterAnalysisRender(){
-  if(typeof updateMethodologyContent !== 'function') return;
-  updateMethodologyContent();
-  setTimeout(updateMethodologyContent, 120);
-  setTimeout(updateMethodologyContent, 360);
+  let root = getEl('anlRes') || getEl('riskPanel') || document;
+  const refreshExplanations = () => {
+    if(typeof decorateCardExplanations === 'function') decorateCardExplanations(root);
+    else if(typeof updateMethodologyContent === 'function') updateMethodologyContent();
+  };
+  refreshExplanations();
+  setTimeout(refreshExplanations, 120);
+  setTimeout(refreshExplanations, 360);
   if(typeof scheduleScrollHints === 'function') {
-    let root = getEl('anlRes') || getEl('riskPanel') || document;
     scheduleScrollHints(root);
     setTimeout(() => scheduleScrollHints(root), 160);
     setTimeout(() => scheduleScrollHints(root), 420);

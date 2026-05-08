@@ -1511,6 +1511,376 @@ function _selectedOptionText(id){
   return (opt.textContent || '').trim();
 }
 
+const CARD_EXPLANATIONS = {
+  trend_direction: {
+    title: 'Genel Eğilim',
+    badge: 'Trend',
+    summary: 'Seçilen verinin genel gidiş yönünü gösterir: yükseliyor, düşüyor, sabit ya da dalgalı.',
+    interpretation: 'En az 3 sınav olunca yorumlanmalıdır. R² yüksekse yön daha güvenilir okunur.',
+    caution: 'Az sınavda veya çok dalgalı sonuçlarda kesin karar değil, izleme ipucu olarak değerlendirilmelidir.'
+  },
+  total_change: {
+    title: 'Toplam Değişim',
+    badge: 'Trend',
+    summary: 'İlk sınavdan son sınava kadar beklenen toplam net/puan değişimini gösterir.',
+    interpretation: 'Pozitif değer gelişimi, negatif değer gerileme eğilimini anlatır.',
+    caution: 'Sınavlar çok zikzaklıysa toplam değişim R² ile birlikte okunmalıdır.'
+  },
+  change_per_exam: {
+    title: 'Sınav Başına Değişim',
+    badge: 'Trend',
+    summary: 'Her sınavda ortalama kaç net ya da puan değiştiğini gösterir.',
+    interpretation: '+ değer ilerleme, - değer düşüş eğilimini gösterir.',
+    caution: 'Bu değer tek tek iki sınav farkı değil, tüm sürece en yakın çizginin eğimidir.'
+  },
+  trend_reliability: {
+    title: 'Trend Güvenilirliği (R²)',
+    badge: 'Güvenilirlik',
+    summary: 'Sonuçların düzenli bir artış veya düşüş çizgisine ne kadar uyduğunu gösterir.',
+    interpretation: 'Değer yükseldikçe trend daha güvenilir okunur; düşük değer dalgalanmayı gösterir.',
+    caution: 'R² düşükse yön oku kesin karar değil, öğretmen için izleme sinyalidir.'
+  },
+  current_performance: {
+    title: 'Güncel Performans (EWMA)',
+    badge: 'Güncel durum',
+    summary: 'Son sınavlara daha fazla ağırlık vererek öğrencinin, sınıfın veya dersin güncel seviyesini gösterir.',
+    interpretation: 'Klasik ortalamadan daha hızlı tepki verir; son durumdaki değişimi daha görünür kılar.',
+    caution: 'Tek bir ani sonuç, genel tablo ve katılım bilgisiyle birlikte değerlendirilmelidir.'
+  },
+  surprise: {
+    title: 'Sürpriz Payı (RMSE)',
+    badge: 'Dalgalanma',
+    summary: 'Gerçek sonuçların beklenen trend çizgisinden ortalama ne kadar saptığını gösterir.',
+    interpretation: 'Düşük değer daha düzenli, yüksek değer daha dalgalı performans anlamına gelir.',
+    caution: 'Sürpriz payı yüksekse trend yorumları daha temkinli yapılmalıdır.'
+  },
+  position_z: {
+    title: 'Ortalamaya Göre Konum',
+    badge: 'Karşılaştırma',
+    summary: 'Öğrencinin sınıf veya kurum ortalamasına göre yerini gösterir.',
+    interpretation: '0 ortalama düzeyidir; + değer ortalamanın üstünü, - değer ortalamanın altını anlatır. Standart sapma, gruptaki tipik uzaklığı ifade eder.',
+    caution: 'Grup küçükse veya sonuçlar birbirine çok yakınsa bu gösterge tek başına öğrenci etiketi olarak kullanılmamalıdır.'
+  },
+  rank_position: {
+    title: 'Sıralama Konumu',
+    badge: 'Sıra',
+    summary: 'Öğrencinin sınıf veya kurum içindeki sıra bilgisini gösterir.',
+    interpretation: 'Sıra değerinde küçük sayı daha iyi konumu ifade eder.',
+    caution: 'Sıra, net/puan farkının büyüklüğünü göstermez; mutlaka net veya puanla birlikte okunmalıdır.'
+  },
+  previous_delta: {
+    title: 'Önceki Sınava Fark',
+    badge: 'Karşılaştırma',
+    summary: 'Seçili sınavın hemen önceki sınava göre artışını veya düşüşünü gösterir.',
+    interpretation: 'Net ve puanda artış iyiye işaret eder. Sıralamada sayının küçülmesi iyileşme anlamına gelir.',
+    caution: 'İki sınav farkı trend değildir; sınav zorluğu ve konu kapsamı sonucu etkileyebilir.'
+  },
+  distribution_sd: {
+    title: 'Ortalamadan Uzaklık (Standart Sapma)',
+    badge: 'Dağılım',
+    summary: 'Grup sonuçlarının ortalamanın etrafında ne kadar dağıldığını gösterir.',
+    interpretation: 'Değer büyüdükçe öğrenciler arası seviye farkı artar; değer küçüldükçe sonuçlar birbirine yaklaşır.',
+    caution: 'Çok küçük gruplarda tek bir uç sonuç dağılımı kolayca değiştirebilir.'
+  },
+  distribution_cv: {
+    title: 'Dağılım / Homojenlik',
+    badge: 'Dağılım',
+    summary: 'Öğrenciler birbirine yakın mı, yoksa seviye farkı fazla mı, bunu gösterir.',
+    interpretation: 'Değer büyüdükçe grup daha heterojen; değer küçüldükçe daha homojen kabul edilir.',
+    caution: 'Ortalama çok düşükse CV olduğundan yüksek görünebilir; öğrenci sayısıyla birlikte okunmalıdır.'
+  },
+  median: {
+    title: 'Medyan Net',
+    badge: 'Dağılım',
+    summary: 'Sonuçlar küçükten büyüğe dizildiğinde ortadaki öğrencinin netini gösterir.',
+    interpretation: 'Tipik öğrenciyi anlatır; uç sonuçlardan ortalamaya göre daha az etkilenir.',
+    caution: 'Medyan ve ortalama belirgin ayrışıyorsa uç öğrenciler genel ortalamayı etkiliyor olabilir.'
+  },
+  iqr: {
+    title: 'Çeyrekler Arası Aralık (IQR)',
+    badge: 'Dağılım',
+    summary: 'Ortadaki yüzde 50 öğrencinin hangi genişlikte bir aralığa yayıldığını gösterir.',
+    interpretation: 'Büyük IQR, orta grubun bile dağınık olduğunu; küçük IQR, orta grubun daha toplu olduğunu gösterir.',
+    caution: 'IQR uç değerleri dışarıda bırakır; en yüksek ve en düşük öğrencileri tek başına anlatmaz.'
+  },
+  effect_size: {
+    title: "Etki Büyüklüğü (Cohen's d)",
+    badge: 'Karşılaştırma',
+    summary: 'Şubeler ya da gruplar arasındaki farkın gerçekten güçlü olup olmadığını gösterir.',
+    interpretation: 'Yaklaşık 0.20 küçük, 0.50 orta, 0.80 ve üzeri büyük fark olarak okunabilir.',
+    caution: 'Ortalama farkı tek başına yeterli değildir; grupların kendi içindeki dağılımı da dikkate alınır.'
+  },
+  group_difference: {
+    title: 'Gruplar Arası Fark',
+    badge: 'Karşılaştırma',
+    summary: 'En yüksek ortalamalı grup ile en düşük ortalamalı grup arasındaki ham net/puan farkını gösterir.',
+    interpretation: 'Fark büyüdükçe gruplar arasındaki seviye ayrımı artar.',
+    caution: 'Ham fark dağılımı hesaba katmaz; varsa Cohen d ile birlikte yorumlanmalıdır.'
+  },
+  branch_institution_delta: {
+    title: 'Şube - Kurum Farkı',
+    badge: 'Karşılaştırma',
+    summary: 'Seçili şubenin kurum ortalamasına göre ne kadar üstte veya altta olduğunu gösterir.',
+    interpretation: '+ değer şubenin kurum ortalamasının üstünde, - değer altında olduğunu anlatır.',
+    caution: 'Bu ham farktır; öğrenci sayısı, dağılım ve sınav zorluğu ile birlikte okunmalıdır.'
+  },
+  boxplot: {
+    title: 'Kutu Grafiği',
+    badge: 'Dağılım',
+    summary: 'Sadece ortalamayı değil, orta grubu, yayılımı ve uç değerleri birlikte gösterir.',
+    interpretation: 'Kutu orta grubu, medyan çizgisi tipik öğrenciyi; işaretli değer varsa seçili öğrenci veya grubun konumunu gösterir.',
+    caution: 'Az sınav veya küçük grup varsa dağılım grafiği geçici dalgalanmaları büyütebilir.'
+  },
+  risk_score: {
+    title: 'Risk Puanı',
+    badge: 'Risk',
+    summary: 'Devamsızlık, sıra kaybı, net düşüşü ve ders düşüşü gibi sinyalleri tek puanda toplar.',
+    interpretation: 'Puan yükseldikçe öğrencinin daha yakından izlenmesi önerilir.',
+    caution: 'Bu bir tanı veya kesin hüküm değildir; öğretmene erken uyarı sağlayan pedagojik bir göstergedir.'
+  },
+  risk_level: {
+    title: 'Risk Düzeyi',
+    badge: 'Risk',
+    summary: 'Öğrencileri risk puanına göre düşük, orta ve yüksek izleme gruplarına ayırır.',
+    interpretation: 'Yüksek düzey daha hızlı inceleme; orta düzey takip; düşük düzey ise gözlem ihtiyacı anlamına gelir.',
+    caution: 'Risk düzeyi öğrenciyi etiketlemez. Öğretmen, rehberlik ve sınıf bilgisiyle birlikte değerlendirilmelidir.'
+  },
+  absence_risk: {
+    title: 'Devamsızlık Sinyali',
+    badge: 'Risk',
+    summary: 'Öğrencinin ilgili sınav türündeki katılım düzenini izler.',
+    interpretation: 'Katılım düşerse risk artar; son sınavlara girmemek daha ciddi uyarı kabul edilir.',
+    caution: 'Mazeretli/mazeretsiz ayrımı ayrıca tutulmuyorsa bu ayrım yapılmaz; öğretmen bilgisiyle birlikte değerlendirilmelidir.'
+  },
+  rank_drop: {
+    title: 'Sıra Gerileme',
+    badge: 'Risk',
+    summary: 'Öğrencinin grup içindeki yerinin gerileyip gerilemediğini gösterir.',
+    interpretation: 'Sınav zor olsa bile sıra gerilemesi göreli konum kaybını yakalar.',
+    caution: 'Tek başına başarısızlık anlamına gelmez; net, puan ve sınav zorluğuyla birlikte okunmalıdır.'
+  },
+  trend_drop: {
+    title: 'Düşüş Trendi',
+    badge: 'Risk',
+    summary: 'Son dönem performansı sınıf seviyesinin belirgin altına düşerse uyarı verir.',
+    interpretation: 'Z-skoru kullanıldığı için sınav zorluğunun etkisi azaltılmaya çalışılır.',
+    caution: 'Bu gösterge öğrenciyi etiketlemez; erken destek planlaması için uyarı verir.'
+  },
+  subject_drop: {
+    title: 'Ders Düşüşü',
+    badge: 'Risk',
+    summary: 'Genel sonuç iyi görünse bile belirli bir derste belirgin kopma varsa uyarı verir.',
+    interpretation: 'Ders neti aynı sınav ve grup dağılımına göre aşağıda kalıyorsa uyarı oluşabilir.',
+    caution: 'Ders bazlı sinyal konu kapsamı ve soru sayısıyla birlikte değerlendirilmelidir.'
+  },
+  risk_reliability: {
+    title: 'Risk Güvenilirliği',
+    badge: 'Risk',
+    summary: 'Sonuçlar çok dalgalıysa risk uyarısının şiddetini düşürmeye yardım eder.',
+    interpretation: 'Böylece tek sınavlık tesadüfi düşüşler gereğinden fazla büyütülmez.',
+    caution: 'Az veriyle kesin risk yorumu yapılmaz; amaç önceliklendirme ve izleme desteğidir.'
+  }
+};
+
+function _cardExplanationEsc(v){
+  return (typeof escapeHtml === 'function') ? escapeHtml(v) : String(v ?? '');
+}
+
+function _cardExplanationNorm(v){
+  return String(v || '')
+    .toLocaleLowerCase('tr-TR')
+    .replace(/[ıİ]/g, 'i')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[’´`]/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function _cardExplanationKeyFromText(text){
+  let n = _cardExplanationNorm(text);
+  if(!n) return '';
+  if(n.includes('genel yon') || n.includes('genel egilim')) return 'trend_direction';
+  if(n.includes('trend guvenilirligi') || n.includes('r²') || /\br2\b/.test(n)) return 'trend_reliability';
+  if(n.includes('sinav basina') || n.includes('sinav basi')) return 'change_per_exam';
+  if(n.includes('toplam') && n.includes('degisim')) return 'total_change';
+  if(n.includes('guncel performans') || n.includes('ewma')) return 'current_performance';
+  if(n.includes('surpriz payi') || n.includes('rmse')) return 'surprise';
+  if(n.includes('sinif ici konum') || n.includes('kurum ici konum') || n.includes('ortalamaya gore konum') || n.includes('sinif karsilastirma') || n.includes('kurum karsilastirma')) return 'position_z';
+  if(n.includes('sinif sira') || n.includes('kurum sira') || n.includes('genel sira') || n.includes('ortalama sira')) return 'rank_position';
+  if(n.includes('onceki sinava fark')) return 'previous_delta';
+  if(n.includes('standart sapma') || n.includes('ortalamadan uzaklik')) return 'distribution_sd';
+  if(n.includes('sinif ici dagilim') || n.includes('ogrenciler arasi dagilim') || n.includes('homojenlik') || /\bcv\b/.test(n)) return 'distribution_cv';
+  if(n.includes('medyan')) return 'median';
+  if(n.includes('ceyrek') || n.includes('iqr') || n.includes('orta grup yayilimi')) return 'iqr';
+  if(n.includes('cohen') || n.includes('etki buyuklugu')) return 'effect_size';
+  if(n.includes('subeler arasi fark') || n.includes('siniflar arasi fark')) return 'group_difference';
+  if(n.includes('sube') && n.includes('kurum') && n.includes('fark')) return 'branch_institution_delta';
+  if(n.includes('kutu grafigi') || n.includes('box plot')) return 'boxplot';
+  if(n.includes('risk puani')) return 'risk_score';
+  if(n.includes('yuksek risk') || n.includes('orta risk') || n.includes('dusuk risk') || n.includes('toplam risk')) return 'risk_level';
+  if(n.includes('devamsizlik')) return 'absence_risk';
+  if(n.includes('sira gerileme')) return 'rank_drop';
+  if(n.includes('dusus trendi') || n.includes('dusme trendi')) return 'trend_drop';
+  if(n.includes('ders dususu')) return 'subject_drop';
+  if(n.includes('risk guvenilirligi')) return 'risk_reliability';
+  return '';
+}
+
+function _cardExplanationTextForElement(el){
+  if(!el) return '';
+  const selectors = [
+    '.trend-stat-label',
+    '.stats-label',
+    '.trend-label',
+    '.sec-label',
+    '.boxplot-title',
+    '.boxplot-card-title',
+    '.risk-info-title',
+    '.risk-score-badge small',
+    '.card-title',
+    'h6',
+    'h5'
+  ];
+  for(const sel of selectors){
+    let node = el.querySelector(sel);
+    if(node && (node.textContent || '').trim()) return node.textContent.trim();
+  }
+  return (el.textContent || '').trim();
+}
+
+function _cardExplanationKeyForElement(el){
+  if(el && el.classList && el.classList.contains('risk-card')) return '';
+  let text = _cardExplanationTextForElement(el);
+  let key = _cardExplanationKeyFromText(text);
+  if(key) return key;
+  if(el && el.classList && el.classList.contains('boxplot-card')) return 'boxplot';
+  if(el && el.classList && (el.classList.contains('risk-card') || el.classList.contains('risk-info-card'))) return 'risk_score';
+  return '';
+}
+
+function _cardExplanationRender(data){
+  let sections = [];
+  if(data.summary) sections.push(`<p class="card-explanation-lead">${_cardExplanationEsc(data.summary)}</p>`);
+  if(data.interpretation) sections.push(`<div class="card-explanation-section"><strong>Nasıl yorumlanır?</strong><span>${_cardExplanationEsc(data.interpretation)}</span></div>`);
+  if(data.caution) sections.push(`<div class="card-explanation-caution"><strong>Dikkat</strong><span>${_cardExplanationEsc(data.caution)}</span></div>`);
+  return sections.join('');
+}
+
+let _lastCardExplanationTrigger = null;
+
+function openCardExplanation(key, trigger){
+  let data = CARD_EXPLANATIONS[key];
+  if(!data) return;
+  let overlay = document.getElementById('cardExplanationOverlay');
+  let modal = overlay ? overlay.querySelector('.card-explanation-modal') : null;
+  let title = document.getElementById('cardExplanationTitle');
+  let badge = document.getElementById('cardExplanationBadge');
+  let body = document.getElementById('cardExplanationBody');
+  if(!overlay || !modal || !title || !badge || !body) return;
+  _lastCardExplanationTrigger = trigger || null;
+  title.textContent = data.title || 'Açıklama';
+  badge.textContent = data.badge || '';
+  badge.hidden = !data.badge;
+  body.innerHTML = _cardExplanationRender(data);
+  overlay.hidden = false;
+  document.body.classList.add('card-explanation-open');
+  requestAnimationFrame(() => modal.focus());
+}
+
+function closeCardExplanation(){
+  let overlay = document.getElementById('cardExplanationOverlay');
+  if(!overlay || overlay.hidden) return;
+  overlay.hidden = true;
+  document.body.classList.remove('card-explanation-open');
+  if(_lastCardExplanationTrigger && typeof _lastCardExplanationTrigger.focus === 'function') {
+    _lastCardExplanationTrigger.focus({ preventScroll: true });
+  }
+  _lastCardExplanationTrigger = null;
+}
+
+function _cardExplanationButtonExists(el){
+  return Array.from(el.children || []).some(child => child.classList && child.classList.contains('card-info-btn'));
+}
+
+function _cardExplanationAddButton(el, key){
+  if(!el || !key || !CARD_EXPLANATIONS[key] || _cardExplanationButtonExists(el)) return;
+  el.classList.add('has-card-info');
+  let btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'card-info-btn no-print';
+  btn.dataset.cardExplanation = key;
+  btn.setAttribute('aria-label', `${CARD_EXPLANATIONS[key].title} açıklamasını göster`);
+  btn.setAttribute('title', 'Açıklama');
+  btn.innerHTML = '<i class="fas fa-circle-info" aria-hidden="true"></i>';
+  el.appendChild(btn);
+}
+
+function decorateCardExplanations(root){
+  let scope = root && root.nodeType === 1 ? root : document;
+  const selector = [
+    '.trend-stat-item',
+    '.stats-item',
+    '.trend-card .trend-metric',
+    '.boxplot-card',
+    '.sec-card',
+    '.risk-stat-card',
+    '.risk-info-card'
+  ].join(',');
+  let cards = [];
+  if(scope.matches && scope.matches(selector)) cards.push(scope);
+  cards = cards.concat(Array.from(scope.querySelectorAll(selector)));
+  cards.forEach(card => {
+    let key = _cardExplanationKeyForElement(card);
+    if(key) _cardExplanationAddButton(card, key);
+  });
+}
+
+let _cardExplanationDecorateScheduled = false;
+function scheduleCardExplanationDecorate(root){
+  if(_cardExplanationDecorateScheduled) return;
+  _cardExplanationDecorateScheduled = true;
+  requestAnimationFrame(() => {
+    _cardExplanationDecorateScheduled = false;
+    decorateCardExplanations(root || document);
+  });
+}
+
+function initCardExplanationSystem(){
+  if(window.__cardExplanationSystemReady) return;
+  window.__cardExplanationSystemReady = true;
+  document.addEventListener('click', event => {
+    let btn = event.target.closest('[data-card-explanation]');
+    if(btn) {
+      event.preventDefault();
+      event.stopPropagation();
+      openCardExplanation(btn.dataset.cardExplanation, btn);
+      return;
+    }
+    if(event.target && event.target.id === 'cardExplanationOverlay') closeCardExplanation();
+    if(event.target && event.target.closest('.card-explanation-close')) closeCardExplanation();
+  });
+  document.addEventListener('keydown', event => {
+    if(event.key === 'Escape') closeCardExplanation();
+  });
+  ['anlRes', 'riskPanel', 'kCont', 'raporRes'].forEach(id => {
+    let el = document.getElementById(id);
+    if(!el || typeof MutationObserver === 'undefined') return;
+    let observer = new MutationObserver(() => scheduleCardExplanationDecorate(el));
+    observer.observe(el, { childList: true, subtree: true });
+  });
+  decorateCardExplanations(document);
+}
+
+if(document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initCardExplanationSystem);
+} else {
+  setTimeout(initCardExplanationSystem, 0);
+}
+
+window.decorateCardExplanations = decorateCardExplanations;
+window.openCardExplanation = openCardExplanation;
+window.closeCardExplanation = closeCardExplanation;
+
 function _methodologyEsc(v){
   return (typeof escapeHtml === 'function') ? escapeHtml(v) : String(v ?? '');
 }
@@ -1594,11 +1964,11 @@ function _methodologyData(aT){
       limit: 'R² düşükse yön etiketi temkinli okunur. Az sınavda trend, kesin yargı değil izleme sinyalidir.'
     },
     {
-      display: 'Toplam Net/Puan/Ders Değişimi / Sınav Başı Değişim',
+      display: 'Toplam Net/Puan/Ders Değişimi / Sınav Başına Değişim',
       original: 'Regresyon doğrusuna dayalı toplam değişim ve regresyon eğimi',
       when: 'Trend kartıyla birlikte görünür.',
       meaning: 'Süreç boyunca beklenen toplam artış/azalışı ve her yeni sınav için ortalama değişim hızını gösterir.',
-      calc: 'Sınav başı değişim regresyon eğimidir. Toplam değişim = eğim x (geçerli sınav sayısı - 1).',
+      calc: 'Sınav başına değişim regresyon eğimidir. Toplam değişim = eğim x (geçerli sınav sayısı - 1).',
       limit: 'Sonuçlar zikzaklıysa eğim gerçek öğrenme yönünü abartabilir; R² ile birlikte okunmalıdır.'
     },
     {
@@ -1910,7 +2280,7 @@ function _methodologyRenderedItemVisible(aT, item, root, rootText){
 
   if(aT === 'student') {
     if(display === 'Genel Yön (Trend)') return has(['Genel Yön (Trend)']);
-    if(display === 'Toplam Net/Puan/Ders Değişimi / Sınav Başı Değişim') return has(['Toplam Net Değişimi', 'Toplam Puan Değişimi', 'Ders Değişimi', 'Sınav Başı Değişim']);
+    if(display === 'Toplam Net/Puan/Ders Değişimi / Sınav Başına Değişim') return has(['Toplam Net Değişimi', 'Toplam Puan Değişimi', 'Ders Değişimi', 'Sınav Başına Değişim', 'Sınav Başı Değişim']);
     if(display === 'Güncel Performans') return has(['Güncel Performans']);
     if(display === 'Sürpriz Payı') return has(['Sürpriz Payı']);
     if(display === 'Sınıf İçi Konum / Kurum İçi Konum') return has(['Sınıf İçi Konum', 'Kurum İçi Konum']);
@@ -1957,6 +2327,7 @@ function _methodologyFilterByRendered(aT, items){
 }
 
 function updateMethodologyContent(){
+  if(typeof decorateCardExplanations === 'function') decorateCardExplanations(document);
   let body = document.querySelector('#methodologyBody .methodology-body');
   if(!body) return;
   let aT = getEl('aType') ? getEl('aType').value : 'student';

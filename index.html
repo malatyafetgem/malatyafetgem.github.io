@@ -111,6 +111,22 @@ window.SA_CACHE_READY = (async function(){
   <div class="pwa-progress"></div>
 </div>
 
+<div id="cardExplanationOverlay" class="card-explanation-backdrop no-print" hidden>
+  <section class="card-explanation-modal" role="dialog" aria-modal="true" aria-labelledby="cardExplanationTitle" tabindex="-1">
+    <button type="button" class="card-explanation-close" aria-label="Açıklamayı kapat">
+      <i class="fas fa-times"></i>
+    </button>
+    <div class="card-explanation-head">
+      <span class="card-explanation-icon"><i class="fas fa-circle-info"></i></span>
+      <div>
+        <div class="card-explanation-badge" id="cardExplanationBadge"></div>
+        <h5 id="cardExplanationTitle">Açıklama</h5>
+      </div>
+    </div>
+    <div class="card-explanation-body" id="cardExplanationBody"></div>
+  </section>
+</div>
+
 <div id="mainApp" class="app-wrapper" style="display:none;">
   <nav class="app-header navbar navbar-expand bg-body sa-topbar" id="topNav">
     <ul class="navbar-nav">
@@ -202,17 +218,6 @@ window.SA_CACHE_READY = (async function(){
             <div class="col-sm-6 col-md-4 col-lg-2" id="gRiskExType" style="display:none;"><div class="mb-3"><label>Sınav Türü</label><select id="riskExTypeFilter" class="form-select" onchange="onRiskFilterChange(false)"><option value="">Tüm Sınav Türleri</option></select></div></div>
             <div class="col-sm-6 col-md-4 col-lg-2" id="gRiskLevel" style="display:none;"><div class="mb-3"><label>Risk Türü</label><select id="riskLevelFilter" class="form-select" onchange="onRiskFilterChange(false)"><option value="">Tüm Riskler</option><option value="high">Yüksek Risk</option><option value="med">Orta Risk</option><option value="low">Düşük Risk</option></select></div></div>
                 </div>
-              </div>
-            </div>
-          </div>
-          <div class="methodology-card no-print">
-            <button class="methodology-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#methodologyBody" aria-expanded="false" aria-controls="methodologyBody">
-              <span><i class="fas fa-circle-info me-2"></i>Açıklamalar</span>
-              <i class="fas fa-chevron-down"></i>
-            </button>
-            <div class="collapse" id="methodologyBody">
-              <div class="methodology-body">
-                <div class="methodology-intro">Bu bölüm, seçili analiz sayfasında görülebilen istatistiksel kartların bilimsel adını, ne anlattığını ve nasıl hesaplandığını açıklar.</div>
               </div>
             </div>
           </div>
