@@ -281,6 +281,10 @@ async function sAct(no,clr=false){
   let ab=getEl('anlStuBadge'); if(ab)ab.innerHTML=s?`<span class="badge rounded-pill px-2 py-1 sa-selected-pill selected-student-pill"><i class="fas fa-check-circle me-1"></i>Seçili Öğrenci: ${escapeHtml(s.name)} (${escapeHtml(s.class)})</span>`:'';
   getEl('homeArea').innerHTML='';
   if(no) await reqProfile();
+  if(no && typeof decorateCardExplanations === 'function') {
+    decorateCardExplanations(getEl('homeArea'));
+    setTimeout(() => decorateCardExplanations(getEl('homeArea')), 180);
+  }
   schedulePaneScrollHintRefresh('anasayfa');
   if(getEl('sonuclar').classList.contains('active-pane')) {
     reqUI();
@@ -1513,7 +1517,7 @@ function _selectedOptionText(id){
 
 const CARD_EXPLANATIONS = {
   trend_direction: {
-    title: 'Genel Eğilim',
+    title: 'Genel Yön (Trend)',
     badge: 'Trend',
     summary: 'Seçilen verinin genel gidiş yönünü gösterir: yükseliyor, düşüyor, sabit ya da dalgalı.',
     interpretation: 'En az 3 sınav olunca yorumlanmalıdır. R² yüksekse yön daha güvenilir okunur.',
@@ -1631,54 +1635,12 @@ const CARD_EXPLANATIONS = {
     interpretation: 'Kutu orta grubu, medyan çizgisi tipik öğrenciyi; işaretli değer varsa seçili öğrenci veya grubun konumunu gösterir.',
     caution: 'Az sınav veya küçük grup varsa dağılım grafiği geçici dalgalanmaları büyütebilir.'
   },
-  risk_score: {
-    title: 'Risk Puanı',
-    badge: 'Risk',
-    summary: 'Devamsızlık, sıra kaybı, net düşüşü ve ders düşüşü gibi sinyalleri tek puanda toplar.',
-    interpretation: 'Puan yükseldikçe öğrencinin daha yakından izlenmesi önerilir.',
-    caution: 'Bu bir tanı veya kesin hüküm değildir; öğretmene erken uyarı sağlayan pedagojik bir göstergedir.'
-  },
-  risk_level: {
-    title: 'Risk Düzeyi',
-    badge: 'Risk',
-    summary: 'Öğrencileri risk puanına göre düşük, orta ve yüksek izleme gruplarına ayırır.',
-    interpretation: 'Yüksek düzey daha hızlı inceleme; orta düzey takip; düşük düzey ise gözlem ihtiyacı anlamına gelir.',
-    caution: 'Risk düzeyi öğrenciyi etiketlemez. Öğretmen, rehberlik ve sınıf bilgisiyle birlikte değerlendirilmelidir.'
-  },
-  absence_risk: {
-    title: 'Devamsızlık Sinyali',
-    badge: 'Risk',
-    summary: 'Öğrencinin ilgili sınav türündeki katılım düzenini izler.',
-    interpretation: 'Katılım düşerse risk artar; son sınavlara girmemek daha ciddi uyarı kabul edilir.',
-    caution: 'Mazeretli/mazeretsiz ayrımı ayrıca tutulmuyorsa bu ayrım yapılmaz; öğretmen bilgisiyle birlikte değerlendirilmelidir.'
-  },
-  rank_drop: {
-    title: 'Sıra Gerileme',
-    badge: 'Risk',
-    summary: 'Öğrencinin grup içindeki yerinin gerileyip gerilemediğini gösterir.',
-    interpretation: 'Sınav zor olsa bile sıra gerilemesi göreli konum kaybını yakalar.',
-    caution: 'Tek başına başarısızlık anlamına gelmez; net, puan ve sınav zorluğuyla birlikte okunmalıdır.'
-  },
-  trend_drop: {
-    title: 'Düşüş Trendi',
-    badge: 'Risk',
-    summary: 'Son dönem performansı sınıf seviyesinin belirgin altına düşerse uyarı verir.',
-    interpretation: 'Z-skoru kullanıldığı için sınav zorluğunun etkisi azaltılmaya çalışılır.',
-    caution: 'Bu gösterge öğrenciyi etiketlemez; erken destek planlaması için uyarı verir.'
-  },
-  subject_drop: {
-    title: 'Ders Düşüşü',
-    badge: 'Risk',
-    summary: 'Genel sonuç iyi görünse bile belirli bir derste belirgin kopma varsa uyarı verir.',
-    interpretation: 'Ders neti aynı sınav ve grup dağılımına göre aşağıda kalıyorsa uyarı oluşabilir.',
-    caution: 'Ders bazlı sinyal konu kapsamı ve soru sayısıyla birlikte değerlendirilmelidir.'
-  },
-  risk_reliability: {
-    title: 'Risk Güvenilirliği',
-    badge: 'Risk',
-    summary: 'Sonuçlar çok dalgalıysa risk uyarısının şiddetini düşürmeye yardım eder.',
-    interpretation: 'Böylece tek sınavlık tesadüfi düşüşler gereğinden fazla büyütülmez.',
-    caution: 'Az veriyle kesin risk yorumu yapılmaz; amaç önceliklendirme ve izleme desteğidir.'
+  score_rank: {
+    title: 'Puan ve Sıra',
+    badge: 'Öğrenci',
+    summary: 'Seçili sınavdaki puan, toplam net ve varsa sınıf/kurum sırasını birlikte gösterir.',
+    interpretation: 'Puan mutlak başarıyı, sıra ise aynı sınava giren grup içindeki göreli konumu anlatır.',
+    caution: 'Tek sınavlık sonuç trend değildir; önceki sınav farkı ve genel gidişle birlikte okunmalıdır.'
   }
 };
 
@@ -1699,6 +1661,28 @@ function _cardExplanationNorm(v){
 function _cardExplanationKeyFromText(text){
   let n = _cardExplanationNorm(text);
   if(!n) return '';
+
+  // Basit ve ilk bakışta anlaşılır öğrenci özet kartlarında info butonu gösterme.
+  // Bu kartlar açıklama ihtiyacı taşımadığı için popup sistemi dışında tutulur.
+  const simpleStudentCardLabels = [
+    'ortalama net',
+    'ortalama puan',
+    'katilim',
+    'sinif derece',
+    'kurum derece'
+  ];
+  if(simpleStudentCardLabels.includes(n)) return '';
+
+  // Risk Analizi sayfasındaki ve diğer sayfalardaki risk kartlarında info sistemi kullanılmayacak.
+  if(
+    n.includes('risk') ||
+    n.includes('devamsizlik') ||
+    n.includes('sira gerileme') ||
+    n.includes('dusus trendi') ||
+    n.includes('dusme trendi') ||
+    n.includes('ders dususu')
+  ) return '';
+
   if(n.includes('genel yon') || n.includes('genel egilim')) return 'trend_direction';
   if(n.includes('trend guvenilirligi') || n.includes('r²') || /\br2\b/.test(n)) return 'trend_reliability';
   if(n.includes('sinav basina') || n.includes('sinav basi')) return 'change_per_exam';
@@ -1706,6 +1690,7 @@ function _cardExplanationKeyFromText(text){
   if(n.includes('guncel performans') || n.includes('ewma')) return 'current_performance';
   if(n.includes('surpriz payi') || n.includes('rmse')) return 'surprise';
   if(n.includes('sinif ici konum') || n.includes('kurum ici konum') || n.includes('ortalamaya gore konum') || n.includes('sinif karsilastirma') || n.includes('kurum karsilastirma')) return 'position_z';
+  if(n.includes('puan') && n.includes('sira')) return 'score_rank';
   if(n.includes('sinif sira') || n.includes('kurum sira') || n.includes('genel sira') || n.includes('ortalama sira')) return 'rank_position';
   if(n.includes('onceki sinava fark')) return 'previous_delta';
   if(n.includes('standart sapma') || n.includes('ortalamadan uzaklik')) return 'distribution_sd';
@@ -1716,13 +1701,6 @@ function _cardExplanationKeyFromText(text){
   if(n.includes('subeler arasi fark') || n.includes('siniflar arasi fark')) return 'group_difference';
   if(n.includes('sube') && n.includes('kurum') && n.includes('fark')) return 'branch_institution_delta';
   if(n.includes('kutu grafigi') || n.includes('box plot')) return 'boxplot';
-  if(n.includes('risk puani')) return 'risk_score';
-  if(n.includes('yuksek risk') || n.includes('orta risk') || n.includes('dusuk risk') || n.includes('toplam risk')) return 'risk_level';
-  if(n.includes('devamsizlik')) return 'absence_risk';
-  if(n.includes('sira gerileme')) return 'rank_drop';
-  if(n.includes('dusus trendi') || n.includes('dusme trendi')) return 'trend_drop';
-  if(n.includes('ders dususu')) return 'subject_drop';
-  if(n.includes('risk guvenilirligi')) return 'risk_reliability';
   return '';
 }
 
@@ -1749,51 +1727,165 @@ function _cardExplanationTextForElement(el){
 }
 
 function _cardExplanationKeyForElement(el){
-  if(el && el.classList && el.classList.contains('risk-card')) return '';
+  if(el && el.classList && (el.classList.contains('risk-card') || el.classList.contains('risk-info-card') || el.classList.contains('risk-stat-card'))) return '';
   let text = _cardExplanationTextForElement(el);
   let key = _cardExplanationKeyFromText(text);
   if(key) return key;
   if(el && el.classList && el.classList.contains('boxplot-card')) return 'boxplot';
-  if(el && el.classList && (el.classList.contains('risk-card') || el.classList.contains('risk-info-card'))) return 'risk_score';
   return '';
 }
 
 function _cardExplanationRender(data){
   let sections = [];
-  if(data.summary) sections.push(`<p class="card-explanation-lead">${_cardExplanationEsc(data.summary)}</p>`);
-  if(data.interpretation) sections.push(`<div class="card-explanation-section"><strong>Nasıl yorumlanır?</strong><span>${_cardExplanationEsc(data.interpretation)}</span></div>`);
-  if(data.caution) sections.push(`<div class="card-explanation-caution"><strong>Dikkat</strong><span>${_cardExplanationEsc(data.caution)}</span></div>`);
+  if(data.summary) sections.push(`<div class="card-explanation-section card-explanation-definition"><strong class="card-explanation-section-title"><i class="fas fa-circle-question" aria-hidden="true"></i>Nedir?</strong><span>${_cardExplanationEsc(data.summary)}</span></div>`);
+  if(data.interpretation) sections.push(`<div class="card-explanation-section"><strong class="card-explanation-section-title"><i class="fas fa-chart-line" aria-hidden="true"></i>Nasıl okunur?</strong><span>${_cardExplanationEsc(data.interpretation)}</span></div>`);
+  if(data.caution) sections.push(`<div class="card-explanation-caution"><strong class="card-explanation-section-title"><i class="fas fa-lightbulb" aria-hidden="true"></i>Not</strong><span>${_cardExplanationEsc(data.caution)}</span></div>`);
   return sections.join('');
 }
 
+function _cardExplanationTitleWithBadge(data, trigger){
+  let selectedTitle = trigger && trigger.dataset ? (trigger.dataset.cardExplanationTitle || '') : '';
+  if(selectedTitle) return selectedTitle;
+  return data && data.title ? String(data.title) : 'Açıklama';
+}
+
+
 let _lastCardExplanationTrigger = null;
+let _activeCardExplanationPopover = null;
+let _activeCardExplanationSheet = null;
+
+function _cardExplanationIsMobile(){
+  try {
+    return window.matchMedia && window.matchMedia('(max-width: 575px)').matches;
+  } catch(e) {
+    return window.innerWidth <= 575;
+  }
+}
+
+function _cardExplanationDesktopPlacement(trigger){
+  try {
+    let anchor = trigger && trigger.closest ? (trigger.closest('.has-card-info') || trigger) : trigger;
+    if(!anchor || !anchor.getBoundingClientRect) return 'auto';
+    let rect = anchor.getBoundingClientRect();
+    let vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+    let vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
+
+    // Masaüstü kuralı:
+    // 1) Sağda yer varsa sağda aç.
+    // 2) Sağda yer yoksa altta aç.
+    // 3) Altta da yer yoksa üstte aç.
+    // 4) Bunlar mümkün değilse son çare olarak solda/auto davranışına düş.
+    let rightSpace = vw - rect.right;
+    let leftSpace = rect.left;
+    let bottomSpace = vh - rect.bottom;
+    let topSpace = rect.top;
+
+    let popoverWidth = 405;
+    let popoverHeightEstimate = 260;
+    let gap = 18;
+
+    if(rightSpace >= popoverWidth + gap) return 'right';
+    if(bottomSpace >= popoverHeightEstimate + gap) return 'bottom';
+    if(topSpace >= popoverHeightEstimate + gap) return 'top';
+    if(leftSpace >= popoverWidth + gap) return 'left';
+
+    return bottomSpace >= topSpace ? 'bottom' : 'top';
+  } catch(e) {
+    return 'auto';
+  }
+}
+
+function _cardExplanationPopoverHtml(data, trigger){
+  return `<div class="card-explanation-popover-card">
+    <div class="card-explanation-popover-head">
+      <div class="card-explanation-title-wrap">
+        <h5 class="card-explanation-popover-title">${_cardExplanationEsc(_cardExplanationTitleWithBadge(data, trigger))}</h5>
+      </div>
+      <button type="button" class="card-explanation-mini-close" data-card-explanation-close aria-label="Açıklamayı kapat">
+        <i class="fas fa-times" aria-hidden="true"></i>
+      </button>
+    </div>
+    <div class="card-explanation-body">${_cardExplanationRender(data)}</div>
+  </div>`;
+}
+
+function _cardExplanationFillSheet(data, trigger){
+  let title = document.getElementById('cardExplanationSheetTitle');
+  let badge = document.getElementById('cardExplanationSheetBadge');
+  let body = document.getElementById('cardExplanationSheetBody');
+  if(!title || !badge || !body) return false;
+  title.textContent = _cardExplanationTitleWithBadge(data, trigger);
+  badge.textContent = '';
+  badge.hidden = true;
+  body.innerHTML = _cardExplanationRender(data);
+  if(typeof body.scrollTo === 'function') body.scrollTo({ top: 0 });
+  else body.scrollTop = 0;
+  return true;
+}
 
 function openCardExplanation(key, trigger){
   let data = CARD_EXPLANATIONS[key];
-  if(!data) return;
-  let overlay = document.getElementById('cardExplanationOverlay');
-  let modal = overlay ? overlay.querySelector('.card-explanation-modal') : null;
-  let title = document.getElementById('cardExplanationTitle');
-  let badge = document.getElementById('cardExplanationBadge');
-  let body = document.getElementById('cardExplanationBody');
-  if(!overlay || !modal || !title || !badge || !body) return;
+  if(!data || !trigger) return;
+  closeCardExplanation(false);
   _lastCardExplanationTrigger = trigger || null;
-  title.textContent = data.title || 'Açıklama';
-  badge.textContent = data.badge || '';
-  badge.hidden = !data.badge;
-  body.innerHTML = _cardExplanationRender(data);
-  overlay.hidden = false;
+
+  if(_cardExplanationIsMobile()) {
+    if(!_cardExplanationFillSheet(data, trigger)) return;
+    let sheetEl = document.getElementById('cardExplanationSheet');
+    if(!sheetEl || !window.bootstrap || !bootstrap.Offcanvas) return;
+    _activeCardExplanationSheet = bootstrap.Offcanvas.getOrCreateInstance(sheetEl, {
+      backdrop: true,
+      keyboard: true,
+      scroll: false
+    });
+    sheetEl.addEventListener('hidden.bs.offcanvas', () => closeCardExplanation(false), { once: true });
+    trigger.setAttribute('aria-expanded', 'true');
+    document.body.classList.add('card-explanation-open');
+    _activeCardExplanationSheet.show();
+    return;
+  }
+
+  if(!window.bootstrap || !bootstrap.Popover) {
+    if(typeof showToast === 'function') showToast(data.summary || data.title || 'Açıklama', 'info', 4500);
+    return;
+  }
+
+  _activeCardExplanationPopover = new bootstrap.Popover(trigger, {
+    container: 'body',
+    html: true,
+    sanitize: false,
+    trigger: 'manual',
+    placement: _cardExplanationDesktopPlacement(trigger),
+    fallbackPlacements: ['right', 'bottom', 'top', 'left'],
+    boundary: 'viewport',
+    offset: [0, 10],
+    customClass: 'card-explanation-popover no-print',
+    title: '',
+    content: _cardExplanationPopoverHtml(data, trigger)
+  });
+  trigger.setAttribute('aria-expanded', 'true');
   document.body.classList.add('card-explanation-open');
-  requestAnimationFrame(() => modal.focus());
+  _activeCardExplanationPopover.show();
 }
 
-function closeCardExplanation(){
-  let overlay = document.getElementById('cardExplanationOverlay');
-  if(!overlay || overlay.hidden) return;
-  overlay.hidden = true;
+function closeCardExplanation(restoreFocus = true){
+  if(_activeCardExplanationPopover) {
+    try { _activeCardExplanationPopover.dispose(); } catch(e) {}
+    _activeCardExplanationPopover = null;
+  }
+  if(_activeCardExplanationSheet) {
+    try {
+      let sheetEl = document.getElementById('cardExplanationSheet');
+      if(sheetEl && sheetEl.classList.contains('show')) _activeCardExplanationSheet.hide();
+    } catch(e) {}
+    _activeCardExplanationSheet = null;
+  }
   document.body.classList.remove('card-explanation-open');
-  if(_lastCardExplanationTrigger && typeof _lastCardExplanationTrigger.focus === 'function') {
-    _lastCardExplanationTrigger.focus({ preventScroll: true });
+  if(_lastCardExplanationTrigger) {
+    _lastCardExplanationTrigger.setAttribute('aria-expanded', 'false');
+    if(restoreFocus && typeof _lastCardExplanationTrigger.focus === 'function') {
+      _lastCardExplanationTrigger.focus({ preventScroll: true });
+    }
   }
   _lastCardExplanationTrigger = null;
 }
@@ -1802,17 +1894,28 @@ function _cardExplanationButtonExists(el){
   return Array.from(el.children || []).some(child => child.classList && child.classList.contains('card-info-btn'));
 }
 
-function _cardExplanationAddButton(el, key){
+function _cardExplanationAddButton(el, key, titleOverride){
   if(!el || !key || !CARD_EXPLANATIONS[key] || _cardExplanationButtonExists(el)) return;
   el.classList.add('has-card-info');
   let btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'card-info-btn no-print';
   btn.dataset.cardExplanation = key;
-  btn.setAttribute('aria-label', `${CARD_EXPLANATIONS[key].title} açıklamasını göster`);
-  btn.setAttribute('title', 'Açıklama');
-  btn.innerHTML = '<i class="fas fa-circle-info" aria-hidden="true"></i>';
+  if(titleOverride) btn.dataset.cardExplanationTitle = titleOverride;
+  btn.setAttribute('aria-label', `${titleOverride || CARD_EXPLANATIONS[key].title} açıklamasını göster`);
+  btn.setAttribute('aria-expanded', 'false');
+  btn.innerHTML = '<i class="fas fa-info" aria-hidden="true"></i>';
   el.appendChild(btn);
+}
+
+function _cardExplanationStripNativeTooltips(el){
+  if(!el || !el.querySelectorAll) return;
+  if(el.hasAttribute && el.hasAttribute('title')) el.removeAttribute('title');
+  el.querySelectorAll('[title]').forEach(node => {
+    // Eski kart açıklamaları native tooltip olarak görünmesin.
+    // Erişilebilirlik için info butonunda aria-label zaten var.
+    node.removeAttribute('title');
+  });
 }
 
 function decorateCardExplanations(root){
@@ -1822,16 +1925,19 @@ function decorateCardExplanations(root){
     '.stats-item',
     '.trend-card .trend-metric',
     '.boxplot-card',
-    '.sec-card',
-    '.risk-stat-card',
-    '.risk-info-card'
+    '.sec-card'
   ].join(',');
   let cards = [];
   if(scope.matches && scope.matches(selector)) cards.push(scope);
   cards = cards.concat(Array.from(scope.querySelectorAll(selector)));
   cards.forEach(card => {
+    _cardExplanationStripNativeTooltips(card);
+    let originalTitle = _cardExplanationTextForElement(card);
     let key = _cardExplanationKeyForElement(card);
-    if(key) _cardExplanationAddButton(card, key);
+    if(!key) return;
+    // Kart adları artık üretim kaynağında (app-analysis.js) sabitlendi.
+    // Burada yalnızca popup başlığı karttaki mevcut görünen adla aynı tutulur.
+    _cardExplanationAddButton(card, key, originalTitle);
   });
 }
 
@@ -1849,6 +1955,12 @@ function initCardExplanationSystem(){
   if(window.__cardExplanationSystemReady) return;
   window.__cardExplanationSystemReady = true;
   document.addEventListener('click', event => {
+    if(event.target.closest('[data-card-explanation-close]')) {
+      event.preventDefault();
+      event.stopPropagation();
+      closeCardExplanation(true);
+      return;
+    }
     let btn = event.target.closest('[data-card-explanation]');
     if(btn) {
       event.preventDefault();
@@ -1856,18 +1968,21 @@ function initCardExplanationSystem(){
       openCardExplanation(btn.dataset.cardExplanation, btn);
       return;
     }
-    if(event.target && event.target.id === 'cardExplanationOverlay') closeCardExplanation();
-    if(event.target && event.target.closest('.card-explanation-close')) closeCardExplanation();
+    if(_activeCardExplanationPopover && !event.target.closest('.card-explanation-popover')) {
+      closeCardExplanation(false);
+    }
   });
   document.addEventListener('keydown', event => {
     if(event.key === 'Escape') closeCardExplanation();
   });
-  ['anlRes', 'riskPanel', 'kCont', 'raporRes'].forEach(id => {
+  ['homeArea', 'anlRes', 'riskPanel', 'kCont', 'raporRes'].forEach(id => {
     let el = document.getElementById(id);
     if(!el || typeof MutationObserver === 'undefined') return;
     let observer = new MutationObserver(() => scheduleCardExplanationDecorate(el));
     observer.observe(el, { childList: true, subtree: true });
   });
+  window.addEventListener('resize', () => closeCardExplanation(false));
+  window.addEventListener('orientationchange', () => closeCardExplanation(false));
   decorateCardExplanations(document);
 }
 
@@ -1964,7 +2079,7 @@ function _methodologyData(aT){
       limit: 'R² düşükse yön etiketi temkinli okunur. Az sınavda trend, kesin yargı değil izleme sinyalidir.'
     },
     {
-      display: 'Toplam Net/Puan/Ders Değişimi / Sınav Başına Değişim',
+      display: 'Toplam Değişim / Sınav Başına Değişim',
       original: 'Regresyon doğrusuna dayalı toplam değişim ve regresyon eğimi',
       when: 'Trend kartıyla birlikte görünür.',
       meaning: 'Süreç boyunca beklenen toplam artış/azalışı ve her yeni sınav için ortalama değişim hızını gösterir.',
@@ -1972,7 +2087,7 @@ function _methodologyData(aT){
       limit: 'Sonuçlar zikzaklıysa eğim gerçek öğrenme yönünü abartabilir; R² ile birlikte okunmalıdır.'
     },
     {
-      display: 'Güncel Performans',
+      display: 'Güncel Performans (EWMA)',
       original: 'Üstel Ağırlıklı Hareketli Ortalama (EWMA)',
       when: 'Tüm sınavlar seçiliyken ve en az 3 geçerli sınav varsa görünür.',
       meaning: 'Öğrencinin son dönem durumunu klasik ortalamadan daha duyarlı biçimde gösterir.',
@@ -1980,7 +2095,7 @@ function _methodologyData(aT){
       limit: 'Tek bir son sınavı mutlak gerçek kabul etmez; yine de kısa dönem değişimlere daha duyarlıdır.'
     },
     {
-      display: 'Sürpriz Payı',
+      display: 'Sürpriz Payı (RMSE)',
       original: 'Regresyon kalıntılarının standart hatası / RMSE',
       when: 'Trend hesabı yapılabiliyorsa görünür.',
       meaning: 'Öğrenci sonuçlarının trend çizgisinden ortalama ne kadar saptığını gösterir.',
@@ -2031,7 +2146,7 @@ function _methodologyData(aT){
 
   const classItems = [
     {
-      display: 'Genel Eğilim / Toplam Net Değişimi / Sınav Başına Değişim',
+      display: 'Genel Yön (Trend) / Toplam Değişim / Sınav Başına Değişim',
       original: 'Sınıf ortalaması üzerinden doğrusal regresyon eğimi ve toplam değişim',
       when: 'Seçilen sınıf/şube/veri için en az 2 sınav ortalaması oluştuğunda görünür; 3 ve üzeri sınavda yorum daha sağlıklıdır.',
       meaning: 'Sınıf ortalamasının zaman içinde yükselme, düşme veya sabit kalma yönünü gösterir.',
@@ -2047,7 +2162,7 @@ function _methodologyData(aT){
       limit: 'R² düşükse yükseliş veya düşüş etiketi tek başına güçlü yorum sayılmaz; sonuç izleme sinyali olarak okunur.'
     },
     {
-      display: 'Sınıf İçi Dağılım',
+      display: 'Dağılım / Homojenlik',
       original: 'Örneklem standart sapması + Değişim Katsayısı (CV)',
       when: 'Trend kartı içinde, yeterli öğrenci sonucu olduğunda görünür.',
       meaning: 'Öğrencilerin sınıf ortalaması etrafında ne kadar toplandığını veya ayrıştığını anlatır.',
@@ -2063,7 +2178,7 @@ function _methodologyData(aT){
       limit: 'Bu değer dağılımı dikkate almaz; farkın pedagojik büyüklüğü için Cohen d kartı daha güçlüdür.'
     },
     {
-      display: "Şubeler Arası Etki Büyüklüğü (Cohen's d)",
+      display: "Etki Büyüklüğü (Cohen's d)",
       original: "Cohen's d, havuzlanmış standart sapma ile etki büyüklüğü",
       when: 'Şube filtresi Tümü iken, en az 2 şube varsa ve karşılaştırılan şubelerde yaklaşık 10 veya daha fazla öğrenci ortalaması oluşuyorsa görünür.',
       meaning: 'Şube ortalamaları arasındaki farkın küçük mü, orta mı, büyük mü olduğunu dağılımı hesaba katarak söyler.',
@@ -2082,7 +2197,7 @@ function _methodologyData(aT){
 
   const subjectItems = [
     {
-      display: 'Genel Eğilim / Toplam Net Değişimi / Sınav Başına Değişim',
+      display: 'Genel Yön (Trend) / Toplam Değişim / Sınav Başına Değişim',
       original: 'Ders ortalaması üzerinden doğrusal regresyon eğimi ve toplam değişim',
       when: 'Seçili derste en az 3 sınavlık karşılaştırılabilir veri varsa görünür.',
       meaning: 'Dersin kurum/sınıf genelinde zamanla güçlenip güçlenmediğini gösterir.',
@@ -2098,7 +2213,7 @@ function _methodologyData(aT){
       limit: 'R² düşükse ders için yükseliş veya düşüş yorumu zayıf kabul edilir; konu kapsamı farkı ayrıca düşünülmelidir.'
     },
     {
-      display: 'Öğrenciler Arası Dağılım',
+      display: 'Dağılım / Homojenlik',
       original: 'Örneklem standart sapması + Değişim Katsayısı (CV)',
       when: 'Seçili derste yeterli öğrenci sonucu olduğunda trend kartı içinde görünür.',
       meaning: 'Aynı derste öğrenciler arasındaki seviye farkının büyüklüğünü gösterir.',
@@ -2114,7 +2229,7 @@ function _methodologyData(aT){
       limit: 'Ham fark dağılımı hesaba katmaz; Cohen d varsa onunla birlikte okunmalıdır.'
     },
     {
-      display: "Şubeler Arası Etki Büyüklüğü (Cohen's d)",
+      display: "Etki Büyüklüğü (Cohen's d)",
       original: "Cohen's d, ders bazlı etki büyüklüğü",
       when: 'Şube filtresi Tümü iken, en az 2 şube ve yeterli öğrenci verisi varsa görünür.',
       meaning: 'Seçili derste şubeler arasındaki farkın eğitimsel olarak ne kadar güçlü olduğunu gösterir.',
@@ -2279,10 +2394,10 @@ function _methodologyRenderedItemVisible(aT, item, root, rootText){
   if(aT === 'risk') return true;
 
   if(aT === 'student') {
-    if(display === 'Genel Yön (Trend)') return has(['Genel Yön (Trend)']);
-    if(display === 'Toplam Net/Puan/Ders Değişimi / Sınav Başına Değişim') return has(['Toplam Net Değişimi', 'Toplam Puan Değişimi', 'Ders Değişimi', 'Sınav Başına Değişim', 'Sınav Başı Değişim']);
-    if(display === 'Güncel Performans') return has(['Güncel Performans']);
-    if(display === 'Sürpriz Payı') return has(['Sürpriz Payı']);
+    if(display === 'Genel Yön (Trend)') return has(['Genel Yön (Trend)', 'Genel Yön']);
+    if(display === 'Toplam Değişim / Sınav Başına Değişim') return has(['Toplam Değişim', 'Sınav Başına Değişim', 'Sınav Başı Değişim']);
+    if(display === 'Güncel Performans (EWMA)') return has(['Güncel Performans (EWMA)', 'Güncel Performans']);
+    if(display === 'Sürpriz Payı (RMSE)') return has(['Sürpriz Payı (RMSE)', 'Sürpriz Payı']);
     if(display === 'Sınıf İçi Konum / Kurum İçi Konum') return has(['Sınıf İçi Konum', 'Kurum İçi Konum']);
     if(display === 'Sınıf Ortalama Sıra / Kurum Ortalama Sıra') return has(['Sınıf Ortalama Sıra', 'Kurum Ortalama Sıra', 'Genel Ortalama Sıra']);
     if(display === 'Önceki Sınava Fark') return has(['Önceki Sınava Fark']);
@@ -2291,20 +2406,20 @@ function _methodologyRenderedItemVisible(aT, item, root, rootText){
   }
 
   if(aT === 'class') {
-    if(display === 'Genel Eğilim / Toplam Net Değişimi / Sınav Başına Değişim') return has(['Genel Eğilim', 'Toplam Net Değişimi', 'Sınav Başına Değişim']);
+    if(display === 'Genel Yön (Trend) / Toplam Değişim / Sınav Başına Değişim') return has(['Genel Yön (Trend)', 'Toplam Değişim', 'Sınav Başına Değişim']);
     if(display === 'Trend Güvenilirliği (R²)') return has(['Trend Güvenilirliği', 'R²']);
-    if(display === 'Sınıf İçi Dağılım') return has(['Sınıf İçi Dağılım']);
+    if(display === 'Dağılım / Homojenlik') return has(['Dağılım / Homojenlik']);
     if(display === 'Şubeler Arası Fark') return has(['Şubeler Arası Fark']);
-    if(display === "Şubeler Arası Etki Büyüklüğü (Cohen's d)") return has(['Şubeler Arası Etki Büyüklüğü', "Cohen's d", 'Cohen']);
+    if(display === "Etki Büyüklüğü (Cohen's d)") return has(['Etki Büyüklüğü', "Cohen's d", 'Cohen']);
     if(display === 'Sınıflar Arası Kutu Grafiği') return _methodologySelectorHasContent(['#clsBoxPlotArea .boxplot-card']);
   }
 
   if(aT === 'subject') {
-    if(display === 'Genel Eğilim / Toplam Net Değişimi / Sınav Başına Değişim') return has(['Genel Eğilim', 'Toplam Net Değişimi', 'Sınav Başına Değişim']);
+    if(display === 'Genel Yön (Trend) / Toplam Değişim / Sınav Başına Değişim') return has(['Genel Yön (Trend)', 'Toplam Değişim', 'Sınav Başına Değişim']);
     if(display === 'Trend Güvenilirliği (R²)') return has(['Trend Güvenilirliği', 'R²']);
-    if(display === 'Öğrenciler Arası Dağılım') return has(['Öğrenciler Arası Dağılım']);
+    if(display === 'Dağılım / Homojenlik') return has(['Dağılım / Homojenlik']);
     if(display === 'Sınıflar Arası Fark') return has(['Sınıflar Arası Fark']);
-    if(display === "Şubeler Arası Etki Büyüklüğü (Cohen's d)") return has(['Şubeler Arası Etki Büyüklüğü', "Cohen's d", 'Cohen']);
+    if(display === "Etki Büyüklüğü (Cohen's d)") return has(['Etki Büyüklüğü', "Cohen's d", 'Cohen']);
     if(display === 'Ders Kutu Grafiği') return _methodologySelectorHasContent(['#subjBoxPlotArea .boxplot-card']);
   }
 

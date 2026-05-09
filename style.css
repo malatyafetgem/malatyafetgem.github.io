@@ -599,37 +599,44 @@ tr.print-title-row { display: none; }
   padding: 10px 12px;
 }
 
-/* ===== Kart bazlı açıklama popup sistemi ===== */
+/* ===== Kart bazlı açıklama sistemi | AdminLTE v4 + Bootstrap Popover/Offcanvas ===== */
 .has-card-info {
   position: relative !important;
 }
 .card-info-btn {
   position: absolute;
-  top: 7px;
-  right: 7px;
+  top: 8px;
+  right: 8px;
   z-index: 4;
-  width: 25px;
-  height: 25px;
-  border: 1px solid rgba(37,99,235,0.16);
+  width: 24px;
+  height: 24px;
+  border: 1px solid rgba(148,163,184,0.34);
   border-radius: 999px;
-  background: rgba(239,246,255,0.94);
-  color: var(--sa-primary);
+  background: rgba(255,255,255,0.88);
+  color: #64748b;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0;
-  font-size: 0.78rem;
+  font-size: 0.66rem;
   line-height: 1;
   box-shadow: 0 4px 12px rgba(15,23,42,0.08);
   cursor: pointer;
-  transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+  backdrop-filter: blur(8px);
+  transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
 }
 .card-info-btn:hover,
-.card-info-btn:focus-visible {
-  background: #dbeafe;
-  box-shadow: 0 7px 18px rgba(37,99,235,0.18);
+.card-info-btn:focus-visible,
+.card-info-btn[aria-expanded="true"] {
+  background: #ffffff;
+  color: var(--sa-primary);
+  border-color: rgba(37,99,235,0.38);
+  box-shadow: 0 8px 20px rgba(37,99,235,0.16);
   outline: none;
   transform: translateY(-1px);
+}
+.card-info-btn:active {
+  transform: translateY(0);
 }
 @media screen {
   .trend-stat-item.has-card-info,
@@ -637,160 +644,242 @@ tr.print-title-row { display: none; }
   .trend-card .trend-metric.has-card-info {
     padding-top: 24px;
   }
-  .sec-card.has-card-info {
+  .sec-card.has-card-info,
+  .risk-stat-card.has-card-info,
+  .risk-info-card.has-card-info,
+  .boxplot-card.has-card-info {
     padding-right: 42px;
   }
 }
-.card-explanation-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 2140;
-  background: rgba(15,23,42,0.28);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 18px;
+
+/* Desktop: Bootstrap Popover görünümü */
+.card-explanation-popover {
+  --bs-popover-max-width: 390px;
+  --bs-popover-border-color: rgba(219,228,239,0.96);
+  --bs-popover-border-radius: 16px;
+  --bs-popover-box-shadow: 0 18px 48px rgba(15,23,42,0.20);
+  --bs-popover-header-bg: transparent;
+  --bs-popover-header-border-color: transparent;
+  --bs-popover-body-padding-x: 0;
+  --bs-popover-body-padding-y: 0;
+  border: 1px solid rgba(219,228,239,0.96);
+  overflow: hidden;
 }
-.card-explanation-backdrop[hidden] {
-  display: none !important;
+.card-explanation-popover .popover-header {
+  padding: 0;
 }
-.card-explanation-modal {
-  width: min(440px, calc(100vw - 32px));
-  max-height: min(78vh, 620px);
-  overflow: auto;
-  border: 1px solid rgba(37,99,235,0.18);
-  border-radius: 14px;
-  background: linear-gradient(135deg, #ffffff, #f8fbff);
-  box-shadow: 0 24px 70px rgba(15,23,42,0.24);
-  padding: 16px 16px 15px;
-  position: relative;
-  color: #203449;
+.card-explanation-popover .popover-body {
+  padding: 0;
+  color: #475569;
 }
-.card-explanation-modal:focus {
-  outline: none;
+.card-explanation-popover-card {
+  background: #fff;
 }
-.card-explanation-close {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 31px;
-  height: 31px;
-  border: 1px solid #dbeafe;
-  border-radius: 9px;
-  background: #ffffff;
-  color: #64748b;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-.card-explanation-close:hover,
-.card-explanation-close:focus-visible {
-  color: var(--sa-primary);
-  background: #eff6ff;
-  outline: none;
-}
-.card-explanation-head {
+.card-explanation-popover-head {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  padding-right: 34px;
-  margin-bottom: 10px;
+  padding: 14px 15px 13px;
+  background:
+    radial-gradient(circle at top left, rgba(37,99,235,0.15), transparent 42%),
+    linear-gradient(135deg, rgba(37,99,235,0.10), rgba(5,150,105,0.08));
+  border-bottom: 1px solid rgba(226,232,240,0.88);
 }
-.card-explanation-icon {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  background: var(--sa-primary-soft);
+.card-explanation-popover-icon {
+  width: 33px;
+  height: 33px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.88);
   color: var(--sa-primary);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
+  font-size: 0.86rem;
+  box-shadow: 0 6px 18px rgba(37,99,235,0.12);
+}
+.card-explanation-title-wrap {
+  min-width: 0;
 }
 .card-explanation-badge {
   display: inline-flex;
   align-items: center;
   min-height: 18px;
-  padding: 2px 7px;
+  padding: 2px 8px;
   border-radius: 999px;
-  background: #eaf3ff;
+  background: rgba(255,255,255,0.84);
   color: #31537a;
-  font-size: 0.66rem;
-  font-weight: 800;
+  font-size: 0.64rem;
+  font-weight: 850;
   line-height: 1;
-  margin-bottom: 5px;
+  margin-bottom: 6px;
+  border: 1px solid rgba(148,163,184,0.18);
 }
-.card-explanation-badge[hidden] {
+.card-explanation-badge[hidden],
+.card-explanation-badge:empty {
   display: none !important;
 }
-.card-explanation-head h5 {
+.card-explanation-popover-title {
   margin: 0;
   color: #172033;
-  font-size: 0.96rem;
+  font-size: 0.98rem;
   font-weight: 850;
-  line-height: 1.2;
+  line-height: 1.22;
+  letter-spacing: -0.01em;
 }
 .card-explanation-body {
   display: grid;
   gap: 9px;
+  padding: 13px 15px 15px;
   color: #475569;
-  font-size: 0.82rem;
-  line-height: 1.44;
+  font-size: 0.86rem;
+  line-height: 1.48;
 }
 .card-explanation-lead {
   margin: 0;
-  color: #34465c;
+  color: #26384d;
+  font-weight: 600;
+  line-height: 1.52;
 }
 .card-explanation-section,
 .card-explanation-caution {
   display: grid;
-  gap: 3px;
+  gap: 4px;
   padding: 9px 10px;
-  border-radius: 10px;
-  border: 1px solid #e3edf8;
-  background: #fbfdff;
+  border-radius: 12px;
+  border: 1px solid rgba(226,232,240,0.88);
+  border-left: 4px solid rgba(37,99,235,0.48);
+  background: #f8fbff;
 }
 .card-explanation-section strong,
-.card-explanation-caution strong {
+.card-explanation-caution strong,
+.card-explanation-section-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: #203449;
   font-size: 0.73rem;
+  font-weight: 850;
+  letter-spacing: 0.01em;
 }
 .card-explanation-caution {
-  border-color: #fde7b7;
-  background: #fff8e6;
+  border-left-color: #f59e0b;
+  background: #fffbeb;
   color: #634a13;
+}
+
+/* Mobil: Bootstrap Offcanvas bottom sheet */
+.card-explanation-sheet {
+  height: auto !important;
+  max-height: min(68dvh, 500px);
+  width: min(560px, calc(100vw - 16px));
+  margin: 0 auto 8px;
+  border: 1px solid rgba(226,232,240,0.96) !important;
+  border-radius: 20px !important;
+  overflow: hidden;
+  box-shadow: 0 22px 58px rgba(15,23,42,0.26);
+  background: #ffffff;
+}
+.card-explanation-sheet-handle {
+  width: 42px;
+  height: 4px;
+  border-radius: 999px;
+  background: #cbd5e1;
+  margin: 9px auto 0;
+}
+.card-explanation-sheet-head {
+  padding: 12px 14px 12px 15px;
+  background:
+    radial-gradient(circle at top left, rgba(37,99,235,0.15), transparent 42%),
+    linear-gradient(135deg, rgba(37,99,235,0.10), rgba(5,150,105,0.08));
+  border-bottom: 1px solid rgba(226,232,240,0.88);
+}
+.card-explanation-sheet-title-group {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+}
+.card-explanation-sheet-icon {
+  width: 33px;
+  height: 33px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.88);
+  color: var(--sa-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  font-size: 0.86rem;
+  box-shadow: 0 6px 18px rgba(37,99,235,0.12);
+}
+.card-explanation-sheet .offcanvas-title {
+  margin: 0;
+  color: #172033;
+  font-size: 0.98rem;
+  font-weight: 850;
+  line-height: 1.22;
+  letter-spacing: -0.01em;
+}
+.card-explanation-sheet-close {
+  width: 0.75em;
+  height: 0.75em;
+  padding: 0.65rem !important;
+  border-radius: 999px;
+  background-color: rgba(255,255,255,0.72);
+  opacity: 0.72;
+}
+.card-explanation-sheet .offcanvas-body {
+  overflow-y: auto;
+  padding: 13px 15px 15px;
 }
 body.card-explanation-open {
   overflow: hidden;
 }
+@media (min-width: 576px) {
+  .card-explanation-sheet {
+    display: none !important;
+  }
+}
 @media (max-width: 575px) {
   .card-info-btn {
-    width: 24px;
-    height: 24px;
-    top: 6px;
-    right: 6px;
-    font-size: 0.75rem;
+    width: 23px;
+    height: 23px;
+    top: 7px;
+    right: 7px;
+    font-size: 0.64rem;
   }
-  .card-explanation-backdrop {
-    align-items: flex-end;
-    padding: 12px;
-  }
-  .card-explanation-modal {
-    width: 100%;
-    max-height: 72vh;
-    border-radius: 14px;
-    padding: 15px 14px 14px;
+  .card-explanation-popover {
+    display: none !important;
   }
   .card-explanation-body {
-    font-size: 0.81rem;
+    gap: 8px;
+    font-size: 0.84rem;
+    line-height: 1.46;
+  }
+  .card-explanation-section,
+  .card-explanation-caution {
+    padding: 9px 10px;
+  }
+}
+@media (max-width: 360px) {
+  .card-explanation-sheet {
+    max-height: min(64dvh, 460px);
+    width: calc(100vw - 12px);
+    margin-bottom: 6px;
+  }
+  .card-explanation-body {
+    font-size: 0.82rem;
   }
 }
 @media print {
   .card-info-btn,
-  .card-explanation-backdrop {
+  .card-explanation-sheet,
+  .card-explanation-popover {
     display: none !important;
   }
 }
+
 .risk-note {
   display: flex;
   align-items: center;
@@ -3252,3 +3341,529 @@ body.desktop-site-mode .bottom-nav {
 @media print {
   .bottom-nav { display: none !important; }
 }
+
+
+/* ===== Açıklama popup estetik ince ayarları | AU39 ===== */
+/* Amaç: AdminLTE/Bootstrap hissini koruyup kaba kutu etkisini azaltmak. */
+.card-explanation-popover {
+  --bs-popover-max-width: 405px;
+  --bs-popover-border-radius: 18px;
+  border-color: rgba(203,213,225,0.78) !important;
+  box-shadow: 0 18px 44px rgba(15,23,42,0.18) !important;
+}
+.card-explanation-popover-card,
+.card-explanation-sheet {
+  background:
+    linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+}
+.card-explanation-popover-head,
+.card-explanation-sheet-head {
+  padding: 14px 16px 12px;
+  background:
+    linear-gradient(135deg, rgba(239,246,255,0.96), rgba(240,253,250,0.82));
+  border-bottom: 1px solid rgba(226,232,240,0.72);
+}
+.card-explanation-popover-icon,
+.card-explanation-sheet-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 11px;
+  background: rgba(255,255,255,0.92);
+  color: var(--sa-primary);
+  font-size: 0.78rem;
+  box-shadow: 0 5px 14px rgba(37,99,235,0.10);
+  border: 1px solid rgba(191,219,254,0.62);
+}
+.card-explanation-badge {
+  min-height: 17px;
+  padding: 2px 8px;
+  margin-bottom: 6px;
+  border: 0;
+  background: rgba(255,255,255,0.82);
+  color: #334155;
+  font-size: 0.63rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  box-shadow: inset 0 0 0 1px rgba(203,213,225,0.55);
+}
+.card-explanation-popover-title,
+.card-explanation-sheet .offcanvas-title {
+  font-size: 0.98rem;
+  font-weight: 850;
+  color: #172033;
+  letter-spacing: -0.015em;
+}
+.card-explanation-body {
+  padding: 14px 17px 16px;
+  gap: 0;
+  font-size: 0.85rem;
+  line-height: 1.52;
+}
+.card-explanation-lead {
+  margin: 0 0 11px;
+  color: #25364a;
+  font-size: 0.88rem;
+  font-weight: 650;
+  line-height: 1.55;
+}
+.card-explanation-section,
+.card-explanation-caution {
+  position: relative;
+  display: block;
+  padding: 10px 0 0 26px;
+  margin-top: 10px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #526173;
+}
+.card-explanation-section::before,
+.card-explanation-caution::before {
+  content: "";
+  position: absolute;
+  left: 9px;
+  top: 13px;
+  bottom: 2px;
+  width: 2px;
+  border-radius: 999px;
+  background: rgba(37,99,235,0.24);
+}
+.card-explanation-caution::before {
+  background: rgba(217,119,6,0.30);
+}
+.card-explanation-section + .card-explanation-caution {
+  margin-top: 9px;
+}
+.card-explanation-section-title {
+  display: flex !important;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 5px;
+  color: #1f3349 !important;
+  font-size: 0.75rem !important;
+  font-weight: 850 !important;
+  letter-spacing: 0.005em;
+}
+.card-explanation-section-title i {
+  position: absolute;
+  left: 0;
+  top: 10px;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #eff6ff;
+  color: var(--sa-primary);
+  font-size: 0.66rem;
+  box-shadow: 0 0 0 1px rgba(191,219,254,0.76);
+}
+.card-explanation-caution .card-explanation-section-title i {
+  background: #fffbeb;
+  color: #d97706;
+  box-shadow: 0 0 0 1px rgba(253,230,138,0.82);
+}
+.card-explanation-section span:not(.card-explanation-section-title),
+.card-explanation-caution span:not(.card-explanation-section-title) {
+  display: block;
+  color: #526173;
+}
+.card-explanation-caution span:not(.card-explanation-section-title) {
+  color: #6f5518;
+}
+.card-explanation-sheet {
+  max-height: min(64dvh, 470px);
+  border-radius: 18px !important;
+  margin-bottom: 8px;
+}
+.card-explanation-sheet-handle {
+  width: 38px;
+  height: 4px;
+  background: #d1d9e6;
+}
+.card-explanation-sheet-close {
+  background-color: rgba(255,255,255,0.72);
+  opacity: 0.65;
+}
+@media (max-width: 575px) {
+  .card-explanation-sheet-head {
+    padding: 12px 15px 11px;
+  }
+  .card-explanation-body {
+    padding: 13px 16px 15px;
+    font-size: 0.84rem;
+    line-height: 1.48;
+  }
+  .card-explanation-lead {
+    font-size: 0.86rem;
+    margin-bottom: 10px;
+  }
+  .card-explanation-section,
+  .card-explanation-caution {
+    padding-top: 9px;
+    margin-top: 8px;
+  }
+}
+@media (max-width: 360px) {
+  .card-explanation-sheet {
+    max-height: min(62dvh, 440px);
+  }
+}
+
+
+/* ===== Popup başlık sadeleştirme | AU40 ===== */
+/* Popup içindeki ekstra info ikonunu kaldırır; kart üstündeki sağ üst info simgesi kalır. */
+.card-explanation-popover-icon,
+.card-explanation-sheet-icon {
+  display: none !important;
+}
+.card-explanation-popover-head,
+.card-explanation-sheet-head {
+  padding-left: 18px;
+}
+.card-explanation-sheet-title-group {
+  gap: 0;
+}
+.card-explanation-title-wrap,
+.card-explanation-sheet-title-group > div {
+  min-width: 0;
+}
+.card-explanation-popover-title,
+.card-explanation-sheet .offcanvas-title {
+  font-size: 1rem;
+}
+@media (max-width: 575px) {
+  .card-explanation-sheet-head {
+    padding-left: 18px;
+  }
+}
+
+
+/* ===== Başlık tek satır düzeltmesi | AU41 ===== */
+/* Üstte ayrı rozet satırı yok; başlık artık örn. "Genel Eğilim (Trend)" şeklindedir. */
+.card-explanation-popover .popover-header {
+  display: none !important;
+}
+.card-explanation-popover-head,
+.card-explanation-sheet-head {
+  padding-top: 16px;
+  padding-bottom: 14px;
+}
+.card-explanation-popover-title,
+.card-explanation-sheet .offcanvas-title {
+  font-size: 1.02rem;
+  line-height: 1.25;
+}
+.card-explanation-badge {
+  display: none !important;
+}
+@media (max-width: 575px) {
+  .card-explanation-sheet-head {
+    padding-top: 13px;
+    padding-bottom: 12px;
+  }
+}
+
+
+/* ===== Kapatma düğmesi ve başlık ölçüsü | AU42 ===== */
+.card-explanation-popover-head {
+  position: relative;
+  align-items: center;
+  padding: 13px 48px 12px 17px;
+  min-height: 52px;
+}
+.card-explanation-popover-title,
+.card-explanation-sheet .offcanvas-title {
+  font-size: 0.93rem !important;
+  line-height: 1.22 !important;
+  font-weight: 820 !important;
+}
+.card-explanation-mini-close {
+  position: absolute;
+  top: 50%;
+  right: 13px;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(148,163,184,0.26);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.72);
+  color: #64748b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font-size: 0.76rem;
+  line-height: 1;
+  box-shadow: 0 4px 12px rgba(15,23,42,0.06);
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+  transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+}
+.card-explanation-mini-close:hover,
+.card-explanation-mini-close:focus-visible {
+  background: #ffffff;
+  color: #334155;
+  border-color: rgba(100,116,139,0.34);
+  box-shadow: 0 6px 16px rgba(15,23,42,0.10);
+  outline: none;
+  transform: translateY(-50%) scale(1.03);
+}
+.card-explanation-mini-close:active {
+  transform: translateY(-50%) scale(0.98);
+}
+.card-explanation-sheet-head {
+  padding: 12px 50px 11px 18px;
+  position: relative;
+}
+.card-explanation-sheet-close {
+  position: absolute;
+  top: 50%;
+  right: 13px;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  padding: 0 !important;
+  border: 1px solid rgba(148,163,184,0.26);
+  border-radius: 999px;
+  background-size: 0.64em;
+  background-color: rgba(255,255,255,0.72);
+  opacity: 0.72;
+  box-shadow: 0 4px 12px rgba(15,23,42,0.06);
+}
+.card-explanation-sheet-close:hover,
+.card-explanation-sheet-close:focus-visible {
+  background-color: #ffffff;
+  opacity: 0.92;
+  box-shadow: 0 6px 16px rgba(15,23,42,0.10);
+}
+@media (max-width: 575px) {
+  .card-explanation-popover-title,
+  .card-explanation-sheet .offcanvas-title {
+    font-size: 0.92rem !important;
+  }
+  .card-explanation-sheet-head {
+    padding-top: 12px;
+    padding-bottom: 11px;
+  }
+}
+
+
+/* ===== Başlık ortalama ve 'Nedir?' bölümü | AU43 ===== */
+.card-explanation-popover-head {
+  justify-content: center;
+  text-align: center;
+  padding-left: 48px !important;
+  padding-right: 48px !important;
+}
+.card-explanation-popover-head .card-explanation-title-wrap {
+  width: 100%;
+  text-align: center;
+}
+.card-explanation-popover-title {
+  text-align: center;
+}
+.card-explanation-sheet-head {
+  justify-content: center;
+  padding-left: 50px !important;
+  padding-right: 50px !important;
+}
+.card-explanation-sheet-title-group {
+  width: 100%;
+  justify-content: center;
+  text-align: center;
+}
+.card-explanation-sheet-title-group > div {
+  width: 100%;
+}
+.card-explanation-sheet .offcanvas-title {
+  text-align: center;
+}
+.card-explanation-body {
+  gap: 0;
+}
+.card-explanation-definition {
+  margin-top: 0 !important;
+}
+.card-explanation-definition::before {
+  background: rgba(8,145,178,0.28);
+}
+.card-explanation-definition .card-explanation-section-title i {
+  background: #ecfeff;
+  color: var(--sa-info);
+  box-shadow: 0 0 0 1px rgba(165,243,252,0.86);
+}
+.card-explanation-definition span:not(.card-explanation-section-title) {
+  color: #526173;
+  font-weight: 500;
+}
+
+
+/* ===== Kategori başlıkları tamamen kaldırıldı | AU44 ===== */
+.card-explanation-badge {
+  display: none !important;
+  visibility: hidden !important;
+  width: 0 !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+
+
+/* ===== Masaüstü popover konumlandırma iyileştirmesi | AU45 ===== */
+/* Popover masaüstünde seçilen kartın sağında/solunda açılır; mobil offcanvas davranışı değişmedi. */
+@media (min-width: 576px) {
+  .card-explanation-popover {
+    --bs-popover-max-width: 405px;
+    max-width: min(405px, calc(100vw - 32px));
+  }
+  .card-explanation-popover.bs-popover-start,
+  .card-explanation-popover.bs-popover-end {
+    margin-inline: 4px;
+  }
+}
+
+
+/* ===== Info butonu renk iyileştirmesi | AU46 ===== */
+/* Daha belirgin ama kartın ana bilgisini bastırmayan soft mavi görünüm. */
+.card-info-btn {
+  background: #eff6ff !important;
+  color: #2563eb !important;
+  border-color: #bfdbfe !important;
+  box-shadow: 0 4px 10px rgba(37,99,235,0.10) !important;
+}
+
+.card-info-btn:hover,
+.card-info-btn:focus-visible,
+.card-info-btn[aria-expanded="true"] {
+  background: #dbeafe !important;
+  color: #1d4ed8 !important;
+  border-color: #93c5fd !important;
+  box-shadow: 0 7px 16px rgba(37,99,235,0.18) !important;
+}
+
+.card-info-btn:active {
+  background: #bfdbfe !important;
+  color: #1e40af !important;
+  box-shadow: 0 4px 10px rgba(37,99,235,0.14) !important;
+}
+
+
+/* ===== Eski hover tooltip ve soru işareti imlecini kaldırma | AU47 ===== */
+/* Kartlardaki eski title açıklamaları JS ile temizlenir; bu CSS de help imlecini engeller. */
+.trend-card [title],
+.sec-card[title],
+.stats-item[title],
+.trend-stat-item[title],
+.trend-metric[title],
+.boxplot-card[title],
+.risk-stat-card[title],
+.risk-info-card[title] {
+  cursor: inherit !important;
+}
+
+.stats-explain,
+.sec-explain {
+  cursor: inherit !important;
+}
+
+
+/* ===== Info butonu gömülü görünüm | AU48 ===== */
+/* Buton kartın üstüne yapıştırılmış değil, kart yüzeyine gömülmüş küçük bir bilgi noktası gibi görünür. */
+.card-info-btn {
+  background: linear-gradient(145deg, #eaf2ff 0%, #f8fbff 100%) !important;
+  color: #2563eb !important;
+  border-color: rgba(147,197,253,0.70) !important;
+  box-shadow:
+    inset 0 1px 2px rgba(15,23,42,0.10),
+    inset 0 -1px 0 rgba(255,255,255,0.92),
+    0 1px 2px rgba(15,23,42,0.03) !important;
+}
+
+.card-info-btn i {
+  filter: drop-shadow(0 1px 0 rgba(255,255,255,0.75));
+}
+
+.card-info-btn:hover,
+.card-info-btn:focus-visible {
+  background: linear-gradient(145deg, #dbeafe 0%, #eff6ff 100%) !important;
+  color: #1d4ed8 !important;
+  border-color: rgba(96,165,250,0.82) !important;
+  box-shadow:
+    inset 0 1px 2px rgba(15,23,42,0.12),
+    inset 0 -1px 0 rgba(255,255,255,0.92),
+    0 4px 10px rgba(37,99,235,0.12) !important;
+  transform: translateY(-1px);
+}
+
+.card-info-btn[aria-expanded="true"] {
+  background: linear-gradient(145deg, #bfdbfe 0%, #e0f2fe 100%) !important;
+  color: #1e40af !important;
+  border-color: rgba(59,130,246,0.70) !important;
+  box-shadow:
+    inset 0 2px 4px rgba(30,64,175,0.16),
+    inset 0 -1px 0 rgba(255,255,255,0.82),
+    0 3px 8px rgba(37,99,235,0.10) !important;
+  transform: translateY(0);
+}
+
+.card-info-btn:active {
+  background: linear-gradient(145deg, #bfdbfe 0%, #dbeafe 100%) !important;
+  color: #1e3a8a !important;
+  box-shadow:
+    inset 0 2px 5px rgba(30,64,175,0.18),
+    inset 0 -1px 0 rgba(255,255,255,0.76) !important;
+  transform: translateY(0);
+}
+
+
+
+/* ===== Öğrenci Sorgula info desteği | AU49 ===== */
+.student-profile-info-cards .sec-card.has-card-info,
+.student-profile-stats-part .trend-metric.has-card-info,
+.risk-info-section .risk-info-card.has-card-info {
+  position: relative !important;
+}
+
+
+/* ===== Basit öğrenci özet kartlarında info kaldırıldı | AU50 ===== */
+/* Ortalama Net, Katılım, Sınıf Derece ve Kurum Derece kartları JS eşleştirmesinden çıkarıldı. */
+
+
+/* ===== Masaüstü popup yön önceliği | AU51 ===== */
+/* Kural: sağda yer varsa sağ; yoksa alt; alt da yoksa üst. Sol yalnızca son çare. */
+@media (min-width: 576px) {
+  .card-explanation-popover.bs-popover-end {
+    margin-left: 6px;
+  }
+  .card-explanation-popover.bs-popover-bottom {
+    margin-top: 6px;
+  }
+  .card-explanation-popover.bs-popover-top {
+    margin-bottom: 6px;
+  }
+}
+
+
+/* ===== Risk kartlarında info sistemi kaldırıldı | AU52 ===== */
+.risk-card .card-info-btn,
+.risk-stat-card .card-info-btn,
+.risk-info-card .card-info-btn,
+.risk-info-section .card-info-btn {
+  display: none !important;
+}
+
+.risk-stat-card.has-card-info,
+.risk-info-card.has-card-info {
+  padding-right: inherit !important;
+}
+
+
+/* ===== Seçim sütunu düzeltmeleri yeniden uygulandı | AU53 ===== */
+
+
+/* ===== Metodoloji başlıkları yeni İstatistik Kartları adlarıyla eşitlendi | AU56 ===== */

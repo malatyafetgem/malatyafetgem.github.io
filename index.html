@@ -111,20 +111,18 @@ window.SA_CACHE_READY = (async function(){
   <div class="pwa-progress"></div>
 </div>
 
-<div id="cardExplanationOverlay" class="card-explanation-backdrop no-print" hidden>
-  <section class="card-explanation-modal" role="dialog" aria-modal="true" aria-labelledby="cardExplanationTitle" tabindex="-1">
-    <button type="button" class="card-explanation-close" aria-label="Açıklamayı kapat">
-      <i class="fas fa-times"></i>
-    </button>
-    <div class="card-explanation-head">
-      <span class="card-explanation-icon"><i class="fas fa-circle-info"></i></span>
+<div id="cardExplanationSheet" class="offcanvas offcanvas-bottom card-explanation-sheet no-print" tabindex="-1" aria-labelledby="cardExplanationSheetTitle">
+  <div class="card-explanation-sheet-handle" aria-hidden="true"></div>
+  <div class="offcanvas-header card-explanation-sheet-head">
+    <div class="card-explanation-sheet-title-group">
       <div>
-        <div class="card-explanation-badge" id="cardExplanationBadge"></div>
-        <h5 id="cardExplanationTitle">Açıklama</h5>
+        <div class="card-explanation-badge" id="cardExplanationSheetBadge"></div>
+        <h5 class="offcanvas-title" id="cardExplanationSheetTitle">Açıklama</h5>
       </div>
     </div>
-    <div class="card-explanation-body" id="cardExplanationBody"></div>
-  </section>
+    <button type="button" class="btn-close card-explanation-sheet-close" data-bs-dismiss="offcanvas" aria-label="Kapat"></button>
+  </div>
+  <div class="offcanvas-body card-explanation-body" id="cardExplanationSheetBody"></div>
 </div>
 
 <div id="mainApp" class="app-wrapper" style="display:none;">

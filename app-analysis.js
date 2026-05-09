@@ -918,7 +918,7 @@ function buildKarneExamCards(summary, examType, metricLabel) {
     if(consistency){
       consHtml = `<div class="col mb-1 trend-metric" title="Sınav sonuçlarının trend doğrusundan ortalama sapması (Standart Hata / RMSE). Düşük değer = trend güvenilir, sürpriz az.">
         <div class="trend-value trend-tone-purple">±${consistency.sd.toFixed(2)}</div>
-        <div class="small text-muted trend-label">Sürpriz Payı</div>
+        <div class="small text-muted trend-label">Sürpriz Payı (RMSE)</div>
         <div class="x-small text-muted">${consistency.label}</div>
         <div class="x-small text-muted">(Standart Hata / RMSE)</div>
       </div>`;
@@ -932,7 +932,7 @@ function buildKarneExamCards(summary, examType, metricLabel) {
       </div>
       <div class="col mb-1 trend-metric" title="İlk sınavdan son sınava kadar regresyon doğrusunun toplam değişimi">
         <div class="trend-value ${trendTone}">${tSign}${trend.totalChange.toFixed(1)}</div>
-        <div class="small text-muted trend-label"><strong>Toplam ${metricLabel} Değişimi</strong></div>
+        <div class="small text-muted trend-label"><strong>Toplam Değişim</strong></div>
         <div class="x-small text-muted">Süreç Boyunca</div>
       </div>
       <div class="col mb-1 trend-metric" title="Her yeni sınavda beklenen ortalama değişim (regresyon eğimi)">
@@ -943,7 +943,7 @@ function buildKarneExamCards(summary, examType, metricLabel) {
       ${consHtml}
       <div class="col mb-1 trend-metric" title="Son sınavlara daha fazla ağırlık verilerek hesaplanan ortalama (EWMA, α=0.5)">
         <div class="trend-value trend-tone-primary">${ewmaVal !== null ? ewmaVal : '—'}</div>
-        <div class="small text-muted trend-label"><strong>Güncel Performans</strong></div>
+        <div class="small text-muted trend-label"><strong>Güncel Performans (EWMA)</strong></div>
         <div class="x-small text-muted">(Ağırlıklı / EWMA)</div>
       </div>
       <div class="col mb-1 trend-metric" title="Bu sınav türünde katıldığı sınav sayısı">
@@ -1122,7 +1122,7 @@ function buildSingleExamCards(stu, examType, curExam, prevExam, stGrade){
   let card1 = `<div class="${cardCol}"><div class="sec-card">
     <div class="sec-icon"><i class="fas fa-star"></i></div>
     <div class="sec-body">
-      <div class="sec-label">Puan &amp; Sıra</div>
+      <div class="sec-label">Puan ve Sıra</div>
       <div class="sec-value">${scoreTxt}</div>
       <div class="sec-sub">Net: ${netTxt}${rankBits.length?' · '+rankBits.join(' · '):''}</div>
     </div></div></div>`;
@@ -1902,7 +1902,7 @@ function rAnl(){
               ? `<div class="comparison-list">${compLines.join('')}</div>`
               : `<div class="sec-sub">${labMain} fark — ${best.cls} vs ${worst.cls}</div>`;
             cohenHtml = _trendStatItem(
-              "Şubeler Arası Etki Büyüklüğü (Cohen's d)",
+              "Etki Büyüklüğü (Cohen's d)",
               `<span style="color:${dColorMain};">d = ${dMain.toFixed(2)}</span>`,
               `${escapeHtml(labMain)} · ${escapeHtml(best.cls)} vs ${escapeHtml(worst.cls)}`,
               "Cohen's d: en güçlü şube ile karşılaştırılan şubeler arasındaki standartlaştırılmış ortalama farkı.",
@@ -1925,7 +1925,7 @@ function rAnl(){
         singleExamSingleBranchHtml = `<div class="row g-2 sec-cards-row class-info-cards class-context-cards mb-3">
           <div class="col-12 col-md-4 class-info-col"><div class="sec-card h-100"><div class="sec-icon"><i class="fas fa-school"></i></div><div class="sec-body"><div class="sec-label">Şube Ortalaması</div><div class="sec-value">${_brAvg.toFixed(2)}</div><div class="sec-sub">${escapeHtml(sortedClasses[0])} · ${escapeHtml(ls)}</div></div></div></div>
           ${_instAvg!==null?`<div class="col-12 col-md-4 class-info-col"><div class="sec-card h-100"><div class="sec-icon"><i class="fas fa-building"></i></div><div class="sec-body"><div class="sec-label">Kurum Ortalaması</div><div class="sec-value">${_instAvg.toFixed(2)}</div><div class="sec-sub">${lvlForAvg?lvlForAvg+'. Sınıflar':''} · ${_instValsForDate.length} kayıt</div></div></div></div>`:''}
-          ${_delta!==null?`<div class="col-12 col-md-4 class-info-col"><div class="sec-card ${_dCls} h-100"><div class="sec-icon"><i class="fas fa-exchange-alt"></i></div><div class="sec-body"><div class="sec-label">Şube − Kurum Farkı</div><div class="sec-value">${_dSign}${_delta.toFixed(2)}</div><div class="sec-sub">${_delta>0?'Kurum üstünde':'Kurum altında'}</div></div></div></div>`:''}
+          ${_delta!==null?`<div class="col-12 col-md-4 class-info-col"><div class="sec-card ${_dCls} h-100"><div class="sec-icon"><i class="fas fa-exchange-alt"></i></div><div class="sec-body"><div class="sec-label">Şube - Kurum Farkı</div><div class="sec-value">${_dSign}${_delta.toFixed(2)}</div><div class="sec-sub">${_delta>0?'Kurum üstünde':'Kurum altında'}</div></div></div></div>`:''}
         </div>`;
       }
 
@@ -2058,14 +2058,14 @@ function rAnl(){
 
         clsTrendHtml = _trendStatBlock([
           _trendStatItem(
-            'Genel Eğilim',
+            'Genel Yön (Trend)',
             `<span class="trend-indicator ${clsTClass}"><i class="fas ${clsTIcon} me-1"></i>${clsTText}</span>`,
             'Sınıf ortalamasının yönü',
             'Sınıf ortalamasının zaman içindeki yönü',
             ''
           ),
           _trendStatItem(
-            'Toplam Net Değişimi',
+            'Toplam Değişim',
             `<span style="--metric-color:${clsTColor}; color:var(--metric-color);">${clsTSign}${clsTTotal.toFixed(2)}</span>`,
             'Süreç boyunca',
             'İlk sınavdan son sınava ortalamadaki net değişim (regresyon)',
@@ -2086,7 +2086,7 @@ function rAnl(){
             ''
           ),
           _trendStatItem(
-            'Sınıf İçi Dağılım',
+            'Dağılım / Homojenlik',
             `<span class="trend-tone-purple">±${ssVal.toFixed(2)}</span>`,
             _consistencyLabelC,
             'Öğrencilerin ortalama etrafındaki dağılımı (örneklem standart sapması, n-1). Düşük = homojen sınıf.',
@@ -2266,14 +2266,14 @@ function rAnl(){
 
         subjTrendHtml = _trendStatBlock([
           _trendStatItem(
-            'Genel Eğilim',
+            'Genel Yön (Trend)',
             `<span class="trend-indicator ${subjTClass}"><i class="fas ${subjTIcon} me-1"></i>${subjTText}</span>`,
             'Ders ortalamasının yönü',
             'Bu dersin ortalamasının zaman içindeki yönü',
             ''
           ),
           _trendStatItem(
-            'Toplam Net Değişimi',
+            'Toplam Değişim',
             `<span style="--metric-color:${subjTColor}; color:var(--metric-color);">${subjTSign}${subjTotal.toFixed(2)}</span>`,
             'Süreç boyunca',
             'İlk sınavdan son sınava ders ortalamasındaki değişim (regresyon)',
@@ -2294,7 +2294,7 @@ function rAnl(){
             ''
           ),
           _trendStatItem(
-            'Öğrenciler Arası Dağılım',
+            'Dağılım / Homojenlik',
             `<span class="trend-tone-purple">±${subjSS.toFixed(2)}</span>`,
             _consistencyLabelS,
             'Öğrenci netlerinin ortalama etrafındaki dağılımı (örneklem standart sapması, n-1)',
@@ -2358,7 +2358,7 @@ function rAnl(){
             ? `<div class="comparison-list">${subjCompLines.join('')}</div>`
             : `<div class="sec-sub">${subjDLab2} fark — ${subjBestClsN} vs ${subjWorstClsN2}</div>`;
           subjStatsHtml = _trendStatItem(
-            "Şubeler Arası Etki Büyüklüğü (Cohen's d)",
+            "Etki Büyüklüğü (Cohen's d)",
             `<span style="color:${subjDCol2};">d = ${subjD2.toFixed(2)}</span>`,
             `${escapeHtml(subjDLab2)} · ${escapeHtml(subjBestClsN)} vs ${escapeHtml(subjWorstClsN2)}`,
             "Cohen's d: en güçlü sınıf ile karşılaştırılan sınıflar arasındaki standartlaştırılmış ortalama farkı.",
