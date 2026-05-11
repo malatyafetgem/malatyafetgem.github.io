@@ -102,7 +102,12 @@ function metaIntersectsGrades(meta, grades){
 }
 
 function toCleanArray(val){
-  return Array.isArray(val) ? val.filter(x => x) : (val && typeof val === 'object' ? Object.values(val).filter(x => x) : []);
+  // filter(x => x) yerine açık null/undefined kontrolü: 0 veya false değerli geçerli
+  // kayıtların yanlışlıkla elenmesini önler.
+  const notNullish = x => x !== null && x !== undefined;
+  return Array.isArray(val)
+    ? val.filter(notNullish)
+    : (val && typeof val === 'object' ? Object.values(val).filter(notNullish) : []);
 }
 
 function getSelectValueIfEnabled(id){
@@ -749,6 +754,13 @@ function ewma(values, windowSize, alpha){
 }
 
 // ---- calcZScore: Bir değerin popülasyon içindeki z-skorunu hesapla ----
+// ÖNEMLI — std seçimi:
+//   Burada PAYDAsi n olan POPÜLASYON standart sapması kullanılır.
+//   Çünkü elimizdeki grup (sınıf, kurum) zaten tüm popülasyonu temsil eder;
+//   başka bir evrene genelleme yapmıyoruz.
+//   app-analysis.js'teki _statStd ise (n-1) paydası kullanan ÖRNEKLEM std'dir —
+//   o fonksiyon bir örneklemden evrene tahmin yapar (CV, dağılım kartları vb.).
+//   İki fonksiyon kasıtlı olarak farklı; birini diğeriyle değiştirme.
 function calcZScore(value, population){
   let arr = (population||[]).filter(v => v !== null && v !== undefined && !isNaN(v)).map(Number);
   let n = arr.length; if(n < 2) return 0;

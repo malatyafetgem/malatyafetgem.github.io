@@ -23,6 +23,13 @@ function _statMean(arr){
 /**
  * Örneklem standart sapması (n-1 paydası).
  * En az 2 değer gerekir, aksi halde null.
+ *
+ * ÖNEMLI — std seçimi:
+ *   Burada PAYDAsi (n-1) olan ÖRNEKLEM standart sapması kullanılır.
+ *   CV, dağılım ve homojenlik kartları için bir örneklemden evrene tahmin yapılır.
+ *   app-core.js'teki calcZScore ise n paydası kullanan POPÜLASYON std'dir —
+ *   o fonksiyon elimizdeki grubun tamamına (sınıf/kurum) z-skoru hesaplar.
+ *   İki fonksiyon kasıtlı olarak farklı; birini diğeriyle değiştirme.
  */
 function _statStd(arr){
   if(!arr || arr.length < 2) return null;
