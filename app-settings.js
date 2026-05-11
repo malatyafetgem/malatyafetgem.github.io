@@ -151,6 +151,7 @@ async function xDel(){
       // Bellek senkronizasyonu
       Object.keys(CACHED_RESULTS).forEach(bId => { CACHED_RESULTS[bId] = (CACHED_RESULTS[bId]||[]).filter(x => x.studentNo !== id); });
       DB.e = DB.e.filter(x => x.studentNo !== id);
+      _riskCache = null; // Risk cache'i geçersiz kıl
       if(aNo === id) sAct(null);
       showToast('Öğrenci ve tüm sınav kayıtları silindi (' + touchedBatches.size + ' paket).', 'success');
     } catch(err){
@@ -161,11 +162,12 @@ async function xDel(){
     }
   }
   else if(t==='allStudents'){
-    try { await database.ref('db_v2/students').set([]); await database.ref('db_v2/examResults').remove(); await database.ref('db_v2/examMeta').remove(); DB.s=[]; CACHED_RESULTS={}; DB.e=[]; EXAM_META={}; sAct(null); rTabS(); rTabE(); uStat(); uDrp(); showToast('Tüm öğrenci ve sınav verileri silindi.', 'success'); }
+    try { await database.ref('db_v2/students').set([]); await database.ref('db_v2/examResults').remove(); await database.ref('db_v2/examMeta').remove(); DB.s=[]; CACHED_RESULTS={}; DB.e=[]; EXAM_META={}; _riskCache=null; _stuMapCache=null; sAct(null); rTabS(); rTabE(); uStat(); uDrp(); showToast('Tüm öğrenci ve sınav verileri silindi.', 'success'); }
     catch(err){ showToast('Silme işlemi başarısız: ' + err.message, 'error'); }
   }
   else if(t==='exam'){
-    try { await database.ref('db_v2/examResults/'+id).remove(); await database.ref('db_v2/examMeta/'+id).remove(); if(CACHED_RESULTS[id]) delete CACHED_RESULTS[id]; delete EXAM_META[id]; DB.e = DB.e.filter(x => x.examBatchId !== id); rTabE(); uStat(); uDrp(); if(aNo) reqProfile(); else if(getEl('sonuclar').classList.contains('active-pane')) reqAnl(); showToast('Sınav silindi.', 'success'); }
+    try { await database.ref('db_v2/examResults/'+id).remove(); await database.ref('db_v2/examMeta/'+id).remove(); if(CACHED_RESULTS[id]) delete CACHED_RESULTS[id]; delete EXAM_META[id]; DB.e = DB.e.filter(x => x.examBatchId !== id); _riskCache = null; // Risk cache'i geçersiz kıl
+rTabE(); uStat(); uDrp(); if(aNo) reqProfile(); else if(getEl('sonuclar').classList.contains('active-pane')) reqAnl(); showToast('Sınav silindi.', 'success'); }
     catch(err){ showToast('Sınav silinemedi: ' + err.message, 'error'); }
   }
   else if(t==='all'){
@@ -186,7 +188,8 @@ async function svStu(){
   let isNewStudent = !s;
   
   if(s){ 
-    let oldClass = s.class; s.name=toTitleCase(nm); s.class=cc; 
+    let oldClass = s.class; s.name=toTitleCase(nm); s.class=cc;
+    _stuMapCache = null; // Ad/sınıf değişiminde Firebase listener beklenmeden cache temizle
     if (oldClass !== cc) {
       ld(1, 'Sınav kayıtları güncelleniyor...');
       try {
@@ -501,7 +504,8 @@ async function confirmUpload() {
     else if (PENDING_UPLOAD.type === 'e') {
       if(PENDING_UPLOAD.existsId) { await database.ref('db_v2/examResults/' + PENDING_UPLOAD.existsId).remove(); await database.ref('db_v2/examMeta/' + PENDING_UPLOAD.existsId).remove(); delete CACHED_RESULTS[PENDING_UPLOAD.existsId]; }
       await database.ref('db_v2/examResults/' + PENDING_UPLOAD.bId).set(PENDING_UPLOAD.newResults); 
-      await database.ref('db_v2/examMeta/' + PENDING_UPLOAD.bId).set({ date: PENDING_UPLOAD.bD, examType: PENDING_UPLOAD.bT, publisher: PENDING_UPLOAD.bPub, count: PENDING_UPLOAD.newResults.length, subjects: PENDING_UPLOAD.subjects, grades: PENDING_UPLOAD.grades }); showToast('Sınav sonuçları sisteme başarıyla kaydedildi.', 'success');
+      await database.ref('db_v2/examMeta/' + PENDING_UPLOAD.bId).set({ date: PENDING_UPLOAD.bD, examType: PENDING_UPLOAD.bT, publisher: PENDING_UPLOAD.bPub, count: PENDING_UPLOAD.newResults.length, subjects: PENDING_UPLOAD.subjects, grades: PENDING_UPLOAD.grades }); _riskCache = null; // Risk cache'i geçersiz kıl
+showToast('Sınav sonuçları sisteme başarıyla kaydedildi.', 'success');
     }
   } catch(err) { showToast('Kayıt sırasında hata oluştu: ' + err.message, 'error'); } cancelUpload(); ld(0);
 }

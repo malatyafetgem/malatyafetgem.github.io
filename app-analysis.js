@@ -141,11 +141,11 @@ function _statTone(cls){
 
 function _statItem(label, valueHtml, subHtml, explainText, toneClass){
   let cls = toneClass ? ` ${toneClass}` : '';
+  // explainText artık stats-explain olarak gösterilmiyor; aynı bilgi info popup içinde yer alıyor.
   return `<div class="stats-item${cls}">
     <div class="stats-label">${escapeHtml(label)}</div>
     <div class="stats-value">${valueHtml}</div>
     ${subHtml ? `<div class="stats-sub">${subHtml}</div>` : ''}
-    ${explainText ? `<div class="stats-explain" title="${escapeHtml(explainText)}">${escapeHtml(explainText)}</div>` : ''}
   </div>`;
 }
 
@@ -1095,14 +1095,14 @@ function rH(){
 
 // ---- _buildSingleMetricSparkline: Tek bir metrik için (Toplam Net, Puan, ders neti, sıralama) eğilim kartı ----
 // metric: 'totalNet' | 'score' | 'rank_c'/'rank_i'/'rank_g' | 's_<dersAdı>'
+// NOT (Madde 10): Tüm çağrı noktaları temizlendi. Fonksiyon tanımı da silinebilir; şimdilik bırakıldı.
 function _buildSingleMetricSparkline(stuNo, examType, curExam, metric, label){
   // Eğilim (sparkline) grafiği kullanıcı isteğiyle kaldırıldı.
   return '';
 }
 
 // ---- buildSubjectSparklines: Tek sınav modu — Ders Eğilimi mini-grafik paneli ----
-// Her ders için, öğrencinin aynı sınav türündeki son 5 sınavının (seçili sınav dahil)
-// neti üzerinden minik bir SVG çizgi grafiği üretir. Seçili sınavın noktası vurgulanır.
+// NOT (Madde 10): Tüm çağrı noktaları temizlendi. Fonksiyon tanımı da silinebilir; şimdilik bırakıldı.
 function buildSubjectSparklines(stuNo, examType, curExam, subjects){
   // Ders Eğilimi sparkline paneli kullanıcı isteğiyle kaldırıldı.
   return '';
@@ -1343,8 +1343,6 @@ function rAnl(){
         let insTN = DB.e.filter(x => x.date===_seDate && (x.publisher||'')===_sePub && x.examType===eT && getGrade(x.studentClass)===stGrade && !x.abs).map(x => x.totalNet);
         insVals.push(insTN.length ? insTN.reduce((a,b)=>a+b,0)/insTN.length : null);
 
-        let totalNetTrendCard = _buildSingleMetricSparkline(no, eT, curExam, 'totalNet', 'Toplam Net');
-
         // 1-A: Özet modunda Toplam Net için Z-skoru + yüzdelik dilim + katılım kartı
         let seExtraCardsHtml = '';
         {
@@ -1426,8 +1424,6 @@ function rAnl(){
               <div class="single-exam-chart-title"><i class="fas fa-chart-bar"></i>Ders Bazlı Net Karşılaştırması</div>
               <div class="chart-box chart-box-xl avoid-break"><canvas id="cA"></canvas></div>
             </div>
-            ${totalNetTrendCard}
-            ${buildSubjectSparklines(no, eT, curExam, subjects)}
           </div>
         </div>`;
         r.innerHTML = h;
@@ -1529,8 +1525,6 @@ function rAnl(){
           </div>`;
         }
 
-        // Sadece bu dersin eğilim grafiği
-        let trendCard = _buildSingleMetricSparkline(no, eT, curExam, 's_'+_sKey, subjKey+' Neti');
 
         // Tek ders çubuk grafik (öğrenci vs sınıf vs kurum — sadece bu ders)
         let singleBarHtml = `<div class="single-exam-chart-title chart-section-title"><i class="fas fa-chart-bar"></i>${subjKey} — Karşılaştırma</div>
@@ -1547,7 +1541,6 @@ function rAnl(){
             ${subjectStatsHtml}
             ${dybBar}
             ${singleBarHtml}
-            ${trendCard}
           </div>
         </div>`;
         r.innerHTML = h;
@@ -1643,8 +1636,6 @@ function rAnl(){
           )
         ], 'fa-chart-bar');
 
-        let trendCard = _buildSingleMetricSparkline(no, eT, curExam, sb, ls);
-
         let h = `<div class="d-flex justify-content-end mb-2 no-print"><button class="btn-print no-print" onclick="xPR('pS','Ogrenci_Veri',this)"><i class='fas fa-print me-1'></i>Yazdır</button></div>
         <div id="pS" class="card shadow-sm">
           <div class="report-header">
@@ -1656,7 +1647,6 @@ function rAnl(){
             ${metricStatsHtml}
             <div class="single-exam-chart-title chart-section-title"><i class="fas fa-chart-line"></i>${escapeHtml(ls)} — Sınav Trend</div>
             <div class="chart-box chart-box-xl avoid-break"><canvas id="cA"></canvas></div>
-            ${trendCard}
           </div>
         </div>`;
         r.innerHTML = h;
@@ -2567,7 +2557,7 @@ function rAnl(){
                 _trendStatItem(
                   'Ortalamadan Uzaklık (Standart Sapma)',
                   `±${_gsStd.toFixed(2)}`,
-                  `Standart sapma · ${_gsHomLab}`,
+                  `${_gsHomLab}`,
                   'Öğrencilerin tüm sınav ortalamalarının genel ortalama etrafındaki yayılımı. Düşükse grup homojen.',
                   ''
                 ),
@@ -2768,7 +2758,7 @@ function rAnl(){
           _trendStatItem(
             'Ortalamadan Uzaklık (Standart Sapma)',
             `±${_eStd.toFixed(2)}`,
-            `Standart sapma · ${_eHomLab}`,
+            `${_eHomLab}`,
             'Öğrenci netlerinin ortalama etrafındaki yayılımı. Düşükse grup homojen.',
             ''
           ),

@@ -655,7 +655,26 @@ async function reqUI() {
 function normTR(s){return String(s||'').toLocaleLowerCase('tr-TR').replace(/ğ/g,'g').replace(/ü/g,'u').replace(/ş/g,'s').replace(/ı/g,'i').replace(/ö/g,'o').replace(/ç/g,'c');}
 
 // ---- pN (orig lines 1031-1031) ----
-function pN(v){let n=parseFloat(String(v||0).replace(',','.'));return isNaN(n)?0:n;}
+function pN(v){
+  // Türkçe: binlik ayraç nokta, ondalık ayraç virgül → 1.234,56 veya 12,5
+  // İngilizce: 12.5 → doğrudan geçer
+  let s = String(v === null || v === undefined ? 0 : v).trim();
+  // Hem nokta hem virgül varsa: son gelen ondalık ayraçtır
+  let hasDot   = s.includes('.');
+  let hasComma = s.includes(',');
+  if(hasDot && hasComma){
+    // 1.234,56 → Türkçe: noktaları kaldır, virgülü noktaya çevir
+    if(s.lastIndexOf(',') > s.lastIndexOf('.')) s = s.replace(/\./g,'').replace(',','.');
+    // 1,234.56 → İngilizce: virgülleri kaldır
+    else s = s.replace(/,/g,'');
+  } else if(hasComma){
+    // 12,5 → ondalık virgül
+    s = s.replace(',','.');
+  }
+  // Tek nokta → İngilizce ondalık veya binlik nokta; parseFloat halleder
+  let n = parseFloat(s);
+  return isNaN(n) ? 0 : n;
+}
 
 // ---- srt (orig lines 1033-1045) ----
 function srt(a,b){
@@ -718,7 +737,7 @@ function linRegRMSE(values){
 function ewma(values, windowSize, alpha){
   let arr = (values||[]).filter(v => v !== null && v !== undefined && !isNaN(v)).map(Number);
   if(!arr.length) return null;
-  alpha = alpha || 0.5;
+  alpha = (alpha !== null && alpha !== undefined) ? alpha : 0.5;
   windowSize = windowSize || 3;
   // Son windowSize sınava kısıtla
   let window_ = arr.slice(-windowSize);

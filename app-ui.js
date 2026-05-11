@@ -275,7 +275,9 @@ window.addEventListener('load', () => {
 
 // ---- sAct (orig lines 1021-1028) ----
 async function sAct(no,clr=false){
-  aNo=no; if(clr){let st=getStuMap().get(no); getEl('sInp').value=st?(st.name+' ('+st.class+')'):'';getEl('sRes').innerHTML='';getEl('sRes').style.display='none';}
+  aNo=no;
+  // Öğrenci seçilince arama kutusu her zaman temizlenir; seçili öğrenci rozette gösterilir.
+  getEl('sInp').value=''; getEl('sRes').innerHTML=''; getEl('sRes').style.display='none';
   let s=getStuMap().get(aNo);
   getEl('aBadge').innerHTML=s?`<span class="badge rounded-pill px-3 py-2 sa-selected-pill"><i class="fas fa-check-circle me-1"></i>Seçili Öğrenci: ${escapeHtml(s.name)} (${escapeHtml(s.class)})</span>`:'<span class="text-muted">Seçilmedi</span>';
   let ab=getEl('anlStuBadge'); if(ab)ab.innerHTML=s?`<span class="badge rounded-pill px-2 py-1 sa-selected-pill selected-student-pill"><i class="fas fa-check-circle me-1"></i>Seçili Öğrenci: ${escapeHtml(s.name)} (${escapeHtml(s.class)})</span>`:'';
@@ -1181,7 +1183,9 @@ function execAnlStuSearch(){
 
 // ---- anlStuSelect (orig lines 1907-1911) ----
 function anlStuSelect(no){
-  getEl('anlStuRes').style.display='none'; let s=getStuMap().get(no); if(s) getEl('anlStuInp').value=s.name+' ('+s.class+')'; aNo = no;
+  getEl('anlStuRes').style.display='none';
+  // Öğrenci seçilince arama kutusu temizlenir; seçili öğrenci rozette gösterilir.
+  getEl('anlStuInp').value=''; aNo = no; let s=getStuMap().get(no);
   let ab=getEl('anlStuBadge'); if(ab) ab.innerHTML=s?`<span class="badge rounded-pill px-2 py-1 sa-selected-pill selected-student-pill"><i class="fas fa-check-circle me-1"></i>Seçili Öğrenci: ${escapeHtml(s.name)} (${escapeHtml(s.class)})</span>`:'';
   getEl('aBadge').innerHTML=s?`<span class="badge rounded-pill px-3 py-2 sa-selected-pill"><i class="fas fa-check-circle me-1"></i>Seçili Öğrenci: ${escapeHtml(s.name)} (${escapeHtml(s.class)})</span>`:'<span class="text-muted">Seçilmedi</span>'; reqUI(); 
 }
@@ -2569,7 +2573,10 @@ function uSub(){
     _applyAnalysisSubValue('', _selVal);
   } else if (aT === 'subject') {
     subjects = _resultSubjects(subjectFilters);
-    let prev = _preferredAnalysisSub(''), opts = subjects.map(x=>optionHtml(x, toTitleCase(x))).join('');
+    // Sınav türü veya diğer filtreler değişince ders "Ders Seç" durumunda kalmalı.
+    // _preferredAnalysisSub kullanmıyoruz; sadece mevcut subEl.value'yu (sıfırlanmış olabilir) koruyoruz.
+    let prev = subEl.value || '';
+    let opts = subjects.map(x=>optionHtml(x, toTitleCase(x))).join('');
     let ph = optionHtml('', 'Ders Seç', !prev, true);
     subEl.innerHTML = opts ? (ph + opts) : optionHtml('', 'Ders bulunamadı', true, true);
     _applyAnalysisSubValue('', prev);

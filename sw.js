@@ -32,6 +32,7 @@ function isNavigationRequest(request, url) {
 function isFreshAppAsset(url) {
   const fileName = url.pathname.split('/').pop();
   return [
+    'index.html',
     'version.js',
     'style.css',
     'app-core.js',
