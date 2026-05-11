@@ -390,34 +390,6 @@ async function init(){
   applyTheme(false);
   // ld(1,'Sistem altyapısı hazırlanıyor...'); // Bu satırı sildik/kapattık
 
-  let v2Snap = await database.ref('db_v2/students').once('value');
-  if (!v2Snap.exists()) {
-    try {
-      ld(1, 'Veritabanı yeni nesil altyapıya geçiriliyor (Sadece 1 kez yapılır)...');
-      let oldSnap = await database.ref('sinavDB').once('value'), oldDB = oldSnap.val();
-      if (oldDB && oldDB.s && oldDB.e) {
-        let cleanStudents = oldDB.s.filter(x => x !== null);
-        await database.ref('db_v2/students').set(cleanStudents);
-        let meta = {}, results = {};
-        oldDB.e.forEach(ex => {
-          if(!ex) return; let bId = ex.examBatchId;
-          if(!meta[bId]) { meta[bId] = { date: ex.date, examType: ex.examType, publisher: ex.publisher || '', count: 0, subjects: [], grades: [] }; results[bId] = []; }
-          meta[bId].count++; results[bId].push(ex);
-          let stGrade = getGrade(ex.studentClass);
-          if(stGrade && !meta[bId].grades.includes(stGrade)) meta[bId].grades.push(stGrade);
-          if(!ex.abs && ex.subs) meta[bId].subjects = Array.from(new Set([...meta[bId].subjects, ...Object.keys(ex.subs)]));
-        });
-        if(Object.keys(meta).length > 0) {
-          await database.ref('db_v2/examMeta').set(meta); await database.ref('db_v2/examResults').set(results);
-        }
-      } else { await database.ref('db_v2/students').set([]); }
-    } catch(err) {
-      showToast('Veritabanı geçişi tamamlanamadı: ' + err.message, 'error', 7000);
-    } finally {
-      ld(0);
-    }
-  }
-
   database.ref('db_v2/students').on('value', snap => { 
     let sData = snap.val(); DB.s = (sData ? (Array.isArray(sData) ? sData.filter(x => x) : Object.values(sData).filter(x => x)) : []).map(s => s ? {...s, name: toTitleCase(s.name)} : s);
     _stuMapCache = null; // Map index'i yenile
