@@ -130,15 +130,6 @@ function _homogeneityLabel(cv){
   return 'Çok heterojen';
 }
 
-/**
- * Yeni eklenen kart yardımcısı: bir kart içine kısa Türkçe açıklama satırı (sec-explain) basar.
- * Kullanım: ${_explain('İlk sınavdan son sınava net farkı')} kart .sec-body içine.
- */
-function _explain(txt){
-  if(!txt) return '';
-  return `<div class="sec-explain" title="${escapeHtml(txt)}">${escapeHtml(txt)}</div>`;
-}
-
 function _statTone(cls){
   if(!cls) return '';
   if(String(cls).indexOf('sec-pos') >= 0) return 'stat-pos';
@@ -148,7 +139,7 @@ function _statTone(cls){
 
 function _statItem(label, valueHtml, subHtml, explainText, toneClass){
   let cls = toneClass ? ` ${toneClass}` : '';
-  // explainText artık stats-explain olarak gösterilmiyor; aynı bilgi info popup içinde yer alıyor.
+  // explainText artık satır içinde gösterilmiyor; aynı bilgi info popup içinde yer alıyor.
   return `<div class="stats-item${cls}">
     <div class="stats-label">${escapeHtml(label)}</div>
     <div class="stats-value">${valueHtml}</div>

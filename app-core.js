@@ -464,11 +464,10 @@ async function reqProfile() {
   await fetchBatches(neededBatches); rH();
 }
 
-function refreshMethodologyAfterAnalysisRender(){
+function refreshAfterAnalysisRender(){
   let root = getEl('anlRes') || getEl('riskPanel') || document;
   const refreshExplanations = () => {
     if(typeof decorateCardExplanations === 'function') decorateCardExplanations(root);
-    else if(typeof updateMethodologyContent === 'function') updateMethodologyContent();
   };
   refreshExplanations();
   setTimeout(refreshExplanations, 120);
@@ -492,7 +491,7 @@ async function reqAnl() {
     if(ids.length) await fetchBatches(ids, { message:'Risk verileri hazırlanıyor...' });
     if(typeof renderRiskPanel === 'function') renderRiskPanel();
     if(typeof applyExamColorToFilters === 'function') applyExamColorToFilters();
-    refreshMethodologyAfterAnalysisRender();
+    refreshAfterAnalysisRender();
     return;
   }
 
@@ -550,7 +549,7 @@ async function reqAnl() {
     if(typeof applyExamColorToFilters === 'function') applyExamColorToFilters();
     if(typeof rAnl === 'function') rAnl();
     else getEl('anlRes').innerHTML='';
-    refreshMethodologyAfterAnalysisRender();
+    refreshAfterAnalysisRender();
     return;
   }
 
@@ -610,7 +609,7 @@ async function reqAnl() {
 
   if(needed.length > 0) await fetchBatches(needed); 
   rAnl();
-  refreshMethodologyAfterAnalysisRender();
+  refreshAfterAnalysisRender();
 }
 
 // ---- reqUI (orig lines 942-942) ----

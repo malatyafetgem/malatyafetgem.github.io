@@ -549,7 +549,7 @@ else window.addEventListener('load', bootApp);
 // ---- top-level (orig lines 4009-4009) ----
 let deferredInstallPrompt = null, pwaPopupTimer = null, pwaPopupShowTimer = null, userLoggedIn = false;
 let pwaInstallToast = null, pwaInstallCompleted = false, pwaInstallStartedAt = 0;
-let pwaInstallSuccessTimer = null, pwaInstallSuccessShown = false;
+let pwaInstallSuccessShown = false;
 
 function clearPwaInstallToast() {
   if(pwaInstallToast && pwaInstallToast.parentNode) pwaInstallToast.remove();
@@ -565,18 +565,11 @@ function showPwaInstallLoading() {
   if(pwaInstallToast) pwaInstallToast.dataset.toastKey = 'pwa-install-loading';
 }
 
-function showPwaInstallSuccess() {
+function markPwaInstallCompleted() {
   if(pwaInstallSuccessShown) return;
   pwaInstallSuccessShown = true;
-  let hadLoadingToast = !!(pwaInstallToast && pwaInstallToast.parentNode);
-  let elapsed = hadLoadingToast && pwaInstallStartedAt ? (Date.now() - pwaInstallStartedAt) : 0;
-  let waitMs = hadLoadingToast ? Math.max(0, 1300 - elapsed) : 0;
-  if(pwaInstallSuccessTimer) clearTimeout(pwaInstallSuccessTimer);
-  pwaInstallSuccessTimer = setTimeout(() => {
-    clearPwaInstallToast();
-    showToast('Uygulama başarıyla yüklendi!', 'success');
-    pwaInstallSuccessTimer = null;
-  }, waitMs);
+  clearPwaInstallToast();
+  pwaInstallStartedAt = 0;
 }
 
 // ---- top-level (orig lines 4010-4010) ----
@@ -586,23 +579,19 @@ window.addEventListener('beforeinstallprompt', (e) => {
   pwaInstallCompleted = false;
   pwaInstallSuccessShown = false;
   pwaInstallStartedAt = 0;
-  if (pwaInstallSuccessTimer) {
-    clearTimeout(pwaInstallSuccessTimer);
-    pwaInstallSuccessTimer = null;
-  }
   clearPwaInstallToast();
   if (userLoggedIn) showPwaPopupIfReady();
 });
 
 // ---- top-level (orig lines 4011-4011) ----
-// "Başarıyla yüklendi" mesajının tek yetkili kaynağı appinstalled olayıdır.
+// Başarı bildirimi tarayıcı/işletim sistemi tarafından verilir; burada yalnızca yükleniyor toast'ı temizlenir.
 window.addEventListener('appinstalled', () => {
   pwaInstallCompleted = true;
   deferredInstallPrompt = null;
   let installWrap = document.getElementById('installBtnWrapper');
   if(installWrap) installWrap.style.display = 'none';
   closePwaPopup();
-  showPwaInstallSuccess();
+  markPwaInstallCompleted();
 });
 
 // ---- showPwaPopupIfReady (orig lines 4013-4016) ----
@@ -645,7 +634,7 @@ function closePwaPopup() {
 
 // ---- triggerInstall (orig lines 4018-4018) ----
 // userChoice kullanıcının diyalogu kabul/reddettiğini bildirir, yükleme tamamını değil.
-// "Yüklendi" toast'ı appinstalled üzerinden gelir; burada sadece "yükleniyor" gösterilir.
+// Başarı toast'ı gösterilmez; burada sadece "yükleniyor" gösterilir.
 function triggerInstall(e) {
   if(e && e.preventDefault) e.preventDefault();
   closePwaPopup();
@@ -658,10 +647,6 @@ function triggerInstall(e) {
   pwaInstallCompleted = false;
   pwaInstallSuccessShown = false;
   pwaInstallStartedAt = 0;
-  if (pwaInstallSuccessTimer) {
-    clearTimeout(pwaInstallSuccessTimer);
-    pwaInstallSuccessTimer = null;
-  }
   const promptEvent = deferredInstallPrompt;
   showPwaInstallLoading();
   try {
