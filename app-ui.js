@@ -176,10 +176,6 @@ window.addEventListener('hashchange', function() {
 
 // ---- sTab (orig lines 972-977) ----
 function sTab(id, el) {
-  try {
-    if (window.event && window.event.preventDefault) window.event.preventDefault();
-    if (window.event) window.event.returnValue = false;
-  } catch(e){}
   executeTabSwitch(id, false);
   return false;
 }

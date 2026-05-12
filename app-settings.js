@@ -172,7 +172,7 @@ rTabE(); uStat(); uDrp(); if(aNo) reqProfile(); else if(getEl('sonuclar').classL
   }
   else if(t==='all'){
     ld(1,'Sıfırlanıyor...');
-    try { await database.ref('db_v2').remove(); await database.ref('sinavDB').remove(); location.reload(); return; }
+    try { await database.ref('db_v2').remove(); location.reload(); return; }
     catch(err){ showToast('Sıfırlama başarısız: ' + err.message, 'error'); ld(0); }
   }
   cMod('mConf');

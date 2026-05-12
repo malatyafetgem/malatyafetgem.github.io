@@ -387,7 +387,7 @@ function toTitleCase(str) {
 
 // ---- init (orig lines 801-851) ----
 async function init(){
-  applyTheme(false);
+  applyTheme();
   // ld(1,'Sistem altyapısı hazırlanıyor...'); // Bu satırı sildik/kapattık
 
   database.ref('db_v2/students').on('value', snap => { 
