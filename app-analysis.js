@@ -1,9 +1,7 @@
 ﻿// app-analysis.js — Risk scoring, box plots, karne, rH, rAnl, rapor
 
-// ---- top-level (orig lines 1079-1079) ----
 let _riskCache = null;
 
-// ---- top-level (orig lines 1081-1081) ----
 const RISK_SEV_W = { high: 3, med: 2, low: 1 };
 
 // ============================================================
@@ -227,7 +225,6 @@ function _sampleConfidence(n){
 // ============================================================
 
 
-// ---- calcRiskScores (orig lines 1083-1256) — OPTİMİZE EDİLDİ ----
 function calcRiskScores() {
   if(!DB.e.length || !DB.s.length) return[];
 
@@ -482,7 +479,6 @@ function calcRiskScores() {
   return riskEntries;
 }
 
-// ---- renderRiskPanel (orig lines 1258-1340) ----
 function renderRiskPanel() {
   let panelEl = getEl('riskPanel'); if(!panelEl) return;
   let risks = (_riskCache && _riskCache.results) ? _riskCache.results : calcRiskScores();
@@ -503,13 +499,12 @@ function renderRiskPanel() {
   let branchF = branchRaw === '__ALL__' ? '' : branchRaw;
   let levelF  = (getEl('riskLevelFilter')||{}).value  || '';
 
-  // Sınıf adından grade ve şubeyi ayıkla (örn. "10-A" → grade:"10", branch:"A")
-  function getGradeFromCls(cls) { let m = String(cls||'').match(/^(\d+)/); return m ? m[1] : ''; }
+  // Sınıf adından şubeyi ayıkla (örn. "10-A" → branch:"A")
   function getBranchFromCls(cls) { let m = String(cls||'').match(/[A-Za-z]+$/); return m ? m[0].toUpperCase() : ''; }
 
   let filtered = risks.filter(r => {
     if(exTypeF && !r.examTypes.includes(exTypeF)) return false;
-    if(gradeF  && getGradeFromCls(r.cls) !== gradeF) return false;
+    if(gradeF  && getGrade(r.cls) !== gradeF) return false;
     if(branchF && getBranchFromCls(r.cls) !== branchF) return false;
     if(levelF  && r.level !== levelF) return false;
     return true;
@@ -568,7 +563,6 @@ function renderRiskPanel() {
   listEl.innerHTML = html;
 }
 
-// ---- setRiskLevel (orig lines 1342-1349) ----
 function setRiskLevel(level) {
   let el = getEl('riskLevelFilter');
   if(!el) return;
@@ -580,7 +574,6 @@ function setRiskLevel(level) {
   if(typeof updateFilterSummary === 'function') updateFilterSummary();
 }
 
-// ---- goToStudent (orig lines 1351-1356) ----
 function goToStudent(no) {
   sAct(no, true);
   // Öğrenci sekmesine geç
@@ -588,7 +581,6 @@ function goToStudent(no) {
   sTab('anasayfa', navEl);
 }
 
-// ---- calcBoxPlot (orig lines 1359-1381) ----
 function calcBoxPlot(values) {
   // null/undefined önce filtrele, sonra sayıya çevir (Number(null)=0 tuzağından kaçın)
   let arr = (values||[]).filter(v => v !== null && v !== undefined).map(Number).filter(v => !isNaN(v)).sort((a,b) => a-b);
@@ -612,7 +604,6 @@ function calcBoxPlot(values) {
   return { min: arr[0], max: arr[n-1], q1, median, q3, mean, whiskerLo, whiskerHi, outliers, n };
 }
 
-// ---- mkBoxPlotSVG (orig lines 1388-1510) ----
 function mkBoxPlotSVG(groups, studentVal, options) {
   options = options || {};
   let W = options.width || 520, H = options.height || 210;
@@ -733,7 +724,6 @@ function mkBoxPlotSVG(groups, studentVal, options) {
   </svg></div>`;
 }
 
-// ---- mkMultiClassBoxPlot (orig lines 1513-1529) ----
 function mkMultiClassBoxPlot(classDataMap, highlightClass, options, allVals) {
   options = options || {};
   let entries = Object.entries(classDataMap).sort((a,b)=>a[0].localeCompare(b[0],'tr'));
@@ -752,7 +742,6 @@ function mkMultiClassBoxPlot(classDataMap, highlightClass, options, allVals) {
   return mkBoxPlotSVG(groups, null, { ...options, width: W });
 }
 
-// ---- calcKarneSummaryCards (orig lines 2232-2294) ----
 // sb parametresi opsiyoneldir; belirtilmezse veya 'totalNet' ise net bazlı hesap yapılır.
 // 'score' → puan, 's_matematik' gibi → o dersin neti kullanılır.
 function calcKarneSummaryCards(stuNo, examType, grade, examsData, sb) {
@@ -840,7 +829,6 @@ function calcKarneSummaryCards(stuNo, examType, grade, examsData, sb) {
   return {stuAvg, genAvg, rank, totalStudents, classRank, classTotalStudents, partRate, attendedCount, totalExamCount, trend, consistency};
 }
 
-// ---- buildRiskInfoCards (orig lines 2297-2342) ----
 function buildRiskInfoCards(stuNo, examType, stuClass) {
   let risks = (_riskCache && _riskCache.results) ? _riskCache.results : calcRiskScores();
   let stuRisk = risks.find(r => r.no === stuNo && r.examTypes.includes(examType));
@@ -882,7 +870,6 @@ function buildRiskInfoCards(stuNo, examType, stuClass) {
   </div>`;
 }
 
-// ---- buildKarneExamCards (orig lines 2344-2417) ----
 // 4 üst kart (Ortalama Net, Katılım, Sınıf Derece, Kurum Derece) + (n≥3 ise) trend bloğu.
 // Trend bloğu: Genel Yön (R² chip), Toplam İlerleme, Sınav Başına Değişim, Performans Tutarlılığı (σ), Son Dönem Ortalaması.
 // metricLabel: görünen etiket (ör. 'Net', 'Puan', 'Matematik Neti') — belirtilmezse 'Net'
@@ -1000,7 +987,6 @@ function buildKarneExamCards(summary, examType, metricLabel) {
   return cardsHtml;
 }
 
-// ---- rH (orig lines 2419-2501) ----
 function rH(){
   let s=getStuMap().get(aNo); if(!s)return; let r=getEl('homeArea');
   let combined=DB.e.filter(x=>x.studentNo===aNo).sort((a,b)=>srt(a.date,b.date));
@@ -1219,7 +1205,6 @@ function buildSingleExamCards(stu, examType, curExam, prevExam, stGrade){
   return `<div class="row g-2 sec-cards-row analysis-info-cards single-exam-info-cards">${card1}${prevCard}${card3}${card4}${participationCard}</div>`;
 }
 
-// ---- buildStuBoxPlots (orig lines 2503-2550) ----
 function buildStuBoxPlots(stuNo, examType, stuClass, stuGrade, sb) {
   // 1. SİSTEMDE O SINAV TÜRÜNDEN TOPLAM KAÇ TANE YAPILDIĞINI BUL
   let totalExamsOfType = new Set(Object.values(EXAM_META).filter(m => m.examType === examType).map(m => m.date)).size;
@@ -1276,7 +1261,6 @@ function buildStuBoxPlots(stuNo, examType, stuClass, stuGrade, sb) {
   </div>`;
 }
 
-// ---- rAnl (orig lines 2552-3492) ----
 function rAnl(){
   let aT=getEl('aType').value,eT=getEl('aEx').value, sb=getEl('aSub')?getEl('aSub').value:'', r=getEl('anlRes');
   if(aT === 'risk') return; // Risk analizi renderRiskPanel tarafından yönetilir
@@ -1419,7 +1403,7 @@ function rAnl(){
               <div class="table-responsive"><table class="table table-sm table-hover table-bordered" id="tS"><thead><tr><th>#</th><th>Ders</th><th>D</th><th>Y</th><th>Net</th><th>Sınıf Ort.</th><th>Sınıf Fark</th><th>Kurum Ort.</th><th>Kurum Fark</th></tr></thead><tbody>${rowsSE}</tbody></table></div>
             </div>
             <div class="single-exam-chart-part">
-              <div class="single-exam-chart-title"><i class="fas fa-chart-bar"></i>Ders Bazlı Net Karşılaştırması</div>
+              <div class="single-exam-chart-title chart-section-title"><i class="fas fa-chart-bar"></i>Ders Bazlı Net Karşılaştırması</div>
               <div class="chart-box chart-box-xl avoid-break"><canvas id="cA"></canvas></div>
             </div>
           </div>
@@ -3075,7 +3059,6 @@ function rAnl(){
   }
 }
 
-// ---- raporInit (orig lines 3494-3500) ----
 function raporInit() {
   let lvlSel = getEl('rLvl'), prevLvl = lvlSel.value;
   let levels = (typeof _resultGrades === 'function')
@@ -3099,7 +3082,6 @@ function resetRapor() {
   raporInit();
 }
 
-// ---- raporFillBranches (orig lines 3502-3506) ----
 function raporFillBranches() {
   let lvl = getEl('rLvl').value, brSel = getEl('rBr'), prevBr = brSel.value;
   let branches = lvl
@@ -3182,7 +3164,6 @@ function raporUpdateLocks() {
   }
 }
 
-// ---- generateRapor (orig lines 3508-3627) ----
 async function generateRapor() {
   let lvl = getEl('rLvl').value, brRaw = getEl('rBr').value, br = brRaw === '__ALL__' ? '' : brRaw, eTypeSel = getEl('rExType').value;
   let rType = getEl('rReportType') ? getEl('rReportType').value : '';

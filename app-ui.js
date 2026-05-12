@@ -1,6 +1,5 @@
 ﻿// app-ui.js — Tabs, navigation, dropdowns, search, filters, charts, exports
 
-// ---- top-level (orig lines 944-944) ----
 let currentPane = 'anasayfa_genel';
 const VALID_PANES = ['anasayfa_genel', 'anasayfa', 'sonuclar', 'rapor', 'ayarlar'];
 
@@ -134,7 +133,6 @@ function runPaneTask(id, fn) {
   }
 }
 
-// ---- top-level (orig lines 945-970) ----
 window.addEventListener('popstate', function(e) {
   let isMobile = isMobileAppMode();
   // Giriş ekranı görünüyorsa: tarayıcıyı kapat / bir önceki sayfaya git (zaten doğal davranış)
@@ -174,7 +172,6 @@ window.addEventListener('hashchange', function() {
   executeTabSwitch(paneFromLocation(), true);
 });
 
-// ---- sTab (orig lines 972-977) ----
 function sTab(id, el) {
   executeTabSwitch(id, false);
   return false;
@@ -194,7 +191,6 @@ function closeSidebarIfOpen() {
   document.querySelectorAll('.sidebar-overlay,.sidebar-backdrop').forEach(el => el.remove());
 }
 
-// ---- executeTabSwitch (orig lines 979-1019) ----
 function executeTabSwitch(id, isPopState) {
   id = normalizePaneId(id);
   if(id === 'ayarlar' && !document.body.classList.contains('is-admin')) id = 'anasayfa_genel';
@@ -269,7 +265,6 @@ window.addEventListener('load', () => {
   setTimeout(() => ensurePaneVisibility(), 250);
 });
 
-// ---- sAct (orig lines 1021-1028) ----
 async function sAct(no,clr=false){
   aNo=no;
   // Öğrenci seçilince arama kutusu her zaman temizlenir; seçili öğrenci rozette gösterilir.
@@ -290,13 +285,10 @@ async function sAct(no,clr=false){
   }
 }
 
-// ---- getGrade (orig lines 1531-1531) ----
 function getGrade(cls){ let m=String(cls||'').match(/^(\d+)/); return m?m[1]:''; }
 
-// ---- getBrVal (orig lines 1532-1532) ----
 function getBrVal(){ let el=getEl('aBr'); if(!el) return ''; let v=el.value; return (v==='__ALL__'||!v)?'':v; }
 
-// ---- mkChart (orig lines 1534-1551) ----
 function mkChart(canvasId,labels,datasets,rev=false){
   let gCol='#e2e8f0';
   let txtCol='#475569';
@@ -352,7 +344,6 @@ function _tblToWsSafe(tbl){
   return ws;
 }
 
-// ---- xXL (orig lines 1553-1557) ----
 function xXL(id,fn){
   let tbl=getEl(id), wb=XLSX.utils.book_new();
   let ws=_tblToWsSafe(tbl);
@@ -360,7 +351,6 @@ function xXL(id,fn){
   XLSX.writeFile(wb,fn+'.xlsx');
 }
 
-// ---- xXLMul (orig lines 1559-1567) ----
 function xXLMul(cId,fn){
   let wb=XLSX.utils.book_new(), ts=getEl(cId).getElementsByTagName('table');
   for(let i=0;i<ts.length;i++){
@@ -1146,10 +1136,8 @@ ${cssLinks}
 }
 
 
-// ---- debounceSearch (orig lines 1890-1890) ----
 function debounceSearch(){clearTimeout(searchDebounceTimer);searchDebounceTimer=setTimeout(sSearch,280);}
 
-// ---- sSearch (orig lines 1891-1897) ----
 function sSearch(){
   let v=getEl('sInp').value.trim(),r=getEl('sRes'); if(!v){r.innerHTML='';r.style.display='none';return;}
   let trm=normTR(v).split(/\s+/), m=DB.s.filter(x=>{let txt=normTR(x.no+' '+x.name+' '+x.class);return trm.every(t=>txt.includes(t));});
@@ -1161,13 +1149,10 @@ function sSearch(){
   r.innerHTML=h; r.style.display='block';
 }
 
-// ---- clrS (orig lines 1898-1898) ----
 function clrS(){getEl('sInp').value='';getEl('sRes').innerHTML='';getEl('sRes').style.display='none';sAct(null,false);}
 
-// ---- anlStuDoSearch (orig lines 1900-1900) ----
 function anlStuDoSearch(){clearTimeout(anlDebounceTimer);anlDebounceTimer=setTimeout(execAnlStuSearch,280);}
 
-// ---- execAnlStuSearch (orig lines 1901-1906) ----
 function execAnlStuSearch(){
   let v=getEl('anlStuInp').value.trim(), res=getEl('anlStuRes'); if(!v){res.style.display='none';res.innerHTML='';return;}
   let trm=normTR(v).split(/\s+/), m=DB.s.filter(x=>{let txt=normTR(x.no+' '+x.name+' '+x.class);return trm.every(t=>txt.includes(t));});
@@ -1175,7 +1160,6 @@ function execAnlStuSearch(){
   res.innerHTML=m.slice(0,20).map(x=>`<div class="anlStu-item" role="option" tabindex="0" onclick="anlStuSelect(${jsArg(x.no)})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();anlStuSelect(${jsArg(x.no)});}"><div class="anlStu-main"><strong>${escapeHtml(x.no)}</strong> — ${escapeHtml(x.name)} <span class="text-muted">(${escapeHtml(x.class)})</span></div></div>`).join(''); res.style.display='block';
 }
 
-// ---- anlStuSelect (orig lines 1907-1911) ----
 function anlStuSelect(no){
   getEl('anlStuRes').style.display='none';
   // Öğrenci seçilince arama kutusu temizlenir; seçili öğrenci rozette gösterilir.
@@ -1184,10 +1168,8 @@ function anlStuSelect(no){
   getEl('aBadge').innerHTML=s?`<span class="badge rounded-pill px-3 py-2 sa-selected-pill"><i class="fas fa-check-circle me-1"></i>Seçili Öğrenci: ${escapeHtml(s.name)} (${escapeHtml(s.class)})</span>`:'<span class="text-muted">Seçilmedi</span>'; reqUI(); 
 }
 
-// ---- anlStuClear (orig lines 1912-1912) ----
 function anlStuClear(){ getEl('anlStuInp').value=''; getEl('anlStuRes').style.display='none'; getEl('anlStuRes').innerHTML=''; getEl('anlStuBadge').innerHTML=''; sAct(null,false); }
 
-// ---- top-level (orig lines 1913-1913) ----
 document.addEventListener('click',e=>{ let res=getEl('anlStuRes'),inp=getEl('anlStuInp'); if(res&&inp&&!res.contains(e.target)&&e.target!==inp)res.style.display='none'; let res2=getEl('sRes'),inp2=getEl('sInp'); if(res2&&inp2&&!res2.contains(e.target)&&e.target!==inp2)res2.style.display='none'; });
 
 // ---- examColorIdx: sınav türü adından deterministik renk index'i (0-7) üretir ----
@@ -1211,7 +1193,6 @@ function toExamLabel(t){
   }).join(' ');
 }
 
-// ---- uStat (orig lines 1915-1921) ----
 function uStat(){
   const g=getEl('dynamicStatsGrid'); if(!g) return;
   // Sınav türü -> { total, grades:{9:n,10:n,...} }
@@ -1304,7 +1285,6 @@ function goToAnaliz(examType, grade) {
   }, 150);
 }
 
-// ---- uDrp (orig lines 1923-1925) ----
 function uDrp(){
   uExamTypes(); if(aNo){ let s=getStuMap().get(aNo); if(s&&getEl('anlStuInp'))getEl('anlStuInp').value=s.name+' ('+s.class+')'; }
 }
@@ -1384,7 +1364,6 @@ function _selectHasConcreteValue(id){
   return !!(opt && !opt.disabled && el.value !== '');
 }
 
-// ---- uBranches (orig lines 1927-1945) ----
 function uBranches(){
   let aT = getEl('aType') ? getEl('aType').value : '';
   if(!(aT==='class'||aT==='subject'||aT==='examdetail')) return;
@@ -1404,7 +1383,6 @@ function uBranches(){
   else brSel.value = '';
 }
 
-// ---- uExamTypes (orig lines 1947-1986) ----
 function uExamTypes(){
   let aT = getEl('aType') ? getEl('aType').value : '';
   let exSel = getEl('aEx'); if(!exSel) return;
@@ -2049,7 +2027,6 @@ function onRiskFilterChange(rebuild){
   updateFilterSummary();
 }
 
-// ---- uSub (orig lines 1988-2043) ----
 function uSub(){
   let aT=getEl('aType')?getEl('aType').value:'', t=getEl('aEx')?getEl('aEx').value:'';
   let subEl = getEl('aSub'); if(!subEl) return;
@@ -2116,7 +2093,6 @@ function uSub(){
   }
 }
 
-// ---- _updateGDateVisibility (orig lines 2046-2056) ----
 function _updateGDateVisibility() {
   let t = getEl('aType') ? getEl('aType').value : '';
   let sub = getEl('aSub') ? getEl('aSub').value : '';
@@ -2129,14 +2105,12 @@ function _updateGDateVisibility() {
   }
 }
 
-// ---- _resetSel (orig lines 2059-2063) ----
 function _resetSel(id){
   let el = getEl(id); if(!el) return;
   el.value = '';
   if(el.options.length && el.options[0].disabled){ el.options[0].selected = true; }
 }
 
-// ---- onLvlChange (orig lines 2064-2067) ----
 function onLvlChange(){
   _rememberAnalysisSub();
   _resetSel('aBr'); _resetSel('aEx'); _resetSel('aDate'); _resetSel('aSub');
@@ -2144,7 +2118,6 @@ function onLvlChange(){
   uExamDates(); uSub(); _updateGDateVisibility(); _updateAnalysisFilterLocks(); reqAnl();
 }
 
-// ---- onBrChange (orig lines 2068-2071) ----
 function onBrChange(){
   _rememberAnalysisSub();
   _resetSel('aEx'); _resetSel('aDate'); _resetSel('aSub');
@@ -2152,7 +2125,6 @@ function onBrChange(){
   uExamDates(); uSub(); _updateGDateVisibility(); _updateAnalysisFilterLocks(); reqAnl();
 }
 
-// ---- onExTypeChange (orig lines 2072-2075) ----
 function onExTypeChange(){
   let _aT = getEl('aType') ? getEl('aType').value : '';
   if(_aT === 'student' && !aNo){
@@ -2260,14 +2232,12 @@ function applyExamColorToFilters(){
   }
 }
 
-// ---- onDateChange (orig lines 2076-2079) ----
 function onDateChange(){
   _rememberAnalysisSub();
   _resetSel('aSub');
   uSub(); _updateGDateVisibility(); _updateAnalysisFilterLocks(); reqAnl();
 }
 
-// ---- uExamDates (orig lines 2081-2109) ----
 function uExamDates(){
   let t=getEl('aEx') ? getEl('aEx').value : '', dates=[], datePublisherMap = {}, aT = getEl('aType') ? getEl('aType').value : '';
   let dateEl = getEl('aDate'); if(!dateEl) return;
@@ -2351,7 +2321,6 @@ function _updateAnalysisFilterLocks(){
   }
 }
 
-// ---- uUI (orig lines 2111-2172) ----
 function uUI(){
   let t=getEl('aType').value;
   let isRisk = t === 'risk';
@@ -2410,7 +2379,6 @@ function uUI(){
   updateFilterSummary();
 }
 
-// ---- _populateRiskFilterDropdowns (orig lines 2174-2220) ----
 function _populateRiskFilterDropdowns() {
   let risks = (_riskCache && _riskCache.results) ? _riskCache.results : (typeof calcRiskScores === 'function' ? calcRiskScores() : []);
   let riskParts = (r) => _classParts(r.cls);
@@ -2477,7 +2445,6 @@ function _populateRiskFilterDropdowns() {
   }
 }
 
-// ---- handleSubChange (orig lines 2222-2230) ----
 function handleSubChange(){ 
   let t = getEl('aType').value, sub = getEl('aSub').value;
   if(t === 'student' && !aNo){
@@ -2506,13 +2473,26 @@ function _ensureTableScrollHints(scope){
       if(headerCandidate && headerCandidate.classList && headerCandidate.classList.contains('sa-list-header')){
         header = headerCandidate;
         prev.remove();
+      } else if(box.parentElement && box.parentElement.classList && box.parentElement.classList.contains('card-body')){
+        headerCandidate = box.parentElement.previousElementSibling;
+        if(headerCandidate && headerCandidate.classList && headerCandidate.classList.contains('sa-list-header')){
+          header = headerCandidate;
+          prev.remove();
+        } else {
+          return;
+        }
       } else {
         return;
       }
     } else if(prev && prev.classList && prev.classList.contains('sa-list-header')){
       header = prev;
+    } else if(box.parentElement && box.parentElement.classList && box.parentElement.classList.contains('card-body')){
+      let headerCandidate = box.parentElement.previousElementSibling;
+      if(headerCandidate && headerCandidate.classList && headerCandidate.classList.contains('sa-list-header')){
+        header = headerCandidate;
+      }
     }
-    if(header && header.parentNode === box.parentNode){
+    if(header){
       let inlineHint = header.querySelector(':scope > .scroll-hint-inline');
       if(!inlineHint){
         inlineHint = document.createElement('span');

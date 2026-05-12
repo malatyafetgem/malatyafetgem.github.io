@@ -1,9 +1,7 @@
-// app-core.js — Firebase init, auth, global state, init, data fetch, helpers
+﻿// app-core.js — Firebase init, auth, global state, init, data fetch, helpers
 
-// ---- top-level (orig lines 674-674) ----
 Chart.register(ChartDataLabels);
 
-// ---- top-level (orig lines 676-684) ----
 const firebaseConfig = {
   apiKey: "AIzaSyCbgwrcjkFF8yf2S2zOFzIt8w18oqmI6oQ",
   authDomain: "fetgemfen-f9580.firebaseapp.com",
@@ -14,13 +12,10 @@ const firebaseConfig = {
   databaseURL: "https://fetgemfen-f9580-default-rtdb.europe-west1.firebasedatabase.app"
 };
 
-// ---- top-level (orig lines 685-685) ----
 firebase.initializeApp(firebaseConfig);
 
-// ---- top-level (orig lines 686-686) ----
 const database = firebase.database();
 
-// ---- top-level (orig lines 687-687) ----
 const auth = firebase.auth();
 
 let APP_BROWSER_ONLINE = (typeof navigator === 'undefined') ? true : navigator.onLine !== false;
@@ -43,7 +38,6 @@ function ensureOnlineForWrite(actionLabel = 'Bu işlem'){
   return false;
 }
 
-// ---- uConn (orig lines 689-693) ----
 function uConn(online){
   APP_FIREBASE_CONNECTED = online === true;
   const d=document.getElementById('connDot'),t=document.getElementById('connTxt'),b=document.getElementById('connBadge');if(!d||!t||!b)return;
@@ -52,7 +46,6 @@ function uConn(online){
   else{t.textContent='Çevrimdışı';b.className='nav-link conn-badge is-offline';b.title=APP_BROWSER_ONLINE?'Firebase bağlantısı yok':'İnternet bağlantısı yok';}
 }
 
-// ---- top-level (orig lines 694-694) ----
 database.ref('.info/connected').on('value',snap=>uConn(snap.val()===true),()=>uConn(false));
 
 window.addEventListener('online', () => {
@@ -67,7 +60,6 @@ window.addEventListener('offline', () => {
   showToast('İnternet bağlantısı kesildi. Veri yazma işlemleri bağlantı gelene kadar durduruldu.', 'warning', 5000);
 });
 
-// ---- top-level (orig lines 696-696) ----
 const ADMIN_UID="YLozrXC5w4OmD4HRzjlgF80qPCp1";
 
 function showStartup(message){
@@ -151,7 +143,6 @@ function showAnalysisHint(message){
   if(typeof applyExamColorToFilters === 'function') applyExamColorToFilters();
 }
 
-// ---- checkAuth (orig lines 698-721) ----
 function checkAuth(){
   let settled = false;
   const loaderDelay = setTimeout(() => {
@@ -210,7 +201,6 @@ function checkAuth(){
   });
 }
 
-// ---- login (orig lines 723-736) ----
 function login(){
   const em=getEl('loginEmail').value.trim(),pa=getEl('loginPass').value;
   const err=getEl('loginError'),btn=getEl('btnLogin');
@@ -226,17 +216,14 @@ function login(){
   });
 }
 
-// ---- logout (orig lines 738-738) ----
 function logout(){ auth.signOut(); location.reload(); }
 
-// ---- togglePassword (orig lines 740-744) ----
 function togglePassword(){
   let inp = getEl('loginPass'), icon = getEl('togglePassIcon');
   if(inp.type === 'password'){ inp.type = 'text'; icon.classList.replace('fa-eye', 'fa-eye-slash'); } 
   else { inp.type = 'password'; icon.classList.replace('fa-eye-slash', 'fa-eye'); }
 }
 
-// ---- openForgotPassword (orig lines 746-751) ----
 function openForgotPassword(e) {
   e.preventDefault();
   let em = getEl('loginEmail').value.trim();
@@ -244,7 +231,6 @@ function openForgotPassword(e) {
   getEl('forgotMsg').innerHTML = ''; showModal('mForgot');
 }
 
-// ---- sendPasswordReset (orig lines 753-765) ----
 function sendPasswordReset() {
   let em = getEl('forgotEmail').value.trim(), msg = getEl('forgotMsg');
   if(!em) { msg.innerHTML = '<span class="text-danger">E-posta adresi gerekli.</span>'; return; }
@@ -259,7 +245,6 @@ function sendPasswordReset() {
   });
 }
 
-// ---- applyTheme (orig lines 767-772) ----
 function applyTheme(){
   Chart.defaults.color='#475569';
   if(c.h)c.h.update();if(c.a)c.a.update();
@@ -267,10 +252,8 @@ function applyTheme(){
   if(window._raporCharts) window._raporCharts.forEach(ch=>ch.update());
 }
 
-// ---- toggleTheme (orig lines 773-773) ----
 function toggleTheme(){ /* no-op: dark mode removed */ }
 
-// ---- top-level (orig lines 775-775) ----
 function getEl(i){return document.getElementById(i);}
 
 function cleanupModalState(){
@@ -320,35 +303,26 @@ function hideModal(id) {
 
 document.addEventListener('hidden.bs.modal', cleanupModalState);
 
-// ---- top-level (orig lines 776-776) ----
 let DB = { s: [], e: [] };
 
-// ---- top-level (orig lines 777-777) ----
 let EXAM_META = {};
 
-// ---- top-level (orig lines 778-778) ----
 let CACHED_RESULTS = {};
 
-// ---- top-level (orig lines 779-779) ----
 let aNo=null, c={h:null,a:null};
 
-// ---- top-level (orig lines 780-780) ----
 const cols=['#2563eb','#059669','#d97706','#dc2626','#7c3aed','#0891b2','#be185d','#4b5563'];
 
-// ---- top-level (orig lines 781-781) ----
 let dInf={},searchDebounceTimer=null,anlDebounceTimer=null,chartTimer=null;
 
-// ---- top-level (orig lines 782-782) ----
 let currentExcelData=[], currentUploadType='', currentHeaders=[], PENDING_UPLOAD=null;
 
-// ---- ld (orig lines 784-784) ----
 function ld(s,m="İşlem yapılıyor..."){
   const txt = getEl('l-txt'), loader = getEl('loader');
   if(txt) txt.textContent = m;
   if(loader) loader.style.display = s ? 'flex' : 'none';
 }
 
-// ---- showToast (orig lines 786-794) ----
 function showToast(message, type = 'info', duration = 4000) {
   const container = getEl('toastContainer');
   if(!container){ console.warn(message); return null; }
@@ -379,13 +353,11 @@ function scheduleRaporInit(delay = 150){
   }, delay);
 }
 
-// ---- toTitleCase (orig lines 796-799) ----
 function toTitleCase(str) {
   if (!str) return '';
   return String(str).toLocaleLowerCase('tr-TR').split(' ').map(word => word.charAt(0).toLocaleUpperCase('tr-TR') + word.slice(1)).join(' ');
 }
 
-// ---- init (orig lines 801-851) ----
 async function init(){
   applyTheme();
   // ld(1,'Sistem altyapısı hazırlanıyor...'); // Bu satırı sildik/kapattık
@@ -416,7 +388,6 @@ async function init(){
   }, err => showToast('Sınav bilgileri okunamadı: ' + err.message, 'error'));
 }
 
-// ---- fetchBatches (orig lines 853-862) ----
 async function fetchBatches(batchIds, options = {}) {
   let ids = [...new Set((batchIds || []).filter(Boolean))].filter(bId => !CACHED_RESULTS[bId]);
   if(!ids.length){ rebuildDbFromCache(); return; }
@@ -456,7 +427,6 @@ async function fetchBatches(batchIds, options = {}) {
   return run;
 }
 
-// ---- reqProfile (orig lines 866-871) ----
 async function reqProfile() {
   if(!aNo) return;
   let st = getStuMap().get(aNo), stGrade = st ? getGrade(st.class) : null, neededBatches = [];
@@ -479,7 +449,6 @@ function refreshAfterAnalysisRender(){
   }
 }
 
-// ---- reqAnl (orig lines 873-940) ----
 async function reqAnl() {
   let eT = getEl('aEx').value, dt = getAnalysisDateValue(), aT = getEl('aType').value, sub = getSelectValueIfEnabled('aSub');
   let needed = [];
@@ -612,7 +581,6 @@ async function reqAnl() {
   refreshAfterAnalysisRender();
 }
 
-// ---- reqUI (orig lines 942-942) ----
 async function reqUI() {
   const typeEl = getEl('aType');
   const currentType = typeEl ? typeEl.value : '';
@@ -627,10 +595,8 @@ async function reqUI() {
   await reqAnl();
 }
 
-// ---- normTR (orig lines 1030-1030) ----
 function normTR(s){return String(s||'').toLocaleLowerCase('tr-TR').replace(/ğ/g,'g').replace(/ü/g,'u').replace(/ş/g,'s').replace(/ı/g,'i').replace(/ö/g,'o').replace(/ç/g,'c');}
 
-// ---- pN (orig lines 1031-1031) ----
 function pN(v){
   // Türkçe: binlik ayraç nokta, ondalık ayraç virgül → 1.234,56 veya 12,5
   // İngilizce: 12.5 → doğrudan geçer
@@ -652,7 +618,6 @@ function pN(v){
   return isNaN(n) ? 0 : n;
 }
 
-// ---- srt (orig lines 1033-1045) ----
 function srt(a,b){
   // === FIX: Tarihler her zaman GG.AA.YYYY -> Date olarak karşılaştırılır (string sıralama yok) ===
   let parseDate = (dStr) => {
@@ -667,7 +632,6 @@ function srt(a,b){
   return parseDate(a) - parseDate(b);
 }
 
-// ---- linRegSlope (orig lines 1050-1057) ----
 function linRegSlope(values){
   let arr = (values||[]).filter(v => v !== null && v !== undefined && !isNaN(v)).map(Number);
   let n = arr.length; if(n < 2) return 0;

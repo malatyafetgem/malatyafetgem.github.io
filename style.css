@@ -1,4 +1,4 @@
-/* Inline override from original index.html line 6 */
+﻿/* Inline override from original index.html line 6 */
 :root{
   --sa-primary:#2563eb;
   --sa-primary-600:#1d4ed8;
@@ -3156,7 +3156,7 @@ body.desktop-site-mode .bottom-nav {
 }
 
 
-/* ===== Açıklama popup estetik ince ayarları | AU39 ===== */
+/* ===== Açıklama popup estetik ince ayarları ===== */
 /* Amaç: AdminLTE/Bootstrap hissini koruyup kaba kutu etkisini azaltmak. */
 .card-explanation-popover {
   --bs-popover-max-width: 405px;
@@ -3325,7 +3325,7 @@ body.desktop-site-mode .bottom-nav {
 }
 
 
-/* ===== Popup başlık sadeleştirme | AU40 ===== */
+/* ===== Popup başlık sadeleştirme ===== */
 /* Popup içindeki ekstra info ikonunu kaldırır; kart üstündeki sağ üst info simgesi kalır. */
 .card-explanation-popover-icon,
 .card-explanation-sheet-icon {
@@ -3353,7 +3353,7 @@ body.desktop-site-mode .bottom-nav {
 }
 
 
-/* ===== Başlık tek satır düzeltmesi | AU41 ===== */
+/* ===== Başlık tek satır düzeltmesi ===== */
 /* Üstte ayrı rozet satırı yok; başlık artık örn. "Genel Eğilim (Trend)" şeklindedir. */
 .card-explanation-popover .popover-header {
   display: none !important;
@@ -3379,7 +3379,7 @@ body.desktop-site-mode .bottom-nav {
 }
 
 
-/* ===== Kapatma düğmesi ve başlık ölçüsü | AU42 ===== */
+/* ===== Kapatma düğmesi ve başlık ölçüsü ===== */
 .card-explanation-popover-head {
   position: relative;
   align-items: center;
@@ -3463,7 +3463,7 @@ body.desktop-site-mode .bottom-nav {
 }
 
 
-/* ===== Başlık ortalama ve 'Nedir?' bölümü | AU43 ===== */
+/* ===== Başlık ortalama ve 'Nedir?' bölümü ===== */
 .card-explanation-popover-head {
   justify-content: center;
   text-align: center;
@@ -3513,7 +3513,7 @@ body.desktop-site-mode .bottom-nav {
 }
 
 
-/* ===== Kategori başlıkları tamamen kaldırıldı | AU44 ===== */
+/* ===== Kategori başlıkları tamamen kaldırıldı ===== */
 .card-explanation-badge {
   display: none !important;
   visibility: hidden !important;
@@ -3527,7 +3527,7 @@ body.desktop-site-mode .bottom-nav {
 
 
 
-/* ===== Masaüstü popover konumlandırma iyileştirmesi | AU45 ===== */
+/* ===== Masaüstü popover konumlandırma iyileştirmesi ===== */
 /* Popover masaüstünde seçilen kartın sağında/solunda açılır; mobil offcanvas davranışı değişmedi. */
 @media (min-width: 576px) {
   .card-explanation-popover {
@@ -3541,7 +3541,7 @@ body.desktop-site-mode .bottom-nav {
 }
 
 
-/* ===== Info butonu renk iyileştirmesi | AU46 ===== */
+/* ===== Info butonu renk iyileştirmesi ===== */
 /* Daha belirgin ama kartın ana bilgisini bastırmayan soft mavi görünüm. */
 .card-info-btn {
   background: #eff6ff !important;
@@ -3566,7 +3566,7 @@ body.desktop-site-mode .bottom-nav {
 }
 
 
-/* ===== Eski hover tooltip ve soru işareti imlecini kaldırma | AU47 ===== */
+/* ===== Eski hover tooltip ve soru işareti imlecini kaldırma ===== */
 /* Kartlardaki eski title açıklamaları JS ile temizlenir; bu CSS de help imlecini engeller. */
 .trend-card [title],
 .sec-card[title],
@@ -3579,7 +3579,7 @@ body.desktop-site-mode .bottom-nav {
   cursor: inherit !important;
 }
 
-/* ===== Info butonu gömülü görünüm | AU48 ===== */
+/* ===== Info butonu gömülü görünüm ===== */
 /* Buton kartın üstüne yapıştırılmış değil, kart yüzeyine gömülmüş küçük bir bilgi noktası gibi görünür. */
 .card-info-btn {
   background: linear-gradient(145deg, #eaf2ff 0%, #f8fbff 100%) !important;
@@ -3629,7 +3629,7 @@ body.desktop-site-mode .bottom-nav {
 
 
 
-/* ===== Öğrenci Sorgula info desteği | AU49 ===== */
+/* ===== Öğrenci Sorgula info desteği ===== */
 .student-profile-info-cards .sec-card.has-card-info,
 .student-profile-stats-part .trend-metric.has-card-info,
 .risk-info-section .risk-info-card.has-card-info {
@@ -3637,11 +3637,11 @@ body.desktop-site-mode .bottom-nav {
 }
 
 
-/* ===== Basit öğrenci özet kartlarında info kaldırıldı | AU50 ===== */
+/* ===== Basit öğrenci özet kartlarında info kaldırıldı ===== */
 /* Ortalama Net, Katılım, Sınıf Derece ve Kurum Derece kartları JS eşleştirmesinden çıkarıldı. */
 
 
-/* ===== Masaüstü popup yön önceliği | AU51 ===== */
+/* ===== Masaüstü popup yön önceliği ===== */
 /* Kural: sağda yer varsa sağ; yoksa alt; alt da yoksa üst. Sol yalnızca son çare. */
 @media (min-width: 576px) {
   .card-explanation-popover.bs-popover-end {
@@ -3656,7 +3656,7 @@ body.desktop-site-mode .bottom-nav {
 }
 
 
-/* ===== Risk kartlarında info sistemi kaldırıldı | AU52 ===== */
+/* ===== Risk kartlarında info sistemi kaldırıldı ===== */
 .risk-card .card-info-btn,
 .risk-stat-card .card-info-btn,
 .risk-info-card .card-info-btn,
@@ -3669,8 +3669,3 @@ body.desktop-site-mode .bottom-nav {
   padding-right: inherit !important;
 }
 
-
-/* ===== Seçim sütunu düzeltmeleri yeniden uygulandı | AU53 ===== */
-
-
-/* ===== Metodoloji başlıkları yeni İstatistik Kartları adlarıyla eşitlendi | AU56 ===== */

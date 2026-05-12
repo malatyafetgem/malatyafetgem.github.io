@@ -1,6 +1,5 @@
-// app-settings.js — Settings CRUD, Excel upload wizard, DB exp/imp, PWA install
+﻿// app-settings.js — Settings CRUD, Excel upload wizard, DB exp/imp, PWA install
 
-// ---- rTabS (orig lines 3629-3632) ----
 function rTabS(){
   let t=getEl('tStu').querySelector('tbody');
   t.innerHTML=DB.s.map((s,idx)=>{
@@ -13,7 +12,6 @@ function rTabS(){
   }).join('');
 }
 
-// ---- filterSettingsStudents (orig lines 3634-3642) ----
 function filterSettingsStudents() {
   let input = getEl('setStuSearch').value.toLocaleLowerCase('tr-TR');
   let rows = getEl('tStu').querySelectorAll('tbody tr');
@@ -24,7 +22,6 @@ function filterSettingsStudents() {
   });
 }
 
-// ---- rTabE (orig lines 3644-3652) ----
 function rTabE(){
   let u = Object.keys(EXAM_META).map(bId => ({ examBatchId: bId, ...EXAM_META[bId] })).sort((a,b)=>{
     let dateCmp = srt(a.date, b.date); if(dateCmp !== 0) return dateCmp;
@@ -35,14 +32,12 @@ function rTabE(){
   getEl('tExA').innerHTML=`<table class="table table-sm table-hover text-nowrap"><thead><tr><th>#</th><th>Tarih</th><th>Tür</th><th>Sınıf Seviyesi</th><th>Yayınevi</th><th>Sayı</th><th>İşlem</th></tr></thead><tbody>${u.map((e,idx)=>{ let gl = (e.grades && e.grades.length > 0) ? [...e.grades].sort().join(', ') : 'Tümü'; let bIdArg = jsArg(e.examBatchId); return `<tr><td>${idx+1}</td><td>${escapeHtml(e.date)}</td><td>${escapeHtml(e.examType)}</td><td>${escapeHtml(gl)}</td><td>${escapeHtml(toTitleCase(e.publisher)||'—')}</td><td>${escapeHtml(e.count)}</td><td><div class="btn-group btn-group-sm"><button class="btn btn-warning admin-only" onclick="eExam(${bIdArg})" title="Düzenle"><i class='fas fa-edit'></i></button><button class="btn btn-danger admin-only" onclick="cDel('exam','Sınav tamamen silinecek. Onaylıyor musunuz?',${bIdArg})"><i class='fas fa-trash'></i></button></div></td></tr>`; }).join('')}</tbody></table>`;
 }
 
-// ---- eExam (orig lines 3654-3658) ----
 function eExam(bId){
   let m = EXAM_META[bId]; if(!m) return;
   getEl('eExBatchId').value = bId; getEl('eExDate').value = m.date; getEl('eExType').value = m.examType; getEl('eExPub').value = m.publisher || '';
   showModal('mEditExam');
 }
 
-// ---- svExam (orig lines 3660-3689) ----
 async function svExam(){
   let bId = getEl('eExBatchId').value, newDate = getEl('eExDate').value.trim(), newType = getEl('eExType').value.trim().toLocaleUpperCase('tr-TR'), newPub = getEl('eExPub').value.trim();
   if(!newDate || !newType){ showToast('Tarih ve tür zorunludur!','warning'); return; }
@@ -74,19 +69,14 @@ async function svExam(){
   ld(0);
 }
 
-// ---- oMod (orig lines 3691-3691) ----
 function oMod(id){showModal(id);}
 
-// ---- cMod (orig lines 3692-3692) ----
 function cMod(id){hideModal(id);}
 
-// ---- oModAdd (orig lines 3693-3693) ----
 function oModAdd(){getEl('mSTit').textContent='Öğrenci Ekle';getEl('mSNo').value='';getEl('mSNo').disabled=false;getEl('mSNa').value='';getEl('mSCl').value='';oMod('mStu');}
 
-// ---- eStu (orig lines 3694-3694) ----
 function eStu(n){let s=getStuMap().get(n);if(s){getEl('mSTit').textContent='Öğrenci Düzenle';getEl('mSNo').value=s.no;getEl('mSNo').disabled=true;getEl('mSNa').value=toTitleCase(s.name);getEl('mSCl').value=s.class;oMod('mStu');}}
 
-// ---- cDel (orig lines 3695-3695) ----
 function cDel(t,m,id=null){
   dInf={t,id};
   let title = getEl('mConfTitle'), ok = getEl('mConfOkBtn');
@@ -105,7 +95,6 @@ function appConfirm(message, onConfirm, options = {}){
   oMod('mConf');
 }
 
-// ---- xDel (orig lines 3697-3741) ----
 async function xDel(){
   let t=dInf.t,id=dInf.id;
   if(t === 'callback'){
@@ -178,7 +167,6 @@ rTabE(); uStat(); uDrp(); if(aNo) reqProfile(); else if(getEl('sonuclar').classL
   cMod('mConf');
 }
 
-// ---- svStu (orig lines 3743-3766) ----
 async function svStu(){
   let n=String(getEl('mSNo').value).trim(),nm=getEl('mSNa').value.trim(),cc=getEl('mSCl').value.trim();
   if(!n||!nm||!cc){showToast('Tüm alanları doldurun!','warning');return;}
@@ -218,14 +206,12 @@ async function svStu(){
   cMod('mStu'); showToast('Öğrenci bilgileri kaydedildi.', 'success');
 }
 
-// ---- expDB (orig lines 3768-3772) ----
 async function expDB(){
   ld(1,'Yedek hazırlanıyor, lütfen bekleyin...');
   try { let resultsSnap = await database.ref('db_v2/examResults').once('value'); let payload = { _version: 2, _date: new Date().toISOString(), students: DB.s, examMeta: EXAM_META, examResults: resultsSnap.val() || {} }; let b = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'}); let a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `TamYedek_${new Date().toLocaleDateString('tr-TR').replace(/\./g,'-')}.json`; a.click(); } catch(err) { showToast('Yedek alınamadı: ' + err.message, 'error'); }
   ld(0);
 }
 
-// ---- impDB (orig lines 3774-3786) ----
 async function impDB(e){
   if(auth.currentUser.uid !== ADMIN_UID){ showToast('Bu işlem sadece admin tarafından yapılabilir.', 'error'); e.target.value = ''; return; }
   let f = e.target.files[0]; if(!f){ e.target.value=''; return; }
@@ -252,7 +238,6 @@ function restoreBackupFile(f){
   rd.readAsText(f);
 }
 
-// ---- cancelUpload (orig lines 3788-3788) ----
 function cancelUpload() {
   PENDING_UPLOAD = null;
   let fStu = getEl('fStu'), fEx = getEl('fEx');
@@ -263,10 +248,8 @@ function cancelUpload() {
   hideModal('mUploadPreview');
 }
 
-// ---- backToMapping (orig lines 3789-3789) ----
 function backToMapping() { hideModal('mUploadPreview'); showModal('mMappings'); }
 
-// ---- upl (orig lines 3791-3829) ----
 function upl(e, t) {
   let f = e.target.files[0]; if(!f) return;
   // === FIX: XLSX yükleme kırılganlığı — uzantı, boyut, sayfa ve başlık doğrulamaları ===
@@ -307,16 +290,13 @@ function upl(e, t) {
   }, 100);
 }
 
-// ---- buildOptions (orig lines 3831-3834) ----
 function buildOptions(headers, selectedGuess, allowEmpty) {
   let html = allowEmpty ? optionHtml('', '-- Boş Geç --') : optionHtml('', '-- Seçiniz --');
   headers.forEach(h => { let sel = !!(selectedGuess && selectedGuess !== '' && (h.toLocaleLowerCase('tr-TR') === selectedGuess.toLocaleLowerCase('tr-TR') || h.toLocaleLowerCase('tr-TR').includes(selectedGuess.toLocaleLowerCase('tr-TR')))); html += optionHtml(h, h, sel); }); return html;
 }
 
-// ---- top-level (orig lines 3836-3836) ----
 let wizardStep = 0;
 
-// ---- buildMappingUI (orig lines 3838-3853) ----
 function buildMappingUI() {
   let b = getEl('mMappingsBody'), h = currentHeaders;
   if(currentUploadType === 's') {
@@ -334,10 +314,8 @@ function buildMappingUI() {
   }
 }
 
-// ---- top-level (orig lines 3855-3855) ----
 const WIZARD_STEPS = [ { id:'wiz-step-0', title:'1. Sınav Genel Bilgileri' }, { id:'wiz-step-1', title:'2. Sabit Excel Sütunları' }, { id:'wiz-step-2', title:'3. Ders Netleri Eşleştirmesi' }, { id:'wiz-step-3', title:'4. Dereceler (İsteğe Bağlı)' } ];
 
-// ---- renderWizardStep (orig lines 3857-3891) ----
 function renderWizardStep() {
   let h = currentHeaders, saved = {}; try { saved = JSON.parse(localStorage.getItem('map_e') || '{}'); } catch(e){}
   let today = new Date().toISOString().split('T')[0], [y,m,d] = today.split('-'), trDate = `${d}.${m}.${y}`, b = getEl('mMappingsBody');
@@ -377,10 +355,8 @@ function renderWizardStep() {
   if(btnDone) btnDone.style.display = wizardStep === WIZARD_STEPS.length - 1 ? 'inline-block' : 'none';
 }
 
-// ---- wizardNav (orig lines 3893-3893) ----
 function wizardNav(dir) { saveWizardStepData(); wizardStep = Math.max(0, Math.min(WIZARD_STEPS.length - 1, wizardStep + dir)); renderWizardStep(); }
 
-// ---- saveWizardStepData (orig lines 3895-3902) ----
 function saveWizardStepData() {
   let saved = {}; try { saved = JSON.parse(localStorage.getItem('map_e') || '{}'); } catch(e){}
   if(wizardStep === 0) { let t = getEl('map_e_type'), d = getEl('map_e_date'), p = getEl('map_e_pub'), ma = getEl('map_e_mark_absent'); if(t) saved.type = t.value; if(d) saved.date = d.value; if(p) saved.pub = p.value; if(ma) saved.markAbsent = ma.checked; }
@@ -390,7 +366,6 @@ function saveWizardStepData() {
   try { localStorage.setItem('map_e', JSON.stringify(saved)); } catch(e) {}
 }
 
-// ---- addSubjectRow (orig lines 3904-3910) ----
 function addSubjectRow(selectedCol = '', typedName = '') {
   let div = document.createElement('div'); div.className = 'subj-map-row';
   let html = `<select class="form-select form-select-sm map-subj-col">${optionHtml('', '-- Excel Sütunu Seçin --')}`;
@@ -399,7 +374,6 @@ function addSubjectRow(selectedCol = '', typedName = '') {
   div.innerHTML = html; getEl('subjectMapContainer').appendChild(div);
 }
 
-// ---- processMappings (orig lines 3912-3989) ----
 function processMappings() {
   let d = currentExcelData, previewHtml = '';
   if(currentUploadType === 's') {
@@ -494,7 +468,6 @@ function processMappings() {
   getEl('uploadPreviewBody').innerHTML = previewHtml; hideModal('mMappings'); showModal('mUploadPreview', {backdrop: 'static'});
 }
 
-// ---- confirmUpload (orig lines 3991-4001) ----
 async function confirmUpload() {
   if(!PENDING_UPLOAD) return cancelUpload();
   if(!ensureOnlineForWrite('Veri yükleme')) return;
@@ -510,7 +483,6 @@ showToast('Sınav sonuçları sisteme başarıyla kaydedildi.', 'success');
   } catch(err) { showToast('Kayıt sırasında hata oluştu: ' + err.message, 'error'); } cancelUpload(); ld(0);
 }
 
-// ---- top-level (orig lines 4003-4007) ----
 const APP_CACHE_NAME = window.SA_CACHE_NAME; // version.js → index.html üzerinden gelir
 
 let APP_BOOTED = false;
@@ -546,10 +518,9 @@ function bootApp(){
 if(document.readyState === 'complete') bootApp();
 else window.addEventListener('load', bootApp);
 
-// ---- top-level (orig lines 4009-4009) ----
 let deferredInstallPrompt = null, pwaPopupTimer = null, pwaPopupShowTimer = null, userLoggedIn = false;
-let pwaInstallToast = null, pwaInstallCompleted = false, pwaInstallStartedAt = 0;
-let pwaInstallSuccessShown = false;
+let pwaInstallToast = null, pwaInstallCompleted = false;
+let pwaInstallHandled = false;
 
 function clearPwaInstallToast() {
   if(pwaInstallToast && pwaInstallToast.parentNode) pwaInstallToast.remove();
@@ -559,31 +530,26 @@ function clearPwaInstallToast() {
 
 function showPwaInstallLoading() {
   if(pwaInstallToast && pwaInstallToast.parentNode) return;
-  pwaInstallStartedAt = Date.now();
   clearPwaInstallToast();
   pwaInstallToast = showToast('Uygulama yükleniyor...', 'info', 12000);
   if(pwaInstallToast) pwaInstallToast.dataset.toastKey = 'pwa-install-loading';
 }
 
-function markPwaInstallCompleted() {
-  if(pwaInstallSuccessShown) return;
-  pwaInstallSuccessShown = true;
+function finishPwaInstallFlow() {
+  if(pwaInstallHandled) return;
+  pwaInstallHandled = true;
   clearPwaInstallToast();
-  pwaInstallStartedAt = 0;
 }
 
-// ---- top-level (orig lines 4010-4010) ----
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredInstallPrompt = e;
   pwaInstallCompleted = false;
-  pwaInstallSuccessShown = false;
-  pwaInstallStartedAt = 0;
+  pwaInstallHandled = false;
   clearPwaInstallToast();
   if (userLoggedIn) showPwaPopupIfReady();
 });
 
-// ---- top-level (orig lines 4011-4011) ----
 // Başarı bildirimi tarayıcı/işletim sistemi tarafından verilir; burada yalnızca yükleniyor toast'ı temizlenir.
 window.addEventListener('appinstalled', () => {
   pwaInstallCompleted = true;
@@ -591,19 +557,18 @@ window.addEventListener('appinstalled', () => {
   let installWrap = document.getElementById('installBtnWrapper');
   if(installWrap) installWrap.style.display = 'none';
   closePwaPopup();
-  markPwaInstallCompleted();
+  finishPwaInstallFlow();
 });
 
-// ---- showPwaPopupIfReady (orig lines 4013-4016) ----
 function showPwaPopupIfReady() {
   userLoggedIn = true;
-  if (!deferredInstallPrompt || pwaInstallCompleted || pwaInstallSuccessShown) return;
+  if (!deferredInstallPrompt || pwaInstallCompleted || pwaInstallHandled) return;
   let installWrap = document.getElementById('installBtnWrapper');
   if(installWrap) installWrap.style.display = 'block';
   if(pwaPopupShowTimer) clearTimeout(pwaPopupShowTimer);
   pwaPopupShowTimer = setTimeout(() => {
     pwaPopupShowTimer = null;
-    if (!deferredInstallPrompt || pwaInstallCompleted || pwaInstallSuccessShown) return;
+    if (!deferredInstallPrompt || pwaInstallCompleted || pwaInstallHandled) return;
     const popup = document.getElementById('pwaInstallPopup');
     if(!popup) return;
     const bar = popup.querySelector('.pwa-progress');
@@ -619,7 +584,6 @@ function showPwaPopupIfReady() {
   }, 1500);
 }
 
-// ---- closePwaPopup (orig lines 4017-4017) ----
 function closePwaPopup() {
   if(pwaPopupShowTimer) {
     clearTimeout(pwaPopupShowTimer);
@@ -632,7 +596,6 @@ function closePwaPopup() {
   setTimeout(() => { popup.style.display = 'none'; popup.style.animation = ''; }, 300);
 }
 
-// ---- triggerInstall (orig lines 4018-4018) ----
 // userChoice kullanıcının diyalogu kabul/reddettiğini bildirir, yükleme tamamını değil.
 // Başarı toast'ı gösterilmez; burada sadece "yükleniyor" gösterilir.
 function triggerInstall(e) {
@@ -645,8 +608,7 @@ function triggerInstall(e) {
     return;
   }
   pwaInstallCompleted = false;
-  pwaInstallSuccessShown = false;
-  pwaInstallStartedAt = 0;
+  pwaInstallHandled = false;
   const promptEvent = deferredInstallPrompt;
   showPwaInstallLoading();
   try {
@@ -654,7 +616,6 @@ function triggerInstall(e) {
   } catch(err) {
     deferredInstallPrompt = null;
     clearPwaInstallToast();
-    pwaInstallStartedAt = 0;
     showToast('Yükleme penceresi açılamadı. Sayfayı yenileyip tekrar deneyin.', 'warning', 4500);
     return;
   }
@@ -665,11 +626,9 @@ function triggerInstall(e) {
       if(installWrap) installWrap.style.display = 'none';
     } else {
       clearPwaInstallToast();
-      pwaInstallStartedAt = 0;
     }
   }).catch(() => {
     deferredInstallPrompt = null;
     clearPwaInstallToast();
-    pwaInstallStartedAt = 0;
   });
 }

@@ -60,10 +60,14 @@ function safeCachePut(cache, request, response) {
   });
 }
 
+function precacheAssets(cache) {
+  return cache.addAll(ASSETS.map(asset => new Request(asset, { cache: 'reload' })));
+}
+
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(ASSETS))
+      .then(precacheAssets)
       .then(() => self.skipWaiting())
   );
 });
