@@ -6,71 +6,165 @@
 <meta name="theme-color" content="#2563eb">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Öğretmen">
-<link rel="icon" href="./icon.png" type="image/png">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sınav Analizi">
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="./icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="./icon-192.png">
 <link rel="manifest" href="./manifest.json">
-<title>Öğretmen Bilgi Sistemi</title>
+<title>Sınav Analiz Sistemi</title>
 <script src="./version.js"></script>
 <script>
-window.OBS_APP_VERSION = APP_VERSION;
-window.OBS_CACHE_NAME = 'ogretmen-bilgi-' + APP_VERSION;
+window.SA_APP_VERSION = APP_VERSION;
+window.SA_CACHE_NAME = 'sinav-analizi-' + APP_VERSION;
+window.SA_CACHE_READY = (async function(){
+  try {
+    const markerKey = 'sinavAnalizi.cacheReadyVersion';
+    try {
+      if (localStorage.getItem(markerKey) === window.SA_CACHE_NAME) {
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistration('./').then(reg => { if (reg) reg.update(); }).catch(() => {});
+        }
+        return;
+      }
+    } catch (e) {}
+    if (!('caches' in window)) return;
+    const keys = await caches.keys();
+    await Promise.all(keys
+      .filter(key => key.startsWith('sinav-analizi-') && key !== window.SA_CACHE_NAME)
+      .map(key => caches.delete(key)));
+    if ('serviceWorker' in navigator) {
+      const reg = await navigator.serviceWorker.getRegistration('./');
+      if (reg) reg.update();
+    }
+    try { localStorage.setItem(markerKey, window.SA_CACHE_NAME); } catch (e) {}
+  } catch (err) {
+    console.warn('Başlangıç önbelleği temizlenemedi:', err);
+  }
+})();
 </script>
+
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@4.0.0-rc7/dist/css/adminlte.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
-<link rel="stylesheet" href="./teacher-style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<!-- Chart.js ve Datalabels Eklentisi -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
+
+<link rel="stylesheet" href="./style.css">
 </head>
-<body class="layout-fixed sidebar-expand-lg sidebar-mini">
+<body class="layout-fixed sidebar-expand-lg sidebar-mini" data-active-pane="anasayfa_genel">
+
+<div id="loader">
+  <div class="spinner-border text-light mb-3 loader-spinner"></div>
+  <div id="l-txt">Oturum kontrol ediliyor...</div>
+</div>
 
 <div id="loginScreen">
   <div class="login-card card shadow-lg">
-    <div class="card-header">
-      <div class="login-icon"><i class="fas fa-chalkboard-user"></i></div>
-      <h1>Öğretmen Bilgi Sistemi</h1>
-      <p>Öğretmen bilgi, görev, nöbet ve ders programı yönetimi</p>
+    <div class="card-header text-center py-4">
+      <h3 class="mb-0 text-white"><i class="fas fa-chart-bar me-2"></i>Sınav Analizi</h3>
+      <p class="text-white-50 mb-0 mt-1 login-subtitle">Bulut Tabanlı Eğitim Platformu</p>
     </div>
-    <div class="card-body">
-      <label class="form-label" for="loginEmail">Kullanıcı adı</label>
-      <input id="loginEmail" type="email" class="form-control mb-3" autocomplete="username" value="malatyafetgem@gmail.com">
-      <label class="form-label" for="loginPass">Şifre</label>
-      <div class="input-group mb-3">
-        <input id="loginPass" type="password" class="form-control" autocomplete="current-password" onkeydown="if(event.key==='Enter') login()">
-        <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()" title="Şifreyi göster/gizle"><i id="togglePassIcon" class="fas fa-eye"></i></button>
+    <div class="card-body p-4">
+      <div class="mb-3">
+        <label>E-posta</label>
+        <div class="input-group">
+          <input type="email" id="loginEmail" class="form-control" placeholder="ornek@okul.com" autocomplete="email" onkeydown="if(event.key==='Enter') document.getElementById('loginPass').focus();">
+          <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+        </div>
       </div>
-      <button class="btn btn-primary w-100" onclick="login()"><i class="fas fa-right-to-bracket me-2"></i>Giriş Yap</button>
-      <div id="loginError" class="alert alert-danger mt-3 mb-0 d-none"></div>
+      <div class="mb-3">
+        <label>Şifre</label>
+        <div class="input-group">
+          <input type="password" id="loginPass" class="form-control password-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()">
+          <span class="input-group-text password-toggle" role="button" tabindex="0" aria-label="Şifreyi göster/gizle" onclick="togglePassword()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();togglePassword();}">
+            <i class="fas fa-eye" id="togglePassIcon"></i>
+          </span>
+        </div>
+      </div>
+      <button id="btnLogin" onclick="login()" class="btn btn-primary w-100 btn-lg">
+        <i class="fas fa-sign-in-alt me-2"></i>Giriş Yap
+      </button>
+      <div class="text-center mt-2">
+        <a href="#" class="forgot-link" onclick="openForgotPassword(event); return false;">Şifremi unuttum</a>
+      </div>
+      <div id="loginError" class="alert mt-3 mb-0"></div>
     </div>
   </div>
 </div>
 
+<div id="pwaInstallPopup">
+  <div class="pwa-icon"><i class="fas fa-mobile-screen-button"></i></div>
+  <div class="pwa-text">
+    <strong>Uygulamayı Yükle</strong>
+    <span>Ana ekrana ekleyerek daha hızlı erişin</span>
+  </div>
+  <div class="pwa-actions">
+    <button class="btn-pwa-install" onclick="triggerInstall(event)"><i class="fas fa-download me-1"></i>Yükle</button>
+    <button class="btn-pwa-close" onclick="closePwaPopup()" title="Kapat"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="pwa-progress"></div>
+</div>
+
+<div id="cardExplanationSheet" class="offcanvas offcanvas-bottom card-explanation-sheet no-print" tabindex="-1" aria-labelledby="cardExplanationSheetTitle">
+  <div class="card-explanation-sheet-handle" aria-hidden="true"></div>
+  <div class="offcanvas-header card-explanation-sheet-head">
+    <div class="card-explanation-sheet-title-group">
+      <div>
+        <div class="card-explanation-badge" id="cardExplanationSheetBadge"></div>
+        <h5 class="offcanvas-title" id="cardExplanationSheetTitle">Açıklama</h5>
+      </div>
+    </div>
+    <button type="button" class="btn-close card-explanation-sheet-close" data-bs-dismiss="offcanvas" aria-label="Kapat"></button>
+  </div>
+  <div class="offcanvas-body card-explanation-body" id="cardExplanationSheetBody"></div>
+</div>
+
 <div id="mainApp" class="app-wrapper" style="display:none;">
-  <nav class="app-header navbar navbar-expand bg-body obs-topbar">
+  <nav class="app-header navbar navbar-expand bg-body sa-topbar" id="topNav">
     <ul class="navbar-nav">
       <li class="nav-item"><a class="nav-link top-icon-link" data-lte-toggle="sidebar" href="#" role="button" onclick="event.preventDefault()" aria-label="Menüyü aç/kapat"><i class="fas fa-bars"></i></a></li>
-      <li class="nav-item d-none d-md-flex align-items-center"><span class="nav-link top-brand-inline"><i class="fas fa-user-tie"></i><span>Öğretmen Bilgi Sistemi</span></span></li>
-      <li class="nav-item d-flex d-lg-none align-items-center ms-1"><a href="#dashboard" class="top-mobile-brand" onclick="return sTab('dashboard')" aria-label="Ana Sayfa"><img src="./icon.png" alt="" class="top-mobile-brand-icon"><span>Öğretmen</span></a></li>
+      <li class="nav-item d-none d-md-inline-block">
+        <span class="nav-link top-user-email"><i class="fas fa-user-circle"></i><span id="userEmail"></span></span>
+      </li>
+      <li class="nav-item d-flex d-lg-none align-items-center ms-1">
+        <a href="#anasayfa_genel" class="top-mobile-brand" onclick="return sTab('anasayfa_genel',this)" aria-label="Ana Sayfa">
+          <img src="./icon.png" alt="" class="top-mobile-brand-icon"><span>Sınav Analizi</span>
+        </a>
+      </li>
     </ul>
     <ul class="navbar-nav ms-auto">
-      <li class="nav-item"><span class="nav-link version-pill" id="versionBadge"></span></li>
-      <li class="nav-item"><a href="#" class="nav-link top-action-link" onclick="logout(); return false;"><i class="fas fa-arrow-right-from-bracket me-1"></i><span>Çıkış</span></a></li>
+      <li class="nav-item" id="installBtnWrapper" style="display:none;">
+        <a href="#" class="nav-link top-action-link text-success" id="installBtn" onclick="triggerInstall(event); return false;" title="Uygulamayı Yükle">
+          <i class="fas fa-download me-1"></i><span class="d-none d-sm-inline">Yükle</span>
+        </a>
+      </li>
+      <li class="nav-item"><span id="connBadge" class="nav-link conn-badge is-pending" title="Bağlantı durumu"><span id="connDot" class="conn-dot" aria-hidden="true"></span><span id="connTxt">Bağlanıyor...</span></span></li>
+      <li class="nav-item"><a href="#" class="nav-link top-action-link logout-link" onclick="logout(); return false;" title="Çıkış"><i class="fas fa-sign-out-alt"></i><span>Çıkış</span></a></li>
     </ul>
   </nav>
 
-  <aside class="app-sidebar bg-body-secondary shadow obs-sidebar" data-bs-theme="light">
+  <aside class="app-sidebar bg-body-secondary shadow sa-sidebar" data-bs-theme="light" data-enable-persistence="true">
     <div class="sidebar-brand">
-      <a href="#dashboard" class="brand-link" onclick="return sTab('dashboard')">
+      <a href="#anasayfa_genel" class="brand-link" onclick="return sTab('anasayfa_genel',this)">
         <img src="./icon.png" alt="" class="brand-image">
-        <span class="brand-text fw-bold">Öğretmen</span>
+        <span class="brand-text fw-bold">Sınav Analizi</span>
       </a>
     </div>
     <div class="sidebar-wrapper">
       <nav class="mt-2">
         <ul class="nav sidebar-menu flex-column" role="menu">
-          <li class="nav-item"><a id="nav-dashboard" href="#dashboard" class="nav-link active" onclick="return sTab('dashboard')"><i class="nav-icon fas fa-house"></i><p>Ana Sayfa</p></a></li>
-          <li class="nav-item"><a id="nav-teachers" href="#teachers" class="nav-link" onclick="return sTab('teachers')"><i class="nav-icon fas fa-user-tie"></i><p>Öğretmen</p></a></li>
-          <li class="nav-item"><a id="nav-classes" href="#classes" class="nav-link" onclick="return sTab('classes')"><i class="nav-icon fas fa-users"></i><p>Sınıf</p></a></li>
-          <li class="nav-item"><a id="nav-reports" href="#reports" class="nav-link" onclick="return sTab('reports')"><i class="nav-icon fas fa-chart-simple"></i><p>Raporlar</p></a></li>
-          <li class="nav-item"><a id="nav-settings" href="#settings" class="nav-link" onclick="return sTab('settings')"><i class="nav-icon fas fa-gear"></i><p>Ayarlar</p></a></li>
+          <li class="nav-item"><a id="nav-anasayfa_genel" href="#anasayfa_genel" class="nav-link active" onclick="return sTab('anasayfa_genel',this)"><i class="nav-icon fas fa-home"></i><p>Ana Sayfa</p></a></li>
+          <li class="nav-item"><a id="nav-anasayfa" href="#anasayfa" class="nav-link" onclick="return sTab('anasayfa',this)"><i class="nav-icon fas fa-user-graduate"></i><p>Öğrenci</p></a></li>
+          <li class="nav-item"><a id="nav-sonuclar" href="#sonuclar" class="nav-link" onclick="return sTab('sonuclar',this)"><i class="nav-icon fas fa-chart-line"></i><p>Sonuçlar &amp; Analizler</p></a></li>
+          <li class="nav-item"><a id="nav-rapor" href="#rapor" class="nav-link" onclick="return sTab('rapor',this)"><i class="nav-icon fas fa-file-alt"></i><p>Toplu Rapor</p></a></li>
+          <li id="nav-ayarlar" class="nav-item admin-only"><a href="#ayarlar" class="nav-link" onclick="return sTab('ayarlar',this)"><i class="nav-icon fas fa-cog"></i><p>Ayarlar</p></a></li>
         </ul>
       </nav>
     </div>
@@ -79,266 +173,306 @@ window.OBS_CACHE_NAME = 'ogretmen-bilgi-' + APP_VERSION;
   <main class="app-main">
     <div class="app-content">
       <div class="container-fluid">
-        <section id="dashboard" class="pane active-pane">
-          <div class="page-title-row">
-            <div><h2>Ana Sayfa</h2><p>Öğretmen, nöbet, görev ve program durumunun kısa özeti.</p></div>
-            <button class="btn btn-primary btn-sm" onclick="openTeacherModal()"><i class="fas fa-plus me-1"></i>Öğretmen Ekle</button>
+        
+        <div id="anasayfa_genel" class="pane active-pane">
+          <div class="row mb-3 home-shortcuts-row">
+            <div class="col-md-3 col-sm-6 col-12"><div class="home-nav-card home-nav-primary" role="button" tabindex="0" onclick="sTab('anasayfa', document.getElementById('nav-anasayfa'))" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();sTab('anasayfa', document.getElementById('nav-anasayfa'));}"><span class="home-nav-icon"><i class="fas fa-user-graduate"></i></span><div class="home-nav-content"><span class="home-nav-title">Öğrenci Profili</span><span class="home-nav-desc">Kişisel karneler</span></div></div></div>
+            <div class="col-md-3 col-sm-6 col-12"><div class="home-nav-card home-nav-success" role="button" tabindex="0" onclick="sTab('sonuclar', document.getElementById('nav-sonuclar'))" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();sTab('sonuclar', document.getElementById('nav-sonuclar'));}"><span class="home-nav-icon"><i class="fas fa-chart-line"></i></span><div class="home-nav-content"><span class="home-nav-title">Sonuçlar & Analizler</span><span class="home-nav-desc">Sınıf/Ders analizleri</span></div></div></div>
+            <div class="col-md-3 col-sm-6 col-12"><div class="home-nav-card home-nav-info" role="button" tabindex="0" onclick="sTab('rapor', document.getElementById('nav-rapor'))" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();sTab('rapor', document.getElementById('nav-rapor'));}"><span class="home-nav-icon"><i class="fas fa-file-alt"></i></span><div class="home-nav-content"><span class="home-nav-title">Toplu Rapor</span><span class="home-nav-desc">Sınıf karneleri yazdır</span></div></div></div>
+            <div class="col-md-3 col-sm-6 col-12 admin-only"><div class="home-nav-card home-nav-warning" role="button" tabindex="0" onclick="sTab('ayarlar', document.getElementById('nav-ayarlar'))" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();sTab('ayarlar', document.getElementById('nav-ayarlar'));}"><span class="home-nav-icon"><i class="fas fa-cog"></i></span><div class="home-nav-content"><span class="home-nav-title">Ayarlar & Yükleme</span><span class="home-nav-desc">Excel ile veri aktarımı</span></div></div></div>
           </div>
-          <div id="dashboardCards" class="row g-3"></div>
-          <div class="card obs-panel mb-3">
-            <div class="card-header"><h3 class="card-title"><i class="fas fa-search me-2"></i>Arama</h3></div>
-            <div class="card-body">
-              <div class="input-group"><span class="input-group-text"><i class="fas fa-magnifying-glass"></i></span><input id="dashboardSearch" class="form-control" placeholder="Öğretmen adı, branş veya sınıf..." oninput="renderDashboardSearch()"><button class="btn btn-outline-secondary" onclick="clearDashboardSearch()"><i class="fas fa-xmark"></i></button></div>
-              <div id="dashboardSearchResults" class="dashboard-search-results"></div>
+          <div class="card sa-panel sa-panel-info"><div class="card-header"><h3 class="card-title"><i class="fas fa-tachometer-alt me-2"></i>Sistem Özeti</h3></div><div class="card-body"><div class="row" id="dynamicStatsGrid"></div></div></div>
+        </div>
+
+        <div id="anasayfa" class="pane">
+          <div class="card sa-panel sa-panel-primary"><div class="card-header"><h3 class="card-title"><i class="fas fa-search me-2"></i>Öğrenci Sorgula</h3></div><div class="card-body"><div id="aBadge" class="mb-2"></div><div id="sSearchWrapper" class="search-wrapper"><div class="input-group"><input type="text" id="sInp" class="form-control" placeholder="Ad, soyad veya numara..." onkeyup="debounceSearch()" autocomplete="off"><button class="btn btn-outline-secondary btn-search-clear" onclick="clrS()"><i class="fas fa-times"></i></button></div><div id="sRes" role="listbox"></div></div></div></div>
+          <div id="homeArea"></div>
+        </div>
+
+        <div id="sonuclar" class="pane">
+          <div class="card sa-panel sa-panel-primary analysis-filter-card" id="anlFilterCard">
+            <div class="card-header d-flex align-items-center gap-2">
+              <h3 class="card-title mb-0"><i class="fas fa-filter me-2"></i>Analiz Filtreleri</h3>
+              <button type="button" class="btn btn-sm btn-outline-secondary ms-auto filter-reset-header" onclick="resetAnalysisFilters()" title="Filtreleri sıfırla" aria-label="Filtreleri sıfırla">
+                <i class="fas fa-rotate-left"></i><span class="d-none d-md-inline ms-1">Sıfırla</span>
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-primary d-md-none filter-collapse-toggle" data-bs-toggle="collapse" data-bs-target="#anlFilterBody" aria-expanded="true" aria-controls="anlFilterBody" title="Filtreleri aç/kapat">
+                <i class="fas fa-sliders-h"></i>
+              </button>
             </div>
-          </div>
-          <div class="row g-3 mt-1">
-            <div class="col-lg-7"><div class="card obs-panel"><div class="card-header"><h3 class="card-title"><i class="fas fa-calendar-day me-2"></i>Bugün</h3></div><div class="card-body" id="todayPanel"></div></div></div>
-            <div class="col-lg-5"><div class="card obs-panel"><div class="card-header"><h3 class="card-title"><i class="fas fa-magnifying-glass-chart me-2"></i>Hızlı Sorgu</h3></div><div class="card-body" id="quickQueryPanel"></div></div></div>
-          </div>
-        </section>
-
-        <section id="teachers" class="pane">
-          <div class="page-title-row">
-            <div><h2>Öğretmen</h2><p>Öğretmen arayın, profilini açın, kişisel bilgileri ve programını yönetin.</p></div>
-            <div class="page-actions"><button class="btn btn-outline-secondary btn-sm" onclick="sTab('reports'); setReportMode('teachers')"><i class="fas fa-table me-1"></i>Tam Liste</button><button class="btn btn-primary btn-sm" onclick="openTeacherModal()"><i class="fas fa-plus me-1"></i>Ekle</button></div>
-          </div>
-          <div class="card obs-panel mb-3"><div class="card-body">
-            <div id="teacherSelectedBadge" class="selected-teacher-badge mb-2" style="display:none"></div>
-            <div class="row g-2 align-items-end">
-              <div class="col-md-6"><label class="form-label">Arama</label><div class="input-group"><span class="input-group-text"><i class="fas fa-search"></i></span><input id="teacherSearch" class="form-control" placeholder="Ad, soyad veya branş..." oninput="renderTeachers()"></div><div id="teacherSearchResults" class="dashboard-search-results"></div></div>
-              <div class="col-md-3"><label class="form-label">Günlük Program</label><select id="teacherProfileSelect" class="form-select d-none" onchange="goTeacherProfile(this.value)"></select><select id="teacherProfileDay" class="form-select" onchange="renderTeachers()"></select></div>
-              <div class="col-md-3"><button class="btn btn-outline-secondary w-100" onclick="clearTeacherSearch()"><i class="fas fa-xmark me-1"></i>Temizle</button></div>
-            </div>
-          </div></div>
-          <div id="teacherProfile" class="mt-3"></div>
-          <details class="teacher-list-details no-print mt-3">
-            <summary><i class="fas fa-list me-1"></i>Öğretmen listesini ekranda göster</summary>
-            <div id="teacherPrintArea" class="card obs-panel mt-2"><div class="card-body p-0"><div class="table-responsive"><table class="table table-hover align-middle mb-0" id="teacherTable"></table></div></div></div>
-          </details>
-        </section>
-
-        <section id="classes" class="pane">
-          <div class="page-title-row">
-            <div><h2>Sınıf</h2><p>Seçilen sınıfın günlük/haftalık programı ve ders-öğretmen dağılımı.</p></div>
-          </div>
-          <div class="card obs-panel mb-3"><div class="card-body"><div class="row g-2 align-items-end">
-            <div class="col-md-4"><label class="form-label">Sınıf</label><select id="classProfileSelect" class="form-select" onchange="renderClasses()"></select></div>
-            <div class="col-md-4"><label class="form-label">Günlük Program Günü</label><select id="classProfileDay" class="form-select" onchange="renderClasses()"></select></div>
-            <div class="col-md-4"><button class="btn btn-outline-secondary w-100" onclick="printArea('classProfilePrintArea','Sinif_Profili')"><i class="fas fa-print me-1"></i>Yazdır</button></div>
-          </div></div></div>
-          <div id="classProfilePrintArea"><div id="classProfileContent"></div></div>
-        </section>
-
-        <section id="reports" class="pane">
-          <div class="page-title-row">
-            <div><h2>Raporlar</h2><p>Ders programı, nöbet listesi, görevler ve yazdırılabilir toplu görünümler.</p></div>
-            <button id="reportPrimaryAction" class="btn btn-primary btn-sm" onclick="openScheduleModal()"><i class="fas fa-plus me-1"></i>Ders Ekle</button>
-          </div>
-          <div class="card obs-panel mb-3"><div class="card-body"><div class="report-switch no-print">
-            <button id="reportBtn-schedule" class="btn btn-sm btn-primary" onclick="setReportMode('schedule')"><i class="fas fa-calendar-days me-1"></i>Ders Programı</button>
-            <button id="reportBtn-teachers" class="btn btn-sm btn-outline-secondary" onclick="setReportMode('teachers')"><i class="fas fa-user-tie me-1"></i>Öğretmen Listesi</button>
-            <button id="reportBtn-duty" class="btn btn-sm btn-outline-secondary" onclick="setReportMode('duty')"><i class="fas fa-clipboard-check me-1"></i>Nöbet</button>
-            <button id="reportBtn-tasks" class="btn btn-sm btn-outline-secondary" onclick="setReportMode('tasks')"><i class="fas fa-sitemap me-1"></i>Görevler</button>
-          </div></div></div>
-          <div id="reportPane-schedule" class="report-pane">
-            <div class="card obs-panel mb-3 schedule-toolbar-card">
+            <div id="filterSummary" class="filter-summary no-print" aria-live="polite"></div>
+            <div id="anlFilterBody" class="collapse show">
               <div class="card-body">
-                <div class="schedule-toolbar-main">
-                  <div class="schedule-view-control">
-                    <label class="form-label">Görünüm</label>
-                    <select id="scheduleViewMode" class="form-select" onchange="renderSchedule()"><option value="weekly">Haftalık (Birlikte)</option><option value="daily">Günlük</option><option value="classList">Sınıf Programları</option><option value="teacherSheet">Öğretmen Çarşaf</option><option value="classSheet">Sınıf Çarşaf</option><option value="free">Boş Saat / Boş Gün</option></select>
-                  </div>
-                  <div id="scheduleFilterSummary" class="schedule-filter-summary" aria-live="polite"></div>
-                  <button class="btn btn-outline-secondary schedule-print-btn" onclick="printArea('schedulePrintArea','Ders_Programi')"><i class="fas fa-print me-1"></i>Yazdır</button>
+                <div class="row" id="anlFilterRow">
+            <div class="col-sm-6 col-md-4 col-lg-2"><div class="mb-3"><label>Analiz Türü</label><select id="aType" class="form-select" onchange="reqUI()"><option value="student">Öğrenci Analizi</option><option value="class">Sınıf Analizi</option><option value="subject">Ders Analizi</option><option value="examdetail">Sınav Analizi</option><option value="risk">Risk Analizi</option></select></div></div>
+            <div class="col-sm-6 col-md-4 col-lg-3" id="gStu"><div class="mb-3"><label>Öğrenci Seçin</label><div id="anlStuSearchWrapper"><div class="input-group"><input type="text" id="anlStuInp" class="form-control" placeholder="Ad, soyad veya numara..." onkeyup="anlStuDoSearch()" autocomplete="off"><button class="btn btn-outline-secondary btn-search-clear" onclick="anlStuClear()"><i class="fas fa-times"></i></button></div><div id="anlStuRes" role="listbox"></div></div><div id="anlStuBadge"></div></div></div>
+            <div class="col-sm-6 col-md-4 col-lg-2" id="gLvl" style="display:none;"><div class="mb-3"><label>Sınıf Seviyesi</label><select id="aLvl" class="form-select" onchange="onLvlChange()"><option value="" disabled selected>Sınıf Seviyesi Seç</option></select></div></div>
+            <div class="col-sm-6 col-md-4 col-lg-2" id="gBr" style="display:none;"><div class="mb-3"><label>Şube</label><select id="aBr" class="form-select" onchange="onBrChange()"><option value="" disabled selected>Şube Seç</option></select></div></div>
+            <div class="col-sm-6 col-md-4 col-lg-2" id="gEx"><div class="mb-3"><label>Sınav Türü</label><div class="aex-wrap"><select id="aEx" class="form-select" onchange="onExTypeChange()"><option value="" disabled selected>Sınav Türü Seçiniz</option></select><span id="aExBadge" class="aex-badge" aria-hidden="true"></span></div></div></div>
+            <div class="col-sm-6 col-md-4 col-lg-2" id="gExDate" style="display:none;"><div class="mb-3"><label>Sınav Seç</label><select id="aExDate" class="form-select" onchange="onExDateStudentChange()"><option value="" disabled selected>Sınav Seçiniz</option><option value="__ALL__">Tüm Sınavlar</option></select></div></div>
+            <div class="col-sm-6 col-md-4 col-lg-2" id="gDate" style="display:none;"><div class="mb-3"><label id="lblDate">Sınav Seç</label><select id="aDate" class="form-select" onchange="onDateChange()"><option value="" disabled selected>Sınav Seç</option></select></div></div>
+            <div class="col-sm-6 col-md-4 col-lg-2" id="gSub" style="display:none;"><div class="mb-3"><label id="lblSub">Veri</label><select id="aSub" class="form-select" onchange="handleSubChange()"></select></div></div>
+            <div class="col-sm-6 col-md-4 col-lg-2" id="gRiskGrade" style="display:none;"><div class="mb-3"><label>Sınıf Seviyesi</label><select id="riskGradeFilter" class="form-select" onchange="onRiskFilterChange(true)"><option value="">Tüm Sınıflar</option></select></div></div>
+            <div class="col-sm-6 col-md-4 col-lg-2" id="gRiskBranch" style="display:none;"><div class="mb-3"><label>Şube</label><select id="riskBranchFilter" class="form-select" onchange="onRiskFilterChange(false)"><option value="">Tüm Şubeler</option></select></div></div>
+            <div class="col-sm-6 col-md-4 col-lg-2" id="gRiskExType" style="display:none;"><div class="mb-3"><label>Sınav Türü</label><select id="riskExTypeFilter" class="form-select" onchange="onRiskFilterChange(false)"><option value="">Tüm Sınav Türleri</option></select></div></div>
+            <div class="col-sm-6 col-md-4 col-lg-2" id="gRiskLevel" style="display:none;"><div class="mb-3"><label>Risk Türü</label><select id="riskLevelFilter" class="form-select" onchange="onRiskFilterChange(false)"><option value="">Tüm Riskler</option><option value="high">Yüksek Risk</option><option value="med">Orta Risk</option><option value="low">Düşük Risk</option></select></div></div>
                 </div>
-                <details id="scheduleFilterDetails" class="schedule-filter-details no-print">
-                  <summary><span><i class="fas fa-sliders me-1"></i>Filtreler</span><strong id="scheduleFilterCount"></strong></summary>
-                  <div class="row g-2 align-items-end">
-                    <div class="col-md-3 col-xl-2" data-schedule-filter="teacher"><label class="form-label">Öğretmen</label><select id="scheduleTeacherFilter" class="form-select" onchange="renderSchedule()"></select></div>
-                    <div class="col-md-3 col-xl-2" data-schedule-filter="class"><label class="form-label">Sınıf</label><select id="scheduleClassFilter" class="form-select" onchange="renderSchedule()"></select></div>
-                    <div class="col-md-2" data-schedule-filter="grade"><label class="form-label">Seviye</label><select id="scheduleGradeFilter" class="form-select" onchange="renderSchedule()"></select></div>
-                    <div class="col-md-2" data-schedule-filter="day"><label class="form-label">Gün</label><select id="scheduleDayFilter" class="form-select" onchange="renderSchedule()"></select></div>
-                    <div class="col-md-2" data-schedule-filter="hour"><label class="form-label">Saat</label><select id="scheduleHourFilter" class="form-select" onchange="renderSchedule()"></select></div>
-                    <div class="col-md-2 schedule-filter-reset"><button class="btn btn-outline-secondary w-100" onclick="clearScheduleFilters()"><i class="fas fa-xmark me-1"></i>Temizle</button></div>
-                  </div>
-                </details>
               </div>
             </div>
-            <div id="schedulePrintArea"><div id="scheduleContent"></div></div>
           </div>
-          <div id="reportPane-teachers" class="report-pane d-none">
-            <div class="page-actions mb-3 no-print"><button class="btn btn-outline-secondary btn-sm" onclick="printArea('reportTeacherPrintArea','Ogretmen_Listesi')"><i class="fas fa-print me-1"></i>Listeyi Yazdır</button></div>
-            <div id="reportTeacherPrintArea"><div id="reportTeacherListContent"></div></div>
-          </div>
-          <div id="reportPane-duty" class="report-pane d-none">
-            <div class="page-actions mb-3 no-print"><button class="btn btn-outline-secondary btn-sm" onclick="printArea('dutyPrintArea','Nobet_Listesi')"><i class="fas fa-print me-1"></i>Nöbeti Yazdır</button></div>
-            <div id="dutyPrintArea"><div id="dutyContent"></div></div>
-          </div>
-          <div id="reportPane-tasks" class="report-pane d-none">
-            <div class="page-actions mb-3 no-print"><button class="btn btn-outline-secondary btn-sm" onclick="printArea('tasksPrintArea','Ogretmen_Gorevleri')"><i class="fas fa-print me-1"></i>Görevleri Yazdır</button></div>
-            <div class="card obs-panel mb-3 no-print"><div class="card-body">
-              <div id="taskFilterSummary" class="schedule-filter-summary"></div>
-              <details class="task-filter-details">
-                <summary><span><i class="fas fa-sliders me-1"></i>Filtreler</span><strong id="taskFilterCount"></strong></summary>
-                <div class="row g-2 align-items-end">
-                  <div class="col-md-3"><label class="form-label">Öğretmen</label><select id="taskReportTeacher" class="form-select" onchange="renderTasks()"></select></div>
-                  <div class="col-md-3"><label class="form-label">Görev Türü</label><select id="taskReportKind" class="form-select" onchange="renderTasks()"></select></div>
-                  <div class="col-md-4"><label class="form-label">Arama</label><input id="taskReportSearch" class="form-control" placeholder="Görev, açıklama veya ayrıntı..." oninput="renderTasks()"></div>
-                  <div class="col-md-2"><button class="btn btn-outline-secondary w-100" onclick="clearTaskFilters()"><i class="fas fa-xmark me-1"></i>Temizle</button></div>
+          <div id="anlRes"></div>
+          <div id="riskPanel" style="display:none;">
+            <div class="card risk-panel-card">
+              <div class="card-header risk-panel-card-header">
+                <div class="risk-panel-header">
+                  <h6><i class="fas fa-shield-alt risk-panel-icon"></i>Risk Analizi <span id="riskTotalBadge"></span></h6>
                 </div>
-              </details>
-            </div></div>
-            <div id="tasksPrintArea"><div id="tasksContent"></div></div>
+              </div>
+              <div class="card-body risk-panel-body">
+                <div class="risk-note no-print"><i class="fas fa-circle-info me-1"></i>Risk puanı karar destek göstergesidir; öğrenci hakkında tek başına kesin yargı üretmez.</div>
+                <div class="row mb-3" id="riskStatCards">
+                  <div class="col-6 col-md-3 mb-2"><div class="risk-stat-card risk-stat-high" role="button" tabindex="0" onclick="setRiskLevel('high')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setRiskLevel('high')}"><span class="risk-stat-icon"><i class="fas fa-exclamation-circle"></i></span><div class="risk-stat-content"><span class="risk-stat-label">Yüksek Risk</span><span class="risk-stat-number" id="riskCardHigh">0</span></div></div></div>
+                  <div class="col-6 col-md-3 mb-2"><div class="risk-stat-card risk-stat-med" role="button" tabindex="0" onclick="setRiskLevel('med')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setRiskLevel('med')}"><span class="risk-stat-icon"><i class="fas fa-exclamation-triangle"></i></span><div class="risk-stat-content"><span class="risk-stat-label">Orta Risk</span><span class="risk-stat-number" id="riskCardMed">0</span></div></div></div>
+                  <div class="col-6 col-md-3 mb-2"><div class="risk-stat-card risk-stat-low" role="button" tabindex="0" onclick="setRiskLevel('low')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setRiskLevel('low')}"><span class="risk-stat-icon"><i class="fas fa-info-circle"></i></span><div class="risk-stat-content"><span class="risk-stat-label">Düşük Risk</span><span class="risk-stat-number" id="riskCardLow">0</span></div></div></div>
+                  <div class="col-6 col-md-3 mb-2"><div class="risk-stat-card risk-stat-total" role="button" tabindex="0" onclick="setRiskLevel('')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setRiskLevel('')}"><span class="risk-stat-icon"><i class="fas fa-users"></i></span><div class="risk-stat-content"><span class="risk-stat-label">Toplam Risk</span><span class="risk-stat-number" id="riskCardTotal">0</span></div></div></div>
+                </div>
+                <div class="risk-list-wrap" id="riskList" role="list"></div>
+              </div>
+            </div>
           </div>
-        </section>
+        </div>
 
-        <section id="settings" class="pane">
-          <div class="page-title-row">
-            <div><h2>Veri & Ayarlar</h2><p>Excel/CSV içe aktarma, yedekleme ve temel liste ayarları.</p></div>
+        <div id="rapor" class="pane">
+          <div class="card sa-panel sa-panel-primary"><div class="card-header d-flex align-items-center justify-content-between"><h3 class="card-title"><i class="fas fa-file-alt me-2"></i>Toplu Rapor & Liste</h3><button type="button" class="btn btn-sm btn-outline-secondary ms-auto filter-reset-header" onclick="resetRapor()" title="Filtreleri sıfırla" aria-label="Filtreleri sıfırla"><i class="fas fa-rotate-left"></i><span class="d-none d-md-inline ms-1">Sıfırla</span></button></div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-sm-6 col-md-3"><div class="mb-3"><label>Sınıf Seviyesi</label><select id="rLvl" class="form-select" onchange="raporFillBranches()"><option value="">Seçiniz</option></select></div></div>
+                <div class="col-sm-6 col-md-2"><div class="mb-3"><label>Şube</label><select id="rBr" class="form-select" onchange="raporFillExamTypes()"><option value="">Tümü</option></select></div></div>
+                <div class="col-sm-6 col-md-3"><div class="mb-3"><label>Sınav Türü</label><select id="rExType" class="form-select" onchange="raporExamTypeChanged()"><option value="" disabled selected>Sınav Seçiniz</option></select></div></div>
+                <div class="col-sm-6 col-md-3"><div class="mb-3"><label>Rapor Türü</label><select id="rReportType" class="form-select" onchange="generateRapor()"><option value="" disabled selected>Rapor Türü Seçiniz</option><option value="Karne">Karne (Öğrenci Bazlı)</option><option value="Liste">Liste (Toplu Netler)</option></select></div></div>
+              </div>
+            </div>
           </div>
-          <div id="settingsContent"></div>
-        </section>
+          <div id="raporRes"></div>
+        </div>
+
+        <div id="ayarlar" class="pane">
+          <div class="row">
+            <div class="col-lg-12">
+              <div class="card sa-panel sa-panel-primary">
+                <div class="card-header d-flex justify-content-between align-items-center"><h3 class="card-title"><i class="fas fa-users me-2"></i>Öğrenci Yönetimi</h3><button class="btn btn-success btn-sm ms-auto" onclick="oModAdd()"><i class="fas fa-plus me-1"></i>Ekle</button></div>
+                <div class="card-body">
+                  <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-3 settings-toolbar">
+                    <div class="btn-group"><button class="btn btn-primary btn-sm" onclick="getEl('fStu').click()"><i class="fas fa-upload me-1"></i>Excelden Yükle</button><input type="file" id="fStu" style="display:none;" onchange="upl(event,'s')" accept=".xlsx,.xls"></div>
+                    <div class="input-group input-group-sm settings-search"><input type="text" id="setStuSearch" class="form-control" placeholder="İsim veya No ile ara..." onkeyup="filterSettingsStudents()"><span class="input-group-text"><i class="fas fa-search"></i></span></div>
+                  </div>
+                  <div class="table-responsive sa-table-scroll-sm"><table class="table table-sm table-hover text-nowrap" id="tStu"><thead><tr><th>#</th><th>No</th><th>Ad Soyad</th><th>Sınıf</th><th>İşlem</th></tr></thead><tbody></tbody></table></div>
+                  <button class="btn btn-danger w-100 mt-2 admin-only" onclick="cDel('allStudents','Tüm veriler silinecek. Onaylıyor musunuz?')"><i class="fas fa-trash me-1"></i>Tümünü Sil</button>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-12"><div class="card sa-panel sa-panel-warning"><div class="card-header"><h3 class="card-title"><i class="fas fa-file-excel me-2"></i>Sınav Verileri</h3></div><div class="card-body"><button class="btn btn-primary btn-sm mb-3" onclick="getEl('fEx').click()"><i class="fas fa-magic me-1"></i>Sonuç Yükle (Sihirbaz)</button><input type="file" id="fEx" style="display:none;" onchange="upl(event,'e')" accept=".xlsx,.xls"><div id="tExA" class="table-responsive"></div></div></div></div>
+            <div class="col-lg-12 admin-only">
+              <div class="card sys-mgmt-card"><div class="card-header"><h3 class="card-title"><i class="fas fa-database"></i>Sistem Yönetimi</h3></div><div class="card-body"><div class="sys-mgmt-inner"><div class="sys-mgmt-section"><button class="sys-mgmt-tile tile-export" onclick="expDB()"><span class="tile-icon"><i class="fas fa-cloud-download-alt"></i></span><span class="tile-text"><strong>Yedeği İndir</strong></span></button><button class="sys-mgmt-tile tile-import" onclick="getEl('fImp').click()"><span class="tile-icon"><i class="fas fa-cloud-upload-alt"></i></span><span class="tile-text"><strong>Yedekten Geri Yükle</strong></span></button><input type="file" id="fImp" style="display:none;" accept=".json" onchange="impDB(event)"></div><div class="sys-mgmt-divider"></div><div class="sys-mgmt-danger"><span class="danger-icon"><i class="fas fa-exclamation-triangle"></i></span><span class="danger-text"><strong>Sıfırla</strong></span><button class="btn-danger-modern" onclick="cDel('all','Tüm Veritabanı Silinecek!')">Sıfırla</button></div></div></div></div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   </main>
+  <footer class="app-footer text-center sa-footer">© 2026 AYUSTASI</footer>
 
-  <footer class="app-footer text-center">© 2026 AYUSTASI</footer>
-
+  <!-- BOTTOM NAV BAR (mobil navigasyon) -->
   <nav id="bottomNav" class="bottom-nav" aria-label="Alt navigasyon">
-    <a id="bnav-dashboard" href="#dashboard" class="bnav-item active" onclick="return sTab('dashboard')"><i class="fas fa-house"></i><span>Ana</span></a>
-    <a id="bnav-teachers" href="#teachers" class="bnav-item" onclick="return sTab('teachers')"><i class="fas fa-user-tie"></i><span>Öğretmen</span></a>
-    <a id="bnav-classes" href="#classes" class="bnav-item" onclick="return sTab('classes')"><i class="fas fa-users"></i><span>Sınıf</span></a>
-    <a id="bnav-reports" href="#reports" class="bnav-item" onclick="return sTab('reports')"><i class="fas fa-chart-simple"></i><span>Rapor</span></a>
-    <a id="bnav-settings" href="#settings" class="bnav-item" onclick="return sTab('settings')"><i class="fas fa-gear"></i><span>Ayar</span></a>
-  </nav>
+  <a href="#anasayfa_genel" class="bnav-item" id="bnav-anasayfa_genel" onclick="return sTab('anasayfa_genel',this)" aria-label="Ana Sayfa">
+    <i class="fas fa-home bnav-icon"></i>
+    <span class="bnav-label">Ana Sayfa</span>
+  </a>
+  <a href="#anasayfa" class="bnav-item" id="bnav-anasayfa" onclick="return sTab('anasayfa',this)" aria-label="Öğrenci">
+    <i class="fas fa-user-graduate bnav-icon"></i>
+    <span class="bnav-label">Öğrenci</span>
+  </a>
+  <a href="#sonuclar" class="bnav-item" id="bnav-sonuclar" onclick="return sTab('sonuclar',this)" aria-label="Analizler">
+    <i class="fas fa-chart-line bnav-icon"></i>
+    <span class="bnav-label">Analizler</span>
+  </a>
+  <a href="#rapor" class="bnav-item" id="bnav-rapor" onclick="return sTab('rapor',this)" aria-label="Rapor">
+    <i class="fas fa-file-alt bnav-icon"></i>
+    <span class="bnav-label">Rapor</span>
+  </a>
+  <a href="#ayarlar" class="bnav-item admin-only" id="bnav-ayarlar" onclick="return sTab('ayarlar',this)" aria-label="Ayarlar">
+    <i class="fas fa-cog bnav-icon"></i>
+    <span class="bnav-label">Ayarlar</span>
+  </a>
+</nav>
 </div>
 
 <div id="toastContainer"></div>
 
-<div class="modal fade" id="teacherModal" tabindex="-1" aria-labelledby="teacherModalTitle" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+<!-- MODALLAR (Bootstrap 5 native) -->
+<div class="modal fade" id="mForgot" tabindex="-1" aria-labelledby="mForgotTitle" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered">
     <div class="modal-content">
-      <div class="modal-header obs-modal-header"><h5 class="modal-title" id="teacherModalTitle">Öğretmen</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Kapat"></button></div>
-      <div class="modal-body">
-        <input type="hidden" id="teacherId">
-        <div class="row g-3">
-          <div class="col-md-6"><label class="form-label">Adı</label><input id="tFirstName" class="form-control"></div>
-          <div class="col-md-6"><label class="form-label">Soyadı</label><input id="tLastName" class="form-control"></div>
-          <div class="col-md-4"><label class="form-label">T.C. Kimlik No</label><input id="tIdentityNo" class="form-control"></div>
-          <div class="col-md-4"><label class="form-label">Branşı</label><input id="tBranch" class="form-control"></div>
-          <div class="col-md-4"><label class="form-label">Cep Telefonu</label><input id="tPhone" class="form-control"></div>
-          <div class="col-md-6"><label class="form-label">E-posta</label><input id="tEmail" type="email" class="form-control"></div>
-          <div class="col-md-6"><label class="form-label">Sınıfı</label><input id="tClassAdvisor" class="form-control" placeholder="Örn: 9A"></div>
-          <div class="col-md-4"><label class="form-label">Kulüp</label><input id="tClub" class="form-control"></div>
-          <div class="col-md-4"><label class="form-label">Proje</label><input id="tProject" class="form-control"></div>
-          <div class="col-md-4"><label class="form-label">Boş Gün</label><select id="tFreeDay" class="form-select"></select></div>
-          <div class="col-md-6"><label class="form-label">Nöbet Günü</label><select id="tDutyDay" class="form-select"></select></div>
-          <div class="col-md-6"><label class="form-label">Nöbet Yeri</label><input id="tDutyPlace" class="form-control"></div>
-          <div class="col-12"><label class="form-label">Ders Programı Notu</label><textarea id="tScheduleNote" class="form-control" rows="2" placeholder="İstersen geçici program notu yazılabilir. Ayrıntılı program Raporlar sekmesinden girilir."></textarea></div>
-        </div>
+      <div class="modal-header sa-modal-header sa-modal-primary">
+        <h5 class="modal-title" id="mForgotTitle">Şifre Sıfırlama</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Kapat"></button>
       </div>
-      <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button><button type="button" class="btn btn-primary" onclick="saveTeacherForm()">Kaydet</button></div>
+      <div class="modal-body">
+        <label for="forgotEmail" class="form-label">E-posta</label>
+        <input type="email" id="forgotEmail" class="form-control" placeholder="E-posta" autocomplete="email">
+        <div id="forgotMsg" class="mt-2"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Kapat</button>
+        <button type="button" class="btn btn-primary btn-sm" onclick="sendPasswordReset()">Gönder</button>
+      </div>
     </div>
   </div>
 </div>
 
-<div class="modal fade" id="scheduleModal" tabindex="-1" aria-labelledby="scheduleModalTitle" aria-hidden="true">
+<div class="modal fade" id="mMappings" tabindex="-1" aria-labelledby="mMappingsTitle" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header sa-modal-header sa-modal-primary">
+        <h5 class="modal-title" id="mMappingsTitle">Sihirbaz</h5>
+        <button type="button" class="btn-close btn-close-white" onclick="cancelUpload()" aria-label="Kapat"></button>
+      </div>
+      <div class="modal-body" id="mMappingsBody"></div>
+      <div class="modal-footer" id="mMappingsFooter"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="mUploadPreview" tabindex="-1" aria-labelledby="mUploadPreviewTitle" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header sa-modal-header sa-modal-info">
+        <h5 class="modal-title" id="mUploadPreviewTitle">Ön İzleme</h5>
+        <button type="button" class="btn-close btn-close-white" onclick="cancelUpload()" aria-label="Kapat"></button>
+      </div>
+      <div class="modal-body" id="uploadPreviewBody"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="backToMapping()">Geri</button>
+        <button type="button" class="btn btn-success ms-auto" onclick="confirmUpload()">Kaydet</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="mEditExam" tabindex="-1" aria-labelledby="mEditExamTitle" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header sa-modal-header sa-modal-warning">
+        <h5 class="modal-title" id="mEditExamTitle">Sınav Düzenle</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="eExBatchId">
+        <div class="mb-3">
+          <label for="eExDate" class="form-label">Tarih</label>
+          <input type="text" id="eExDate" class="form-control">
+        </div>
+        <div class="mb-3">
+          <label for="eExType" class="form-label">Tür</label>
+          <input type="text" id="eExType" class="form-control">
+        </div>
+        <div class="mb-0">
+          <label for="eExPub" class="form-label">Yayınevi</label>
+          <input type="text" id="eExPub" class="form-control">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">İptal</button>
+        <button type="button" class="btn btn-warning btn-sm" onclick="svExam()">Kaydet</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="mConf" tabindex="-1" aria-labelledby="mConfTitle" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header sa-modal-header sa-modal-danger">
+        <h5 class="modal-title" id="mConfTitle">Dikkat!</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Kapat"></button>
+      </div>
+      <div class="modal-body">
+        <p id="cTxt" class="mb-0"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Vazgeç</button>
+        <button type="button" class="btn btn-danger btn-sm" id="mConfOkBtn" onclick="xDel()">Evet, Sil</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="mStu" tabindex="-1" aria-labelledby="mSTit" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
-      <div class="modal-header obs-modal-header"><h5 class="modal-title" id="scheduleModalTitle">Ders Ekle</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Kapat"></button></div>
+      <div class="modal-header sa-modal-header sa-modal-primary">
+        <h5 class="modal-title" id="mSTit">Öğrenci</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Kapat"></button>
+      </div>
       <div class="modal-body">
-        <input type="hidden" id="scheduleId">
-        <div class="row g-3">
-          <div class="col-12"><label class="form-label">Öğretmen</label><select id="sTeacher" class="form-select"></select></div>
-          <div class="col-md-6"><label class="form-label">Sınıf</label><select id="sClass" class="form-select"></select></div>
-          <div class="col-md-6"><label class="form-label">Ders</label><input id="sSubject" class="form-control" list="subjectOptions" placeholder="Örn: Matematik"><datalist id="subjectOptions"></datalist></div>
-          <div class="col-md-6"><label class="form-label">Gün</label><select id="sDay" class="form-select"></select></div>
-          <div class="col-md-6"><label class="form-label">Saat</label><select id="sHour" class="form-select"></select></div>
-          <div class="col-12"><label class="form-label">Not / Derslik</label><input id="sNote" class="form-control"></div>
+        <div class="mb-3">
+          <label for="mSNo" class="form-label">No</label>
+          <input type="text" id="mSNo" class="form-control">
+        </div>
+        <div class="mb-3">
+          <label for="mSNa" class="form-label">Ad</label>
+          <input type="text" id="mSNa" class="form-control">
+        </div>
+        <div class="mb-0">
+          <label for="mSCl" class="form-label">Sınıf</label>
+          <input type="text" id="mSCl" class="form-control">
         </div>
       </div>
-      <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button><button type="button" class="btn btn-primary" onclick="saveScheduleForm()">Kaydet</button></div>
-    </div>
-  </div>
-</div>
-
-<div class="modal fade" id="taskModal" tabindex="-1" aria-labelledby="taskModalTitle" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-    <div class="modal-content">
-      <div class="modal-header obs-modal-header"><h5 class="modal-title" id="taskModalTitle">Görev Ekle</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Kapat"></button></div>
-      <div class="modal-body">
-        <input type="hidden" id="taskId">
-        <div class="row g-3">
-          <div class="col-md-6"><label class="form-label">Öğretmen</label><select id="taskTeacher" class="form-select"></select></div>
-          <div class="col-md-6"><label class="form-label">Görev Türü</label><input id="taskKind" class="form-control" list="taskKindOptions" placeholder="Örn: Kurul/Komisyon"><datalist id="taskKindOptions"></datalist></div>
-          <div class="col-12"><label class="form-label">Görev Tanımı</label><input id="taskTitle" class="form-control"></div>
-          <div class="col-12"><label class="form-label">Açıklamalar</label><input id="taskDescription" class="form-control"></div>
-          <div class="col-12"><label class="form-label">Ayrıntılar</label><textarea id="taskDetails" class="form-control" rows="2"></textarea></div>
-          <div class="col-md-6"><label class="form-label">Başlangıç</label><input id="taskStart" type="date" class="form-control"></div>
-          <div class="col-md-6"><label class="form-label">Bitiş</label><input id="taskEnd" type="date" class="form-control"></div>
-        </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+        <button type="button" class="btn btn-success" onclick="svStu()">Kaydet</button>
       </div>
-      <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button><button type="button" class="btn btn-primary" onclick="saveTaskForm()">Kaydet</button></div>
     </div>
   </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/admin-lte@4.0.0-rc7/dist/js/adminlte.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
 <script>
-if(!window.bootstrap||!window.bootstrap.Modal){
-  class LocalModal{
-    constructor(el){ this.el=el; el.__localModal=this; }
-    static getOrCreateInstance(el){ return el?.__localModal || new LocalModal(el); }
-    static getInstance(el){ return el?.__localModal || null; }
-    show(){
-      if(!this.el) return;
-      this.el.style.display='block';
-      this.el.removeAttribute('aria-hidden');
-      this.el.setAttribute('aria-modal','true');
-      this.el.classList.add('show');
-      document.body.classList.add('modal-open');
-      if(!this.backdrop){
-        this.backdrop=document.createElement('div');
-        this.backdrop.className='modal-backdrop fade show';
-        document.body.appendChild(this.backdrop);
-      }
-    }
-    hide(){
-      if(!this.el) return;
-      this.el.classList.remove('show');
-      this.el.setAttribute('aria-hidden','true');
-      this.el.removeAttribute('aria-modal');
-      this.el.style.display='none';
-      document.body.classList.remove('modal-open');
-      if(this.backdrop){ this.backdrop.remove(); this.backdrop=null; }
-    }
+(async function loadAppScripts(){
+  const version = window.SA_APP_VERSION;
+  const scripts = ['app-core.js','app-ui.js','app-analysis.js','app-settings.js'];
+  const refreshLocalStyle = () => {
+    const current = document.querySelector('link[href*="style.css"]');
+    if (!current) return;
+    const fresh = current.cloneNode();
+    fresh.href = `./style.css?v=${version}&t=${Date.now()}`;
+    fresh.onload = () => current.remove();
+    document.head.appendChild(fresh);
+  };
+  const loadScript = src => new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = `./${src}?v=${version}`;
+    s.onload = resolve;
+    s.onerror = () => reject(new Error(src + ' yüklenemedi'));
+    document.body.appendChild(s);
+  });
+  try {
+    if (window.SA_CACHE_READY) await window.SA_CACHE_READY;
+    refreshLocalStyle();
+    for (const src of scripts) await loadScript(src);
+  } catch (err) {
+    console.error('Uygulama başlatılamadı:', err);
+    const loader = document.getElementById('loader');
+    const text = document.getElementById('l-txt');
+    document.body.classList.add('auth-pending');
+    if (text) text.textContent = 'Uygulama dosyaları yüklenemedi. Lütfen sayfayı yenileyin.';
+    if (loader) loader.style.display = 'flex';
   }
-  window.bootstrap={...(window.bootstrap||{}),Modal:LocalModal};
-  document.addEventListener('click',event=>{
-    const close=event.target.closest('[data-bs-dismiss="modal"]');
-    if(close) window.bootstrap.Modal.getOrCreateInstance(close.closest('.modal')).hide();
-  });
-  document.addEventListener('keydown',event=>{
-    if(event.key==='Escape') document.querySelectorAll('.modal.show').forEach(el=>window.bootstrap.Modal.getOrCreateInstance(el).hide());
-  });
-}
+})();
 </script>
-<script src="./teacher-seed.js"></script>
-<script src="./teacher-schedule-seed.js"></script>
-<script src="./teacher-task-seed.js"></script>
-<script src="./teacher-firebase-config.js"></script>
-<script src="https://www.gstatic.com/firebasejs/12.4.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/12.4.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/12.4.0/firebase-database-compat.js"></script>
-<script src="./teacher-core.js"></script>
-<script src="./teacher-ui.js"></script>
-<script src="./teacher-teachers.js"></script>
-<script src="./teacher-classes.js"></script>
-<script src="./teacher-schedule.js"></script>
-<script src="./teacher-duty.js"></script>
-<script src="./teacher-settings.js"></script>
+
 </body>
 </html>

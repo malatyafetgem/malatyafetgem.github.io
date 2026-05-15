@@ -1,9 +1,9 @@
 {
-  "name": "Öğretmen Bilgi Sistemi",
-  "short_name": "Öğretmen",
+  "name": "Sınav Analiz Sistemi",
+  "short_name": "Sınav Analizi",
   "id": "./",
   "lang": "tr",
-  "description": "Öğretmen bilgileri, ders programı, nöbet ve görev takibi için yönetim sistemi.",
+  "description": "Öğrenci, sınıf, ders, sınav ve risk analizleri için PWA destekli eğitim raporlama sistemi.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
@@ -11,11 +11,43 @@
   "theme_color": "#2563eb",
   "categories": ["education", "productivity"],
   "icons": [
+  {
+    "src": "./icon-192.png",
+    "sizes": "192x192",
+    "type": "image/png",
+    "purpose": "any maskable"
+  },
+  {
+    "src": "./icon.png",
+    "sizes": "512x512",
+    "type": "image/png",
+    "purpose": "any maskable"
+  }
+],
+  "shortcuts": [
     {
-      "src": "./icon.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "name": "Ana Sayfa",
+      "short_name": "Ana Sayfa",
+      "url": "./index.html#anasayfa_genel",
+      "icons": [{ "src": "./icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Öğrenci Sorgula",
+      "short_name": "Öğrenci",
+      "url": "./index.html#anasayfa",
+      "icons": [{ "src": "./icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Sonuçlar ve Analizler",
+      "short_name": "Analizler",
+      "url": "./index.html#sonuclar",
+      "icons": [{ "src": "./icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Toplu Rapor",
+      "short_name": "Rapor",
+      "url": "./index.html#rapor",
+      "icons": [{ "src": "./icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ]
 }
