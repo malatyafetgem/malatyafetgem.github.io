@@ -1,81 +1,67 @@
-importScripts('./version.js'); // APP_VERSION tek kaynaktan gelir
-const CACHE_NAME = 'sinav-analizi-' + APP_VERSION;
+importScripts('./version.js');
+
+const CACHE_NAME = 'ogretmen-bilgi-' + APP_VERSION;
 const ASSETS = [
   './',
   './index.html',
   './version.js',
-  './style.css',
-  './app-core.js',
-  './app-ui.js',
-  './app-analysis.js',
-  './app-settings.js',
+  './teacher-style.css',
+  './teacher-core.js',
+  './teacher-seed.js',
+  './teacher-schedule-seed.js',
+  './teacher-task-seed.js',
+  './teacher-firebase-config.js',
+  './teacher-ui.js',
+  './teacher-teachers.js',
+  './teacher-classes.js',
+  './teacher-schedule.js',
+  './teacher-duty.js',
+  './teacher-settings.js',
   './manifest.json',
-  './icon-192.png',
   './icon.png'
 ];
 
-function isFirebaseRequest(url) {
-  return url.hostname.includes('firebaseio.com') ||
-    url.hostname.includes('firebasedatabase.app') ||
-    url.hostname === 'identitytoolkit.googleapis.com' ||
-    url.hostname === 'securetoken.googleapis.com' ||
-    url.hostname === 'firebaseinstallations.googleapis.com' ||
-    url.hostname === 'www.googleapis.com';
-}
-
-function isNavigationRequest(request, url) {
-  return request.mode === 'navigate' ||
-    url.pathname.endsWith('/') ||
-    url.pathname.endsWith('/index.html');
-}
-
-function isFreshAppAsset(url) {
-  const fileName = url.pathname.split('/').pop();
+function isAppAsset(url) {
+  const name = url.pathname.split('/').pop();
   return [
     'index.html',
     'version.js',
-    'style.css',
-    'app-core.js',
-    'app-ui.js',
-    'app-analysis.js',
-    'app-settings.js',
+    'teacher-style.css',
+    'teacher-core.js',
+    'teacher-seed.js',
+    'teacher-schedule-seed.js',
+    'teacher-task-seed.js',
+    'teacher-firebase-config.js',
+    'teacher-ui.js',
+    'teacher-teachers.js',
+    'teacher-classes.js',
+    'teacher-schedule.js',
+    'teacher-duty.js',
+    'teacher-settings.js',
     'manifest.json',
-    'icon-192.png',
     'icon.png',
     'sw.js'
-  ].includes(fileName);
-}
-
-function requestUrl(request) {
-  return new URL(typeof request === 'string' ? request : request.url, self.location.href);
+  ].includes(name);
 }
 
 function safeCachePut(cache, request, response) {
-  const url = requestUrl(request);
-  if (url.origin !== self.location.origin || !response || !response.ok || response.type === 'opaque') {
-    return Promise.resolve();
-  }
-  return cache.put(request, response).catch(err => {
-    console.warn('cache put hatası:', err);
-  });
+  const url = new URL(typeof request === 'string' ? request : request.url, self.location.href);
+  if (url.origin !== self.location.origin || !response || !response.ok || response.type === 'opaque') return Promise.resolve();
+  return cache.put(request, response).catch(() => {});
 }
 
-function precacheAssets(cache) {
+function precache(cache) {
   return cache.addAll(ASSETS.map(asset => new Request(asset, { cache: 'reload' })));
 }
 
 self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(precacheAssets)
-      .then(() => self.skipWaiting())
-  );
+  event.waitUntil(caches.open(CACHE_NAME).then(precache).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.filter(key => key.startsWith('sinav-analizi-') && key !== CACHE_NAME).map(key => caches.delete(key))))
+      .then(keys => Promise.all(keys.filter(key => key.startsWith('ogretmen-bilgi-') && key !== CACHE_NAME).map(key => caches.delete(key))))
       .then(() => self.clients.claim())
   );
 });
@@ -83,51 +69,29 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
+  if (url.origin !== self.location.origin) return;
 
-  if (isFirebaseRequest(url)) {
-    event.respondWith(fetch(event.request));
-    return;
-  }
-
-  if (url.origin !== self.location.origin) {
-    event.respondWith(fetch(event.request));
-    return;
-  }
-
-  if (isNavigationRequest(event.request, url)) {
+  if (event.request.mode === 'navigate' || url.pathname.endsWith('/index.html') || url.pathname.endsWith('/')) {
     event.respondWith(
-      fetch(event.request)
-        .then(response => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then(cache => safeCachePut(cache, './index.html', copy));
-          return response;
-        })
-        .catch(() => caches.match(event.request, { ignoreSearch: true })
-          .then(response => response || caches.match('./index.html', { ignoreSearch: true })))
+      fetch(event.request).then(response => {
+        const copy = response.clone();
+        caches.open(CACHE_NAME).then(cache => safeCachePut(cache, './index.html', copy));
+        return response;
+      }).catch(() => caches.match('./index.html', { ignoreSearch: true }))
     );
     return;
   }
 
-  if (isFreshAppAsset(url)) {
+  if (isAppAsset(url)) {
     event.respondWith(
-      fetch(event.request, { cache: 'no-store' })
-        .then(response => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then(cache => safeCachePut(cache, event.request, copy));
-          return response;
-        })
-        .catch(() => caches.match(event.request)
-          .then(response => response || caches.match(event.request, { ignoreSearch: true })))
-    );
-    return;
-  }
-
-  event.respondWith(
-    caches.match(event.request, { ignoreSearch: true })
-      .then(response => response || fetch(event.request).then(networkResponse => {
-        const copy = networkResponse.clone();
+      fetch(event.request, { cache: 'no-store' }).then(response => {
+        const copy = response.clone();
         caches.open(CACHE_NAME).then(cache => safeCachePut(cache, event.request, copy));
-        return networkResponse;
-      }))
-  );
+        return response;
+      }).catch(() => caches.match(event.request, { ignoreSearch: true }))
+    );
+    return;
+  }
+
+  event.respondWith(caches.match(event.request, { ignoreSearch: true }).then(response => response || fetch(event.request)));
 });
