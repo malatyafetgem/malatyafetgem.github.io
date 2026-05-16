@@ -1,4 +1,4 @@
-﻿// app-analysis.js — Risk scoring, box plots, karne, rH, rAnl, rapor
+// app-analysis.js — Risk scoring, box plots, karne, rH, rAnl, rapor
 
 let _riskCache = null;
 
@@ -1009,7 +1009,25 @@ function rH(){
 
   let typsIdx = 0;
   typs.forEach(t=>{
-    let el=grp[t].sort((a,b)=>srt(a.date,b.date)); let sb=Array.from(new Set(el.filter(e=>!e.abs).flatMap(e=>Object.keys(e.subs)))).sort();
+    let el=grp[t].sort((a,b)=>srt(a.date,b.date));
+    // --- Sanal "Katılmadı" satırları: sınıf seviyesinde var olup öğrenci için kaydı bulunmayan sınavlar ---
+    {
+      let attendedKeys = new Set();
+      el.forEach(e => { attendedKeys.add(e.date+'||'+(e.publisher||'')); });
+      let seenGradeKey = new Set();
+      DB.e.forEach(x => {
+        if(x.examType !== t) return;
+        if(getGrade(x.studentClass) !== stGrade) return;
+        let k = x.date+'||'+(x.publisher||'');
+        if(seenGradeKey.has(k)) return;
+        seenGradeKey.add(k);
+        if(!attendedKeys.has(k)) {
+          el.push({ studentNo: aNo, studentClass: s.class, examType: t, date: x.date, publisher: x.publisher||'', subs: {}, totalNet: 0, score: 0, cR:'—', cP:'—', iR:'—', iP:'—', abs: true });
+        }
+      });
+      el.sort((a,b)=>srt(a.date,b.date));
+    }
+    let sb=Array.from(new Set(el.filter(e=>!e.abs).flatMap(e=>Object.keys(e.subs)))).sort();
     let totalCols=sb.length+5, shorten=totalCols>10;
     
     let summary = calcKarneSummaryCards(aNo, t, stGrade, el);
@@ -3348,7 +3366,25 @@ async function generateRapor() {
       html += `<div class="report-header report-header-tight no-print"><span class="report-title-main"><i class="fas fa-user-graduate me-2"></i><strong>${escapeHtml(stu.name)}</strong> — Genel Karne Özeti</span><span class="report-title-sub">Sınıf: ${escapeHtml(stu.class)} | ${new Date().toLocaleDateString('tr-TR')}</span></div>`;
 
       typs.forEach(t => {
-        let el = grp[t].sort((a,b)=>srt(a.date,b.date)); let sb = Array.from(new Set(el.filter(e=>!e.abs).flatMap(e=>Object.keys(e.subs)))).sort();
+        let el = grp[t].sort((a,b)=>srt(a.date,b.date));
+        // --- Sanal "Katılmadı" satırları: sınıf seviyesinde var olup öğrenci için kaydı bulunmayan sınavlar ---
+        {
+          let attendedKeys = new Set();
+          el.forEach(e => { attendedKeys.add(e.date+'||'+(e.publisher||'')); });
+          let seenGradeKey = new Set();
+          DB.e.forEach(x => {
+            if(x.examType !== t) return;
+            if(getGrade(x.studentClass) !== stGrade) return;
+            let k = x.date+'||'+(x.publisher||'');
+            if(seenGradeKey.has(k)) return;
+            seenGradeKey.add(k);
+            if(!attendedKeys.has(k)) {
+              el.push({ studentNo: stu.no, studentClass: stu.class, examType: t, date: x.date, publisher: x.publisher||'', subs: {}, totalNet: 0, score: 0, cR:'—', cP:'—', iR:'—', iP:'—', abs: true });
+            }
+          });
+          el.sort((a,b)=>srt(a.date,b.date));
+        }
+        let sb = Array.from(new Set(el.filter(e=>!e.abs).flatMap(e=>Object.keys(e.subs)))).sort();
         let shorten = (sb.length + 5) > 10, abbrev = (name) => shorten ? name.substring(0,3) : toTitleCase(name);
         
         let summary = calcKarneSummaryCards(stu.no, t, stGrade, el);
