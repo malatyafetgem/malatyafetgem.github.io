@@ -24,8 +24,7 @@ window.SA_CACHE_READY = (async function(){
       if (localStorage.getItem(markerKey) === window.SA_CACHE_NAME) {
         if ('serviceWorker' in navigator) {
           navigator.serviceWorker.getRegistration('./').then(reg => { if (reg) reg.update(); }).catch(() => {});
-        }
-        return;
+        }        return;
       }
     } catch (e) {}
     if (!('caches' in window)) return;
@@ -472,6 +471,12 @@ window.SA_CACHE_READY = (async function(){
     if (loader) loader.style.display = 'flex';
   }
 })();
+</script>
+
+<script>
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  navigator.serviceWorker.register('/sw.js?v=' + (window.SA_APP_VERSION || 'dev'), { scope: '/', updateViaCache: 'none' }).catch(() => {});
+}
 </script>
 
 </body>

@@ -1,17 +1,18 @@
 importScripts('./version.js'); // APP_VERSION tek kaynaktan gelir
 const CACHE_NAME = 'sinav-analizi-' + APP_VERSION;
+const SCOPE = '/';
 const ASSETS = [
-  './',
-  './index.html',
-  './version.js',
-  './style.css',
-  './app-core.js',
-  './app-ui.js',
-  './app-analysis.js',
-  './app-settings.js',
-  './manifest.json',
-  './icon-192.png',
-  './icon.png'
+  '/',
+  '/index.html',
+  '/version.js',
+  '/style.css',
+  '/app-core.js',
+  '/app-ui.js',
+  '/app-analysis.js',
+  '/app-settings.js',
+  '/manifest.json',
+  '/icon-192.png',
+  '/icon.png'
 ];
 
 function isFirebaseRequest(url) {
@@ -25,11 +26,13 @@ function isFirebaseRequest(url) {
 
 function isNavigationRequest(request, url) {
   return request.mode === 'navigate' ||
-    url.pathname.endsWith('/') ||
-    url.pathname.endsWith('/index.html');
+    url.pathname === '/' ||
+    url.pathname === '/index.html';
 }
 
 function isFreshAppAsset(url) {
+  // Sadece kök scope'taki dosyalar — /ogretmen/ altındakilere dokunma
+  if (!url.pathname.startsWith(SCOPE) || url.pathname.startsWith('/ogretmen/')) return false;
   const fileName = url.pathname.split('/').pop();
   return [
     'index.html',
@@ -83,6 +86,9 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
+
+  // Scope dışındaki isteklere (örn. /ogretmen/) müdahale etme
+  if (url.origin === self.location.origin && url.pathname.startsWith('/ogretmen/')) return;
 
   if (isFirebaseRequest(url)) {
     event.respondWith(fetch(event.request));
